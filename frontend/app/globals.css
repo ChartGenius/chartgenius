@@ -697,3 +697,203 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* Tailwind compat */
 .text-gain { color: var(--green); }
 .text-loss { color: var(--red); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOBILE RESPONSIVE  (≤ 768px — iPhone/Android)
+───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  /* ── Ticker Bar ────────────────────────────────────────────────────────── */
+  .ticker-item {
+    padding: 0 12px;
+    gap: 5px;
+    font-size: 11px;
+  }
+
+  /* ── Header ────────────────────────────────────────────────────────────── */
+  .site-header {
+    padding: 0 10px;
+    gap: 6px;
+    /* sticky top stays 28px — ticker bar height unchanged */
+  }
+
+  /* Hide full nav — too wide for small screens */
+  .header-nav {
+    display: none;
+  }
+
+  /* Compact right section: hide clock & market status, keep buttons */
+  .live-time,
+  .market-status {
+    display: none;
+  }
+
+  .login-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .pro-btn {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  /* ── Category Tabs ─────────────────────────────────────────────────────── */
+  .cat-tabs {
+    padding: 0 6px;
+    /* overflow-x: auto already set — ensures horizontal scroll, no wrapping */
+  }
+
+  /* Hide the flex-spacer and search box — search moves to a separate affordance */
+  .cat-tabs-spacer {
+    display: none;
+  }
+
+  .symbol-search {
+    display: none;
+  }
+
+  .cat-tab {
+    padding: 0 10px;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  /* ── Main Layout: stack vertically ────────────────────────────────────── */
+  .main-content {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .news-feed {
+    flex: 1 1 auto;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Hide sidebar — too narrow on mobile */
+  .sidebar {
+    display: none;
+  }
+
+  /* ── News Column Header: hide on mobile ───────────────────────────────── */
+  .feed-col-header {
+    display: none !important;
+  }
+
+  /* ── News Rows: reflow to stacked two-line layout ─────────────────────── */
+  .news-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 6px;
+    padding: 8px 10px;
+    /* Override the desktop grid */
+    grid-template-columns: unset;
+  }
+
+  /* Title: takes full width so it pushes to its own line */
+  .news-title {
+    order: 1;
+    flex: 0 0 100%;
+    white-space: normal;        /* allow wrapping */
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+
+  /* Meta items: flow on the line below the title */
+  .news-time {
+    order: 2;
+    text-align: left;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .news-source {
+    order: 2;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90px;           /* prevent super-long source names blowing layout */
+    font-size: 9.5px;
+  }
+
+  .news-sentiment {
+    order: 2;
+    flex-shrink: 0;
+  }
+
+  /* Symbols: deprioritize on mobile — show but smaller */
+  .news-symbols {
+    order: 2;
+    min-width: unset;
+    text-align: left;
+    font-size: 9.5px;
+    color: var(--text-3);
+  }
+
+  /* Skeleton rows stay full height readable */
+  .news-row-skeleton {
+    height: 52px;
+  }
+
+  /* ── Feed header sticky offset stays 102px (heights unchanged) ─────────── */
+
+  /* ── Calendar View ─────────────────────────────────────────────────────── */
+  .cal-row,
+  .cal-header {
+    grid-template-columns: 48px 32px 36px 1fr;
+    padding: 5px 10px;
+    gap: 0 6px;
+  }
+
+  .cal-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .cal-time  { font-size: 10.5px; }
+  .cal-currency { font-size: 10.5px; }
+
+  /* ── Footer ────────────────────────────────────────────────────────────── */
+  .site-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+}
+
+/* ── Extra-small: 375px iPhone SE / iPhone 14 ──────────────────────────── */
+@media (max-width: 390px) {
+  .logo {
+    font-size: 12px;
+  }
+
+  .logo-badge {
+    display: none;
+  }
+
+  .ticker-item {
+    padding: 0 10px;
+    font-size: 10.5px;
+  }
+
+  .cat-tab {
+    padding: 0 8px;
+    font-size: 10.5px;
+  }
+
+  .news-title {
+    font-size: 12px;
+  }
+}

@@ -517,7 +517,7 @@ export default function Home() {
 
           {/* Column headers for news */}
           {!showCalendar && (
-            <div style={{
+            <div className="feed-col-header" style={{
               display: 'grid',
               gridTemplateColumns: '36px 80px 1fr auto auto',
               gap: '0 8px',
