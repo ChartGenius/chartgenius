@@ -57,7 +57,23 @@ interface NewsArticle {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const FALLBACK_SYMBOLS = ['AAPL', 'GOOGL', 'TSLA', 'MSFT', 'META', 'NVDA']
+// Sidebar market quotes symbols
+const SIDEBAR_SYMBOLS = ['AAPL', 'GOOGL', 'TSLA', 'MSFT', 'META', 'NVDA', 'AMZN', 'SPY']
+
+// Ticker bar symbols — dedicated set with display name mapping
+const TICKER_SYMBOLS = ['SPY', 'QQQ', 'DIA', 'BTC-USD', 'ETH-USD', 'EURUSD', 'GBPUSD', 'GC=F', 'CL=F', 'VIX']
+const TICKER_DISPLAY: Record<string, string> = {
+  'SPY':     'S&P 500',
+  'QQQ':     'NASDAQ',
+  'DIA':     'DOW',
+  'BTC-USD': 'BTC/USD',
+  'ETH-USD': 'ETH/USD',
+  'EURUSD':  'EUR/USD',
+  'GBPUSD':  'GBP/USD',
+  'GC=F':    'GOLD',
+  'CL=F':    'CRUDE',
+  'VIX':     'VIX',
+}
 
 const TICKER_FALLBACK = [
   { symbol: 'S&P 500', price: 5234.18, change: 0.42 },
@@ -70,8 +86,6 @@ const TICKER_FALLBACK = [
   { symbol: 'GOLD',    price: 2312.40,  change: 0.31 },
   { symbol: 'CRUDE',   price: 83.72,    change: -0.55 },
   { symbol: 'VIX',     price: 14.32,    change: -3.21 },
-  { symbol: 'USD/JPY', price: 151.82,   change: 0.22 },
-  { symbol: 'SILVER',  price: 27.14,    change: 1.04 },
 ]
 
 const CATEGORIES = ['All', 'Equities', 'Forex', 'Crypto', 'Commodities', 'Macro', 'Calendar']
@@ -115,10 +129,20 @@ function fmtEventTime(dateStr: string) {
 
 // ─── Ticker Bar ──────────────────────────────────────────────────────────────
 
-function TickerBar({ quotes }: { quotes: Record<string, Quote> }) {
-  const items = Object.values(quotes).length > 0
-    ? Object.values(quotes).map(q => ({ symbol: q.symbol, price: q.current, change: q.changePct }))
-    : TICKER_FALLBACK
+function TickerBar({ tickerQuotes }: { tickerQuotes: Record<string, Quote> }) {
+  const items = Object.keys(tickerQuotes).length > 0
+    ? TICKER_SYMBOLS
+        .filter(sym => tickerQuotes[sym])
+        .map(sym => {
+          const q = tickerQuotes[sym]
+          return {
+            symbol: TICKER_DISPLAY[sym] || sym,
+            price: q.current,
+            change: q.changePct,
+            isReal: q.source !== 'mock',
+          }
+        })
+    : TICKER_FALLBACK.map(t => ({ ...t, isReal: false }))
 
   const duped = [...items, ...items, ...items]
 
@@ -226,6 +250,10 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [symbolSearch, setSymbolSearch] = useState('')
 
+  // Ticker bar state — dedicated to the 10 market index/commodity symbols
+  const [tickerQuotes, setTickerQuotes] = useState<Record<string, Quote>>({})
+
+  // Sidebar quotes — tech stocks & market ETFs
   const [quotes, setQuotes] = useState<Record<string, Quote>>({})
   const [loadingQuotes, setLoadingQuotes] = useState(true)
   const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null)
@@ -266,18 +294,36 @@ export default function Home() {
     try { localStorage.setItem('cg_wl', JSON.stringify(watchlist)) } catch {}
   }, [watchlist])
 
-  // Fetch quotes
+  // Fetch ticker bar quotes (SPY, QQQ, DIA, BTC-USD, etc.)
+  const fetchTickerQuotes = useCallback(async () => {
+    if (isOffline) return
+    try {
+      const syms = TICKER_SYMBOLS.join(',')
+      const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${syms}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const j = await res.json()
+      if (j.success && j.data) setTickerQuotes(j.data)
+    } catch (err) {
+      console.warn('[TickerBar] fetch failed:', err)
+    }
+  }, [isOffline])
+
+  // Fetch sidebar quotes (AAPL, GOOGL, TSLA, MSFT, META, NVDA)
   const fetchQuotes = useCallback(async () => {
     if (isOffline) return
     try {
-      const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${FALLBACK_SYMBOLS.join(',')}`)
-      if (!res.ok) throw new Error()
+      const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${SIDEBAR_SYMBOLS.join(',')}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const j = await res.json()
-      if (j.success) setQuotes(j.data)
-    } catch {} finally { setLoadingQuotes(false) }
+      if (j.success && j.data) setQuotes(j.data)
+    } catch (err) {
+      console.warn('[MarketQuotes] fetch failed:', err)
+    } finally {
+      setLoadingQuotes(false)
+    }
   }, [isOffline])
 
-  // Fetch status
+  // Fetch market status
   const fetchStatus = useCallback(async () => {
     if (isOffline) return
     try {
@@ -288,7 +334,7 @@ export default function Home() {
     } catch {}
   }, [isOffline])
 
-  // Fetch calendar
+  // Fetch economic calendar
   const fetchCalendar = useCallback(async () => {
     if (isOffline) return
     try {
@@ -327,14 +373,24 @@ export default function Home() {
     }
   }, [isOffline])
 
-  // Init
+  // Initial data load
   useEffect(() => {
-    fetchQuotes(); fetchStatus(); fetchCalendar(); fetchNews('All')
-  }, [fetchQuotes, fetchStatus, fetchCalendar, fetchNews])
+    fetchTickerQuotes()
+    fetchQuotes()
+    fetchStatus()
+    fetchCalendar()
+    fetchNews('All')
+  }, [fetchTickerQuotes, fetchQuotes, fetchStatus, fetchCalendar, fetchNews])
 
-  // Auto-refresh quotes
+  // Auto-refresh every 30 seconds — ticker bar
   useEffect(() => {
-    const t = setInterval(fetchQuotes, 60_000)
+    const t = setInterval(fetchTickerQuotes, 30_000)
+    return () => clearInterval(t)
+  }, [fetchTickerQuotes])
+
+  // Auto-refresh every 30 seconds — sidebar quotes
+  useEffect(() => {
+    const t = setInterval(fetchQuotes, 30_000)
     return () => clearInterval(t)
   }, [fetchQuotes])
 
@@ -344,7 +400,7 @@ export default function Home() {
     if (cat !== 'Calendar') fetchNews(cat)
   }
 
-  // Handle symbol search (debounced)
+  // Debounced symbol search
   useEffect(() => {
     const t = setTimeout(() => {
       if (symbolSearch.trim()) fetchNews(activeCategory, symbolSearch)
@@ -363,10 +419,13 @@ export default function Home() {
   const losers     = [...quoteList].sort((a, b) => a.changePct - b.changePct).slice(0, 4)
   const showCalendar = activeCategory === 'Calendar'
 
+  // Determine data quality for status indicator
+  const hasRealTickerData = Object.values(tickerQuotes).some(q => q.source === 'finnhub')
+
   return (
     <>
       {/* ── Ticker Bar ─────────────────────────────────────────────────────── */}
-      <TickerBar quotes={quotes} />
+      <TickerBar tickerQuotes={tickerQuotes} />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className="site-header">
@@ -445,7 +504,7 @@ export default function Home() {
             </span>
             {!showCalendar && (
               <span style={{ fontSize: 10.5, color: '#404050', marginLeft: 12 }}>
-                {quoteList[0]?.source === 'finnhub' ? '● LIVE DATA' : '○ SIMULATED'}
+                {hasRealTickerData ? '● LIVE DATA' : '○ SIMULATED'}
               </span>
             )}
             <span className="feed-count">
@@ -513,7 +572,7 @@ export default function Home() {
         {/* Right: Sidebar (30%) */}
         <div className="sidebar">
 
-          {/* All Quotes */}
+          {/* Market Quotes */}
           <div className="sidebar-section">
             <div className="sidebar-title">MARKET QUOTES</div>
             {loadingQuotes
