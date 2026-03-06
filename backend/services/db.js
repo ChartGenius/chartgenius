@@ -18,7 +18,7 @@ const pool = new Pool({
 pool.on('connect', () => {
   // Suppress noisy per-connection logs in production
   if (process.env.NODE_ENV === 'development') {
-    console.log('[DB] New PostgreSQL connection established');
+    console.info('[DB] New PostgreSQL connection established');
   }
 });
 
@@ -28,7 +28,7 @@ pool.on('error', (err) => {
 
 // Test connection on startup
 pool.query('SELECT NOW()')
-  .then(r => console.log(`[DB] ✅ PostgreSQL connected — server time: ${r.rows[0].now}`))
+  .then(r => console.info(`[DB] ✅ PostgreSQL connected — server time: ${r.rows[0].now}`))
   .catch(e => console.error('[DB] ❌ PostgreSQL connection failed:', e.message));
 
 module.exports = {

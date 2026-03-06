@@ -261,7 +261,7 @@ class FinnhubService {
 
     this.ws.on('open', () => {
       this.wsConnected = true;
-      console.log('[Finnhub WS] Connected');
+      console.info('[Finnhub WS] Connected');
       // Re-subscribe to all tracked symbols
       this.wsSubscriptions.forEach(sym => this._wsSubscribe(sym));
     });

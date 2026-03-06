@@ -22,7 +22,7 @@ class CacheService {
     });
 
     this.client.on('connect', () => {
-      console.log('[Cache] ✅ Redis connected');
+      console.info('[Cache] ✅ Redis connected');
       this._redisErrorLogged = false;
     });
 
@@ -33,16 +33,24 @@ class CacheService {
     this.connect();
   }
 
+  /**
+   * Attempt to connect to Redis. Falls back to in-memory cache on failure.
+   */
   async connect() {
     try {
       await this.client.connect();
       this.isRedisAvailable = true;
     } catch (error) {
-      console.warn('Redis unavailable, using memory cache:', error.message);
+      console.warn('[Cache] Redis unavailable, using memory cache:', error.message);
       this.isRedisAvailable = false;
     }
   }
 
+  /**
+   * Get a cached value by key.
+   * @param {string} key - Cache key
+   * @returns {Promise<*>} Cached value or null if not found / expired
+   */
   async get(key) {
     try {
       if (this.isRedisAvailable) {
@@ -62,6 +70,12 @@ class CacheService {
     }
   }
 
+  /**
+   * Store a value in cache with optional TTL.
+   * @param {string} key - Cache key
+   * @param {*} value - Value to cache (must be JSON-serialisable)
+   * @param {number} [ttlSeconds=300] - Time-to-live in seconds
+   */
   async set(key, value, ttlSeconds = 300) {
     try {
       if (this.isRedisAvailable) {
@@ -83,6 +97,10 @@ class CacheService {
     }
   }
 
+  /**
+   * Delete a cached entry by key.
+   * @param {string} key - Cache key to remove
+   */
   async del(key) {
     try {
       if (this.isRedisAvailable) {
@@ -95,6 +113,9 @@ class CacheService {
     }
   }
 
+  /**
+   * Evict all expired entries from the in-memory fallback cache.
+   */
   cleanupMemoryCache() {
     const now = Date.now();
     for (const [key, cached] of this.memoryCache.entries()) {
@@ -104,7 +125,15 @@ class CacheService {
     }
   }
 
-  // Helper method for cached API calls
+  /**
+   * Execute an API call with caching: returns cached result if available,
+   * otherwise calls `apiCall`, caches the result, and returns it.
+   *
+   * @param {string} key - Cache key
+   * @param {() => Promise<*>} apiCall - Async function that fetches fresh data
+   * @param {number} [ttlSeconds=300] - Cache TTL in seconds
+   * @returns {Promise<*>} Cached or freshly fetched data
+   */
   async cacheAPICall(key, apiCall, ttlSeconds = 300) {
     const cached = await this.get(key);
     if (cached) {
