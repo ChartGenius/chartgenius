@@ -14,6 +14,9 @@ const SettingsPanel = dynamic(() => import('./components/SettingsPanel'), { ssr:
 // Alert system (SSE-powered real-time market alerts)
 import { AlertBanner, AlertFeed, AlertBadge, useAlerts } from './components/AlertSystem'
 
+// Keyboard shortcuts
+import KeyboardShortcuts from './components/KeyboardShortcuts'
+
 // Onboarding components
 import { WatchlistEmpty, AlertsEmpty } from './components/EmptyState'
 import OnboardingTooltip from './components/OnboardingTooltip'
@@ -891,6 +894,29 @@ export default function Home() {
     setStockQuote(null)
   }
 
+  // ── Keyboard shortcut handlers ─────────────────────────────────────────────
+  const handleKbFocusSearch = useCallback(() => {
+    const el = document.querySelector<HTMLInputElement>('.symbol-search')
+    el?.focus()
+    el?.select()
+  }, [])
+
+  const handleKbEscape = useCallback(() => {
+    // Close modals in priority order
+    if (selectedStock) { closeStockDetail(); return }
+    if (authModalOpen) { setAuthModalOpen(false); return }
+    if (settingsOpen)  { closeSettings(); return }
+  }, [selectedStock, authModalOpen, settingsOpen, closeSettings])
+
+  const handleKbGoToHome = useCallback(() => {
+    setActiveCategory('All')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
+  const handleKbGoToAlerts = useCallback(() => {
+    setActiveCategory('Alerts')
+  }, [])
+
   // ── Add to ticker ──────────────────────────────────────────────────────────
   const addToTicker = (symbol: string) => {
     setCustomTickerSymbols(prev => {
@@ -949,6 +975,15 @@ export default function Home() {
 
   return (
     <>
+      {/* ── Keyboard Shortcuts ────────────────────────────────────────────── */}
+      <KeyboardShortcuts
+        onFocusSearch={handleKbFocusSearch}
+        onEscape={handleKbEscape}
+        onGoToHome={handleKbGoToHome}
+        onGoToAlerts={handleKbGoToAlerts}
+        onOpenSettings={openSettings}
+      />
+
       {/* ── High-urgency Alert Banner ──────────────────────────────────────── */}
       <AlertBanner
         alerts={marketAlerts}
