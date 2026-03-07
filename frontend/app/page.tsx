@@ -9,6 +9,9 @@ import { useSettings } from './context/SettingsContext'
 const AuthModal    = dynamic(() => import('./components/AuthModal'),    { ssr: false })
 const SettingsPanel = dynamic(() => import('./components/SettingsPanel'), { ssr: false })
 
+// Alert system (SSE-powered real-time market alerts)
+import { AlertBanner, AlertFeed, AlertBadge, useAlerts } from './components/AlertSystem'
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -93,7 +96,7 @@ const TICKER_FALLBACK = [
   { symbol: 'VIX',     price: 14.32,    change: -3.21 },
 ]
 
-const CATEGORIES = ['All', 'Equities', 'Forex', 'Crypto', 'Commodities', 'Macro', 'Calendar']
+const CATEGORIES = ['All', 'Equities', 'Forex', 'Crypto', 'Commodities', 'Macro', 'Calendar', 'Alerts']
 
 const NEWS_CAT_MAP: Record<string, string> = {
   All: 'all',
@@ -630,6 +633,19 @@ export default function Home() {
   const { user, token, loadWatchlistFromBackend, syncAddToWatchlist, syncRemoveFromWatchlist } = useAuth()
   const { settings, openSettings, settingsOpen, closeSettings } = useSettings()
 
+  // Real-time alert system
+  const {
+    alerts: marketAlerts,
+    unreadCount: alertUnreadCount,
+    isConnected: alertConnected,
+    prefs: alertPrefs,
+    updatePrefs: updateAlertPrefs,
+    flashActive: alertFlash,
+    markAllRead: markAlertsRead,
+    dismissAlert,
+    refresh: refreshAlerts,
+  } = useAlerts()
+
   const [clock, setClock] = useState('')
   const [isOffline, setIsOffline] = useState(false)
   const [activeCategory, setActiveCategory] = useState('All')
@@ -894,7 +910,7 @@ export default function Home() {
   // ── Category change ────────────────────────────────────────────────────────
   const handleCategory = (cat: string) => {
     setActiveCategory(cat)
-    if (cat !== 'Calendar') fetchNews(cat)
+    if (cat !== 'Calendar' && cat !== 'Alerts') fetchNews(cat)
   }
 
   // ── News symbol filter debounce ────────────────────────────────────────────
@@ -912,10 +928,18 @@ export default function Home() {
   const gainers     = [...quoteList].sort((a, b) => b.changePct - a.changePct).slice(0, 4)
   const losers      = [...quoteList].sort((a, b) => a.changePct - b.changePct).slice(0, 4)
   const showCalendar = activeCategory === 'Calendar'
+  const showAlerts   = activeCategory === 'Alerts'
   const hasRealTickerData = Object.values(tickerQuotes).some(q => q.source === 'finnhub')
 
   return (
     <>
+      {/* ── High-urgency Alert Banner ──────────────────────────────────────── */}
+      <AlertBanner
+        alerts={marketAlerts}
+        flashActive={alertFlash}
+        onDismiss={dismissAlert}
+      />
+
       {/* ── Ticker Bar ─────────────────────────────────────────────────────── */}
       <TickerBar
         tickerQuotes={tickerQuotes}
@@ -996,6 +1020,7 @@ export default function Home() {
             className={`cat-tab ${activeCategory === cat ? 'cat-tab-active' : ''}`}
           >
             {cat}
+            {cat === 'Alerts' && <AlertBadge count={alertUnreadCount} />}
           </button>
         ))}
         <div className="cat-tabs-spacer" />
@@ -1014,9 +1039,24 @@ export default function Home() {
       {/* ── Main Content ───────────────────────────────────────────────────── */}
       <div className="main-content">
 
-        {/* Left: News/Calendar Feed (70%) */}
+        {/* Left: News/Calendar/Alerts Feed (70%) */}
         <div className="news-feed">
-          <div className="feed-header">
+
+          {/* ── Alerts Tab ─────────────────────────────────────────────────── */}
+          {showAlerts && (
+            <AlertFeed
+              alerts={marketAlerts}
+              isConnected={alertConnected}
+              prefs={alertPrefs}
+              onUpdatePrefs={updateAlertPrefs}
+              onMarkAllRead={markAlertsRead}
+              onDismiss={dismissAlert}
+              onRefresh={refreshAlerts}
+            />
+          )}
+
+          {/* ── News / Calendar header (only shown when not Alerts tab) ────── */}
+          {!showAlerts && <div className="feed-header">
             <span className="feed-title">
               <span className="live-dot" />
               {showCalendar ? 'ECONOMIC CALENDAR' : 'LIVE NEWS FEED'}
@@ -1032,9 +1072,9 @@ export default function Home() {
             {!showCalendar && (
               <button onClick={() => fetchNews(activeCategory, newsSymbolFilter)} className="refresh-btn">↻</button>
             )}
-          </div>
+          </div>}
 
-          {!showCalendar && (
+          {!showAlerts && !showCalendar && (
             <div className="feed-col-header" style={{
               display: 'grid',
               gridTemplateColumns: '36px 80px 1fr auto auto',
@@ -1051,7 +1091,7 @@ export default function Home() {
             </div>
           )}
 
-          {showCalendar && (
+          {!showAlerts && showCalendar && (
             <>
               <div className="cal-header">
                 <span>TIME</span>
@@ -1066,7 +1106,7 @@ export default function Home() {
             </>
           )}
 
-          {!showCalendar && (
+          {!showAlerts && !showCalendar && (
             <div className="news-list">
               {loadingNews
                 ? <NewsSkeletons count={20} />

@@ -28,6 +28,7 @@ app.use('/api/watchlist', require('./routes/watchlist'));
 app.use('/api/market-data', require('./routes/marketData'));      // Finnhub-backed real market data
 app.use('/api/feed/news', require('./routes/aggregatedNews'));    // RSS + NewsAPI aggregated feed
 app.use('/api/calendar', require('./routes/calendar'));           // Economic calendar
+app.use('/api/alerts', require('./routes/alerts'));               // Real-time market alerts + SSE
 
 // Health check
 app.get('/health', (req, res) => {
@@ -58,4 +59,10 @@ app.listen(PORT, () => {
   console.log(`📈 Market data:  http://localhost:${PORT}/api/market-data/batch`);
   console.log(`📰 News feed:    http://localhost:${PORT}/api/feed/news`);
   console.log(`📅 Calendar:     http://localhost:${PORT}/api/calendar/today`);
+  console.log(`🚨 Alerts:       http://localhost:${PORT}/api/alerts`);
+  console.log(`📡 Alert stream: http://localhost:${PORT}/api/alerts/live`);
+
+  // Start real-time alert poll loop (every 5 minutes)
+  const alertService = require('./services/alertService');
+  alertService.startPolling(5 * 60 * 1000);
 });
