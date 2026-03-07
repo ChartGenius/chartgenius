@@ -1213,6 +1213,7 @@ export default function LandingPage() {
                     { label: 'Contact', href: '/contact' },
                     { label: 'Team', href: '/team' },
                     { label: 'Blog', href: '/blog' },
+                    { label: 'Help Center', href: '/help' },
                   ].map(l => (
                     <li key={l.label}>
                       <a href={l.href} style={{ fontSize: '14px', color: 'var(--text-2)', textDecoration: 'none', transition: 'color 0.15s' }}
