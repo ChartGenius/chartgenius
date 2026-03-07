@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -190,6 +191,12 @@ export default function StatusPage() {
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       padding: '0 24px',
     }}>
+      {/* ── Breadcrumbs ── */}
+      <Breadcrumbs
+        maxWidth="720px"
+        items={[{ label: 'Home', href: '/' }, { label: 'System Status' }]}
+      />
+
       {/* Header */}
       <header style={{
         maxWidth: '720px', margin: '0 auto',

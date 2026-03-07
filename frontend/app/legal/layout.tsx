@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import LegalBreadcrumbs from './LegalBreadcrumbs'
 
 export const metadata: Metadata = {
   robots: 'noindex, follow',
@@ -70,6 +71,9 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           </Link>
         </div>
       </nav>
+
+      {/* ── Breadcrumbs ── */}
+      <LegalBreadcrumbs />
 
       {/* ── Main layout ── */}
       <div style={{

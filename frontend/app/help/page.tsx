@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Script from 'next/script'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FAQ data (sourced from docs/HELP_CENTER_FAQ.md)
@@ -369,6 +370,11 @@ export default function HelpPage() {
             </div>
           </div>
         </nav>
+
+        {/* ── Breadcrumbs ── */}
+        <Breadcrumbs
+          items={[{ label: 'Home', href: '/' }, { label: 'Help Center' }]}
+        />
 
         {/* ── Hero ── */}
         <div

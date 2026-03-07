@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data — parsed from CHANGELOG.md
@@ -738,6 +739,12 @@ export default function ChangelogPage() {
           </div>
         </div>
       </nav>
+
+      {/* ── Breadcrumbs ── */}
+      <Breadcrumbs
+        maxWidth="860px"
+        items={[{ label: 'Home', href: '/' }, { label: 'Changelog' }]}
+      />
 
       {/* ── Hero ── */}
       <div style={{
