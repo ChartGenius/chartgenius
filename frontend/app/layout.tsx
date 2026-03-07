@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { AuthProvider } from './context/AuthContext'
 import { SettingsProvider } from './context/SettingsContext'
+import { OnboardingProvider } from './context/OnboardingContext'
+import OnboardingOverlay from './components/OnboardingOverlay'
 
 export const metadata: Metadata = {
   title: 'ChartGenius — Real-Time Market Intelligence',
@@ -14,7 +16,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SettingsProvider>
           <AuthProvider>
-            {children}
+            <OnboardingProvider>
+              {children}
+              <OnboardingOverlay />
+            </OnboardingProvider>
           </AuthProvider>
         </SettingsProvider>
       </body>

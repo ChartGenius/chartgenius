@@ -2422,3 +2422,598 @@ a.alert-row-title:hover {
   animation: none !important;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONBOARDING — Welcome Modal
+═══════════════════════════════════════════════════════════════════════════ */
+
+.welcome-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 900;
+  animation: fade-in 0.3s ease;
+}
+
+.welcome-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 901;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 40px 36px;
+  width: min(460px, calc(100vw - 32px));
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  animation: welcome-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes welcome-slide-up {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 24px)); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* Animated chart icon */
+.welcome-chart-icon {
+  margin: 0 auto 28px;
+  width: 80px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome-chart-line {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: draw-line 1s ease forwards 0.3s;
+}
+
+@keyframes draw-line {
+  to { stroke-dashoffset: 0; }
+}
+
+.welcome-chart-dot {
+  opacity: 0;
+  animation: pop-dot 0.2s ease forwards;
+}
+
+@keyframes pop-dot {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.welcome-headline {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-0);
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+  line-height: 1.25;
+}
+
+.welcome-subheading {
+  font-size: 14px;
+  color: var(--text-1);
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.welcome-cta {
+  display: block;
+  width: 100%;
+  padding: 13px 24px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  min-height: 48px;
+}
+
+.welcome-cta:hover { background: #3a8ee0; }
+.welcome-cta:active { transform: scale(0.98); }
+
+.welcome-skip {
+  display: block;
+  margin: 14px auto 0;
+  font-size: 11.5px;
+  color: var(--text-3);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  padding: 4px 8px;
+}
+
+.welcome-skip:hover { color: var(--text-2); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONBOARDING — Checklist Widget
+═══════════════════════════════════════════════════════════════════════════ */
+
+.onboarding-checklist {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 800;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 280px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px) translateY(10px); }
+  to   { opacity: 1; transform: translateX(0) translateY(0); }
+}
+
+.checklist-collapsed {
+  width: auto;
+  min-width: 180px;
+}
+
+.checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-b);
+  user-select: none;
+}
+
+.checklist-collapsed .checklist-header {
+  border-bottom: none;
+}
+
+.checklist-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checklist-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.checklist-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-0);
+  letter-spacing: 0.02em;
+}
+
+.checklist-progress-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(74, 158, 255, 0.12);
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.03em;
+}
+
+.checklist-toggle {
+  font-size: 9px;
+  color: var(--text-2);
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.checklist-toggle:hover { color: var(--text-0); }
+
+/* Progress bar */
+.checklist-progress-bar-wrap {
+  height: 3px;
+  background: var(--bg-4);
+  margin: 0;
+}
+
+.checklist-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--green));
+  border-radius: 0 2px 2px 0;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Items */
+.checklist-items {
+  list-style: none;
+  padding: 8px 0 4px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 14px;
+  transition: background 0.15s;
+}
+
+.checklist-item-next {
+  background: rgba(74, 158, 255, 0.06);
+  border-left: 2px solid var(--accent);
+}
+
+.checklist-item-done .checklist-item-label {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+
+.checklist-check {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.4;
+  min-width: 14px;
+  flex-shrink: 0;
+  transition: color 0.3s;
+}
+
+.check-done {
+  color: var(--green);
+  animation: check-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes check-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.checklist-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.checklist-item-label {
+  font-size: 12px;
+  color: var(--text-1);
+  line-height: 1.3;
+}
+
+.checklist-item-desc {
+  font-size: 10.5px;
+  color: var(--text-2);
+  line-height: 1.3;
+}
+
+.checklist-next-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(74, 158, 255, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* Footer */
+.checklist-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px 12px;
+  border-top: 1px solid var(--border-b);
+}
+
+.checklist-encouragement {
+  font-size: 10.5px;
+  color: var(--text-2);
+  flex: 1;
+}
+
+.checklist-complete-msg {
+  font-size: 11px;
+  color: var(--green);
+  font-weight: 600;
+  flex: 1;
+}
+
+.checklist-dismiss {
+  font-size: 10.5px;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.checklist-dismiss:hover {
+  color: var(--text-1);
+  border-color: var(--text-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONBOARDING — Celebration / Confetti
+═══════════════════════════════════════════════════════════════════════════ */
+
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  animation: fade-in 0.25s ease;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  animation: confetti-fall linear forwards;
+  pointer-events: none;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+.celebration-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px 40px;
+  text-align: center;
+  width: min(400px, calc(100vw - 40px));
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: celebration-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+@keyframes celebration-bounce {
+  from { opacity: 0; transform: scale(0.7); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.celebration-check {
+  font-size: 56px;
+  line-height: 1;
+  color: var(--green);
+  margin-bottom: 20px;
+  animation: check-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+  display: block;
+}
+
+.celebration-heading {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-0);
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
+}
+
+.celebration-sub {
+  font-size: 14px;
+  color: var(--text-1);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.celebration-btn {
+  display: inline-block;
+  padding: 12px 28px;
+  background: var(--green);
+  color: #0a0a0c;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, transform 0.1s;
+  min-height: 48px;
+}
+
+.celebration-btn:hover { background: #00d474; }
+.celebration-btn:active { transform: scale(0.97); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONBOARDING — Tooltips
+═══════════════════════════════════════════════════════════════════════════ */
+
+.ob-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.ob-tooltip {
+  position: absolute;
+  z-index: 700;
+  background: var(--bg-4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px 8px 10px;
+  min-width: 180px;
+  max-width: 240px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: tooltip-fade-in 0.2s ease;
+  pointer-events: auto;
+}
+
+@keyframes tooltip-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ob-tooltip-bottom {
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ob-tooltip-top {
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ob-tooltip-right {
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ob-tooltip-left {
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ob-tooltip-arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--bg-4);
+  border: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+
+.ob-tooltip-bottom .ob-tooltip-arrow {
+  top: -5px;
+  left: 50%;
+  margin-left: -4px;
+  border-bottom: none;
+  border-right: none;
+}
+
+.ob-tooltip-top .ob-tooltip-arrow {
+  bottom: -5px;
+  left: 50%;
+  margin-left: -4px;
+  border-top: none;
+  border-left: none;
+}
+
+.ob-tooltip-right .ob-tooltip-arrow {
+  left: -5px;
+  top: 50%;
+  margin-top: -4px;
+  border-right: none;
+  border-top: none;
+}
+
+.ob-tooltip-left .ob-tooltip-arrow {
+  right: -5px;
+  top: 50%;
+  margin-top: -4px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.ob-tooltip-content {
+  font-size: 11.5px;
+  color: var(--text-1);
+  line-height: 1.4;
+}
+
+.ob-tooltip-dismiss {
+  font-size: 10.5px;
+  color: var(--accent);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-weight: 500;
+}
+
+.ob-tooltip-dismiss:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONBOARDING — Empty States
+═══════════════════════════════════════════════════════════════════════════ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.empty-state-compact {
+  padding: 24px 16px;
+}
+
+.empty-state-icon {
+  color: var(--text-3);
+  margin-bottom: 6px;
+  opacity: 0.7;
+}
+
+.empty-state-headline {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-0);
+  letter-spacing: -0.01em;
+}
+
+.empty-state-subtext {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.5;
+  max-width: 220px;
+}
+
+.empty-state-cta {
+  margin-top: 4px;
+  padding: 9px 18px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+  min-height: 36px;
+}
+
+.empty-state-cta:hover { background: #3a8ee0; }
+
+.empty-state-secondary {
+  font-size: 11px;
+  color: var(--text-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: underline;
+}
+
+.empty-state-secondary:hover { color: var(--text-1); }
+
+/* ─── shared fade-in ──────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

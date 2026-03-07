@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useAuth } from './context/AuthContext'
 import { useSettings } from './context/SettingsContext'
+import { useOnboarding } from './context/OnboardingContext'
 
 // Lazy-load modals so they don't bloat initial bundle
 const AuthModal    = dynamic(() => import('./components/AuthModal'),    { ssr: false })
@@ -11,6 +12,10 @@ const SettingsPanel = dynamic(() => import('./components/SettingsPanel'), { ssr:
 
 // Alert system (SSE-powered real-time market alerts)
 import { AlertBanner, AlertFeed, AlertBadge, useAlerts } from './components/AlertSystem'
+
+// Onboarding components
+import { WatchlistEmpty, AlertsEmpty } from './components/EmptyState'
+import OnboardingTooltip from './components/OnboardingTooltip'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -632,6 +637,7 @@ function SidebarSkeletons({ count = 4 }: { count?: number }) {
 export default function Home() {
   const { user, token, loadWatchlistFromBackend, syncAddToWatchlist, syncRemoveFromWatchlist } = useAuth()
   const { settings, openSettings, settingsOpen, closeSettings } = useSettings()
+  const { markChecklistItem } = useOnboarding()
 
   // Real-time alert system
   const {
@@ -887,6 +893,7 @@ export default function Home() {
   const addToTicker = (symbol: string) => {
     setCustomTickerSymbols(prev => {
       if (prev.includes(symbol) || prev.length >= MAX_TICKER_CUSTOM) return prev
+      markChecklistItem('customizeTicker')
       return [...prev, symbol]
     })
   }
@@ -900,12 +907,15 @@ export default function Home() {
     const isAdding = !watchlist.includes(sym)
     setWatchlist(w => isAdding ? [...w, sym] : w.filter(s => s !== sym))
 
+    // Mark onboarding checklist item on first add
+    if (isAdding) markChecklistItem('addSymbol')
+
     // Sync to backend if logged in
     if (token) {
       if (isAdding) syncAddToWatchlist(sym)
       else syncRemoveFromWatchlist(sym)
     }
-  }, [watchlist, token, syncAddToWatchlist, syncRemoveFromWatchlist])
+  }, [watchlist, token, syncAddToWatchlist, syncRemoveFromWatchlist, markChecklistItem])
 
   // ── Category change ────────────────────────────────────────────────────────
   const handleCategory = (cat: string) => {
@@ -982,24 +992,42 @@ export default function Home() {
           <span className="live-time">{clock}</span>
 
           {/* Settings gear */}
-          <button
-            className="settings-gear-btn"
-            onClick={openSettings}
-            aria-label="Settings"
-            title="Settings"
+          <OnboardingTooltip
+            id="settings-gear"
+            content="Customize your ticker bar and notification preferences here"
+            position="bottom"
+            delayMs={5000}
           >
-            ⚙
-          </button>
+            <button
+              className="settings-gear-btn"
+              onClick={openSettings}
+              aria-label="Settings"
+              title="Settings"
+            >
+              ⚙
+            </button>
+          </OnboardingTooltip>
 
           {/* Auth section */}
           {user ? (
-            <span className="header-user-email" title={user.email}>
+            <span
+              className="header-user-email"
+              title={user.email}
+              onClick={() => markChecklistItem('completeProfile')}
+            >
               {user.email}
             </span>
           ) : (
-            <button className="login-btn" onClick={() => setAuthModalOpen(true)}>
-              Sign In
-            </button>
+            <OnboardingTooltip
+              id="sign-in-btn"
+              content="Sign in to sync your watchlist across devices"
+              position="bottom"
+              delayMs={6000}
+            >
+              <button className="login-btn" onClick={() => setAuthModalOpen(true)}>
+                Sign In
+              </button>
+            </OnboardingTooltip>
           )}
 
           <button className="pro-btn">PRO</button>
@@ -1019,8 +1047,19 @@ export default function Home() {
             onClick={() => handleCategory(cat)}
             className={`cat-tab ${activeCategory === cat ? 'cat-tab-active' : ''}`}
           >
-            {cat}
-            {cat === 'Alerts' && <AlertBadge count={alertUnreadCount} />}
+            {cat === 'Alerts' ? (
+              <OnboardingTooltip
+                id="alerts-tab"
+                content="Set up price alerts so you don't miss market moves"
+                position="bottom"
+                delayMs={4000}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  {cat}<AlertBadge count={alertUnreadCount} />
+                </span>
+              </OnboardingTooltip>
+            ) : cat}
+            {cat !== 'Alerts' && null}
           </button>
         ))}
         <div className="cat-tabs-spacer" />
@@ -1033,7 +1072,14 @@ export default function Home() {
           onChange={e => setNewsSymbolFilter(e.target.value)}
         />
 
-        <StockSearch onSelect={(sym, name) => openStockDetail(sym, name)} />
+        <OnboardingTooltip
+          id="stock-search"
+          content="Search any stock ticker to track it in your watchlist"
+          position="bottom"
+          delayMs={3000}
+        >
+          <StockSearch onSelect={(sym, name) => openStockDetail(sym, name)} />
+        </OnboardingTooltip>
       </div>
 
       {/* ── Main Content ───────────────────────────────────────────────────── */}
@@ -1044,15 +1090,25 @@ export default function Home() {
 
           {/* ── Alerts Tab ─────────────────────────────────────────────────── */}
           {showAlerts && (
-            <AlertFeed
-              alerts={marketAlerts}
-              isConnected={alertConnected}
-              prefs={alertPrefs}
-              onUpdatePrefs={updateAlertPrefs}
-              onMarkAllRead={markAlertsRead}
-              onDismiss={dismissAlert}
-              onRefresh={refreshAlerts}
-            />
+            <>
+              {marketAlerts.length === 0 && (
+                <AlertsEmpty
+                  onCreateAlert={() => {
+                    // Nudge user to open settings/alert creation
+                    setAuthModalOpen(true)
+                  }}
+                />
+              )}
+              <AlertFeed
+                alerts={marketAlerts}
+                isConnected={alertConnected}
+                prefs={alertPrefs}
+                onUpdatePrefs={updateAlertPrefs}
+                onMarkAllRead={markAlertsRead}
+                onDismiss={dismissAlert}
+                onRefresh={refreshAlerts}
+              />
+            </>
           )}
 
           {/* ── News / Calendar header (only shown when not Alerts tab) ────── */}
@@ -1186,7 +1242,17 @@ export default function Home() {
               )}
             </div>
             {watchlist.length === 0 ? (
-              <div className="watchlist-empty">Click ★ on any symbol to track it</div>
+              <WatchlistEmpty
+                onAddSymbol={() => {
+                  // Focus the search bar at the top of the page
+                  const el = document.querySelector<HTMLInputElement>('.symbol-search')
+                  el?.focus()
+                }}
+                onExample={() => {
+                  toggleWatch('AAPL')
+                  openStockDetail('AAPL', 'Apple Inc.')
+                }}
+              />
             ) : (
               watchlist.map(sym => (
                 <div
