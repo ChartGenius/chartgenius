@@ -1188,6 +1188,7 @@ export default function LandingPage() {
                     { label: 'Features', href: '#features' },
                     { label: 'Pricing', href: '#pricing' },
                     { label: 'Roadmap', href: '/roadmap' },
+                    { label: 'Changelog', href: '/changelog' },
                     { label: 'Dashboard', href: '/' },
                   ].map(l => (
                     <li key={l.label}>
