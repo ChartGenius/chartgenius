@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useAuth } from './context/AuthContext'
 import { useSettings } from './context/SettingsContext'
 import { useOnboarding } from './context/OnboardingContext'
+import { trackWatchlistAdd, trackWatchlistRemove, trackStockSearch } from './utils/analytics'
 
 // Lazy-load modals so they don't bloat initial bundle
 const AuthModal    = dynamic(() => import('./components/AuthModal'),    { ssr: false })
@@ -275,6 +276,7 @@ function StockSearch({ onSelect }: { onSelect: (symbol: string, name: string) =>
   }, [])
 
   const pick = (sym: string, name: string) => {
+    trackStockSearch(sym)
     onSelect(sym, name)
     setQuery('')
     setOpen(false)
@@ -906,6 +908,10 @@ export default function Home() {
   const toggleWatch = useCallback((sym: string) => {
     const isAdding = !watchlist.includes(sym)
     setWatchlist(w => isAdding ? [...w, sym] : w.filter(s => s !== sym))
+
+    // Track analytics
+    if (isAdding) trackWatchlistAdd(sym)
+    else trackWatchlistRemove(sym)
 
     // Mark onboarding checklist item on first add
     if (isAdding) markChecklistItem('addSymbol')

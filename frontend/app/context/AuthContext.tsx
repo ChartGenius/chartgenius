@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { trackLogout } from '../utils/analytics'
 import {
   apiLogin,
   apiRegister,
@@ -140,6 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Logout ────────────────────────────────────────────────────────────────
   const logout = useCallback(() => {
+    trackLogout()
     setToken(null)
     setUser(null)
     setBackendWatchlist([])

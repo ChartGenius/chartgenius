@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useSettings, type Theme, type DefaultMarket } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
+import { trackSettingsChanged } from '../utils/analytics'
 
 interface SettingsPanelProps {
   onClose: () => void
@@ -101,7 +102,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                 <button
                   key={t}
                   className={`settings-theme-btn${settings.theme === t ? ' settings-theme-btn-active' : ''}`}
-                  onClick={() => setTheme(t)}
+                  onClick={() => { setTheme(t); trackSettingsChanged('theme', t) }}
                 >
                   {t === 'dark' ? '🌙 Dark' : '☀️ Light'}
                 </button>
@@ -123,7 +124,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                 <button
                   key={m}
                   className={`settings-market-btn${settings.defaultMarket === m ? ' settings-market-btn-active' : ''}`}
-                  onClick={() => setDefaultMarket(m)}
+                  onClick={() => { setDefaultMarket(m); trackSettingsChanged('default_market', m) }}
                 >
                   {m === 'US' ? '🇺🇸 US' : m === 'Crypto' ? '₿ Crypto' : '💱 Forex'}
                 </button>

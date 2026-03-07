@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { trackLogin, trackSignup } from '../utils/analytics'
 
 type Mode = 'login' | 'register'
 
@@ -64,6 +65,12 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
     if (result.error) {
       setError(result.error)
     } else {
+      // Track login / signup
+      if (mode === 'login') {
+        trackLogin()
+      } else {
+        trackSignup('free')
+      }
       onSuccess?.()
       onClose()
     }
