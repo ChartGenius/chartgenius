@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext'
 import { SettingsProvider } from './context/SettingsContext'
 import { OnboardingProvider } from './context/OnboardingContext'
 import OnboardingOverlay from './components/OnboardingOverlay'
+import CookieConsent from './components/CookieConsent'
 
 export const metadata: Metadata = {
   title: 'ChartGenius — Real-Time Market Intelligence',
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <OnboardingProvider>
               {children}
               <OnboardingOverlay />
+              <CookieConsent />
             </OnboardingProvider>
           </AuthProvider>
         </SettingsProvider>
