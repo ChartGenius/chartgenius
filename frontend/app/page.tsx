@@ -601,25 +601,97 @@ function StockDetailModal({
   )
 }
 
+// ─── Ticker Settings Dropdown ─────────────────────────────────────────────────
+
+function TickerSettingsDropdown({
+  hiddenSymbols,
+  onToggle,
+  onClose,
+}: {
+  hiddenSymbols: Set<string>
+  onToggle: (sym: string) => void
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [onClose])
+
+  return (
+    <div ref={ref} style={{
+      position: 'absolute',
+      right: 0,
+      top: '100%',
+      marginTop: 4,
+      background: 'var(--bg-2)',
+      border: '1px solid var(--border)',
+      borderRadius: 6,
+      padding: '8px 0',
+      minWidth: 200,
+      zIndex: 200,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+    }}>
+      <div style={{ padding: '4px 12px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+        TICKER SYMBOLS
+      </div>
+      {TICKER_SYMBOLS.map(sym => (
+        <label key={sym} style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '4px 12px',
+          cursor: 'pointer',
+          fontSize: 11,
+          color: hiddenSymbols.has(sym) ? 'var(--text-3)' : 'var(--text-1)',
+        }}>
+          <input
+            type="checkbox"
+            checked={!hiddenSymbols.has(sym)}
+            onChange={() => onToggle(sym)}
+            style={{ cursor: 'pointer' }}
+          />
+          <span style={{ fontWeight: 600, minWidth: 60 }}>{TICKER_DISPLAY[sym] || sym}</span>
+          <span style={{ color: 'var(--text-3)', fontSize: 9.5 }}>{sym}</span>
+        </label>
+      ))}
+    </div>
+  )
+}
+
 // ─── Ticker Bar ───────────────────────────────────────────────────────────────
 
 function TickerBar({
   tickerQuotes,
   customSymbols,
   isLoading,
+  hiddenSymbols = new Set<string>(),
+  onOpenSettings,
 }: {
   tickerQuotes: Record<string, Quote>
   customSymbols: string[]
   isLoading: boolean
+  hiddenSymbols?: Set<string>
+  onOpenSettings?: () => void
 }) {
   const defaultItems = Object.keys(tickerQuotes).length > 0
     ? TICKER_SYMBOLS
-        .filter(sym => tickerQuotes[sym])
+        .filter(sym => tickerQuotes[sym] && !hiddenSymbols.has(sym))
         .map(sym => {
           const q = tickerQuotes[sym]
           return { symbol: TICKER_DISPLAY[sym] || sym, price: q.current, change: q.changePct, isReal: q.source !== 'mock', raw: sym, isCustom: false }
         })
-    : TICKER_FALLBACK.map(t => ({ ...t, isReal: false, raw: t.symbol, isCustom: false }))
+    : TICKER_FALLBACK
+        .filter(t => {
+          // Map display name back to original symbol for filtering
+          const originalSym = Object.entries(TICKER_DISPLAY).find(([, v]) => v === t.symbol)?.[0] || t.symbol
+          return !hiddenSymbols.has(originalSym)
+        })
+        .map(t => ({ ...t, isReal: false, raw: t.symbol, isCustom: false }))
 
   const customItems = customSymbols
     .filter(sym => tickerQuotes[sym])
@@ -632,7 +704,7 @@ function TickerBar({
   const duped = [...items, ...items, ...items]
 
   return (
-    <div className="ticker-bar">
+    <div className="ticker-bar" style={{ position: 'relative' }}>
       {isLoading && Object.keys(tickerQuotes).length === 0 && (
         <div className="connecting-banner" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 3, padding: '0 16px' }}>
           <span className="connecting-dot" />
@@ -652,6 +724,133 @@ function TickerBar({
           </span>
         ))}
       </div>
+      {onOpenSettings && (
+        <button
+          onClick={onOpenSettings}
+          title="Customize ticker symbols"
+          style={{
+            position: 'absolute',
+            right: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 10,
+            fontSize: 13,
+            color: '#606070',
+            cursor: 'pointer',
+            padding: '2px 5px',
+            borderRadius: 3,
+            lineHeight: 1,
+            background: 'rgba(0,0,0,0.3)',
+          }}
+        >
+          ⚙
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ─── Analysis View ────────────────────────────────────────────────────────────
+
+function AnalysisView({
+  gainers,
+  losers,
+  newsArticles,
+  onOpenStock,
+}: {
+  gainers: Quote[]
+  losers: Quote[]
+  newsArticles: NewsArticle[]
+  onOpenStock: (sym: string) => void
+}) {
+  const bullishCount = newsArticles.filter(a => a.sentimentLabel === 'bullish').length
+  const bearishCount = newsArticles.filter(a => a.sentimentLabel === 'bearish').length
+  const neutralCount  = newsArticles.filter(a => a.sentimentLabel === 'neutral').length
+  const total = newsArticles.length
+  const bullPct = total > 0 ? Math.round((bullishCount / total) * 100) : 0
+  const bearPct = total > 0 ? Math.round((bearishCount / total) * 100) : 0
+  const sentimentScore = bullishCount + bearishCount > 0
+    ? (bullishCount / (bullishCount + bearishCount)) * 100
+    : 50
+  const sentimentLabel = sentimentScore > 60 ? '📈 Bullish' : sentimentScore < 40 ? '📉 Bearish' : '➡ Neutral'
+  const sentimentColor = sentimentScore > 60 ? 'var(--green)' : sentimentScore < 40 ? 'var(--red)' : 'var(--accent)'
+
+  const highImpact = newsArticles.filter(a => a.impactLabel === 'High').slice(0, 8)
+
+  return (
+    <div style={{ padding: '0 0 24px' }}>
+      {/* Sentiment header */}
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+        <div className="feed-title" style={{ marginBottom: 10 }}>
+          <span className="live-dot" />
+          MARKET ANALYSIS
+        </div>
+
+        {/* Sentiment bar */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: 11 }}>
+            <span style={{ color: 'var(--green)', fontWeight: 600 }}>▲ Bullish {bullPct}%</span>
+            <span style={{ color: sentimentColor, fontWeight: 700, fontSize: 12 }}>{sentimentLabel}</span>
+            <span style={{ color: 'var(--red)', fontWeight: 600 }}>Bearish {bearPct}% ▼</span>
+          </div>
+          <div style={{ height: 10, borderRadius: 5, background: 'var(--bg-3)', overflow: 'hidden', display: 'flex' }}>
+            <div style={{ height: '100%', width: `${bullPct}%`, background: 'var(--green)', transition: 'width 0.5s' }} />
+            <div style={{ height: '100%', width: `${neutralCount > 0 ? Math.round((neutralCount / total) * 100) : 0}%`, background: 'var(--accent)', opacity: 0.4 }} />
+            <div style={{ height: '100%', flex: 1, background: 'var(--red)', opacity: 0.7 }} />
+          </div>
+          <div style={{ fontSize: 9.5, color: 'var(--text-3)', marginTop: 4, textAlign: 'center' }}>
+            Based on {total} recent news articles
+          </div>
+        </div>
+
+        {/* Summary stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+          {[
+            { label: 'BULLISH', val: bullishCount, col: 'var(--green)' },
+            { label: 'NEUTRAL', val: neutralCount, col: 'var(--accent)' },
+            { label: 'BEARISH', val: bearishCount, col: 'var(--red)' },
+          ].map(s => (
+            <div key={s.label} style={{ background: 'var(--bg-2)', borderRadius: 5, padding: '6px 8px', textAlign: 'center' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: s.col, fontFamily: 'var(--mono)' }}>{s.val}</div>
+              <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.05em' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Top Movers */}
+      {(gainers.length > 0 || losers.length > 0) && (
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <div className="sidebar-title sidebar-title-gain" style={{ marginBottom: 4 }}>▲ TOP GAINERS</div>
+            {gainers.slice(0, 5).map(q => (
+              <MoverRow key={q.symbol} quote={q} onClick={onOpenStock} />
+            ))}
+          </div>
+          <div>
+            <div className="sidebar-title sidebar-title-loss" style={{ marginBottom: 4 }}>▼ TOP LOSERS</div>
+            {losers.slice(0, 5).map(q => (
+              <MoverRow key={q.symbol} quote={q} onClick={onOpenStock} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* High-impact news */}
+      {highImpact.length > 0 && (
+        <div>
+          <div style={{ padding: '8px 16px 4px', borderBottom: '1px solid var(--border)' }}>
+            <div className="sidebar-title">🔴 HIGH IMPACT NEWS</div>
+          </div>
+          {highImpact.map((a, i) => <NewsRow key={a.id} article={a} index={i} />)}
+        </div>
+      )}
+
+      {gainers.length === 0 && newsArticles.length === 0 && (
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
+          Loading market analysis…
+        </div>
+      )}
     </div>
   )
 }
@@ -972,7 +1171,7 @@ function PortfolioPanel({ quotes }: { quotes: Record<string, Quote> }) {
   return (
     <div className="sidebar-section" style={{ padding: 0 }}>
       <div className="sidebar-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>📈 PORTFOLIO</span>
+        <span>POSITIONS</span>
         <button
           onClick={() => setShowForm(s => !s)}
           style={{ fontSize: 10, color: 'var(--accent)', cursor: 'pointer' }}
@@ -1090,6 +1289,7 @@ export default function Home() {
     flashActive: alertFlash,
     markAllRead: markAlertsRead,
     dismissAlert,
+    clearAllAlerts,
     refresh: refreshAlerts,
   } = useAlerts()
 
@@ -1106,6 +1306,15 @@ export default function Home() {
   const [tickerQuotes, setTickerQuotes] = useState<Record<string, Quote>>({})
   const [tickerLoading, setTickerLoading] = useState(true)
   const [customTickerSymbols, setCustomTickerSymbols] = useState<string[]>([])
+  const [tickerHiddenSymbols, setTickerHiddenSymbols] = useState<Set<string>>(new Set())
+  const [tickerSettingsOpen, setTickerSettingsOpen] = useState(false)
+
+  // Column widths (resizable)
+  const [colWidths, setColWidths] = useState<[number, number, number]>([32, 36, 32])
+  const layoutRef = useRef<HTMLDivElement>(null)
+
+  // Portfolio collapsed
+  const [portfolioCollapsed, setPortfolioCollapsed] = useState(false)
 
   // Sidebar quotes
   const [quotes, setQuotes] = useState<Record<string, Quote>>({})
@@ -1202,6 +1411,28 @@ export default function Home() {
   useEffect(() => {
     try { localStorage.setItem('cg_ticker', JSON.stringify(customTickerSymbols)) } catch {}
   }, [customTickerSymbols])
+
+  // ── Persist: ticker prefs (hidden symbols) ────────────────────────────────
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem('cg_ticker_prefs')
+      if (s) setTickerHiddenSymbols(new Set(JSON.parse(s)))
+    } catch {}
+  }, [])
+  useEffect(() => {
+    try { localStorage.setItem('cg_ticker_prefs', JSON.stringify([...tickerHiddenSymbols])) } catch {}
+  }, [tickerHiddenSymbols])
+
+  // ── Persist: column widths ────────────────────────────────────────────────
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem('cg_col_widths')
+      if (s) setColWidths(JSON.parse(s))
+    } catch {}
+  }, [])
+  useEffect(() => {
+    try { localStorage.setItem('cg_col_widths', JSON.stringify(colWidths)) } catch {}
+  }, [colWidths])
 
   // ── Fetch ticker quotes ────────────────────────────────────────────────────
   const fetchTickerQuotes = useCallback(async (extra: string[] = []) => {
@@ -1397,10 +1628,30 @@ export default function Home() {
         setStockQuote(cached)
         setLoadingStockQuote(false)
       } else {
-        const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${encodeURIComponent(symbol)}`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const j = await res.json()
-        if (j.success && j.data && j.data[symbol]) setStockQuote(j.data[symbol])
+        let fetched = false
+        // Try batch endpoint first
+        try {
+          const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${encodeURIComponent(symbol)}`)
+          if (res.ok) {
+            const j = await res.json()
+            if (j.success && j.data && j.data[symbol]) {
+              setStockQuote(j.data[symbol])
+              fetched = true
+            }
+          }
+        } catch {}
+
+        // Fallback to individual quote endpoint (works for ANY symbol)
+        if (!fetched) {
+          try {
+            const res2 = await fetch(`${API_BASE}/api/market-data/quote?symbol=${encodeURIComponent(symbol)}`)
+            if (res2.ok) {
+              const j2 = await res2.json()
+              if (j2.success && j2.data) setStockQuote(j2.data)
+            }
+          } catch {}
+        }
+
         setLoadingStockQuote(false)
       }
     } catch (err) {
@@ -1480,6 +1731,62 @@ export default function Home() {
     }
   }, [watchlist, token, syncAddToWatchlist, syncRemoveFromWatchlist, markChecklistItem, showToast])
 
+  // ── Ticker symbol visibility toggle ───────────────────────────────────────
+  const toggleTickerSymbol = useCallback((sym: string) => {
+    setTickerHiddenSymbols(prev => {
+      const next = new Set(prev)
+      if (next.has(sym)) next.delete(sym)
+      else next.add(sym)
+      return next
+    })
+  }, [])
+
+  // ── Column resize drag handler ─────────────────────────────────────────────
+  const handleColDragStart = useCallback((dividerIndex: number, e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidths = [...colWidths] as [number, number, number]
+    const totalWidth = layoutRef.current?.offsetWidth || 1200
+
+    const onMove = (me: MouseEvent) => {
+      const dx = me.clientX - startX
+      const pctDelta = (dx / totalWidth) * 100
+      const newWidths = [...startWidths] as [number, number, number]
+
+      if (dividerIndex === 0) {
+        newWidths[0] = Math.max(18, Math.min(45, startWidths[0] + pctDelta))
+        newWidths[1] = Math.max(22, Math.min(55, startWidths[1] - pctDelta))
+        newWidths[2] = Math.max(15, 100 - newWidths[0] - newWidths[1])
+      } else {
+        newWidths[1] = Math.max(22, Math.min(55, startWidths[1] + pctDelta))
+        newWidths[2] = Math.max(15, Math.min(45, startWidths[2] - pctDelta))
+        newWidths[0] = Math.max(18, 100 - newWidths[1] - newWidths[2])
+      }
+
+      // Normalize so they sum to 100
+      const sum = newWidths[0] + newWidths[1] + newWidths[2]
+      if (sum > 0) {
+        newWidths[0] = (newWidths[0] / sum) * 100
+        newWidths[1] = (newWidths[1] / sum) * 100
+        newWidths[2] = (newWidths[2] / sum) * 100
+      }
+
+      setColWidths(newWidths)
+    }
+
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }, [colWidths])
+
   // ── Derived ────────────────────────────────────────────────────────────────
   const quoteList   = Object.values(quotes)
   const gainers     = [...quoteList].sort((a, b) => b.changePct - a.changePct).slice(0, 4)
@@ -1505,11 +1812,24 @@ export default function Home() {
       />
 
       {/* ── Ticker Bar ─────────────────────────────────────────────────────── */}
-      <TickerBar
-        tickerQuotes={tickerQuotes}
-        customSymbols={customTickerSymbols}
-        isLoading={tickerLoading}
-      />
+      <div style={{ position: 'relative' }}>
+        <TickerBar
+          tickerQuotes={tickerQuotes}
+          customSymbols={customTickerSymbols}
+          isLoading={tickerLoading}
+          hiddenSymbols={tickerHiddenSymbols}
+          onOpenSettings={() => setTickerSettingsOpen(s => !s)}
+        />
+        {tickerSettingsOpen && (
+          <div style={{ position: 'absolute', right: 8, top: '100%', zIndex: 200 }}>
+            <TickerSettingsDropdown
+              hiddenSymbols={tickerHiddenSymbols}
+              onToggle={toggleTickerSymbol}
+              onClose={() => setTickerSettingsOpen(false)}
+            />
+          </div>
+        )}
+      </div>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className="site-header">
@@ -1541,7 +1861,6 @@ export default function Home() {
           <button className={`nav-item${activeNav === 'Analysis' ? ' active' : ''}`} onClick={() => {
             setActiveNav('Analysis')
             setShowAlerts(false)
-            handleNewsCategory('Equities')
             document.querySelector('.col-news')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>Analysis</button>
           <button className={`nav-item${activeNav === 'Calendar' ? ' active' : ''}`} onClick={() => {
@@ -1618,7 +1937,12 @@ export default function Home() {
       )}
 
       {/* ── 3-Column Main Layout ───────────────────────────────────────────── */}
-      <div className="layout-3col">
+      <div style={{ position: 'relative' }}>
+      <div
+        className="layout-3col"
+        ref={layoutRef}
+        style={{ gridTemplateColumns: `${colWidths[0].toFixed(1)}% ${colWidths[1].toFixed(1)}% ${colWidths[2].toFixed(1)}%` }}
+      >
 
         {/* ── Column 1 (LEFT): Market Data / Watchlist ─────────────────────── */}
         <div className="col-watchlist">
@@ -1802,24 +2126,36 @@ export default function Home() {
           )}
         </div>
 
-        {/* ── Column 2 (CENTER): News Feed ─────────────────────────────────── */}
+        {/* ── Column 2 (CENTER): News Feed / Analysis ──────────────────────── */}
         <div className="col-news">
 
-          {/* News filter tabs */}
-          <div className="news-filter-tabs">
-            {NEWS_CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                className={`news-filter-tab${newsCategory === cat ? ' active' : ''}`}
-                onClick={() => handleNewsCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+          {/* Nav tabs — only show for non-analysis */}
+          {activeNav !== 'Analysis' && (
+            <div className="news-filter-tabs">
+              {NEWS_CATEGORIES.map(cat => (
+                <button
+                  key={cat}
+                  className={`news-filter-tab${newsCategory === cat ? ' active' : ''}`}
+                  onClick={() => handleNewsCategory(cat)}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Analysis view */}
+          {activeNav === 'Analysis' && (
+            <AnalysisView
+              gainers={gainers}
+              losers={losers}
+              newsArticles={newsArticles}
+              onOpenStock={sym => openStockDetail(sym)}
+            />
+          )}
 
           {/* Feed header */}
-          {!showAlerts && (
+          {!showAlerts && activeNav !== 'Analysis' && (
             <div className="feed-header">
               <span className="feed-title">
                 <span className="live-dot" />
@@ -1834,7 +2170,7 @@ export default function Home() {
           )}
 
           {/* Column headers */}
-          {!showAlerts && (
+          {!showAlerts && activeNav !== 'Analysis' && (
             <div className="feed-col-header" style={{
               display: 'grid',
               gridTemplateColumns: '36px 80px 1fr auto auto',
@@ -1852,7 +2188,7 @@ export default function Home() {
           )}
 
           {/* Symbol filter input */}
-          {!showAlerts && (
+          {!showAlerts && activeNav !== 'Analysis' && (
             <div style={{ padding: '4px 8px', background: 'var(--bg-1)', borderBottom: '1px solid var(--border)' }}>
               <input
                 type="text"
@@ -1866,7 +2202,7 @@ export default function Home() {
           )}
 
           {/* News list */}
-          {!showAlerts && (
+          {!showAlerts && activeNav !== 'Analysis' && (
             <div className="news-list">
               {loadingNews
                 ? <NewsSkeletons count={20} />
@@ -1885,8 +2221,31 @@ export default function Home() {
           )}
         </div>
 
-        {/* ── Column 3 (RIGHT): Calendar / Alerts / Portfolio ──────────────── */}
+        {/* ── Column 3 (RIGHT): Portfolio / Calendar / Alerts ──────────────── */}
         <div className="col-calendar">
+
+          {/* Portfolio Panel — always visible at top, collapsible */}
+          <div style={{ borderBottom: '1px solid var(--border)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '6px 12px',
+                background: 'var(--bg-1)',
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+              onClick={() => setPortfolioCollapsed(c => !c)}
+            >
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}>📈 PORTFOLIO</span>
+              <span style={{ fontSize: 11, color: '#606070' }}>{portfolioCollapsed ? '▼ Show' : '▲ Hide'}</span>
+            </div>
+            {!portfolioCollapsed && (
+              <PortfolioPanel quotes={{ ...quotes, ...tickerQuotes }} />
+            )}
+          </div>
+
           {/* Alerts toggle tab */}
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)' }}>
             <button
@@ -1920,19 +2279,46 @@ export default function Home() {
                 onUpdatePrefs={(p) => { updateAlertPrefs(p); showToast('Alert preferences updated', 'success') }}
                 onMarkAllRead={markAlertsRead}
                 onDismiss={dismissAlert}
+                onClearAll={clearAllAlerts}
                 onRefresh={refreshAlerts}
               />
             </>
           )}
 
-          {/* Calendar + Portfolio */}
+          {/* Calendar */}
           {!showAlerts && (
-            <>
-              <EconomicCalendar events={calendarEvents} loading={loadingCalendar} />
-              <PortfolioPanel quotes={{ ...quotes, ...tickerQuotes }} />
-            </>
+            <EconomicCalendar events={calendarEvents} loading={loadingCalendar} />
           )}
         </div>
+      </div>
+
+      {/* ── Column resize drag handles ─────────────────────────────────────── */}
+      <div
+        style={{
+          position: 'absolute',
+          left: `calc(${colWidths[0].toFixed(1)}% - 3px)`,
+          top: 0,
+          bottom: 0,
+          width: 6,
+          cursor: 'col-resize',
+          zIndex: 50,
+        }}
+        onMouseDown={e => handleColDragStart(0, e)}
+        title="Drag to resize"
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: `calc(${(colWidths[0] + colWidths[1]).toFixed(1)}% - 3px)`,
+          top: 0,
+          bottom: 0,
+          width: 6,
+          cursor: 'col-resize',
+          zIndex: 50,
+        }}
+        onMouseDown={e => handleColDragStart(1, e)}
+        title="Drag to resize"
+      />
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}

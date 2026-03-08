@@ -265,6 +265,11 @@ export function useAlerts() {
     setUnreadCount(c => Math.max(0, c - 1))
   }, [])
 
+  const clearAllAlerts = useCallback(() => {
+    setAlerts([])
+    setUnreadCount(0)
+  }, [])
+
   return {
     alerts,
     unreadCount,
@@ -274,6 +279,7 @@ export function useAlerts() {
     flashActive,
     markAllRead,
     dismissAlert,
+    clearAllAlerts,
     refresh: fetchAlerts,
   }
 }
@@ -401,6 +407,7 @@ export function AlertFeed({
   onUpdatePrefs,
   onMarkAllRead,
   onDismiss,
+  onClearAll,
   onRefresh,
 }: {
   alerts: MarketAlert[]
@@ -409,6 +416,7 @@ export function AlertFeed({
   onUpdatePrefs: (p: Partial<AlertPreferences>) => void
   onMarkAllRead: () => void
   onDismiss: (id: number) => void
+  onClearAll?: () => void
   onRefresh: () => void
 }) {
   const [activeCategory, setActiveCategory] = useState<AlertCategory | 'ALL'>('ALL')
@@ -437,6 +445,16 @@ export function AlertFeed({
           {unreadCount > 0 && (
             <button className="refresh-btn" onClick={onMarkAllRead} title="Mark all as read">
               ✓ Read all ({unreadCount})
+            </button>
+          )}
+          {onClearAll && alerts.length > 0 && (
+            <button
+              className="refresh-btn"
+              onClick={onClearAll}
+              title="Clear all alerts"
+              style={{ color: '#ff4560' }}
+            >
+              🗑 Clear All
             </button>
           )}
           <button

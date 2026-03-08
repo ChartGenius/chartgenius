@@ -52,13 +52,28 @@ export default function OnboardingChecklist() {
             <span className="checklist-title">Getting Started</span>
             <span className="checklist-progress-badge">{completedCount}/5</span>
           </div>
-          <button
-            className="checklist-toggle"
-            aria-label={state.checklistCollapsed ? 'Expand checklist' : 'Collapse checklist'}
-            onClick={e => { e.stopPropagation(); toggleChecklistCollapsed() }}
-          >
-            {state.checklistCollapsed ? '▲' : '▼'}
-          </button>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            <button
+              className="checklist-toggle"
+              aria-label={state.checklistCollapsed ? 'Expand checklist' : 'Collapse checklist'}
+              onClick={e => { e.stopPropagation(); toggleChecklistCollapsed() }}
+            >
+              {state.checklistCollapsed ? '▲' : '▼'}
+            </button>
+            <button
+              className="checklist-toggle"
+              aria-label="Dismiss checklist"
+              title="Don't show again"
+              onClick={e => {
+                e.stopPropagation()
+                try { localStorage.setItem('cg_onboarding_dismissed', '1') } catch {}
+                dismissChecklist()
+              }}
+              style={{ color: '#606070' }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Progress bar */}
@@ -115,15 +130,16 @@ export default function OnboardingChecklist() {
               </span>
             )}
 
-            {canDismissChecklist && (
-              <button
-                className="checklist-dismiss"
-                onClick={dismissChecklist}
-                aria-label="Dismiss onboarding checklist"
-              >
-                Dismiss
-              </button>
-            )}
+            <button
+              className="checklist-dismiss"
+              onClick={() => {
+                try { localStorage.setItem('cg_onboarding_dismissed', '1') } catch {}
+                dismissChecklist()
+              }}
+              aria-label="Dismiss onboarding checklist"
+            >
+              {canDismissChecklist ? 'Dismiss' : '✕ Skip'}
+            </button>
           </div>
         )}
       </div>
