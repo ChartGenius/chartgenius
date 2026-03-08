@@ -358,6 +358,28 @@ async function markAsRead(ids) {
 
 let pollIntervalId = null;
 let isPolling = false;
+let tableCheckDone = false;
+let tableExists = false;
+
+/**
+ * Check if market_alerts table exists.
+ */
+async function checkTableExists() {
+  if (tableCheckDone) return tableExists;
+  try {
+    await db.query('SELECT 1 FROM market_alerts LIMIT 1');
+    tableExists = true;
+  } catch (err) {
+    if (err.message.includes('does not exist')) {
+      console.warn('[Alerts] market_alerts table not found — polling disabled. Run migrations to enable.');
+      tableExists = false;
+    } else {
+      throw err;
+    }
+  }
+  tableCheckDone = true;
+  return tableExists;
+}
 
 /**
  * Run one poll cycle: fetch RSS → filter → score → persist → broadcast.
@@ -365,6 +387,12 @@ let isPolling = false;
 async function runPollCycle() {
   if (isPolling) return; // Prevent concurrent runs
   isPolling = true;
+
+  // Skip if table doesn't exist
+  if (!(await checkTableExists())) {
+    isPolling = false;
+    return;
+  }
 
   try {
     console.info('[Alerts] Running poll cycle…');

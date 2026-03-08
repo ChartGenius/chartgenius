@@ -28,9 +28,13 @@ const parser = new RSSParser({
 });
 
 // ─────────────────────────────────────────────
-// RSS Feed Registry
+// RSS Feed Registry (Expanded 2026-03-08)
+// All feeds are publicly available RSS - legal to consume
 // ─────────────────────────────────────────────
 const RSS_FEEDS = [
+  // ═══════════════════════════════════════════
+  // GENERAL MARKETS & STOCKS
+  // ═══════════════════════════════════════════
   {
     name: 'Yahoo Finance',
     url: 'https://finance.yahoo.com/news/rssindex',
@@ -46,12 +50,54 @@ const RSS_FEEDS = [
     weight: 1.2
   },
   {
+    name: 'MarketWatch Top Stories',
+    url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',
+    category: 'markets',
+    tags: ['markets', 'stocks', 'breaking'],
+    weight: 1.3
+  },
+  {
     name: 'CNBC',
     url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',
     category: 'business',
     tags: ['business', 'markets', 'economy'],
     weight: 1.2
   },
+  {
+    name: 'CNBC World',
+    url: 'https://www.cnbc.com/id/100727362/device/rss/rss.html',
+    category: 'markets',
+    tags: ['markets', 'global', 'international'],
+    weight: 1.1
+  },
+  // Note: Reuters deprecated their RSS feeds in 2023
+  // {
+  //   name: 'Reuters Business',
+  //   url: 'https://feeds.reuters.com/reuters/businessNews',
+  //   category: 'business',
+  //   tags: ['business', 'economy'],
+  //   weight: 1.2
+  // },
+  {
+    name: 'Seeking Alpha Market News',
+    url: 'https://seekingalpha.com/market_currents.xml',
+    category: 'markets',
+    tags: ['markets', 'stocks', 'analysis'],
+    weight: 1.2
+  },
+  {
+    name: 'Seeking Alpha Top Ideas',
+    url: 'https://seekingalpha.com/feed.xml',
+    category: 'stocks',
+    tags: ['stocks', 'analysis', 'investing'],
+    weight: 1.1
+  },
+  // Note: Barrons feed requires auth/subscription
+  // Note: Investopedia feed endpoint deprecated
+  
+  // ═══════════════════════════════════════════
+  // CRYPTO
+  // ═══════════════════════════════════════════
   {
     name: 'CoinDesk',
     url: 'https://www.coindesk.com/arc/outboundfeeds/rss/',
@@ -60,6 +106,38 @@ const RSS_FEEDS = [
     weight: 1.1
   },
   {
+    name: 'Cointelegraph',
+    url: 'https://cointelegraph.com/rss',
+    category: 'crypto',
+    tags: ['crypto', 'bitcoin', 'altcoins'],
+    weight: 1.1
+  },
+  {
+    name: 'The Block',
+    url: 'https://www.theblock.co/rss.xml',
+    category: 'crypto',
+    tags: ['crypto', 'defi', 'institutional'],
+    weight: 1.2
+  },
+  {
+    name: 'Decrypt',
+    url: 'https://decrypt.co/feed',
+    category: 'crypto',
+    tags: ['crypto', 'web3', 'defi'],
+    weight: 1.0
+  },
+  {
+    name: 'Bitcoin Magazine',
+    url: 'https://bitcoinmagazine.com/feed',
+    category: 'crypto',
+    tags: ['bitcoin', 'crypto'],
+    weight: 1.0
+  },
+  
+  // ═══════════════════════════════════════════
+  // FOREX
+  // ═══════════════════════════════════════════
+  {
     name: 'FXStreet',
     url: 'https://www.fxstreet.com/rss/news',
     category: 'forex',
@@ -67,18 +145,106 @@ const RSS_FEEDS = [
     weight: 1.1
   },
   {
-    name: 'Reuters Business',
-    url: 'https://feeds.reuters.com/reuters/businessNews',
-    category: 'business',
-    tags: ['business', 'economy'],
+    name: 'ForexLive',
+    url: 'https://www.forexlive.com/feed/',
+    category: 'forex',
+    tags: ['forex', 'currency', 'central-banks'],
     weight: 1.2
   },
+  // Note: DailyFX feed requires auth
+  
+  // ═══════════════════════════════════════════
+  // ECONOMY & MACRO
+  // ═══════════════════════════════════════════
   {
     name: 'Investing.com Economy',
     url: 'https://www.investing.com/rss/news_285.rss',
     category: 'economy',
     tags: ['economy', 'macroeconomics'],
     weight: 1.15
+  },
+  {
+    name: 'Investing.com Commodities',
+    url: 'https://www.investing.com/rss/news_25.rss',
+    category: 'commodities',
+    tags: ['commodities', 'oil', 'gold'],
+    weight: 1.1
+  },
+  {
+    name: 'Investing.com Forex',
+    url: 'https://www.investing.com/rss/news_1.rss',
+    category: 'forex',
+    tags: ['forex', 'currencies'],
+    weight: 1.1
+  },
+  
+  // ═══════════════════════════════════════════
+  // CENTRAL BANKS & GOVERNMENT
+  // ═══════════════════════════════════════════
+  {
+    name: 'Federal Reserve News',
+    url: 'https://www.federalreserve.gov/feeds/press_all.xml',
+    category: 'central-banks',
+    tags: ['fed', 'central-banks', 'monetary-policy', 'interest-rates'],
+    weight: 1.5  // High impact - direct from source
+  },
+  {
+    name: 'ECB Press Releases',
+    url: 'https://www.ecb.europa.eu/rss/press.html',
+    category: 'central-banks',
+    tags: ['ecb', 'central-banks', 'euro', 'monetary-policy'],
+    weight: 1.4
+  },
+  {
+    name: 'Bank of England News',
+    url: 'https://www.bankofengland.co.uk/rss/news',
+    category: 'central-banks',
+    tags: ['boe', 'central-banks', 'gbp', 'monetary-policy'],
+    weight: 1.4
+  },
+  
+  // ═══════════════════════════════════════════
+  // ALTERNATIVE / COMMENTARY
+  // ═══════════════════════════════════════════
+  {
+    name: 'Zero Hedge',
+    url: 'https://feeds.feedburner.com/zerohedge/feed',
+    category: 'markets',
+    tags: ['markets', 'alternative', 'macro'],
+    weight: 0.9  // Lower weight - opinion-heavy
+  },
+  {
+    name: 'Calculated Risk',
+    url: 'https://www.calculatedriskblog.com/feeds/posts/default',
+    category: 'economy',
+    tags: ['economy', 'housing', 'macro', 'data'],
+    weight: 1.1
+  },
+  
+  // ═══════════════════════════════════════════
+  // BREAKING / REAL-TIME
+  // ═══════════════════════════════════════════
+  // Note: AP via RSShub is unreliable (403s)
+  {
+    name: 'WSJ Markets',
+    url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
+    category: 'markets',
+    tags: ['markets', 'stocks', 'breaking'],
+    weight: 1.3
+  },
+  {
+    name: 'Bloomberg Markets',
+    url: 'https://feeds.bloomberg.com/markets/news.rss',
+    category: 'markets',
+    tags: ['markets', 'stocks', 'global'],
+    weight: 1.3
+  },
+  {
+    name: 'Financial Times',
+    url: 'https://www.ft.com/rss/home',
+    category: 'markets',
+    tags: ['markets', 'global', 'analysis'],
+    weight: 1.2
   }
 ];
 

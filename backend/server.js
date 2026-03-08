@@ -31,6 +31,7 @@ app.use('/api/calendar', require('./routes/calendar'));           // Economic ca
 app.use('/api/waitlist', require('./routes/waitlist'));           // Landing page waitlist
 app.use('/api/alerts', require('./routes/alerts'));               // Real-time market alerts + SSE
 app.use('/api/crypto', require('./routes/crypto'));               // CoinGecko crypto prices & trending
+app.use('/api/market-movers', require('./routes/marketMovers')); // High-impact news scanner
 
 // Health check
 app.get('/health', (req, res) => {
@@ -64,8 +65,32 @@ app.listen(PORT, () => {
   console.log(`🚨 Alerts:       http://localhost:${PORT}/api/alerts`);
   console.log(`📡 Alert stream: http://localhost:${PORT}/api/alerts/live`);
   console.log(`₿  Crypto:       http://localhost:${PORT}/api/crypto/snapshot`);
+  console.log(`🚨 Movers:       http://localhost:${PORT}/api/market-movers`);
 
   // Start real-time alert poll loop (every 5 minutes)
   const alertService = require('./services/alertService');
   alertService.startPolling(5 * 60 * 1000);
+  
+  // Start market mover scanner (every 10 minutes)
+  const marketMoverBot = require('./services/marketMoverBot');
+  setInterval(async () => {
+    try {
+      const result = await marketMoverBot.scan({ impactThreshold: 7, maxAge: 15 });
+      if (result.found > 0) {
+        console.log(`[MarketMover] Found ${result.found} high-impact items`);
+        result.articles.forEach(a => {
+          console.log(`  ${a.impactLabel}: ${a.title.slice(0, 60)}...`);
+        });
+      }
+    } catch (err) {
+      console.error('[MarketMover] Scan error:', err.message);
+    }
+  }, 10 * 60 * 1000);  // Every 10 minutes
+  
+  // Initial scan on startup
+  setTimeout(async () => {
+    const marketMoverBot = require('./services/marketMoverBot');
+    const result = await marketMoverBot.scan({ impactThreshold: 6, maxAge: 60 });
+    console.log(`[MarketMover] Initial scan: ${result.found} market movers found`);
+  }, 5000);
 });
