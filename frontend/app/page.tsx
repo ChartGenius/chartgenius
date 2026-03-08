@@ -111,6 +111,16 @@ interface CompanyProfile {
   beta: number | null
 }
 
+// ─── Portfolio Types ──────────────────────────────────────────────────────────
+
+interface PortfolioPosition {
+  symbol: string
+  name: string
+  shares: number
+  buyPrice: number
+  buyDate: string
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const SIDEBAR_SYMBOLS = ['AAPL', 'GOOGL', 'TSLA', 'MSFT', 'META', 'NVDA', 'AMZN', 'SPY']
@@ -894,6 +904,174 @@ function SidebarSkeletons({ count = 4 }: { count?: number }) {
   )
 }
 
+// ─── Portfolio Panel ──────────────────────────────────────────────────────────
+
+function PortfolioPanel({ quotes }: { quotes: Record<string, Quote> }) {
+  const [positions, setPositions] = useState<PortfolioPosition[]>(() => {
+    try { const s = localStorage.getItem('cg_portfolio'); return s ? JSON.parse(s) : [] } catch { return [] }
+  })
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ symbol: '', shares: '', buyPrice: '', buyDate: '' })
+  const [formError, setFormError] = useState('')
+  const [loadingPrice, setLoadingPrice] = useState(false)
+
+  useEffect(() => {
+    try { localStorage.setItem('cg_portfolio', JSON.stringify(positions)) } catch {}
+  }, [positions])
+
+  const getPrice = (sym: string): number | null => {
+    return quotes[sym]?.current ?? null
+  }
+
+  const totalCost = positions.reduce((s, p) => s + p.shares * p.buyPrice, 0)
+  const totalValue = positions.reduce((s, p) => {
+    const cur = getPrice(p.symbol)
+    return s + p.shares * (cur ?? p.buyPrice)
+  }, 0)
+  const totalPnl = totalValue - totalCost
+  const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
+
+  const handleAdd = async () => {
+    setFormError('')
+    const sym = form.symbol.trim().toUpperCase()
+    const shares = parseFloat(form.shares)
+    const buyPrice = parseFloat(form.buyPrice)
+    if (!sym) { setFormError('Symbol required'); return }
+    if (isNaN(shares) || shares <= 0) { setFormError('Invalid shares'); return }
+    if (isNaN(buyPrice) || buyPrice <= 0) { setFormError('Invalid price'); return }
+
+    // If no price typed, try to fetch current
+    let finalBuyPrice = buyPrice
+    if (isNaN(buyPrice) || buyPrice <= 0) {
+      setLoadingPrice(true)
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+        const res = await fetch(`${API_BASE}/api/market-data/quote?symbol=${sym}`)
+        const j = await res.json()
+        if (j.success && j.data) finalBuyPrice = j.data.current
+      } catch {}
+      setLoadingPrice(false)
+    }
+
+    const pos: PortfolioPosition = {
+      symbol: sym,
+      name: TOP_SYMBOLS.find(s => s.symbol === sym)?.name || sym,
+      shares,
+      buyPrice: finalBuyPrice,
+      buyDate: form.buyDate || new Date().toISOString().slice(0, 10),
+    }
+    setPositions(prev => [...prev, pos])
+    setForm({ symbol: '', shares: '', buyPrice: '', buyDate: '' })
+    setShowForm(false)
+  }
+
+  const removePosition = (i: number) => {
+    setPositions(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  return (
+    <div className="sidebar-section" style={{ padding: 0 }}>
+      <div className="sidebar-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>📈 PORTFOLIO</span>
+        <button
+          onClick={() => setShowForm(s => !s)}
+          style={{ fontSize: 10, color: 'var(--accent)', cursor: 'pointer' }}
+        >
+          {showForm ? '✕ Cancel' : '+ Add Position'}
+        </button>
+      </div>
+
+      {/* Summary */}
+      {positions.length > 0 && (
+        <div style={{ padding: '6px 14px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 10, color: 'var(--text-2)' }}>
+            VALUE <span style={{ color: 'var(--text-0)', fontFamily: 'var(--mono)' }}>${fmt(totalValue)}</span>
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--text-2)' }}>
+            P&amp;L{' '}
+            <span style={{ color: totalPnl >= 0 ? 'var(--green)' : 'var(--red)', fontFamily: 'var(--mono)' }}>
+              {totalPnl >= 0 ? '+' : ''}${fmt(Math.abs(totalPnl))} ({totalPnlPct >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Add form */}
+      {showForm && (
+        <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', background: 'var(--bg-2)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <input
+            className="symbol-search"
+            placeholder="Symbol (e.g. AAPL)"
+            value={form.symbol}
+            onChange={e => setForm(f => ({ ...f, symbol: e.target.value }))}
+            style={{ width: '100%', marginBottom: 0 }}
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            <input
+              className="symbol-search"
+              placeholder="Shares"
+              type="number"
+              value={form.shares}
+              onChange={e => setForm(f => ({ ...f, shares: e.target.value }))}
+              style={{ marginBottom: 0 }}
+            />
+            <input
+              className="symbol-search"
+              placeholder="Buy price ($)"
+              type="number"
+              value={form.buyPrice}
+              onChange={e => setForm(f => ({ ...f, buyPrice: e.target.value }))}
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+          <input
+            className="symbol-search"
+            type="date"
+            value={form.buyDate}
+            onChange={e => setForm(f => ({ ...f, buyDate: e.target.value }))}
+            style={{ width: '100%', marginBottom: 0, colorScheme: 'dark' }}
+          />
+          {formError && <span style={{ fontSize: 10, color: 'var(--red)' }}>{formError}</span>}
+          <button
+            onClick={handleAdd}
+            disabled={loadingPrice}
+            style={{ background: 'var(--accent)', color: '#fff', borderRadius: 4, padding: '4px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer', opacity: loadingPrice ? 0.6 : 1 }}
+          >
+            {loadingPrice ? 'Fetching price…' : 'Add Position'}
+          </button>
+        </div>
+      )}
+
+      {/* Positions */}
+      {positions.length === 0 && !showForm && (
+        <div style={{ padding: '12px 14px', fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>
+          No positions yet. Add your first trade!
+        </div>
+      )}
+      {positions.map((pos, i) => {
+        const cur = getPrice(pos.symbol)
+        const pnl = cur !== null ? (cur - pos.buyPrice) * pos.shares : null
+        const pnlPct = cur !== null ? ((cur - pos.buyPrice) / pos.buyPrice) * 100 : null
+        return (
+          <div key={i} className="mover-row" style={{ gridTemplateColumns: 'auto 1fr auto auto', gap: 8 }}>
+            <span className="mover-symbol" style={{ fontSize: 11 }}>
+              {pos.symbol}
+              <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 3 }}>{pos.shares}sh</span>
+            </span>
+            <span className="mover-price" style={{ fontSize: 11 }}>
+              {cur !== null ? `$${fmt(cur)}` : '—'}
+            </span>
+            <span className={pnlPct !== null ? (pnlPct >= 0 ? 'mover-up' : 'mover-down') : ''} style={{ fontSize: 10 }}>
+              {pnlPct !== null ? `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%` : '—'}
+            </span>
+            <button onClick={() => removePosition(i)} className="remove-btn" style={{ display: 'block' }}>✕</button>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -962,6 +1140,9 @@ export default function Home() {
   // Alerts tab visibility (for right column)
   const [showAlerts, setShowAlerts] = useState(false)
 
+  // Active nav tab
+  const [activeNav, setActiveNav] = useState('Markets')
+
   // Track if we already did the initial backend watchlist sync for this session
   const didSyncWatchlist = useRef(false)
 
@@ -1026,12 +1207,34 @@ export default function Home() {
   const fetchTickerQuotes = useCallback(async (extra: string[] = []) => {
     if (isOffline) return
     try {
+      // Exclude crypto/metals from the batch call (Finnhub doesn't support them well)
+      const cryptoSymbols = new Set(['BTC-USD', 'ETH-USD', 'GC=F', 'CL=F'])
       const all = [...new Set([...TICKER_SYMBOLS, ...extra])]
-      const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${all.join(',')}`)
+      const stockSymbols = all.filter(s => !cryptoSymbols.has(s))
+
+      const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${stockSymbols.join(',')}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const j = await res.json()
       if (j.success && j.data) {
-        setTickerQuotes(j.data)
+        const merged = { ...j.data }
+
+        // Fetch real crypto prices from the crypto endpoint
+        try {
+          const cryptoRes = await fetch(`${API_BASE}/api/crypto/prices?limit=20`)
+          if (cryptoRes.ok) {
+            const cj = await cryptoRes.json()
+            if (cj.success && cj.data) {
+              const btc = cj.data.find((c: { symbol: string }) => c.symbol === 'BTC')
+              const eth = cj.data.find((c: { symbol: string }) => c.symbol === 'ETH')
+              if (btc) merged['BTC-USD'] = { symbol: 'BTC-USD', current: btc.price, change: btc.price * btc.change24h / 100, changePct: btc.change24h, high: btc.price * 1.02, low: btc.price * 0.98, open: btc.price, prevClose: btc.price, timestamp: new Date().toISOString(), source: 'finnhub' as const }
+              if (eth) merged['ETH-USD'] = { symbol: 'ETH-USD', current: eth.price, change: eth.price * eth.change24h / 100, changePct: eth.change24h, high: eth.price * 1.02, low: eth.price * 0.98, open: eth.price, prevClose: eth.price, timestamp: new Date().toISOString(), source: 'finnhub' as const }
+            }
+          }
+        } catch (cryptoErr) {
+          console.warn('[TickerBar] crypto prices fetch failed:', cryptoErr)
+        }
+
+        setTickerQuotes(merged)
         setTickerLoading(false)
       }
     } catch (err) {
@@ -1323,28 +1526,33 @@ export default function Home() {
 
         {/* Navigation — wired to actions */}
         <nav className="header-nav">
-          <button className="nav-item" onClick={() => {
+          <button className={`nav-item${activeNav === 'Markets' ? ' active' : ''}`} onClick={() => {
+            setActiveNav('Markets')
             setShowAlerts(false)
-            handleNewsCategory('All')
             window.scrollTo({ top: 0, behavior: 'smooth' })
+            document.querySelector('.col-watchlist')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>Markets</button>
-          <button className="nav-item" onClick={() => {
+          <button className={`nav-item${activeNav === 'News' ? ' active' : ''}`} onClick={() => {
+            setActiveNav('News')
             setShowAlerts(false)
             handleNewsCategory('All')
+            document.querySelector('.col-news')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>News</button>
-          <button className="nav-item" onClick={() => {
+          <button className={`nav-item${activeNav === 'Analysis' ? ' active' : ''}`} onClick={() => {
+            setActiveNav('Analysis')
             setShowAlerts(false)
             handleNewsCategory('Equities')
+            document.querySelector('.col-news')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>Analysis</button>
-          <button className="nav-item" onClick={() => {
+          <button className={`nav-item${activeNav === 'Calendar' ? ' active' : ''}`} onClick={() => {
+            setActiveNav('Calendar')
             setShowAlerts(false)
-            // Calendar is always visible in the center column — scroll to it
             document.querySelector('.col-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>Calendar</button>
-          <button className="nav-item" onClick={() => {
+          <button className={`nav-item${activeNav === 'Portfolio' ? ' active' : ''}`} onClick={() => {
+            setActiveNav('Portfolio')
             setShowAlerts(false)
-            // Scroll to watchlist in right column
-            document.querySelector('.col-watchlist')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            document.querySelector('.col-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>Portfolio</button>
         </nav>
 
@@ -1412,123 +1620,7 @@ export default function Home() {
       {/* ── 3-Column Main Layout ───────────────────────────────────────────── */}
       <div className="layout-3col">
 
-        {/* ── Column 1: News Feed ──────────────────────────────────────────── */}
-        <div className="col-news">
-
-          {/* News filter tabs */}
-          <div className="news-filter-tabs">
-            {NEWS_CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                className={`news-filter-tab${newsCategory === cat ? ' active' : ''}`}
-                onClick={() => handleNewsCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-            {/* Alerts toggle */}
-            <button
-              className={`news-filter-tab${showAlerts ? ' active' : ''}`}
-              style={{ marginLeft: 'auto' }}
-              onClick={() => setShowAlerts(a => !a)}
-            >
-              🔔 Alerts{alertUnreadCount > 0 && (
-                <AlertBadge count={alertUnreadCount} />
-              )}
-            </button>
-          </div>
-
-          {/* Feed header */}
-          {!showAlerts && (
-            <div className="feed-header">
-              <span className="feed-title">
-                <span className="live-dot" />
-                LIVE NEWS FEED
-              </span>
-              <span style={{ fontSize: 10.5, color: '#404050', marginLeft: 12 }}>
-                {hasRealTickerData ? '● LIVE DATA' : '○ SIMULATED'}
-              </span>
-              <span className="feed-count">{newsArticles.length} articles</span>
-              <button onClick={() => fetchNews(newsCategory, newsSymbolFilter)} className="refresh-btn">↻</button>
-            </div>
-          )}
-
-          {/* Column headers */}
-          {!showAlerts && (
-            <div className="feed-col-header" style={{
-              display: 'grid',
-              gridTemplateColumns: '36px 80px 1fr auto auto',
-              gap: '0 8px',
-              padding: '4px 14px',
-              borderBottom: '1px solid #1c1c24',
-              background: '#0f0f12',
-            }}>
-              {['AGO', 'SOURCE', 'HEADLINE', '', 'SYMS'].map((h, i) => (
-                <span key={i} style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', color: '#404050', textAlign: i === 0 ? 'right' : 'left' }}>
-                  {h}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Symbol filter input */}
-          {!showAlerts && (
-            <div style={{ padding: '4px 8px', background: 'var(--bg-1)', borderBottom: '1px solid var(--border)' }}>
-              <input
-                type="text"
-                className="symbol-search news-symbol-filter"
-                placeholder="Filter by symbol (e.g. AAPL)…"
-                value={newsSymbolFilter}
-                onChange={e => setNewsSymbolFilter(e.target.value)}
-                style={{ width: '100%' }}
-              />
-            </div>
-          )}
-
-          {/* Alerts view */}
-          {showAlerts && (
-            <>
-              {marketAlerts.length === 0 && (
-                <AlertsEmpty onCreateAlert={() => setAuthModalOpen(true)} />
-              )}
-              <AlertFeed
-                alerts={marketAlerts}
-                isConnected={alertConnected}
-                prefs={alertPrefs}
-                onUpdatePrefs={(p) => { updateAlertPrefs(p); showToast('Alert preferences updated', 'success') }}
-                onMarkAllRead={markAlertsRead}
-                onDismiss={dismissAlert}
-                onRefresh={refreshAlerts}
-              />
-            </>
-          )}
-
-          {/* News list */}
-          {!showAlerts && (
-            <div className="news-list">
-              {loadingNews
-                ? <NewsSkeletons count={20} />
-                : newsError
-                  ? (
-                    <div className="feed-empty">
-                      <p>⚠ Could not load feed — {newsError}</p>
-                      <button onClick={() => fetchNews(newsCategory, newsSymbolFilter)} className="retry-btn">↻ Retry</button>
-                    </div>
-                  )
-                  : newsArticles.length > 0
-                    ? newsArticles.map((a, i) => <NewsRow key={a.id} article={a} index={i} />)
-                    : <div className="feed-empty">No articles found{newsSymbolFilter ? ` for "${newsSymbolFilter.toUpperCase()}"` : ''}.</div>
-              }
-            </div>
-          )}
-        </div>
-
-        {/* ── Column 2: Economic Calendar ──────────────────────────────────── */}
-        <div className="col-calendar">
-          <EconomicCalendar events={calendarEvents} loading={loadingCalendar} />
-        </div>
-
-        {/* ── Column 3: Watchlist / Prices ─────────────────────────────────── */}
+        {/* ── Column 1 (LEFT): Market Data / Watchlist ─────────────────────── */}
         <div className="col-watchlist">
 
           {/* Search + Add */}
@@ -1707,6 +1799,138 @@ export default function Home() {
                 ))}
               </div>
             </div>
+          )}
+        </div>
+
+        {/* ── Column 2 (CENTER): News Feed ─────────────────────────────────── */}
+        <div className="col-news">
+
+          {/* News filter tabs */}
+          <div className="news-filter-tabs">
+            {NEWS_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                className={`news-filter-tab${newsCategory === cat ? ' active' : ''}`}
+                onClick={() => handleNewsCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Feed header */}
+          {!showAlerts && (
+            <div className="feed-header">
+              <span className="feed-title">
+                <span className="live-dot" />
+                LIVE NEWS FEED
+              </span>
+              <span style={{ fontSize: 10.5, color: '#404050', marginLeft: 12 }}>
+                {hasRealTickerData ? '● LIVE DATA' : '○ SIMULATED'}
+              </span>
+              <span className="feed-count">{newsArticles.length} articles</span>
+              <button onClick={() => fetchNews(newsCategory, newsSymbolFilter)} className="refresh-btn">↻</button>
+            </div>
+          )}
+
+          {/* Column headers */}
+          {!showAlerts && (
+            <div className="feed-col-header" style={{
+              display: 'grid',
+              gridTemplateColumns: '36px 80px 1fr auto auto',
+              gap: '0 8px',
+              padding: '4px 14px',
+              borderBottom: '1px solid #1c1c24',
+              background: '#0f0f12',
+            }}>
+              {['AGO', 'SOURCE', 'HEADLINE', '', 'SYMS'].map((h, i) => (
+                <span key={i} style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', color: '#404050', textAlign: i === 0 ? 'right' : 'left' }}>
+                  {h}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Symbol filter input */}
+          {!showAlerts && (
+            <div style={{ padding: '4px 8px', background: 'var(--bg-1)', borderBottom: '1px solid var(--border)' }}>
+              <input
+                type="text"
+                className="symbol-search news-symbol-filter"
+                placeholder="Filter by symbol (e.g. AAPL)…"
+                value={newsSymbolFilter}
+                onChange={e => setNewsSymbolFilter(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </div>
+          )}
+
+          {/* News list */}
+          {!showAlerts && (
+            <div className="news-list">
+              {loadingNews
+                ? <NewsSkeletons count={20} />
+                : newsError
+                  ? (
+                    <div className="feed-empty">
+                      <p>⚠ Could not load feed — {newsError}</p>
+                      <button onClick={() => fetchNews(newsCategory, newsSymbolFilter)} className="retry-btn">↻ Retry</button>
+                    </div>
+                  )
+                  : newsArticles.length > 0
+                    ? newsArticles.map((a, i) => <NewsRow key={a.id} article={a} index={i} />)
+                    : <div className="feed-empty">No articles found{newsSymbolFilter ? ` for "${newsSymbolFilter.toUpperCase()}"` : ''}.</div>
+              }
+            </div>
+          )}
+        </div>
+
+        {/* ── Column 3 (RIGHT): Calendar / Alerts / Portfolio ──────────────── */}
+        <div className="col-calendar">
+          {/* Alerts toggle tab */}
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)' }}>
+            <button
+              className={`news-filter-tab${!showAlerts ? ' active' : ''}`}
+              style={{ flex: 1, borderRadius: 0 }}
+              onClick={() => setShowAlerts(false)}
+            >
+              📅 Calendar
+            </button>
+            <button
+              className={`news-filter-tab${showAlerts ? ' active' : ''}`}
+              style={{ flex: 1, borderRadius: 0 }}
+              onClick={() => setShowAlerts(a => !a)}
+            >
+              🔔 Alerts{alertUnreadCount > 0 && (
+                <AlertBadge count={alertUnreadCount} />
+              )}
+            </button>
+          </div>
+
+          {/* Alerts view */}
+          {showAlerts && (
+            <>
+              {marketAlerts.length === 0 && (
+                <AlertsEmpty onCreateAlert={() => setAuthModalOpen(true)} />
+              )}
+              <AlertFeed
+                alerts={marketAlerts}
+                isConnected={alertConnected}
+                prefs={alertPrefs}
+                onUpdatePrefs={(p) => { updateAlertPrefs(p); showToast('Alert preferences updated', 'success') }}
+                onMarkAllRead={markAlertsRead}
+                onDismiss={dismissAlert}
+                onRefresh={refreshAlerts}
+              />
+            </>
+          )}
+
+          {/* Calendar + Portfolio */}
+          {!showAlerts && (
+            <>
+              <EconomicCalendar events={calendarEvents} loading={loadingCalendar} />
+              <PortfolioPanel quotes={{ ...quotes, ...tickerQuotes }} />
+            </>
           )}
         </div>
       </div>

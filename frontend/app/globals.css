@@ -3151,6 +3151,19 @@ a.alert-row-title:hover {
   gap: 0;
 }
 
+/* LEFT column: market data + watchlist */
+.col-watchlist {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 102px);
+  overflow-y: auto;
+  position: sticky;
+  top: 102px;
+  max-height: calc(100vh - 102px);
+}
+
+/* CENTER column: news feed */
 .col-news {
   border-right: 1px solid var(--border);
   display: flex;
@@ -3158,21 +3171,15 @@ a.alert-row-title:hover {
   min-height: calc(100vh - 102px);
 }
 
+/* RIGHT column: calendar + alerts + portfolio */
 .col-calendar {
-  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 102px);
-}
-
-.col-watchlist {
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - 102px);
+  overflow-y: auto;
   position: sticky;
   top: 102px;
   max-height: calc(100vh - 102px);
-  overflow-y: auto;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -3420,15 +3427,18 @@ a.alert-row-title:hover {
   .layout-3col {
     grid-template-columns: 1fr;
   }
+  .col-watchlist {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    position: static;
+    max-height: none;
+  }
   .col-news {
     border-right: none;
     border-bottom: 1px solid var(--border);
   }
   .col-calendar {
     border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-  .col-watchlist {
     position: static;
     max-height: none;
   }
