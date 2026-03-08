@@ -1866,11 +1866,7 @@ export default function Home() {
           <button className={`nav-item${activeNav === 'Calendar' ? ' active' : ''}`} onClick={() => {
             window.open('/calendar', '_blank')
           }}>Calendar</button>
-          <button className={`nav-item${activeNav === 'Portfolio' ? ' active' : ''}`} onClick={() => {
-            setActiveNav('Portfolio')
-            setShowAlerts(false)
-            document.querySelector('.col-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }}>Portfolio</button>
+          <a href="/portfolio" className={`nav-item${activeNav === 'Portfolio' ? ' active' : ''}`} style={{ textDecoration: 'none' }}>Portfolio</a>
         </nav>
 
         <div className="header-right">
