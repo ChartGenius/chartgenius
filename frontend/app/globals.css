@@ -3138,3 +3138,298 @@ a.alert-row-title:hover {
     max-width: 100%;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3-COLUMN DESKTOP LAYOUT
+───────────────────────────────────────────────────────────────────────────── */
+
+.layout-3col {
+  display: grid;
+  grid-template-columns: 32% 36% 32%;
+  align-items: flex-start;
+  min-height: calc(100vh - 102px);
+  gap: 0;
+}
+
+.col-news {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 102px);
+}
+
+.col-calendar {
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 102px);
+}
+
+.col-watchlist {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 102px);
+  position: sticky;
+  top: 102px;
+  max-height: calc(100vh - 102px);
+  overflow-y: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ENHANCED ECONOMIC CALENDAR (FinancialJuice style)
+───────────────────────────────────────────────────────────────────────────── */
+
+.ecal-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+  position: sticky;
+  top: 102px;
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.ecal-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ecal-filter-btn {
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  background: var(--bg-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ecal-filter-btn:hover,
+.ecal-filter-btn.active { 
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.ecal-day-group {
+  border-bottom: 1px solid var(--border);
+}
+
+.ecal-day-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  padding: 5px 12px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border-b);
+  text-transform: uppercase;
+}
+
+.ecal-event {
+  display: grid;
+  grid-template-columns: 42px 20px 32px 1fr;
+  gap: 0 6px;
+  align-items: center;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border-b);
+  cursor: default;
+  transition: background 0.1s;
+}
+.ecal-event:hover { background: var(--bg-2); }
+.ecal-event:last-child { border-bottom: none; }
+
+.ecal-time {
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text-2);
+  text-align: right;
+}
+
+.ecal-impact-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin: auto;
+}
+.ecal-impact-high { background: #ff4560; box-shadow: 0 0 4px rgba(255,69,96,0.5); }
+.ecal-impact-medium { background: #f0a500; }
+.ecal-impact-low { background: #4a9eff; }
+
+.ecal-currency {
+  font-size: 9.5px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--text-1);
+  text-align: center;
+}
+
+.ecal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ecal-event-name {
+  font-size: 11.5px;
+  color: var(--text-0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.ecal-values {
+  display: flex;
+  gap: 8px;
+  font-size: 9.5px;
+  font-family: var(--mono);
+}
+.ecal-actual { color: #00c06a; font-weight: 600; }
+.ecal-forecast { color: var(--text-2); }
+.ecal-previous { color: var(--text-3); }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   COMPANY PROFILE IN MODAL
+───────────────────────────────────────────────────────────────────────────── */
+
+.company-profile {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.company-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.company-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: var(--bg-3);
+}
+
+.company-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.company-name { font-size: 13px; font-weight: 600; color: var(--text-0); }
+.company-industry { font-size: 10.5px; color: var(--text-2); }
+
+.company-description {
+  font-size: 11.5px;
+  color: var(--text-1);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+}
+.company-description.expanded { -webkit-line-clamp: unset; }
+
+.company-key-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.company-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-2);
+  border-radius: 5px;
+  padding: 6px 8px;
+}
+
+.company-stat-label {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+
+.company-stat-val {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-0);
+  font-family: var(--mono);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   NEWS FILTER TABS (inside news column)
+───────────────────────────────────────────────────────────────────────────── */
+
+.news-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-1);
+  position: sticky;
+  top: 102px;
+  z-index: 10;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+.news-filter-tabs::-webkit-scrollbar { display: none; }
+
+.news-filter-tab {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 3px;
+  color: var(--text-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.news-filter-tab:hover { color: var(--text-0); background: var(--bg-3); }
+.news-filter-tab.active { background: var(--accent); color: #fff; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESPONSIVE: 3-col → 1-col on mobile
+───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .layout-3col {
+    grid-template-columns: 1fr;
+  }
+  .col-news {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .col-calendar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .col-watchlist {
+    position: static;
+    max-height: none;
+  }
+}

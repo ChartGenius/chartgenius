@@ -138,6 +138,31 @@ router.get('/news/:symbol', async (req, res) => {
   }
 });
 
+// GET /api/market-data/profile/:symbol — company profile + key metrics
+router.get('/profile/:symbol', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    const profile = await finnhub.getCompanyProfile(symbol);
+
+    if (!profile) {
+      return res.json({
+        success: false,
+        error: 'No profile data available',
+        symbol: symbol.toUpperCase()
+      });
+    }
+
+    res.json({
+      success: true,
+      data: profile,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[MarketData] /profile error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch company profile' });
+  }
+});
+
 // GET /api/market-data/movers — returns top gainers/losers from default watchlist
 router.get('/movers', async (req, res) => {
   try {

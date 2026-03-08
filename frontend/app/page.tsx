@@ -44,7 +44,8 @@ interface CalendarEvent {
   title: string
   currency: string
   impact: number
-  date: string
+  datetime?: string
+  date?: string
   actual: string | null
   forecast: string | null
   previous: string | null
@@ -88,6 +89,28 @@ interface NewsArticle {
   imageUrl: string | null
 }
 
+interface CompanyProfile {
+  symbol: string
+  name: string
+  description: string | null
+  exchange: string
+  industry: string
+  sector: string
+  country: string
+  currency: string
+  marketCap: number | null
+  website: string | null
+  logo: string | null
+  ipo: string | null
+  peRatio: number | null
+  pbRatio: number | null
+  eps: number | null
+  dividendYield: number | null
+  week52High: number | null
+  week52Low: number | null
+  beta: number | null
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const SIDEBAR_SYMBOLS = ['AAPL', 'GOOGL', 'TSLA', 'MSFT', 'META', 'NVDA', 'AMZN', 'SPY']
@@ -119,8 +142,7 @@ const TICKER_FALLBACK = [
   { symbol: 'VIX',     price: 14.32,    change: -3.21 },
 ]
 
-const CATEGORIES = ['All', 'Equities', 'Forex', 'Crypto', 'Commodities', 'Macro', 'Calendar', 'Alerts']
-
+const NEWS_CATEGORIES = ['All', 'Equities', 'Forex', 'Crypto', 'Commodities', 'Macro']
 const NEWS_CAT_MAP: Record<string, string> = {
   All: 'all',
   Equities: 'stocks',
@@ -130,9 +152,12 @@ const NEWS_CAT_MAP: Record<string, string> = {
   Macro: 'economy',
 }
 
+const CALENDAR_IMPACT_FILTERS = ['All', 'High', 'Medium', 'Low']
+const CALENDAR_CURRENCIES = ['All', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'NZD']
+
 const MAX_TICKER_CUSTOM = 15
 
-// ─── Top 100 symbols for autocomplete ────────────────────────────────────────
+// ─── Top symbols for autocomplete ────────────────────────────────────────────
 
 const TOP_SYMBOLS = [
   { symbol: 'AAPL',  name: 'Apple Inc.' },
@@ -200,39 +225,29 @@ const TOP_SYMBOLS = [
   { symbol: 'HOOD',  name: 'Robinhood Markets Inc.' },
   { symbol: 'SOFI',  name: 'SoFi Technologies Inc.' },
   { symbol: 'PLTR',  name: 'Palantir Technologies' },
-  { symbol: 'RBLX',  name: 'Roblox Corporation' },
   { symbol: 'SNOW',  name: 'Snowflake Inc.' },
   { symbol: 'DDOG',  name: 'Datadog Inc.' },
   { symbol: 'CRWD',  name: 'CrowdStrike Holdings' },
   { symbol: 'PANW',  name: 'Palo Alto Networks' },
-  { symbol: 'ZS',    name: 'Zscaler Inc.' },
   { symbol: 'NET',   name: 'Cloudflare Inc.' },
-  { symbol: 'TWLO',  name: 'Twilio Inc.' },
   { symbol: 'UBER',  name: 'Uber Technologies' },
-  { symbol: 'LYFT',  name: 'Lyft Inc.' },
   { symbol: 'ABNB',  name: 'Airbnb Inc.' },
-  { symbol: 'DASH',  name: 'DoorDash Inc.' },
   { symbol: 'RIVN',  name: 'Rivian Automotive Inc.' },
-  { symbol: 'LCID',  name: 'Lucid Group Inc.' },
   { symbol: 'NIO',   name: 'NIO Inc.' },
   { symbol: 'BABA',  name: 'Alibaba Group Holding' },
-  { symbol: 'JD',    name: 'JD.com Inc.' },
-  { symbol: 'PDD',   name: 'PDD Holdings Inc.' },
+  { symbol: 'PLTR',  name: 'Palantir Technologies' },
   { symbol: 'PATH',  name: 'UiPath Inc.' },
-  { symbol: 'U',     name: 'Unity Software Inc.' },
   { symbol: 'SPY',   name: 'SPDR S&P 500 ETF Trust' },
   { symbol: 'QQQ',   name: 'Invesco QQQ Trust' },
   { symbol: 'DIA',   name: 'SPDR Dow Jones ETF' },
   { symbol: 'IWM',   name: 'iShares Russell 2000 ETF' },
   { symbol: 'GLD',   name: 'SPDR Gold Shares ETF' },
   { symbol: 'SLV',   name: 'iShares Silver Trust ETF' },
-  { symbol: 'USO',   name: 'United States Oil Fund' },
   { symbol: 'TLT',   name: 'iShares 20+ Yr Treasury ETF' },
   { symbol: 'XLF',   name: 'Financial Select SPDR ETF' },
   { symbol: 'XLE',   name: 'Energy Select SPDR ETF' },
   { symbol: 'XLK',   name: 'Technology Select SPDR ETF' },
   { symbol: 'ARKK',  name: 'ARK Innovation ETF' },
-  { symbol: 'VTI',   name: 'Vanguard Total Stock Market ETF' },
   { symbol: 'VOO',   name: 'Vanguard S&P 500 ETF' },
   { symbol: 'BRK.B', name: 'Berkshire Hathaway Class B' },
 ]
@@ -245,6 +260,14 @@ function fmt(price: number, dec = 2) {
 
 function fmtPct(pct: number) {
   return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`
+}
+
+function fmtMarketCap(val: number | null) {
+  if (!val) return '—'
+  if (val >= 1e12) return `$${(val / 1e12).toFixed(2)}T`
+  if (val >= 1e9)  return `$${(val / 1e9).toFixed(2)}B`
+  if (val >= 1e6)  return `$${(val / 1e6).toFixed(2)}M`
+  return `$${val.toLocaleString()}`
 }
 
 function fmtTime(dateStr: string) {
@@ -265,11 +288,17 @@ function fmtEventTime(dateStr: string) {
   } catch { return dateStr }
 }
 
+function fmtEventDate(dateStr: string) {
+  try {
+    return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  } catch { return dateStr }
+}
+
 function symbolName(sym: string): string {
   return TOP_SYMBOLS.find(s => s.symbol === sym)?.name || sym
 }
 
-// ─── Stock Search Input ───────────────────────────────────────────────────────
+// ─── Stock Search Input (allows ANY ticker) ───────────────────────────────────
 
 function StockSearch({ onSelect }: { onSelect: (symbol: string, name: string) => void }) {
   const [query, setQuery] = useState('')
@@ -277,12 +306,19 @@ function StockSearch({ onSelect }: { onSelect: (symbol: string, name: string) =>
   const [active, setActive] = useState(0)
   const wrapRef = useRef<HTMLDivElement>(null)
 
-  const results = query.trim().length >= 1
+  const knownResults = query.trim().length >= 1
     ? TOP_SYMBOLS.filter(s =>
         s.symbol.startsWith(query.trim().toUpperCase()) ||
         s.name.toLowerCase().includes(query.trim().toLowerCase())
-      ).slice(0, 8)
+      ).slice(0, 7)
     : []
+
+  // Allow adding ANY ticker not already in known list
+  const upperQuery = query.trim().toUpperCase()
+  const isCustom = upperQuery.length >= 1 && !knownResults.some(r => r.symbol === upperQuery)
+  const results = isCustom
+    ? [...knownResults, { symbol: upperQuery, name: `Add "${upperQuery}" →` }]
+    : knownResults
 
   useEffect(() => {
     const h = (e: MouseEvent) => {
@@ -294,7 +330,8 @@ function StockSearch({ onSelect }: { onSelect: (symbol: string, name: string) =>
 
   const pick = (sym: string, name: string) => {
     trackStockSearch(sym)
-    onSelect(sym, name)
+    const cleanName = name.startsWith('Add "') ? sym : name
+    onSelect(sym, cleanName)
     setQuery('')
     setOpen(false)
     setActive(0)
@@ -305,16 +342,24 @@ function StockSearch({ onSelect }: { onSelect: (symbol: string, name: string) =>
       <input
         type="text"
         className="symbol-search"
-        placeholder="Search stocks…"
+        placeholder="Search or add ticker…"
         value={query}
         autoComplete="off"
         onChange={e => { setQuery(e.target.value); setOpen(true); setActive(0) }}
         onFocus={() => { if (query) setOpen(true) }}
         onKeyDown={e => {
+          if (e.key === 'Enter' && query.trim()) {
+            e.preventDefault()
+            if (open && results.length > 0) {
+              pick(results[active].symbol, results[active].name)
+            } else {
+              pick(upperQuery, upperQuery)
+            }
+            return
+          }
           if (!open || results.length === 0) return
           if (e.key === 'ArrowDown') { e.preventDefault(); setActive(i => Math.min(i + 1, results.length - 1)) }
           if (e.key === 'ArrowUp')   { e.preventDefault(); setActive(i => Math.max(i - 1, 0)) }
-          if (e.key === 'Enter')     { e.preventDefault(); pick(results[active].symbol, results[active].name) }
           if (e.key === 'Escape')    { setOpen(false) }
         }}
       />
@@ -337,13 +382,70 @@ function StockSearch({ onSelect }: { onSelect: (symbol: string, name: string) =>
   )
 }
 
+// ─── Company Profile Section ──────────────────────────────────────────────────
+
+function CompanyProfileSection({ profile }: { profile: CompanyProfile }) {
+  const [expanded, setExpanded] = useState(false)
+
+  const stats = [
+    { label: 'MKT CAP', val: fmtMarketCap(profile.marketCap) },
+    { label: 'P/E RATIO', val: profile.peRatio ? profile.peRatio.toFixed(1) : '—' },
+    { label: 'EPS', val: profile.eps ? `$${profile.eps.toFixed(2)}` : '—' },
+    { label: 'DIV YIELD', val: profile.dividendYield ? `${profile.dividendYield.toFixed(2)}%` : '—' },
+    { label: '52W HIGH', val: profile.week52High ? `$${fmt(profile.week52High)}` : '—' },
+    { label: '52W LOW', val: profile.week52Low ? `$${fmt(profile.week52Low)}` : '—' },
+    { label: 'BETA', val: profile.beta ? profile.beta.toFixed(2) : '—' },
+    { label: 'P/B RATIO', val: profile.pbRatio ? profile.pbRatio.toFixed(1) : '—' },
+    { label: 'EXCHANGE', val: profile.exchange || '—' },
+  ]
+
+  return (
+    <div className="company-profile">
+      <div className="company-profile-header">
+        {profile.logo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={profile.logo} alt={profile.name} className="company-logo" />
+        )}
+        <div className="company-meta">
+          <span className="company-name">{profile.name}</span>
+          <span className="company-industry">
+            {profile.industry}{profile.country ? ` · ${profile.country}` : ''}
+          </span>
+        </div>
+      </div>
+
+      {profile.description && (
+        <p
+          className={`company-description${expanded ? ' expanded' : ''}`}
+          onClick={() => setExpanded(e => !e)}
+          title={expanded ? 'Click to collapse' : 'Click to expand'}
+        >
+          {profile.description}
+          {!expanded && <span style={{ color: 'var(--accent)', marginLeft: 4 }}>more</span>}
+        </p>
+      )}
+
+      <div className="company-key-stats">
+        {stats.map(s => (
+          <div key={s.label} className="company-stat">
+            <span className="company-stat-label">{s.label}</span>
+            <span className="company-stat-val">{s.val}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Stock Detail Modal ───────────────────────────────────────────────────────
 
 function StockDetailModal({
   symbol,
   name,
   quote,
-  loading,
+  profile,
+  loadingQuote,
+  loadingProfile,
   onClose,
   onAddTicker,
   onAddWatchlist,
@@ -354,7 +456,9 @@ function StockDetailModal({
   symbol: string
   name: string
   quote: Quote | null
-  loading: boolean
+  profile: CompanyProfile | null
+  loadingQuote: boolean
+  loadingProfile: boolean
   onClose: () => void
   onAddTicker: () => void
   onAddWatchlist: () => void
@@ -382,17 +486,17 @@ function StockDetailModal({
         <div className="stock-modal-header">
           <div className="stock-modal-title">
             <span className="stock-modal-symbol">{symbol}</span>
-            <span className="stock-modal-company">{name || symbolName(symbol)}</span>
+            <span className="stock-modal-company">{profile?.name || name || symbolName(symbol)}</span>
           </div>
 
           <div className="stock-modal-price-block">
-            {loading && (
+            {loadingQuote && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div className="shimmer" style={{ width: 120, height: 22, borderRadius: 4 }} />
                 <div className="shimmer" style={{ width: 80, height: 14, borderRadius: 4 }} />
               </div>
             )}
-            {!loading && quote && (
+            {!loadingQuote && quote && (
               <>
                 <span className="stock-modal-price">
                   ${quote.current < 10 ? fmt(quote.current, 4) : fmt(quote.current)}
@@ -405,7 +509,7 @@ function StockDetailModal({
                 </span>
               </>
             )}
-            {!loading && !quote && (
+            {!loadingQuote && !quote && (
               <span className="stock-modal-loading">No price data</span>
             )}
           </div>
@@ -413,11 +517,12 @@ function StockDetailModal({
           <button className="modal-close-btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
+        {/* TradingView Chart */}
         <div className="stock-chart-wrap">
           <iframe
             src={`https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(symbol)}&interval=D&theme=dark&style=1&locale=en&toolbar_bg=%230f0f12&hide_top_toolbar=0&hide_side_toolbar=1&allow_symbol_change=0&save_image=0&calendar=0&hideideas=1`}
             width="100%"
-            height="380"
+            height="340"
             frameBorder="0"
             allowTransparency={true}
             scrolling="no"
@@ -425,6 +530,7 @@ function StockDetailModal({
           />
         </div>
 
+        {/* Quote Stats */}
         {quote && (
           <div className="stock-stats">
             <div className="stock-stat">
@@ -446,17 +552,23 @@ function StockDetailModal({
           </div>
         )}
 
-        {!quote && loading && (
-          <div className="stock-stats">
-            {[0,1,2,3].map(i => (
-              <div key={i} className="stock-stat">
-                <div className="shimmer" style={{ width: 50, height: 10, marginBottom: 6, borderRadius: 3 }} />
-                <div className="shimmer" style={{ width: 70, height: 16, borderRadius: 3 }} />
+        {/* Company Profile */}
+        {loadingProfile && (
+          <div className="company-profile">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="shimmer" style={{ width: 200, height: 14, borderRadius: 4 }} />
+              <div className="shimmer" style={{ width: '100%', height: 40, borderRadius: 4 }} />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="shimmer" style={{ height: 44, borderRadius: 5 }} />
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         )}
+        {!loadingProfile && profile && <CompanyProfileSection profile={profile} />}
 
+        {/* Actions */}
         <div className="stock-actions">
           <button
             className={`stock-action-btn${inTicker ? ' stock-action-active' : ''}`}
@@ -622,33 +734,141 @@ function CryptoCoinRow({ coin }: { coin: CryptoCoin }) {
   )
 }
 
-// ─── Calendar Row ─────────────────────────────────────────────────────────────
+// ─── Enhanced Economic Calendar ───────────────────────────────────────────────
 
-function CalendarRow({ event }: { event: CalendarEvent }) {
-  const dots = ['', '●', '●●', '●●●']
-  const impactColor = ['', '#606070', '#f0a500', '#ff4560'][event.impact] || '#606070'
+interface EcalProps {
+  events: CalendarEvent[]
+  loading: boolean
+}
+
+function EconomicCalendar({ events, loading }: EcalProps) {
+  const [impactFilter, setImpactFilter] = useState('All')
+  const [currencyFilter, setCurrencyFilter] = useState('All')
+
+  const filtered = events.filter(e => {
+    const matchImpact = impactFilter === 'All'
+      || (impactFilter === 'High' && e.impact === 3)
+      || (impactFilter === 'Medium' && e.impact === 2)
+      || (impactFilter === 'Low' && e.impact === 1)
+    const matchCurrency = currencyFilter === 'All' || e.currency === currencyFilter
+    return matchImpact && matchCurrency
+  })
+
+  // Group by date
+  const groups: Record<string, CalendarEvent[]> = {}
+  filtered.forEach(e => {
+    const dateStr = e.datetime || e.date || ''
+    const dayKey = dateStr ? fmtEventDate(dateStr) : 'Unknown'
+    if (!groups[dayKey]) groups[dayKey] = []
+    groups[dayKey].push(e)
+  })
+
+  const impactColor = (impact: number) => {
+    if (impact === 3) return 'ecal-impact-high'
+    if (impact === 2) return 'ecal-impact-medium'
+    return 'ecal-impact-low'
+  }
+
+  const getEventTime = (e: CalendarEvent) => fmtEventTime(e.datetime || e.date || '')
+
   return (
-    <div className="cal-row">
-      <span className="cal-time">{fmtEventTime(event.date)}</span>
-      <span className="cal-impact" style={{ color: impactColor, letterSpacing: -2 }}>
-        {dots[event.impact] || '●'}
-      </span>
-      <span className="cal-currency">{event.currency}</span>
-      <span className="cal-title">
-        {event.title}
-        {(event.actual || event.forecast) && (
-          <span style={{ color: '#606070', marginLeft: 8 }}>
-            {event.actual && <span style={{ color: '#00c06a' }}>A:{event.actual} </span>}
-            {event.forecast && <span>F:{event.forecast} </span>}
-            {event.previous && <span>P:{event.previous}</span>}
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      {/* Header */}
+      <div className="ecal-header">
+        <span className="ecal-title">
+          <span style={{ color: '#f0a500' }}>📅</span>
+          ECONOMIC CALENDAR
+        </span>
+
+        {/* Impact filter */}
+        <div style={{ display: 'flex', gap: 3, marginLeft: 4 }}>
+          {CALENDAR_IMPACT_FILTERS.map(f => (
+            <button
+              key={f}
+              className={`ecal-filter-btn${impactFilter === f ? ' active' : ''}`}
+              onClick={() => setImpactFilter(f)}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        {/* Currency filter */}
+        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+          {CALENDAR_CURRENCIES.slice(0, 6).map(c => (
+            <button
+              key={c}
+              className={`ecal-filter-btn${currencyFilter === c ? ' active' : ''}`}
+              onClick={() => setCurrencyFilter(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+
+        <span style={{ fontSize: 9.5, color: 'var(--text-3)', marginLeft: 'auto' }}>
+          {filtered.length} events
+        </span>
+      </div>
+
+      {/* Column headers */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '42px 20px 32px 1fr',
+        gap: '0 6px',
+        padding: '4px 12px',
+        borderBottom: '1px solid var(--border-b)',
+        background: 'var(--bg-2)',
+      }}>
+        {['TIME', 'IMP', 'CCY', 'EVENT & VALUES'].map((h, i) => (
+          <span key={i} style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-3)', textAlign: i === 0 ? 'right' : 'left' }}>
+            {h}
           </span>
+        ))}
+      </div>
+
+      {/* Events */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {loading ? (
+          <div style={{ padding: 20, color: 'var(--text-3)', fontSize: 11, textAlign: 'center' }}>
+            Loading calendar…
+          </div>
+        ) : Object.keys(groups).length === 0 ? (
+          <div style={{ padding: 20, color: 'var(--text-3)', fontSize: 11, textAlign: 'center' }}>
+            No events match current filters.
+          </div>
+        ) : (
+          Object.entries(groups).map(([day, dayEvents]) => (
+            <div key={day} className="ecal-day-group">
+              <div className="ecal-day-label">{day}</div>
+              {dayEvents.map(ev => (
+                <div key={ev.id} className="ecal-event">
+                  <span className="ecal-time">{getEventTime(ev)}</span>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <span className={`ecal-impact-dot ${impactColor(ev.impact)}`} />
+                  </div>
+                  <span className="ecal-currency">{ev.currency}</span>
+                  <div className="ecal-body">
+                    <span className="ecal-event-name">{ev.title}</span>
+                    {(ev.actual || ev.forecast || ev.previous) && (
+                      <div className="ecal-values">
+                        {ev.actual && <span className="ecal-actual">A: {ev.actual}</span>}
+                        {ev.forecast && <span className="ecal-forecast">F: {ev.forecast}</span>}
+                        {ev.previous && <span className="ecal-previous">P: {ev.previous}</span>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))
         )}
-      </span>
+      </div>
     </div>
   )
 }
 
-// ─── Shimmer Skeleton Rows ────────────────────────────────────────────────────
+// ─── Shimmer Skeletons ────────────────────────────────────────────────────────
 
 function NewsSkeletons({ count = 20 }: { count?: number }) {
   return (
@@ -697,7 +917,9 @@ export default function Home() {
 
   const [clock, setClock] = useState('')
   const [isOffline, setIsOffline] = useState(false)
-  const [activeCategory, setActiveCategory] = useState('All')
+
+  // News category filter (inside news column)
+  const [newsCategory, setNewsCategory] = useState('All')
 
   // Auth modal
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -718,6 +940,7 @@ export default function Home() {
 
   // Calendar
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
+  const [loadingCalendar, setLoadingCalendar] = useState(true)
 
   // News
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
@@ -732,7 +955,12 @@ export default function Home() {
   // Stock detail modal
   const [selectedStock, setSelectedStock] = useState<{ symbol: string; name: string } | null>(null)
   const [stockQuote, setStockQuote] = useState<Quote | null>(null)
+  const [stockProfile, setStockProfile] = useState<CompanyProfile | null>(null)
   const [loadingStockQuote, setLoadingStockQuote] = useState(false)
+  const [loadingStockProfile, setLoadingStockProfile] = useState(false)
+
+  // Alerts tab visibility (for right column)
+  const [showAlerts, setShowAlerts] = useState(false)
 
   // Track if we already did the initial backend watchlist sync for this session
   const didSyncWatchlist = useRef(false)
@@ -775,18 +1003,13 @@ export default function Home() {
       setWatchlistSyncing(true)
       const backendSymbols = await loadWatchlistFromBackend()
       if (backendSymbols.length > 0) {
-        // Merge backend + localStorage — backend wins for conflicts
-        setWatchlist(prev => {
-          const merged = [...new Set([...backendSymbols, ...prev])]
-          return merged
-        })
+        setWatchlist(prev => [...new Set([...backendSymbols, ...prev])])
       }
       setWatchlistSyncing(false)
     }
     doSync()
   }, [token, loadWatchlistFromBackend])
 
-  // Reset sync flag on logout
   useEffect(() => {
     if (!token) didSyncWatchlist.current = false
   }, [token])
@@ -847,7 +1070,7 @@ export default function Home() {
     } catch {}
   }, [isOffline])
 
-  // ── Fetch crypto prices (CoinGecko) ───────────────────────────────────────
+  // ── Fetch crypto prices ────────────────────────────────────────────────────
   const fetchCryptoPrices = useCallback(async () => {
     if (isOffline) return
     try {
@@ -860,15 +1083,28 @@ export default function Home() {
     }
   }, [isOffline])
 
-  // ── Fetch economic calendar ────────────────────────────────────────────────
+  // ── Fetch economic calendar (upcoming week) ────────────────────────────────
   const fetchCalendar = useCallback(async () => {
     if (isOffline) return
+    setLoadingCalendar(true)
     try {
-      const res = await fetch(`${API_BASE}/api/calendar/today`)
-      if (!res.ok) return
+      // Try upcoming week first for better coverage
+      const res = await fetch(`${API_BASE}/api/calendar/upcoming?days=5&minImpact=1`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const j = await res.json()
-      if (j.success) setCalendarEvents(j.data.slice(0, 20))
-    } catch {}
+      if (j.success && j.data) {
+        setCalendarEvents(j.data)
+      } else {
+        // Fallback to today
+        const res2 = await fetch(`${API_BASE}/api/calendar/today`)
+        const j2 = await res2.json()
+        if (j2.success) setCalendarEvents(j2.data || [])
+      }
+    } catch (err) {
+      console.warn('[Calendar] fetch failed:', err)
+    } finally {
+      setLoadingCalendar(false)
+    }
   }, [isOffline])
 
   // ── Fetch news ─────────────────────────────────────────────────────────────
@@ -899,6 +1135,8 @@ export default function Home() {
     } finally {
       setLoadingNews(false)
     }
+  // showToast is stable, no need in deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOffline])
 
   // ── Initial load ───────────────────────────────────────────────────────────
@@ -923,33 +1161,68 @@ export default function Home() {
     return () => clearInterval(t)
   }, [fetchQuotes])
 
+  // ── News category change ───────────────────────────────────────────────────
+  const handleNewsCategory = useCallback((cat: string) => {
+    setNewsCategory(cat)
+    setNewsSymbolFilter('')
+    fetchNews(cat)
+  }, [fetchNews])
+
+  // ── News symbol filter debounce ────────────────────────────────────────────
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (newsSymbolFilter.trim()) fetchNews(newsCategory, newsSymbolFilter)
+      else fetchNews(newsCategory)
+    }, 400)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newsSymbolFilter])
+
   // ── Open stock detail modal ────────────────────────────────────────────────
   const openStockDetail = useCallback(async (symbol: string, name?: string) => {
     const resolvedName = name || symbolName(symbol)
     setSelectedStock({ symbol, name: resolvedName })
     setStockQuote(null)
+    setStockProfile(null)
     setLoadingStockQuote(true)
+    setLoadingStockProfile(true)
+
+    // Fetch quote
     try {
       const cached = tickerQuotes[symbol] || quotes[symbol]
       if (cached) {
         setStockQuote(cached)
         setLoadingStockQuote(false)
-        return
+      } else {
+        const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${encodeURIComponent(symbol)}`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const j = await res.json()
+        if (j.success && j.data && j.data[symbol]) setStockQuote(j.data[symbol])
+        setLoadingStockQuote(false)
       }
-      const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${encodeURIComponent(symbol)}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const j = await res.json()
-      if (j.success && j.data && j.data[symbol]) setStockQuote(j.data[symbol])
     } catch (err) {
       console.warn('[StockDetail] quote fetch failed:', err)
-    } finally {
       setLoadingStockQuote(false)
+    }
+
+    // Fetch company profile in parallel
+    try {
+      const res = await fetch(`${API_BASE}/api/market-data/profile/${encodeURIComponent(symbol)}`)
+      if (res.ok) {
+        const j = await res.json()
+        if (j.success && j.data) setStockProfile(j.data)
+      }
+    } catch (err) {
+      console.warn('[StockDetail] profile fetch failed:', err)
+    } finally {
+      setLoadingStockProfile(false)
     }
   }, [tickerQuotes, quotes])
 
   const closeStockDetail = () => {
     setSelectedStock(null)
     setStockQuote(null)
+    setStockProfile(null)
   }
 
   // ── Keyboard shortcut handlers ─────────────────────────────────────────────
@@ -960,19 +1233,18 @@ export default function Home() {
   }, [])
 
   const handleKbEscape = useCallback(() => {
-    // Close modals in priority order
     if (selectedStock) { closeStockDetail(); return }
     if (authModalOpen) { setAuthModalOpen(false); return }
     if (settingsOpen)  { closeSettings(); return }
   }, [selectedStock, authModalOpen, settingsOpen, closeSettings])
 
   const handleKbGoToHome = useCallback(() => {
-    setActiveCategory('All')
+    setNewsCategory('All')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
   const handleKbGoToAlerts = useCallback(() => {
-    setActiveCategory('Alerts')
+    setShowAlerts(true)
   }, [])
 
   // ── Add to ticker ──────────────────────────────────────────────────────────
@@ -988,51 +1260,27 @@ export default function Home() {
     setCustomTickerSymbols(prev => prev.filter(s => s !== symbol))
   }
 
-  // ── Watchlist toggle (with backend sync) ───────────────────────────────────
+  // ── Watchlist toggle ───────────────────────────────────────────────────────
   const toggleWatch = useCallback((sym: string) => {
     const isAdding = !watchlist.includes(sym)
     setWatchlist(w => isAdding ? [...w, sym] : w.filter(s => s !== sym))
 
-    // Toast feedback
     if (isAdding) showToast(`${sym} added to watchlist`, 'success')
     else showToast(`${sym} removed from watchlist`, 'info')
 
-    // Track analytics
-    if (isAdding) trackWatchlistAdd(sym)
+    if (isAdding) { trackWatchlistAdd(sym); markChecklistItem('addSymbol') }
     else trackWatchlistRemove(sym)
 
-    // Mark onboarding checklist item on first add
-    if (isAdding) markChecklistItem('addSymbol')
-
-    // Sync to backend if logged in
     if (token) {
       if (isAdding) syncAddToWatchlist(sym)
       else syncRemoveFromWatchlist(sym)
     }
   }, [watchlist, token, syncAddToWatchlist, syncRemoveFromWatchlist, markChecklistItem, showToast])
 
-  // ── Category change ────────────────────────────────────────────────────────
-  const handleCategory = (cat: string) => {
-    setActiveCategory(cat)
-    if (cat !== 'Calendar' && cat !== 'Alerts') fetchNews(cat)
-  }
-
-  // ── News symbol filter debounce ────────────────────────────────────────────
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (newsSymbolFilter.trim()) fetchNews(activeCategory, newsSymbolFilter)
-      else fetchNews(activeCategory)
-    }, 400)
-    return () => clearTimeout(t)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [newsSymbolFilter])
-
   // ── Derived ────────────────────────────────────────────────────────────────
   const quoteList   = Object.values(quotes)
   const gainers     = [...quoteList].sort((a, b) => b.changePct - a.changePct).slice(0, 4)
   const losers      = [...quoteList].sort((a, b) => a.changePct - b.changePct).slice(0, 4)
-  const showCalendar = activeCategory === 'Calendar'
-  const showAlerts   = activeCategory === 'Alerts'
   const hasRealTickerData = Object.values(tickerQuotes).some(q => q.source === 'finnhub')
 
   return (
@@ -1073,10 +1321,31 @@ export default function Home() {
           <span className="logo-badge">BETA</span>
         </div>
 
+        {/* Navigation — wired to actions */}
         <nav className="header-nav">
-          {['Markets', 'News', 'Analysis', 'Calendar', 'Portfolio'].map(item => (
-            <button key={item} className="nav-item">{item}</button>
-          ))}
+          <button className="nav-item" onClick={() => {
+            setShowAlerts(false)
+            handleNewsCategory('All')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}>Markets</button>
+          <button className="nav-item" onClick={() => {
+            setShowAlerts(false)
+            handleNewsCategory('All')
+          }}>News</button>
+          <button className="nav-item" onClick={() => {
+            setShowAlerts(false)
+            handleNewsCategory('Equities')
+          }}>Analysis</button>
+          <button className="nav-item" onClick={() => {
+            setShowAlerts(false)
+            // Calendar is always visible in the center column — scroll to it
+            document.querySelector('.col-calendar')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}>Calendar</button>
+          <button className="nav-item" onClick={() => {
+            setShowAlerts(false)
+            // Scroll to watchlist in right column
+            document.querySelector('.col-watchlist')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}>Portfolio</button>
         </nav>
 
         <div className="header-right">
@@ -1094,7 +1363,6 @@ export default function Home() {
           )}
           <span className="live-time">{clock}</span>
 
-          {/* Settings gear */}
           <OnboardingTooltip
             id="settings-gear"
             content="Customize your ticker bar and notification preferences here"
@@ -1111,7 +1379,6 @@ export default function Home() {
             </button>
           </OnboardingTooltip>
 
-          {/* Auth section */}
           {user ? (
             <span
               className="header-user-email"
@@ -1142,98 +1409,52 @@ export default function Home() {
         <div className="offline-banner">⊗ OFFLINE — displaying cached data. Reconnect for live prices.</div>
       )}
 
-      {/* ── Category Tabs ──────────────────────────────────────────────────── */}
-      <div className="cat-tabs">
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => handleCategory(cat)}
-            className={`cat-tab ${activeCategory === cat ? 'cat-tab-active' : ''}`}
-          >
-            {cat === 'Alerts' ? (
-              <OnboardingTooltip
-                id="alerts-tab"
-                content="Set up price alerts so you don't miss market moves"
-                position="bottom"
-                delayMs={4000}
+      {/* ── 3-Column Main Layout ───────────────────────────────────────────── */}
+      <div className="layout-3col">
+
+        {/* ── Column 1: News Feed ──────────────────────────────────────────── */}
+        <div className="col-news">
+
+          {/* News filter tabs */}
+          <div className="news-filter-tabs">
+            {NEWS_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                className={`news-filter-tab${newsCategory === cat ? ' active' : ''}`}
+                onClick={() => handleNewsCategory(cat)}
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  {cat}<AlertBadge count={alertUnreadCount} />
-                </span>
-              </OnboardingTooltip>
-            ) : cat}
-            {cat !== 'Alerts' && null}
-          </button>
-        ))}
-        <div className="cat-tabs-spacer" />
-
-        <input
-          type="text"
-          className="symbol-search news-symbol-filter"
-          placeholder="Filter news…"
-          value={newsSymbolFilter}
-          onChange={e => setNewsSymbolFilter(e.target.value)}
-        />
-
-        <OnboardingTooltip
-          id="stock-search"
-          content="Search any stock ticker to track it in your watchlist"
-          position="bottom"
-          delayMs={3000}
-        >
-          <StockSearch onSelect={(sym, name) => openStockDetail(sym, name)} />
-        </OnboardingTooltip>
-      </div>
-
-      {/* ── Main Content ───────────────────────────────────────────────────── */}
-      <div className="main-content">
-
-        {/* Left: News/Calendar/Alerts Feed (70%) */}
-        <div className="news-feed">
-
-          {/* ── Alerts Tab ─────────────────────────────────────────────────── */}
-          {showAlerts && (
-            <>
-              {marketAlerts.length === 0 && (
-                <AlertsEmpty
-                  onCreateAlert={() => {
-                    // Nudge user to open settings/alert creation
-                    setAuthModalOpen(true)
-                  }}
-                />
+                {cat}
+              </button>
+            ))}
+            {/* Alerts toggle */}
+            <button
+              className={`news-filter-tab${showAlerts ? ' active' : ''}`}
+              style={{ marginLeft: 'auto' }}
+              onClick={() => setShowAlerts(a => !a)}
+            >
+              🔔 Alerts{alertUnreadCount > 0 && (
+                <AlertBadge count={alertUnreadCount} />
               )}
-              <AlertFeed
-                alerts={marketAlerts}
-                isConnected={alertConnected}
-                prefs={alertPrefs}
-                onUpdatePrefs={(p) => { updateAlertPrefs(p); showToast('Alert preferences updated', 'success') }}
-                onMarkAllRead={markAlertsRead}
-                onDismiss={dismissAlert}
-                onRefresh={refreshAlerts}
-              />
-            </>
-          )}
+            </button>
+          </div>
 
-          {/* ── News / Calendar header (only shown when not Alerts tab) ────── */}
-          {!showAlerts && <div className="feed-header">
-            <span className="feed-title">
-              <span className="live-dot" />
-              {showCalendar ? 'ECONOMIC CALENDAR' : 'LIVE NEWS FEED'}
-            </span>
-            {!showCalendar && (
+          {/* Feed header */}
+          {!showAlerts && (
+            <div className="feed-header">
+              <span className="feed-title">
+                <span className="live-dot" />
+                LIVE NEWS FEED
+              </span>
               <span style={{ fontSize: 10.5, color: '#404050', marginLeft: 12 }}>
                 {hasRealTickerData ? '● LIVE DATA' : '○ SIMULATED'}
               </span>
-            )}
-            <span className="feed-count">
-              {showCalendar ? `${calendarEvents.length} events` : `${newsArticles.length} articles`}
-            </span>
-            {!showCalendar && (
-              <button onClick={() => fetchNews(activeCategory, newsSymbolFilter)} className="refresh-btn">↻</button>
-            )}
-          </div>}
+              <span className="feed-count">{newsArticles.length} articles</span>
+              <button onClick={() => fetchNews(newsCategory, newsSymbolFilter)} className="refresh-btn">↻</button>
+            </div>
+          )}
 
-          {!showAlerts && !showCalendar && (
+          {/* Column headers */}
+          {!showAlerts && (
             <div className="feed-col-header" style={{
               display: 'grid',
               gridTemplateColumns: '36px 80px 1fr auto auto',
@@ -1250,22 +1471,40 @@ export default function Home() {
             </div>
           )}
 
-          {!showAlerts && showCalendar && (
+          {/* Symbol filter input */}
+          {!showAlerts && (
+            <div style={{ padding: '4px 8px', background: 'var(--bg-1)', borderBottom: '1px solid var(--border)' }}>
+              <input
+                type="text"
+                className="symbol-search news-symbol-filter"
+                placeholder="Filter by symbol (e.g. AAPL)…"
+                value={newsSymbolFilter}
+                onChange={e => setNewsSymbolFilter(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </div>
+          )}
+
+          {/* Alerts view */}
+          {showAlerts && (
             <>
-              <div className="cal-header">
-                <span>TIME</span>
-                <span>IMP</span>
-                <span>CCY</span>
-                <span>EVENT</span>
-              </div>
-              {calendarEvents.length > 0
-                ? calendarEvents.map(ev => <CalendarRow key={ev.id} event={ev} />)
-                : <div className="feed-empty">No events scheduled today.</div>
-              }
+              {marketAlerts.length === 0 && (
+                <AlertsEmpty onCreateAlert={() => setAuthModalOpen(true)} />
+              )}
+              <AlertFeed
+                alerts={marketAlerts}
+                isConnected={alertConnected}
+                prefs={alertPrefs}
+                onUpdatePrefs={(p) => { updateAlertPrefs(p); showToast('Alert preferences updated', 'success') }}
+                onMarkAllRead={markAlertsRead}
+                onDismiss={dismissAlert}
+                onRefresh={refreshAlerts}
+              />
             </>
           )}
 
-          {!showAlerts && !showCalendar && (
+          {/* News list */}
+          {!showAlerts && (
             <div className="news-list">
               {loadingNews
                 ? <NewsSkeletons count={20} />
@@ -1273,7 +1512,7 @@ export default function Home() {
                   ? (
                     <div className="feed-empty">
                       <p>⚠ Could not load feed — {newsError}</p>
-                      <button onClick={() => fetchNews(activeCategory, newsSymbolFilter)} className="retry-btn">↻ Retry</button>
+                      <button onClick={() => fetchNews(newsCategory, newsSymbolFilter)} className="retry-btn">↻ Retry</button>
                     </div>
                   )
                   : newsArticles.length > 0
@@ -1284,8 +1523,25 @@ export default function Home() {
           )}
         </div>
 
-        {/* Right: Sidebar (30%) */}
-        <div className="sidebar">
+        {/* ── Column 2: Economic Calendar ──────────────────────────────────── */}
+        <div className="col-calendar">
+          <EconomicCalendar events={calendarEvents} loading={loadingCalendar} />
+        </div>
+
+        {/* ── Column 3: Watchlist / Prices ─────────────────────────────────── */}
+        <div className="col-watchlist">
+
+          {/* Search + Add */}
+          <div className="sidebar-section" style={{ padding: '8px 10px' }}>
+            <OnboardingTooltip
+              id="stock-search"
+              content="Search any stock ticker to track it in your watchlist"
+              position="bottom"
+              delayMs={3000}
+            >
+              <StockSearch onSelect={(sym, name) => openStockDetail(sym, name)} />
+            </OnboardingTooltip>
+          </div>
 
           {/* Market Quotes */}
           <div className="sidebar-section">
@@ -1326,7 +1582,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Crypto Prices (CoinGecko) */}
+          {/* Crypto Prices */}
           {cryptoCoins.length > 0 && (
             <div className="sidebar-section">
               <div className="sidebar-title" style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => setCryptoExpanded(e => !e)}>
@@ -1373,7 +1629,6 @@ export default function Home() {
             {watchlist.length === 0 ? (
               <WatchlistEmpty
                 onAddSymbol={() => {
-                  // Focus the search bar at the top of the page
                   const el = document.querySelector<HTMLInputElement>('.symbol-search')
                   el?.focus()
                 }}
@@ -1453,7 +1708,6 @@ export default function Home() {
               </div>
             </div>
           )}
-
         </div>
       </div>
 
@@ -1477,7 +1731,9 @@ export default function Home() {
           symbol={selectedStock.symbol}
           name={selectedStock.name}
           quote={stockQuote}
-          loading={loadingStockQuote}
+          profile={stockProfile}
+          loadingQuote={loadingStockQuote}
+          loadingProfile={loadingStockProfile}
           onClose={closeStockDetail}
           onAddTicker={() => addToTicker(selectedStock.symbol)}
           onAddWatchlist={() => toggleWatch(selectedStock.symbol)}
@@ -1489,9 +1745,7 @@ export default function Home() {
 
       {/* ── Auth Modal ─────────────────────────────────────────────────────── */}
       {authModalOpen && (
-        <AuthModal
-          onClose={() => setAuthModalOpen(false)}
-        />
+        <AuthModal onClose={() => setAuthModalOpen(false)} />
       )}
 
       {/* ── Settings Panel ─────────────────────────────────────────────────── */}

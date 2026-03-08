@@ -210,6 +210,116 @@ class FinnhubService {
   }
 
   // ──────────────────────────────────────────
+  // Company Profile
+  // ──────────────────────────────────────────
+
+  /**
+   * Get company profile (description, market cap, PE, sector, etc.)
+   */
+  async getCompanyProfile(symbol) {
+    const upperSymbol = symbol.toUpperCase();
+    const cacheKey = `finnhub:profile:${upperSymbol}`;
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      if (!this.apiKey) return null;
+
+      try {
+        await externalAPILimiter.canMakeRequest('finnhub', 55, 60000);
+
+        const [profileRes, metricsRes] = await Promise.allSettled([
+          axios.get(`${FINNHUB_BASE}/stock/profile2`, {
+            params: { symbol: upperSymbol, token: this.apiKey },
+            timeout: 8000
+          }),
+          axios.get(`${FINNHUB_BASE}/stock/metric`, {
+            params: { symbol: upperSymbol, metric: 'all', token: this.apiKey },
+            timeout: 8000
+          })
+        ]);
+
+        const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : {};
+        const metrics = metricsRes.status === 'fulfilled' ? metricsRes.value.data?.metric : {};
+
+        if (!profile.name) return null;
+
+        return {
+          symbol: upperSymbol,
+          name: profile.name,
+          description: profile.description || null,
+          exchange: profile.exchange,
+          industry: profile.finnhubIndustry,
+          sector: profile.gics || profile.finnhubIndustry,
+          country: profile.country,
+          currency: profile.currency,
+          marketCap: profile.marketCapitalization ? profile.marketCapitalization * 1e6 : null,
+          website: profile.weburl,
+          logo: profile.logo,
+          ipo: profile.ipo,
+          employeeCount: profile.employeeTotal,
+          // Key metrics
+          peRatio: metrics?.peBasicExclExtraTTM || metrics?.peTTM || null,
+          pbRatio: metrics?.pbAnnual || null,
+          eps: metrics?.epsBasicExclExtraItemsTTM || null,
+          dividendYield: metrics?.dividendYieldIndicatedAnnual || null,
+          week52High: metrics?.['52WeekHigh'] || null,
+          week52Low: metrics?.['52WeekLow'] || null,
+          beta: metrics?.beta || null,
+          revenuePerShare: metrics?.revenuePerShareTTM || null,
+          source: 'finnhub'
+        };
+      } catch (error) {
+        console.error(`[Finnhub] Company profile error for ${upperSymbol}:`, error.message);
+        return null;
+      }
+    }, 3600); // Cache 1 hour — profile data rarely changes
+  }
+
+  // ──────────────────────────────────────────
+  // General Market News
+  // ──────────────────────────────────────────
+
+  /**
+   * Get general market/financial news from Finnhub
+   * category: 'general', 'forex', 'crypto', 'merger'
+   */
+  async getGeneralNews(category = 'general', { limit = 30 } = {}) {
+    const cacheKey = `finnhub:general_news:${category}:${limit}`;
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      if (!this.apiKey) return [];
+
+      try {
+        await externalAPILimiter.canMakeRequest('finnhub', 55, 60000);
+
+        const response = await axios.get(`${FINNHUB_BASE}/news`, {
+          params: { category, token: this.apiKey },
+          timeout: 10000
+        });
+
+        return (response.data || []).slice(0, limit).map(item => ({
+          id: item.id?.toString() || item.url,
+          title: item.headline || item.title || '',
+          summary: item.summary || '',
+          url: item.url,
+          source: item.source || 'Finnhub',
+          category: item.category || category,
+          publishedAt: item.datetime ? new Date(item.datetime * 1000).toISOString() : new Date().toISOString(),
+          sentimentScore: 0,
+          sentimentLabel: 'neutral',
+          impactScore: 5,
+          impactLabel: 'Medium',
+          tags: [category],
+          symbols: item.related ? item.related.split(',').map(s => s.trim()).filter(Boolean) : [],
+          imageUrl: item.image || null
+        }));
+      } catch (error) {
+        console.error(`[Finnhub] General news error:`, error.message);
+        return [];
+      }
+    }, 600); // Cache 10 minutes
+  }
+
+  // ──────────────────────────────────────────
   // Market Status
   // ──────────────────────────────────────────
 

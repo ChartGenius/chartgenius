@@ -18,6 +18,7 @@
 const RSSParser = require('rss-parser');
 const axios = require('axios');
 const cache = require('./cache');
+const finnhub = require('./finnhub');
 
 const parser = new RSSParser({
   timeout: 12000,
@@ -31,17 +32,10 @@ const parser = new RSSParser({
 // ─────────────────────────────────────────────
 const RSS_FEEDS = [
   {
-    name: 'Reuters Business',
-    url: 'https://feeds.reuters.com/reuters/businessNews',
-    category: 'business',
-    tags: ['business', 'economy'],
-    weight: 1.2
-  },
-  {
-    name: 'Reuters Markets',
-    url: 'https://feeds.reuters.com/reuters/financialNewsOfficial',
+    name: 'Yahoo Finance',
+    url: 'https://finance.yahoo.com/news/rssindex',
     category: 'markets',
-    tags: ['markets', 'stocks'],
+    tags: ['markets', 'stocks', 'finance'],
     weight: 1.3
   },
   {
@@ -49,6 +43,13 @@ const RSS_FEEDS = [
     url: 'https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines',
     category: 'markets',
     tags: ['markets', 'stocks', 'trading'],
+    weight: 1.2
+  },
+  {
+    name: 'CNBC',
+    url: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+    category: 'business',
+    tags: ['business', 'markets', 'economy'],
     weight: 1.2
   },
   {
@@ -66,18 +67,18 @@ const RSS_FEEDS = [
     weight: 1.1
   },
   {
+    name: 'Reuters Business',
+    url: 'https://feeds.reuters.com/reuters/businessNews',
+    category: 'business',
+    tags: ['business', 'economy'],
+    weight: 1.2
+  },
+  {
     name: 'Investing.com Economy',
     url: 'https://www.investing.com/rss/news_285.rss',
     category: 'economy',
     tags: ['economy', 'macroeconomics'],
     weight: 1.15
-  },
-  {
-    name: 'Seeking Alpha',
-    url: 'https://seekingalpha.com/market_currents.xml',
-    category: 'stocks',
-    tags: ['stocks', 'analysis'],
-    weight: 1.0
   }
 ];
 
@@ -123,7 +124,9 @@ const SYMBOL_KEYWORD_MAP = {
 // ─────────────────────────────────────────────
 class RSSFeedAggregator {
   constructor() {
-    this.newsAPIKey = process.env.NEWS_API_KEY;
+    const rawKey = process.env.NEWS_API_KEY || '';
+    // Only use NewsAPI key if it's been set (not placeholder)
+    this.newsAPIKey = (rawKey && !rawKey.startsWith('REPLACE_')) ? rawKey : null;
     this.feeds = RSS_FEEDS;
     this._articleCache = new Map(); // Dedup by URL across fetch cycles
   }
@@ -153,7 +156,29 @@ class RSSFeedAggregator {
         }
       });
 
-      // If all feeds fail, fall back to NewsAPI (if key exists)
+      // If too few articles, supplement with Finnhub news
+      const finnhubCategoryMap = {
+        'crypto': 'crypto',
+        'forex': 'forex',
+        null: 'general',
+        undefined: 'general',
+        'business': 'general',
+        'markets': 'general',
+        'economy': 'general',
+        'stocks': 'general'
+      };
+      const finnhubCat = finnhubCategoryMap[category] || 'general';
+
+      if (allArticles.length < 10) {
+        try {
+          const finnhubNews = await finnhub.getGeneralNews(finnhubCat, { limit: 30 });
+          allArticles.push(...finnhubNews);
+        } catch (e) {
+          console.warn('[RSS] Finnhub news supplement failed:', e.message);
+        }
+      }
+
+      // If still no articles, fall back to NewsAPI (if key is properly configured)
       if (allArticles.length === 0 && this.newsAPIKey) {
         console.info('[RSS] All feeds failed, falling back to NewsAPI');
         return await this._fetchFromNewsAPI({ limit });
@@ -198,8 +223,41 @@ class RSSFeedAggregator {
         return keywords.some(kw => text.includes(kw));
       });
 
+      // Always supplement with Finnhub company news
+      try {
+        const companyNews = await finnhub.getCompanyNews(symbol, { days: 7 });
+        const normalized = companyNews.map(item => ({
+          id: item.id || item.url,
+          title: item.title || '',
+          summary: item.summary || '',
+          url: item.url,
+          source: item.source || 'Finnhub',
+          category: 'stocks',
+          publishedAt: item.publishedAt,
+          sentimentScore: this._scoreSentiment((item.title + ' ' + (item.summary || '')).toLowerCase()),
+          sentimentLabel: 'neutral',
+          impactScore: 5,
+          impactLabel: 'Medium',
+          tags: ['stocks'],
+          symbols: [symbol.toUpperCase()],
+          imageUrl: item.imageUrl || null
+        }));
+
+        const merged = [...relevant, ...normalized];
+        const seen = new Set();
+        const deduped = merged.filter(a => {
+          const key = a.url || a.id;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        return deduped.slice(0, limit);
+      } catch (e) {
+        console.warn(`[RSS] Finnhub company news for ${symbol} failed:`, e.message);
+      }
+
       // If NewsAPI available and we have fewer than 5 results, supplement
-      if (relevant.length < 5 && this.newsAPIKey) {
+      if (relevant.length < 5 && this.newsAPIKey && this.newsAPIKey !== 'REPLACE_WITH_YOUR_NEWSAPI_KEY') {
         const supplemental = await this._fetchFromNewsAPI({ q: symbol, limit: 10 });
         const merged = [...relevant, ...supplemental];
         const seen = new Set(relevant.map(a => a.url));
