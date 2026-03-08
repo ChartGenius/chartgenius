@@ -40,7 +40,8 @@ const RSS_FEEDS = [
     url: 'https://finance.yahoo.com/news/rssindex',
     category: 'markets',
     tags: ['markets', 'stocks', 'finance'],
-    weight: 1.3
+    weight: 1.3,
+    maxItems: 8   // Cap to prevent one source dominating
   },
   {
     name: 'MarketWatch',
@@ -70,14 +71,6 @@ const RSS_FEEDS = [
     tags: ['markets', 'global', 'international'],
     weight: 1.1
   },
-  // Note: Reuters deprecated their RSS feeds in 2023
-  // {
-  //   name: 'Reuters Business',
-  //   url: 'https://feeds.reuters.com/reuters/businessNews',
-  //   category: 'business',
-  //   tags: ['business', 'economy'],
-  //   weight: 1.2
-  // },
   {
     name: 'Seeking Alpha Market News',
     url: 'https://seekingalpha.com/market_currents.xml',
@@ -90,10 +83,44 @@ const RSS_FEEDS = [
     url: 'https://seekingalpha.com/feed.xml',
     category: 'stocks',
     tags: ['stocks', 'analysis', 'investing'],
+    weight: 1.1,
+    maxItems: 8
+  },
+  {
+    name: 'WSJ Markets',
+    url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
+    category: 'markets',
+    tags: ['markets', 'stocks', 'breaking'],
+    weight: 1.3
+  },
+  {
+    name: 'Bloomberg Markets',
+    url: 'https://feeds.bloomberg.com/markets/news.rss',
+    category: 'markets',
+    tags: ['markets', 'stocks', 'global'],
+    weight: 1.3
+  },
+  {
+    name: 'Financial Times',
+    url: 'https://www.ft.com/rss/home',
+    category: 'markets',
+    tags: ['markets', 'global', 'analysis'],
+    weight: 1.2
+  },
+  {
+    name: 'Nasdaq Markets',
+    url: 'https://www.nasdaq.com/feed/rssoutbound?category=Markets',
+    category: 'markets',
+    tags: ['markets', 'stocks', 'nasdaq'],
     weight: 1.1
   },
-  // Note: Barrons feed requires auth/subscription
-  // Note: Investopedia feed endpoint deprecated
+  {
+    name: 'Benzinga',
+    url: 'https://www.benzinga.com/feed',
+    category: 'markets',
+    tags: ['markets', 'stocks', 'trading'],
+    weight: 1.1
+  },
   
   // ═══════════════════════════════════════════
   // CRYPTO
@@ -133,17 +160,18 @@ const RSS_FEEDS = [
     tags: ['bitcoin', 'crypto'],
     weight: 1.0
   },
+  {
+    name: 'CryptoSlate',
+    url: 'https://cryptoslate.com/feed/',
+    category: 'crypto',
+    tags: ['crypto', 'altcoins', 'defi'],
+    weight: 1.0
+  },
   
   // ═══════════════════════════════════════════
   // FOREX
   // ═══════════════════════════════════════════
-  {
-    name: 'FXStreet',
-    url: 'https://www.fxstreet.com/rss/news',
-    category: 'forex',
-    tags: ['forex', 'currency'],
-    weight: 1.1
-  },
+  // Note: FXStreet returns 403 from cloud/datacenter IPs - removed
   {
     name: 'ForexLive',
     url: 'https://www.forexlive.com/feed/',
@@ -151,7 +179,13 @@ const RSS_FEEDS = [
     tags: ['forex', 'currency', 'central-banks'],
     weight: 1.2
   },
-  // Note: DailyFX feed requires auth
+  {
+    name: 'ForexCrunch',
+    url: 'https://www.forexcrunch.com/feed/',
+    category: 'forex',
+    tags: ['forex', 'currency', 'trading', 'technical-analysis'],
+    weight: 1.1
+  },
   
   // ═══════════════════════════════════════════
   // ECONOMY & MACRO
@@ -220,32 +254,6 @@ const RSS_FEEDS = [
     tags: ['economy', 'housing', 'macro', 'data'],
     weight: 1.1
   },
-  
-  // ═══════════════════════════════════════════
-  // BREAKING / REAL-TIME
-  // ═══════════════════════════════════════════
-  // Note: AP via RSShub is unreliable (403s)
-  {
-    name: 'WSJ Markets',
-    url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
-    category: 'markets',
-    tags: ['markets', 'stocks', 'breaking'],
-    weight: 1.3
-  },
-  {
-    name: 'Bloomberg Markets',
-    url: 'https://feeds.bloomberg.com/markets/news.rss',
-    category: 'markets',
-    tags: ['markets', 'stocks', 'global'],
-    weight: 1.3
-  },
-  {
-    name: 'Financial Times',
-    url: 'https://www.ft.com/rss/home',
-    category: 'markets',
-    tags: ['markets', 'global', 'analysis'],
-    weight: 1.2
-  }
 ];
 
 // ─────────────────────────────────────────────
@@ -301,7 +309,7 @@ class RSSFeedAggregator {
    * Fetch and aggregate news from all RSS sources
    */
   async getAggregatedNews({ limit = 30, category = null, minImpact = 0 } = {}) {
-    const cacheKey = `rss:aggregated:${category || 'all'}:${minImpact}`;
+    const cacheKey = `rss:aggregated:${category || 'all'}:${minImpact}:${limit}`;
 
     return await cache.cacheAPICall(cacheKey, async () => {
       const feedsToFetch = category
@@ -467,7 +475,8 @@ class RSSFeedAggregator {
    */
   async _fetchFeed(feedConfig) {
     const feed = await parser.parseURL(feedConfig.url);
-    return (feed.items || []).slice(0, 25).map(item =>
+    const maxItems = feedConfig.maxItems || 12; // Default 12 per feed for source diversity
+    return (feed.items || []).slice(0, maxItems).map(item =>
       this._normalizeArticle(item, feedConfig)
     );
   }
