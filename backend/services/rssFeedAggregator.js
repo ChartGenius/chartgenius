@@ -108,10 +108,10 @@ const RSS_FEEDS = [
     weight: 1.2
   },
   {
-    name: 'Nasdaq Markets',
-    url: 'https://www.nasdaq.com/feed/rssoutbound?category=Markets',
+    name: 'Business Insider Markets',
+    url: 'https://markets.businessinsider.com/rss/news',
     category: 'markets',
-    tags: ['markets', 'stocks', 'nasdaq'],
+    tags: ['markets', 'stocks', 'business'],
     weight: 1.1
   },
   {
@@ -161,10 +161,17 @@ const RSS_FEEDS = [
     weight: 1.0
   },
   {
-    name: 'CryptoSlate',
-    url: 'https://cryptoslate.com/feed/',
+    name: 'CryptoNews',
+    url: 'https://cryptonews.com/news/feed/',
     category: 'crypto',
-    tags: ['crypto', 'altcoins', 'defi'],
+    tags: ['crypto', 'altcoins', 'blockchain'],
+    weight: 1.0
+  },
+  {
+    name: 'NewsBTC',
+    url: 'https://www.newsbtc.com/feed/',
+    category: 'crypto',
+    tags: ['bitcoin', 'crypto', 'trading'],
     weight: 1.0
   },
   
