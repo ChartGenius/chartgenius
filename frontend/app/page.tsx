@@ -1105,168 +1105,166 @@ function SidebarSkeletons({ count = 4 }: { count?: number }) {
 
 // ─── Portfolio Panel ──────────────────────────────────────────────────────────
 
-function PortfolioPanel({ quotes }: { quotes: Record<string, Quote> }) {
-  const [positions, setPositions] = useState<PortfolioPosition[]>(() => {
-    try { const s = localStorage.getItem('cg_portfolio'); return s ? JSON.parse(s) : [] } catch { return [] }
+interface Holding {
+  id: string
+  ticker: string
+  company: string
+  shares: number
+  avgCost: number
+  buyDate: string
+  sector: string
+  annualDividend: number
+  totalDividendsReceived: number
+}
+
+function PortfolioPanel({ quotes, onOpenStock }: { quotes: Record<string, Quote>; onOpenStock: (symbol: string) => void }) {
+  const [holdings, setHoldings] = useState<Holding[]>(() => {
+    try { const s = localStorage.getItem('cg_portfolio_holdings'); return s ? JSON.parse(s) : [] } catch { return [] }
   })
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ symbol: '', shares: '', buyPrice: '', buyDate: '' })
-  const [formError, setFormError] = useState('')
-  const [loadingPrice, setLoadingPrice] = useState(false)
+  const [liveQuotes, setLiveQuotes] = useState<Record<string, Quote>>({})
+  const [loadingPrices, setLoadingPrices] = useState(false)
 
+  // Fetch live prices for all holdings
   useEffect(() => {
-    try { localStorage.setItem('cg_portfolio', JSON.stringify(positions)) } catch {}
-  }, [positions])
+    if (holdings.length === 0) return
+    
+    const fetchPrices = async () => {
+      setLoadingPrices(true)
+      try {
+        const tickers = holdings.map(h => h.ticker).join(',')
+        const res = await fetch(`${API_BASE}/api/market-data/batch?symbols=${tickers}`)
+        if (res.ok) {
+          const j = await res.json()
+          if (j.success && j.data) setLiveQuotes(j.data)
+        }
+      } catch (err) {
+        console.warn('[PortfolioPanel] fetch failed:', err)
+      } finally {
+        setLoadingPrices(false)
+      }
+    }
 
-  const getPrice = (sym: string): number | null => {
-    return quotes[sym]?.current ?? null
+    fetchPrices()
+    // Auto-refresh every 30s
+    const t = setInterval(fetchPrices, 30_000)
+    return () => clearInterval(t)
+  }, [holdings])
+
+  const getPrice = (ticker: string): number | null => {
+    return liveQuotes[ticker]?.current ?? quotes[ticker]?.current ?? null
   }
 
-  const totalCost = positions.reduce((s, p) => s + p.shares * p.buyPrice, 0)
-  const totalValue = positions.reduce((s, p) => {
-    const cur = getPrice(p.symbol)
-    return s + p.shares * (cur ?? p.buyPrice)
+  const getDayChange = (ticker: string): number | null => {
+    return liveQuotes[ticker]?.changePct ?? quotes[ticker]?.changePct ?? null
+  }
+
+  // Calculate portfolio stats
+  const totalCost = holdings.reduce((s, h) => s + h.shares * h.avgCost, 0)
+  const totalValue = holdings.reduce((s, h) => {
+    const cur = getPrice(h.ticker)
+    return s + h.shares * (cur ?? h.avgCost)
   }, 0)
   const totalPnl = totalValue - totalCost
   const totalPnlPct = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0
-
-  const handleAdd = async () => {
-    setFormError('')
-    const sym = form.symbol.trim().toUpperCase()
-    const shares = parseFloat(form.shares)
-    const buyPrice = parseFloat(form.buyPrice)
-    if (!sym) { setFormError('Symbol required'); return }
-    if (isNaN(shares) || shares <= 0) { setFormError('Invalid shares'); return }
-    if (isNaN(buyPrice) || buyPrice <= 0) { setFormError('Invalid price'); return }
-
-    // If no price typed, try to fetch current
-    let finalBuyPrice = buyPrice
-    if (isNaN(buyPrice) || buyPrice <= 0) {
-      setLoadingPrice(true)
-      try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-        const res = await fetch(`${API_BASE}/api/market-data/quote?symbol=${sym}`)
-        const j = await res.json()
-        if (j.success && j.data) finalBuyPrice = j.data.current
-      } catch {}
-      setLoadingPrice(false)
+  const totalDayGain = holdings.reduce((s, h) => {
+    const cur = getPrice(h.ticker)
+    const dayChange = getDayChange(h.ticker)
+    if (cur && dayChange !== null) {
+      return s + (cur * dayChange / 100) * h.shares
     }
-
-    const pos: PortfolioPosition = {
-      symbol: sym,
-      name: TOP_SYMBOLS.find(s => s.symbol === sym)?.name || sym,
-      shares,
-      buyPrice: finalBuyPrice,
-      buyDate: form.buyDate || new Date().toISOString().slice(0, 10),
-    }
-    setPositions(prev => [...prev, pos])
-    setForm({ symbol: '', shares: '', buyPrice: '', buyDate: '' })
-    setShowForm(false)
-  }
-
-  const removePosition = (i: number) => {
-    setPositions(prev => prev.filter((_, idx) => idx !== i))
-  }
+    return s
+  }, 0)
 
   return (
     <div className="sidebar-section" style={{ padding: 0 }}>
-      <div className="sidebar-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>POSITIONS</span>
-        <button
-          onClick={() => setShowForm(s => !s)}
-          style={{ fontSize: 10, color: 'var(--accent)', cursor: 'pointer' }}
-        >
-          {showForm ? '✕ Cancel' : '+ Add Position'}
-        </button>
-      </div>
-
       {/* Summary */}
-      {positions.length > 0 && (
-        <div style={{ padding: '6px 14px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-2)' }}>
-            VALUE <span style={{ color: 'var(--text-0)', fontFamily: 'var(--mono)' }}>${fmt(totalValue)}</span>
+      {holdings.length > 0 && (
+        <>
+          <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', fontSize: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 6 }}>
+              <div>
+                <span style={{ color: 'var(--text-2)' }}>VALUE</span>
+                <div style={{ color: 'var(--text-0)', fontFamily: 'var(--mono)', fontWeight: 600 }}>
+                  ${fmt(totalValue)}
+                </div>
+              </div>
+              <div>
+                <span style={{ color: 'var(--text-2)' }}>P&L</span>
+                <div style={{ color: totalPnl >= 0 ? 'var(--green)' : 'var(--red)', fontFamily: 'var(--mono)', fontWeight: 600 }}>
+                  ${fmt(Math.abs(totalPnl))} ({totalPnlPct >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)
+                </div>
+              </div>
+            </div>
+            {totalDayGain !== 0 && (
+              <div style={{ color: totalDayGain >= 0 ? 'var(--green)' : 'var(--red)', fontSize: 9.5 }}>
+                Day: {totalDayGain >= 0 ? '+' : ''}${fmt(Math.abs(totalDayGain))}
+              </div>
+            )}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--text-2)' }}>
-            P&amp;L{' '}
-            <span style={{ color: totalPnl >= 0 ? 'var(--green)' : 'var(--red)', fontFamily: 'var(--mono)' }}>
-              {totalPnl >= 0 ? '+' : ''}${fmt(Math.abs(totalPnl))} ({totalPnlPct >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)
-            </span>
+
+          {/* Holdings list */}
+          {holdings.map((h) => {
+            const cur = getPrice(h.ticker)
+            const dayChg = getDayChange(h.ticker)
+            const pnlPct = cur !== null ? ((cur - h.avgCost) / h.avgCost) * 100 : null
+            return (
+              <div key={h.id} className="mover-row" style={{ gridTemplateColumns: 'auto 1fr auto auto', gap: 8, cursor: 'pointer' }} onClick={() => onOpenStock(h.ticker)}>
+                <span className="mover-symbol" style={{ fontSize: 11 }}>
+                  {h.ticker}
+                  <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 3 }}>{h.shares}sh</span>
+                </span>
+                <span className="mover-price" style={{ fontSize: 11 }}>
+                  {cur !== null ? `$${fmt(cur)}` : '—'}
+                </span>
+                <span className={pnlPct !== null ? (pnlPct >= 0 ? 'mover-up' : 'mover-down') : ''} style={{ fontSize: 10 }}>
+                  {pnlPct !== null ? `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%` : '—'}
+                </span>
+              </div>
+            )
+          })}
+
+          {/* View Full Portfolio link */}
+          <div style={{ padding: '8px 14px', borderTop: '1px solid var(--border)' }}>
+            <a
+              href="/portfolio"
+              style={{
+                display: 'inline-block',
+                fontSize: 11,
+                color: 'var(--accent)',
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              View Full Portfolio →
+            </a>
           </div>
-        </div>
+        </>
       )}
 
-      {/* Add form */}
-      {showForm && (
-        <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', background: 'var(--bg-2)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <input
-            className="symbol-search"
-            placeholder="Symbol (e.g. AAPL)"
-            value={form.symbol}
-            onChange={e => setForm(f => ({ ...f, symbol: e.target.value }))}
-            style={{ width: '100%', marginBottom: 0 }}
-          />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            <input
-              className="symbol-search"
-              placeholder="Shares"
-              type="number"
-              value={form.shares}
-              onChange={e => setForm(f => ({ ...f, shares: e.target.value }))}
-              style={{ marginBottom: 0 }}
-            />
-            <input
-              className="symbol-search"
-              placeholder="Buy price ($)"
-              type="number"
-              value={form.buyPrice}
-              onChange={e => setForm(f => ({ ...f, buyPrice: e.target.value }))}
-              style={{ marginBottom: 0 }}
-            />
-          </div>
-          <input
-            className="symbol-search"
-            type="date"
-            value={form.buyDate}
-            onChange={e => setForm(f => ({ ...f, buyDate: e.target.value }))}
-            style={{ width: '100%', marginBottom: 0, colorScheme: 'dark' }}
-          />
-          {formError && <span style={{ fontSize: 10, color: 'var(--red)' }}>{formError}</span>}
-          <button
-            onClick={handleAdd}
-            disabled={loadingPrice}
-            style={{ background: 'var(--accent)', color: '#fff', borderRadius: 4, padding: '4px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer', opacity: loadingPrice ? 0.6 : 1 }}
+      {/* Empty state */}
+      {holdings.length === 0 && (
+        <div style={{ padding: '16px 14px', textAlign: 'center', fontSize: 11, color: 'var(--text-3)' }}>
+          <div style={{ marginBottom: 8 }}>No positions yet</div>
+          <a
+            href="/portfolio"
+            style={{
+              display: 'inline-block',
+              fontSize: 10,
+              color: 'var(--accent)',
+              textDecoration: 'none',
+              fontWeight: 600,
+            }}
           >
-            {loadingPrice ? 'Fetching price…' : 'Add Position'}
-          </button>
+            Add your first stock →
+          </a>
         </div>
       )}
 
-      {/* Positions */}
-      {positions.length === 0 && !showForm && (
-        <div style={{ padding: '12px 14px', fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>
-          No positions yet. Add your first trade!
+      {loadingPrices && holdings.length > 0 && (
+        <div style={{ padding: '4px 14px', fontSize: 9, color: 'var(--text-3)', textAlign: 'right' }}>
+          ↻ updating…
         </div>
       )}
-      {positions.map((pos, i) => {
-        const cur = getPrice(pos.symbol)
-        const pnl = cur !== null ? (cur - pos.buyPrice) * pos.shares : null
-        const pnlPct = cur !== null ? ((cur - pos.buyPrice) / pos.buyPrice) * 100 : null
-        return (
-          <div key={i} className="mover-row" style={{ gridTemplateColumns: 'auto 1fr auto auto', gap: 8 }}>
-            <span className="mover-symbol" style={{ fontSize: 11 }}>
-              {pos.symbol}
-              <span style={{ fontSize: 9, color: 'var(--text-3)', marginLeft: 3 }}>{pos.shares}sh</span>
-            </span>
-            <span className="mover-price" style={{ fontSize: 11 }}>
-              {cur !== null ? `$${fmt(cur)}` : '—'}
-            </span>
-            <span className={pnlPct !== null ? (pnlPct >= 0 ? 'mover-up' : 'mover-down') : ''} style={{ fontSize: 10 }}>
-              {pnlPct !== null ? `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%` : '—'}
-            </span>
-            <button onClick={() => removePosition(i)} className="remove-btn" style={{ display: 'block' }}>✕</button>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -2236,7 +2234,7 @@ export default function Home() {
               <span style={{ fontSize: 11, color: '#606070' }}>{portfolioCollapsed ? '▼ Show' : '▲ Hide'}</span>
             </div>
             {!portfolioCollapsed && (
-              <PortfolioPanel quotes={{ ...quotes, ...tickerQuotes }} />
+              <PortfolioPanel quotes={{ ...quotes, ...tickerQuotes }} onOpenStock={openStockDetail} />
             )}
           </div>
 
