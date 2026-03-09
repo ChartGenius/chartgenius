@@ -362,9 +362,9 @@ function StockScoreCard({ score, loading }: { score: StockScore | null; loading:
             </div>
             {/* Detail tags */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-              {dim.key === 'value' && dim.pe != null && (
+              {dim.key === 'value' && (dim as any).pe != null && (
                 <>
-                  <span className="tag tag-blue" style={{ fontSize: 9 }}>P/E: {dim.pe}</span>
+                  <span className="tag tag-blue" style={{ fontSize: 9 }}>P/E: {(dim as any).pe}</span>
                   <span className="tag" style={{ fontSize: 9 }}>Sector Avg: {(dim as any).sectorAvg}</span>
                 </>
               )}
