@@ -175,6 +175,97 @@ export async function apiSaveSettings(token: string, settings: DashboardSettings
   )
 }
 
+// ─── Agents ───────────────────────────────────────────────────────────────────
+
+export interface AgentStatus {
+  id: string
+  name: AgentName
+  role: string
+  status: 'online' | 'busy' | 'offline'
+  lastActive: string
+  currentTask: string
+  tasksCompletedToday: number
+  tokensUsedToday: number
+}
+
+export async function apiGetAgents(token: string) {
+  return apiFetch<{ agents: AgentStatus[] }>(
+    `${API_BASE}/api/dashboard/agents`,
+    { headers: headers(token) }
+  )
+}
+
+export async function apiUpdateAgent(token: string, name: string, updates: Partial<AgentStatus>) {
+  return apiFetch<{ agent: AgentStatus }>(
+    `${API_BASE}/api/dashboard/agents/${name}`,
+    { method: 'PUT', headers: headers(token), body: JSON.stringify(updates) }
+  )
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export interface Notification {
+  id: string
+  type: 'info' | 'warning' | 'success' | 'error'
+  title: string
+  message: string
+  read: boolean
+  createdAt: string
+}
+
+export async function apiGetNotifications(token: string, limit = 50, unreadOnly = false) {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (unreadOnly) params.set('unread', 'true')
+  return apiFetch<{ notifications: Notification[]; unreadCount: number }>(
+    `${API_BASE}/api/dashboard/notifications?${params}`,
+    { headers: headers(token) }
+  )
+}
+
+export async function apiCreateNotification(token: string, notif: Partial<Notification>) {
+  return apiFetch<{ notification: Notification }>(
+    `${API_BASE}/api/dashboard/notifications`,
+    { method: 'POST', headers: headers(token), body: JSON.stringify(notif) }
+  )
+}
+
+export async function apiMarkNotificationRead(token: string, id: string) {
+  return apiFetch<{ ok: boolean }>(
+    `${API_BASE}/api/dashboard/notifications/${id}/read`,
+    { method: 'PUT', headers: headers(token) }
+  )
+}
+
+export async function apiMarkAllNotificationsRead(token: string) {
+  return apiFetch<{ ok: boolean }>(
+    `${API_BASE}/api/dashboard/notifications/read-all`,
+    { method: 'PUT', headers: headers(token) }
+  )
+}
+
+export async function apiDeleteNotification(token: string, id: string) {
+  return apiFetch<{ ok: boolean }>(
+    `${API_BASE}/api/dashboard/notifications/${id}`,
+    { method: 'DELETE', headers: headers(token) }
+  )
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+
+export interface DashboardStats {
+  totalTasks: number
+  completedToday: number
+  activeAgents: number
+  unreadNotifications: number
+}
+
+export async function apiGetStats(token: string) {
+  return apiFetch<{ stats: DashboardStats }>(
+    `${API_BASE}/api/dashboard/stats`,
+    { headers: headers(token) }
+  )
+}
+
 // ─── Full Sync (localStorage → Supabase) ──────────────────────────────────────
 
 export async function apiSyncDashboard(

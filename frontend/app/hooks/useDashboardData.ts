@@ -19,11 +19,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Task, ActivityItem, Company, DashboardSettings,
+  AgentStatus, Notification, DashboardStats,
   apiGetTasks, apiCreateTask, apiUpdateTask, apiDeleteTask,
   apiGetActivity, apiCreateActivity,
   apiGetCompanies, apiCreateCompany, apiDeleteCompany, apiAddProject, apiDeleteProject,
   apiGetSettings, apiSaveSettings,
   apiSyncDashboard,
+  apiGetAgents, apiUpdateAgent,
+  apiGetNotifications, apiCreateNotification, apiMarkNotificationRead, apiMarkAllNotificationsRead, apiDeleteNotification,
+  apiGetStats,
 } from '../lib/dashboardApi'
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
@@ -153,6 +157,10 @@ export function useDashboardData(token: string | null) {
   const [activity, _setActivity] = useState<ActivityItem[]>(DEFAULT_ACTIVITY)
   const [companies, _setCompanies] = useState<Company[]>(DEFAULT_COMPANIES)
   const [settings, _setSettings] = useState<DashboardSettings>(DEFAULT_SETTINGS)
+  const [agents, _setAgents] = useState<AgentStatus[]>([])
+  const [notifications, _setNotifications] = useState<Notification[]>([])
+  const [unreadCount, _setUnreadCount] = useState(0)
+  const [stats, _setStats] = useState<DashboardStats>({ totalTasks: 0, completedToday: 0, activeAgents: 0, unreadNotifications: 0 })
   const [loading, setLoading] = useState(true)
   const initialized = useRef(false)
   const tokenRef = useRef(token)
@@ -210,6 +218,18 @@ export function useDashboardData(token: string | null) {
             }
             localStorage.setItem(LS_SYNCED, 'true')
           }
+          // Also load agents, notifications, and stats
+          const [agentsRes, notifsRes, statsRes] = await Promise.all([
+            apiGetAgents(token),
+            apiGetNotifications(token),
+            apiGetStats(token),
+          ])
+          if (!agentsRes.error && agentsRes.agents) _setAgents(agentsRes.agents)
+          if (!notifsRes.error && notifsRes.notifications) {
+            _setNotifications(notifsRes.notifications)
+            _setUnreadCount(notifsRes.unreadCount || 0)
+          }
+          if (!statsRes.error && statsRes.stats) _setStats(statsRes.stats)
         } catch (e) {
           console.warn('[Dashboard] API load failed, using localStorage:', e)
         }
@@ -347,12 +367,85 @@ export function useDashboardData(token: string | null) {
     }
   }, [])
 
+  // ── Agent actions ────────────────────────────────────────────────────────
+
+  const refreshAgents = useCallback(async () => {
+    if (!tokenRef.current) return
+    const res = await apiGetAgents(tokenRef.current)
+    if (!res.error && res.agents) _setAgents(res.agents)
+  }, [])
+
+  const updateAgent = useCallback(async (name: string, updates: Partial<AgentStatus>) => {
+    if (!tokenRef.current) return
+    const res = await apiUpdateAgent(tokenRef.current, name, updates)
+    if (!res.error && res.agent) {
+      _setAgents(prev => prev.map(a => a.name === name ? res.agent! : a))
+    }
+  }, [])
+
+  // ── Notification actions ──────────────────────────────────────────────────
+
+  const refreshNotifications = useCallback(async () => {
+    if (!tokenRef.current) return
+    const res = await apiGetNotifications(tokenRef.current)
+    if (!res.error && res.notifications) {
+      _setNotifications(res.notifications)
+      _setUnreadCount(res.unreadCount || 0)
+    }
+  }, [])
+
+  const addNotification = useCallback(async (notif: Partial<Notification>) => {
+    if (!tokenRef.current) return
+    const res = await apiCreateNotification(tokenRef.current, notif)
+    if (!res.error && res.notification) {
+      _setNotifications(prev => [res.notification!, ...prev].slice(0, 50))
+      _setUnreadCount(prev => prev + 1)
+    }
+  }, [])
+
+  const markNotificationRead = useCallback(async (id: string) => {
+    if (!tokenRef.current) return
+    await apiMarkNotificationRead(tokenRef.current, id)
+    _setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    _setUnreadCount(prev => Math.max(0, prev - 1))
+  }, [])
+
+  const markAllNotificationsRead = useCallback(async () => {
+    if (!tokenRef.current) return
+    await apiMarkAllNotificationsRead(tokenRef.current)
+    _setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    _setUnreadCount(0)
+  }, [])
+
+  const deleteNotification = useCallback(async (id: string) => {
+    if (!tokenRef.current) return
+    await apiDeleteNotification(tokenRef.current, id)
+    _setNotifications(prev => {
+      const target = prev.find(n => n.id === id)
+      const next = prev.filter(n => n.id !== id)
+      if (target && !target.read) _setUnreadCount(c => Math.max(0, c - 1))
+      return next
+    })
+  }, [])
+
+  // ── Stats refresh ─────────────────────────────────────────────────────────
+
+  const refreshStats = useCallback(async () => {
+    if (!tokenRef.current) return
+    const res = await apiGetStats(tokenRef.current)
+    if (!res.error && res.stats) _setStats(res.stats)
+  }, [])
+
   return {
     // State (read)
     tasks,
     activity,
     companies,
     settings,
+    agents,
+    notifications,
+    unreadCount,
+    stats,
     loading,
 
     // Setters (for bulk/direct operations like import, drag-drop)
@@ -370,5 +463,19 @@ export function useDashboardData(token: string | null) {
     deleteCompany,
     addProject,
     removeProject,
+
+    // Agent actions
+    refreshAgents,
+    updateAgent,
+
+    // Notification actions
+    refreshNotifications,
+    addNotification,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+
+    // Stats
+    refreshStats,
   }
 }
