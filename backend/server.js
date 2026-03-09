@@ -34,6 +34,7 @@ app.use('/api/crypto', require('./routes/crypto'));               // CoinGecko c
 app.use('/api/market-movers', require('./routes/marketMovers')); // High-impact news scanner
 app.use('/api/stock-info', require('./routes/stockInfo'));         // Comprehensive stock info (Finnhub + Yahoo)
 app.use('/api/portfolio', require('./routes/portfolio'));           // Portfolio persistence (Supabase)
+app.use('/api/alerts/price', require('./routes/priceAlerts'));      // User price alerts
 
 // Health check
 app.get('/health', (req, res) => {
@@ -72,6 +73,12 @@ app.listen(PORT, () => {
   // Start real-time alert poll loop (every 5 minutes)
   const alertService = require('./services/alertService');
   alertService.startPolling(5 * 60 * 1000);
+
+  // Check user price alerts every 5 minutes
+  const { checkAndTriggerAlerts } = require('./routes/priceAlerts');
+  setInterval(async () => {
+    try { await checkAndTriggerAlerts(); } catch {}
+  }, 5 * 60 * 1000);
   
   // Start market mover scanner (every 10 minutes)
   const marketMoverBot = require('./services/marketMoverBot');
