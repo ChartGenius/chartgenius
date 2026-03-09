@@ -11,7 +11,7 @@ import {
 } from '../components/Icons'
 import { useAuth } from '../context/AuthContext'
 import { useDashboardData, DEFAULT_TASKS, DEFAULT_ACTIVITY, DEFAULT_COMPANIES, DEFAULT_SETTINGS } from '../hooks/useDashboardData'
-import type { Task, ActivityItem, Company, DashboardSettings, TaskStatus, Priority, AgentName } from '../lib/dashboardApi'
+import type { Task, ActivityItem, Company, DashboardSettings, TaskStatus, Priority, AgentName, AgentStatus, Notification } from '../lib/dashboardApi'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -458,9 +458,12 @@ export default function DashboardPage() {
   const { token } = useAuth()
   const {
     tasks, activity, companies, settings,
+    agents, notifications, unreadCount, stats,
     setTasks, setActivity, setCompanies, setSettings,
     addTask, updateTask, deleteTask, addActivityItem,
     addCompany, deleteCompany,
+    markNotificationRead, markAllNotificationsRead, deleteNotification,
+    refreshStats,
   } = useDashboardData(token)
 
   const [activeSection, setActiveSection] = useState<string>('overview')
@@ -590,17 +593,25 @@ export default function DashboardPage() {
     return total + (tokens / 1_000_000) * rate
   }, 0)
 
-  const agentStatuses: Record<string, { status: string; color: string; current: string }> = {
-    Axle: { status: 'Active', color: 'var(--blue)', current: 'User acquisition strategy' },
-    Bolt: { status: 'Working', color: 'var(--blue)', current: 'Market sentiment analysis' },
-    Zip: { status: 'Idle', color: 'var(--green)', current: '' },
-  }
+  // Build agent statuses from real API data (falls back to static if empty)
+  const agentStatuses: Record<string, { status: string; color: string; current: string }> = agents.length > 0
+    ? Object.fromEntries(agents.map(a => [a.name, {
+        status: a.status === 'busy' ? 'Working' : a.status === 'online' ? 'Active' : 'Idle',
+        color: a.status === 'offline' ? 'var(--text-2)' : 'var(--blue)',
+        current: a.currentTask || '',
+      }]))
+    : {
+        Axle: { status: 'Active', color: 'var(--blue)', current: '' },
+        Bolt: { status: 'Working', color: 'var(--blue)', current: '' },
+        Zip: { status: 'Idle', color: 'var(--green)', current: '' },
+      }
 
   const navItems = [
     { id: 'overview', label: 'Overview', emoji: '🏠' },
     { id: 'tasks', label: 'Tasks', emoji: '📋' },
     { id: 'companies', label: 'Companies', emoji: '🏢' },
     { id: 'agents', label: 'Agents', emoji: '🤖' },
+    { id: 'notifications', label: 'Notifications', emoji: '🔔' },
     { id: 'metrics', label: 'Metrics', emoji: '📊' },
     { id: 'settings', label: 'Settings', emoji: '⚙️' },
   ]
@@ -650,6 +661,12 @@ export default function DashboardPage() {
                   marginLeft: 'auto', background: 'var(--accent)', color: '#fff',
                   borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 600,
                 }}>{openTasks.length}</span>
+              )}
+              {item.id === 'notifications' && unreadCount > 0 && (
+                <span style={{
+                  marginLeft: 'auto', background: 'var(--red)', color: '#fff',
+                  borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 600,
+                }}>{unreadCount}</span>
               )}
             </button>
           ))}
@@ -725,20 +742,25 @@ export default function DashboardPage() {
                 {/* Active Agents */}
                 <div className="ds-card" style={{ padding: '16px 20px' }}>
                   <div style={{ fontSize: 10, color: 'var(--text-2)', letterSpacing: '0.06em', marginBottom: 10 }}>ACTIVE AGENTS</div>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-0)', marginBottom: 8 }}>3</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-0)', marginBottom: 8 }}>
+                    {stats.activeAgents || agents.filter(a => a.status !== 'offline').length || Object.values(agentStatuses).filter(a => a.status !== 'Idle').length}
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {['Axle', 'Bolt', 'Zip'].map(agent => (
-                      <div key={agent} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <div style={{
-                          width: 6, height: 6, borderRadius: '50%',
-                          background: agentStatuses[agent].current ? 'var(--blue)' : 'var(--green)',
-                        }} />
-                        <span style={{ fontSize: 11, color: 'var(--text-1)' }}>{agent}</span>
-                        <span style={{ fontSize: 10, color: 'var(--text-2)', marginLeft: 'auto' }}>
-                          {agentStatuses[agent].current ? 'working' : 'idle'}
-                        </span>
-                      </div>
-                    ))}
+                    {['Axle', 'Bolt', 'Zip'].map(agent => {
+                      const agentData = agents.find(a => a.name === agent)
+                      const st = agentStatuses[agent] || { status: 'Idle', current: '' }
+                      const statusLabel = agentData
+                        ? (agentData.status === 'busy' ? 'working' : agentData.status === 'online' ? 'online' : 'offline')
+                        : (st.current ? 'working' : 'idle')
+                      const dotColor = statusLabel === 'offline' ? 'var(--text-3)' : statusLabel === 'working' ? 'var(--blue)' : 'var(--green)'
+                      return (
+                        <div key={agent} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor }} />
+                          <span style={{ fontSize: 11, color: 'var(--text-1)' }}>{agent}</span>
+                          <span style={{ fontSize: 10, color: 'var(--text-2)', marginLeft: 'auto' }}>{statusLabel}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -877,6 +899,45 @@ export default function DashboardPage() {
                       </Link>
                     </div>
                   </div>
+
+                  {/* Recent Notifications */}
+                  {notifications.length > 0 && (
+                    <div className="ds-card" style={{ padding: '16px 20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <h2 style={{ fontSize: 13, fontWeight: 600 }}>Notifications</h2>
+                        {unreadCount > 0 && (
+                          <span style={{
+                            background: 'var(--red)', color: '#fff', borderRadius: 10,
+                            padding: '1px 7px', fontSize: 10, fontWeight: 600,
+                          }}>{unreadCount}</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {notifications.slice(0, 4).map(notif => {
+                          const typeIcon: Record<string, string> = { info: 'ℹ️', warning: '⚠️', success: '✅', error: '❌' }
+                          return (
+                            <div key={notif.id} style={{
+                              display: 'flex', gap: 8, alignItems: 'flex-start', padding: '6px 0',
+                              borderBottom: '1px solid var(--border)',
+                              opacity: notif.read ? 0.6 : 1,
+                            }}>
+                              <span style={{ fontSize: 12, flexShrink: 0 }}>{typeIcon[notif.type] || 'ℹ️'}</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontSize: 11, color: 'var(--text-0)', fontWeight: notif.read ? 400 : 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {notif.title}
+                                </p>
+                                <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{formatTime(notif.createdAt)}</span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      <button className="btn" style={{ width: '100%', justifyContent: 'center', fontSize: 11, padding: '7px', marginTop: 8 }}
+                        onClick={() => setActiveSection('notifications')}>
+                        View All →
+                      </button>
+                    </div>
+                  )}
 
                   {/* In Progress */}
                   <div className="ds-card" style={{ padding: '16px 20px' }}>
@@ -1082,14 +1143,19 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
                 {(['Axle', 'Bolt', 'Zip'] as AgentName[]).map(agent => {
+                  const agentData = agents.find(a => a.name === agent)
                   const agentTasks = tasks.filter(t => t.agent === agent)
                   const doneTasks = agentTasks.filter(t => t.status === 'done')
-                  const doneToday = doneTasks.filter(t => t.completedAt.startsWith(todayStr))
+                  const doneToday = agentData?.tasksCompletedToday ?? doneTasks.filter(t => t.completedAt.startsWith(todayStr)).length
                   const recentTasks = [...agentTasks].sort((a, b) =>
                     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                   ).slice(0, 5)
-                  const st = agentStatuses[agent]
+                  const agentStatus = agentData?.status || (agentStatuses[agent]?.current ? 'busy' : 'online')
+                  const currentTask = agentData?.currentTask || agentStatuses[agent]?.current || ''
+                  const statusLabel = agentStatus === 'busy' ? 'Working' : agentStatus === 'online' ? 'Online' : 'Offline'
+                  const statusColor = agentStatus === 'offline' ? 'var(--text-2)' : agentStatus === 'busy' ? 'var(--blue)' : 'var(--green)'
                   const emoji = agent === 'Axle' ? '⚙️' : agent === 'Bolt' ? '⚡' : '🏎️'
+                  const tokensUsed = agentData?.tokensUsedToday || 0
 
                   return (
                     <div key={agent} className="ds-card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -1109,21 +1175,18 @@ export default function DashboardPage() {
                             <div>
                               <h3 style={{ fontSize: 15, fontWeight: 700 }}>{agent}</h3>
                               <p style={{ fontSize: 10, color: 'var(--text-2)', marginTop: 1 }}>
-                                {agent === 'Axle' ? 'CEO / Orchestrator' : agent === 'Bolt' ? 'Developer' : 'Quick Tasks'}
+                                {agentData?.role || (agent === 'Axle' ? 'CEO / Orchestrator' : agent === 'Bolt' ? 'Developer' : 'Quick Tasks')}
                               </p>
                             </div>
                           </div>
                           <div style={{
                             display: 'flex', alignItems: 'center', gap: 5, fontSize: 11,
-                            color: st.current ? 'var(--blue)' : 'var(--green)',
-                            background: (st.current ? 'var(--blue)' : 'var(--green)') + '15',
+                            color: statusColor,
+                            background: statusColor + '15',
                             padding: '4px 10px', borderRadius: 20,
                           }}>
-                            <div style={{
-                              width: 6, height: 6, borderRadius: '50%',
-                              background: st.current ? 'var(--blue)' : 'var(--green)',
-                            }} />
-                            {st.current ? 'Working' : 'Idle'}
+                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor }} />
+                            {statusLabel}
                           </div>
                         </div>
                       </div>
@@ -1144,17 +1207,25 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Current task */}
-                        {st.current && (
+                        {currentTask && (
                           <div style={{ marginBottom: 16, background: 'var(--bg-3)', borderRadius: 8, padding: '10px 12px', border: `1px solid ${AGENT_COLORS[agent]}20` }}>
                             <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4 }}>CURRENT TASK</div>
-                            <p style={{ fontSize: 12, color: 'var(--text-0)' }}>{st.current}</p>
+                            <p style={{ fontSize: 12, color: 'var(--text-0)' }}>{currentTask}</p>
+                          </div>
+                        )}
+
+                        {/* Last active */}
+                        {agentData?.lastActive && (
+                          <div style={{ marginBottom: 16 }}>
+                            <div style={{ fontSize: 10, color: 'var(--text-3)', letterSpacing: '0.05em', marginBottom: 4 }}>LAST ACTIVE</div>
+                            <p style={{ fontSize: 12, color: 'var(--text-1)' }}>{formatTime(agentData.lastActive)}</p>
                           </div>
                         )}
 
                         {/* Stats */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
                           <div style={{ textAlign: 'center', background: 'var(--bg-3)', borderRadius: 8, padding: '10px 8px' }}>
-                            <div style={{ fontSize: 20, fontWeight: 700, color: AGENT_COLORS[agent] }}>{doneToday.length}</div>
+                            <div style={{ fontSize: 20, fontWeight: 700, color: AGENT_COLORS[agent] }}>{doneToday}</div>
                             <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>Today</div>
                           </div>
                           <div style={{ textAlign: 'center', background: 'var(--bg-3)', borderRadius: 8, padding: '10px 8px' }}>
@@ -1168,6 +1239,14 @@ export default function DashboardPage() {
                             <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>Open</div>
                           </div>
                         </div>
+
+                        {/* Tokens used today */}
+                        {tokensUsed > 0 && (
+                          <div style={{ marginBottom: 16 }}>
+                            <div style={{ fontSize: 10, color: 'var(--text-3)', letterSpacing: '0.05em', marginBottom: 4 }}>TOKENS TODAY</div>
+                            <p style={{ fontSize: 12, color: 'var(--text-1)' }}>{tokensUsed.toLocaleString()}</p>
+                          </div>
+                        )}
 
                         {/* Recent tasks */}
                         <div>
@@ -1198,6 +1277,107 @@ export default function DashboardPage() {
                   )
                 })}
               </div>
+            </div>
+          )}
+
+          {/* ── NOTIFICATIONS ── */}
+          {activeSection === 'notifications' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-2)' }}>
+                    {unreadCount} unread
+                  </span>
+                </div>
+                {unreadCount > 0 && (
+                  <button className="btn" style={{ fontSize: 12, padding: '6px 12px' }}
+                    onClick={markAllNotificationsRead}>
+                    Mark all read
+                  </button>
+                )}
+              </div>
+
+              {notifications.length === 0 ? (
+                <div className="ds-card" style={{ padding: 40, textAlign: 'center' }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🔔</div>
+                  <p style={{ fontSize: 14, color: 'var(--text-2)' }}>No notifications yet</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>
+                    Notifications will appear here when tasks are completed or important events occur.
+                  </p>
+                </div>
+              ) : (
+                <div className="ds-card" style={{ padding: 0, overflow: 'hidden' }}>
+                  {notifications.map((notif, idx) => {
+                    const typeConfig: Record<string, { icon: string; color: string }> = {
+                      info: { icon: 'ℹ️', color: 'var(--blue)' },
+                      warning: { icon: '⚠️', color: 'var(--yellow)' },
+                      success: { icon: '✅', color: 'var(--green)' },
+                      error: { icon: '❌', color: 'var(--red)' },
+                    }
+                    const cfg = typeConfig[notif.type] || typeConfig.info
+                    return (
+                      <div key={notif.id} style={{
+                        padding: '14px 20px',
+                        borderBottom: idx < notifications.length - 1 ? '1px solid var(--border)' : 'none',
+                        display: 'flex', gap: 12, alignItems: 'flex-start',
+                        background: notif.read ? 'transparent' : cfg.color + '06',
+                        transition: 'background 0.15s',
+                      }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                          background: cfg.color + '15',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 14,
+                        }}>{cfg.icon}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                            <span style={{
+                              fontSize: 13, fontWeight: notif.read ? 400 : 600,
+                              color: 'var(--text-0)',
+                            }}>{notif.title}</span>
+                            {!notif.read && (
+                              <div style={{
+                                width: 6, height: 6, borderRadius: '50%',
+                                background: cfg.color, flexShrink: 0,
+                              }} />
+                            )}
+                          </div>
+                          {notif.message && (
+                            <p style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.4, marginBottom: 4 }}>
+                              {notif.message}
+                            </p>
+                          )}
+                          <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{formatTime(notif.createdAt)}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                          {!notif.read && (
+                            <button style={{
+                              padding: '4px 8px', fontSize: 10, color: 'var(--text-2)',
+                              background: 'var(--bg-3)', border: '1px solid var(--border)',
+                              borderRadius: 6, cursor: 'pointer', transition: '0.12s',
+                            }}
+                              onClick={() => markNotificationRead(notif.id)}
+                              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-0)')}
+                              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}>
+                              Read
+                            </button>
+                          )}
+                          <button style={{
+                            padding: '4px 8px', fontSize: 10, color: 'var(--text-3)',
+                            background: 'transparent', border: '1px solid transparent',
+                            borderRadius: 6, cursor: 'pointer', transition: '0.12s',
+                          }}
+                            onClick={() => deleteNotification(notif.id)}
+                            onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
+                            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}>
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
