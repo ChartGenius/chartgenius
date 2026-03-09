@@ -79,6 +79,7 @@ app.use('/api/tools', require('./routes/tools'));                   // Trading t
 app.use('/api/dashboard', require('./routes/dashboard'));             // CEO dashboard persistence (tasks, activity, companies, settings)
 app.use('/api/stocks', require('./routes/stocks'));                     // Analyst ratings + stock scoring
 app.use('/api/journal', require('./routes/journal'));                   // Journal CSV import & trade management
+app.use('/api/backup', require('./routes/backup'));                     // Data export/backup/restore
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

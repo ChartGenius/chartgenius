@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { IconArrowLeft, IconAlert } from '../components/Icons'
+import { IconArrowLeft, IconAlert, IconDownload } from '../components/Icons'
 import Link from 'next/link'
 import Tooltip from '../components/Tooltip'
 
@@ -446,6 +446,77 @@ function exportPDF(title: string, tableHtml: string) {
   `)
   win.document.close()
   setTimeout(() => { win.print() }, 400)
+}
+
+// ─── Portfolio Export Button ──────────────────────────────────────────────────
+
+function PortfolioExportButton() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    if (open) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const exportJSON = () => {
+    const keys = ['tv_portfolio_holdings', 'tv_portfolio_settings', 'tv_portfolio_dividends', 'cg_watchlist']
+    const data: Record<string, unknown> = { version: 1, exportedAt: new Date().toISOString(), type: 'portfolio' }
+    keys.forEach(key => { try { data[key] = JSON.parse(localStorage.getItem(key) || 'null') } catch { data[key] = null } })
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = `tradvue-portfolio-${new Date().toISOString().slice(0, 10)}.json`; a.click()
+    URL.revokeObjectURL(url)
+    setOpen(false)
+  }
+
+  const exportCSVFn = () => {
+    let holdings: { ticker: string; company: string; shares: number; avgCost: number; buyDate: string; sector: string; notes?: string }[] = []
+    try { holdings = JSON.parse(localStorage.getItem('tv_portfolio_holdings') || '[]') } catch {}
+    const headers = ['Ticker', 'Company', 'Shares', 'Avg Cost', 'Buy Date', 'Sector', 'Notes']
+    const rows = holdings.map(h => [h.ticker, `"${(h.company || '').replace(/"/g, '""')}"`, h.shares, h.avgCost, h.buyDate, h.sector, `"${(h.notes || '').replace(/"/g, '""')}"`])
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = `tradvue-portfolio-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+    URL.revokeObjectURL(url)
+    setOpen(false)
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        background: 'var(--bg-3)', border: '1px solid var(--border)',
+        borderRadius: 'var(--btn-radius)', padding: '5px 10px',
+        color: 'var(--text-1)', fontSize: 11, cursor: 'pointer',
+      }}>
+        <IconDownload size={13} /> Export
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', right: 0, zIndex: 50, marginTop: 4,
+          background: 'var(--bg-2)', border: '1px solid var(--border)',
+          borderRadius: 10, padding: 6, minWidth: 170,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+        }}>
+          <button onClick={exportJSON} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', color: 'var(--text-0)', fontSize: 12 }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.1)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+            <div style={{ fontWeight: 600 }}>📄 Export JSON</div>
+            <div style={{ fontSize: 10, color: 'var(--text-2)' }}>Full data backup</div>
+          </button>
+          <button onClick={exportCSVFn} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', color: 'var(--text-0)', fontSize: 12 }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.1)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+            <div style={{ fontWeight: 600 }}>📊 Export CSV</div>
+            <div style={{ fontSize: 10, color: 'var(--text-2)' }}>Spreadsheet format</div>
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Portfolio Page ───────────────────────────────────────────────────────────
@@ -913,6 +984,7 @@ export default function PortfolioPage() {
         <button onClick={fetchStockInfos} style={{ fontSize: 11, cursor: 'pointer', padding: '5px 10px', border: '1px solid var(--border)', borderRadius: 'var(--btn-radius)', background: 'var(--bg-3)', color: 'var(--text-1)' }}>
           ↻ Refresh
         </button>
+        <PortfolioExportButton />
         {totalMarketValue > 0 && (
           <div style={{ display: 'flex', gap: 16, fontSize: 11 }}>
             <span style={{ color: 'var(--text-2)' }}>Value: <strong style={{ color: 'var(--text-0)', fontFamily: 'var(--mono)' }}>{fmtDollar(totalMarketValue)}</strong></span>

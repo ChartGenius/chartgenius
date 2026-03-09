@@ -438,4 +438,20 @@ router.post('/import/preview', upload.single('file'), (req, res) => {
   }
 });
 
+/**
+ * GET /api/journal/export?format=json|csv
+ * Returns journal trades in requested format.
+ * Currently a stub — frontend handles exports client-side via localStorage.
+ * This endpoint will be functional when trades are stored server-side.
+ */
+router.get('/export', (req, res) => {
+  const format = (req.query.format || 'json').toLowerCase();
+  // Stub — frontend handles this client-side for now
+  res.json({
+    message: 'Journal export is handled client-side. Use the Export button in the UI.',
+    format,
+    note: 'This endpoint will serve exports when server-side trade storage is implemented.',
+  });
+});
+
 module.exports = router;
