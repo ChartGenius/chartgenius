@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, memo } from 'react'
 import Link from 'next/link'
 import {
   IconSettings, IconChart, IconCalendar, IconClock, IconCheck,
@@ -77,7 +77,7 @@ function getProjectColor(projectName: string) {
 
 // ─── Mini SVG Bar Chart ───────────────────────────────────────────────────────
 
-function BarChart({ data, labels }: { data: number[]; labels: string[] }) {
+const BarChart = memo(function BarChart({ data, labels }: { data: number[]; labels: string[] }) {
   const max = Math.max(...data, 1)
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80, width: '100%' }}>
@@ -93,9 +93,9 @@ function BarChart({ data, labels }: { data: number[]; labels: string[] }) {
       ))}
     </div>
   )
-}
+})
 
-function PieChart({ slices }: { slices: { label: string; value: number; color: string }[] }) {
+const PieChart = memo(function PieChart({ slices }: { slices: { label: string; value: number; color: string }[] }) {
   const total = slices.reduce((s, x) => s + x.value, 0) || 1
   let offset = 0
   return (
@@ -129,7 +129,7 @@ function PieChart({ slices }: { slices: { label: string; value: number; color: s
       </div>
     </div>
   )
-}
+})
 
 // ─── Add Task Modal ────────────────────────────────────────────────────────────
 
@@ -226,7 +226,7 @@ function AddTaskModal({
 
 // ─── Task Card ────────────────────────────────────────────────────────────────
 
-function TaskCard({
+const TaskCard = memo(function TaskCard({
   task, onClick, onDragStart
 }: {
   task: Task
@@ -286,7 +286,7 @@ function TaskCard({
       </div>
     </div>
   )
-}
+})
 
 // ─── Task Detail Modal ────────────────────────────────────────────────────────
 
