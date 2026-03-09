@@ -9,176 +9,13 @@ import {
   IconZap, IconRefresh, IconBell, IconEye, IconArrowRight,
   IconChevronDown, IconTrendingUp,
 } from '../components/Icons'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type TaskStatus = 'todo' | 'inprogress' | 'done'
-type Priority = 'high' | 'medium' | 'low'
-type AgentName = 'Axle' | 'Bolt' | 'Zip'
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: TaskStatus
-  project: string
-  company: string
-  agent: AgentName | ''
-  priority: Priority
-  dueDate: string
-  createdAt: string
-  completedAt: string
-  notes: string
-}
-
-interface ActivityItem {
-  id: string
-  type: string
-  message: string
-  agent: AgentName | ''
-  project: string
-  timestamp: string
-}
-
-interface Project {
-  id: string
-  name: string
-  category: string
-}
-
-interface Company {
-  id: string
-  name: string
-  projects: Project[]
-}
-
-interface DashboardSettings {
-  theme: string
-  defaultView: string
-  agentCosts: { Axle: number; Bolt: number; Zip: number }
-}
-
-// ─── Default Data ─────────────────────────────────────────────────────────────
-
-const TODAY = new Date().toISOString()
-const todayStr = new Date().toISOString().split('T')[0]
-
-const DEFAULT_COMPANIES: Company[] = [
-  {
-    id: 'apex',
-    name: 'ApexLogics',
-    projects: [
-      { id: 'cg-dev', name: 'TradVue › Development', category: 'Development' },
-      { id: 'cg-biz', name: 'TradVue › Business', category: 'Business' },
-      { id: 'cg-ops', name: 'TradVue › Operations', category: 'Operations' },
-    ],
-  },
-]
-
-const DEFAULT_TASKS: Task[] = [
-  {
-    id: 't1', title: 'News feed expansion — 5 new sources',
-    description: 'Add Reuters, Bloomberg, FT, Seeking Alpha, and Benzinga to the news aggregator.',
-    status: 'done', project: 'TradVue › Development', company: 'ApexLogics',
-    agent: 'Bolt', priority: 'high', dueDate: todayStr,
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-    completedAt: new Date(Date.now() - 3600000).toISOString(), notes: '',
-  },
-  {
-    id: 't2', title: 'Portfolio P&L chart',
-    description: 'Build cumulative P&L chart with time range selector.',
-    status: 'done', project: 'TradVue › Development', company: 'ApexLogics',
-    agent: 'Bolt', priority: 'high', dueDate: todayStr,
-    createdAt: new Date(Date.now() - 10800000).toISOString(),
-    completedAt: new Date(Date.now() - 5400000).toISOString(), notes: '',
-  },
-  {
-    id: 't3', title: 'Legal disclaimers — all pages',
-    description: 'Add "Not financial advice" disclaimers to all public-facing pages.',
-    status: 'done', project: 'TradVue › Operations', company: 'ApexLogics',
-    agent: 'Zip', priority: 'medium', dueDate: todayStr,
-    createdAt: new Date(Date.now() - 14400000).toISOString(),
-    completedAt: new Date(Date.now() - 7200000).toISOString(), notes: '',
-  },
-  {
-    id: 't4', title: 'Trading tools phase 2',
-    description: 'ATR calculator, correlation matrix, and options screener.',
-    status: 'done', project: 'TradVue › Development', company: 'ApexLogics',
-    agent: 'Bolt', priority: 'high', dueDate: todayStr,
-    createdAt: new Date(Date.now() - 18000000).toISOString(),
-    completedAt: new Date(Date.now() - 9000000).toISOString(), notes: '',
-  },
-  {
-    id: 't5', title: 'Market sentiment analysis',
-    description: 'Research and implement Fear & Greed index integration.',
-    status: 'inprogress', project: 'TradVue › Development', company: 'ApexLogics',
-    agent: 'Bolt', priority: 'medium', dueDate: todayStr,
-    createdAt: new Date(Date.now() - 1800000).toISOString(),
-    completedAt: '', notes: 'API endpoint found: CNN Fear & Greed',
-  },
-  {
-    id: 't6', title: 'User acquisition strategy',
-    description: 'Draft SEO strategy and content calendar for Q2 2026.',
-    status: 'inprogress', project: 'TradVue › Business', company: 'ApexLogics',
-    agent: 'Axle', priority: 'medium', dueDate: todayStr,
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    completedAt: '', notes: '',
-  },
-  {
-    id: 't7', title: 'Deploy staging environment',
-    description: 'Set up Vercel staging branch with feature flags.',
-    status: 'todo', project: 'TradVue › Operations', company: 'ApexLogics',
-    agent: 'Bolt', priority: 'low', dueDate: '',
-    createdAt: TODAY, completedAt: '', notes: '',
-  },
-  {
-    id: 't8', title: 'Email onboarding sequence',
-    description: 'Write 3-email welcome sequence for new signups.',
-    status: 'todo', project: 'TradVue › Business', company: 'ApexLogics',
-    agent: 'Zip', priority: 'medium', dueDate: '',
-    createdAt: TODAY, completedAt: '', notes: '',
-  },
-]
-
-const DEFAULT_ACTIVITY: ActivityItem[] = [
-  { id: 'a1', type: 'task_complete', message: 'Bolt completed: trading tools phase 2', agent: 'Bolt', project: 'TradVue › Development', timestamp: new Date(Date.now() - 9000000).toISOString() },
-  { id: 'a2', type: 'task_complete', message: 'Zip completed: legal disclaimers', agent: 'Zip', project: 'TradVue › Operations', timestamp: new Date(Date.now() - 7200000).toISOString() },
-  { id: 'a3', type: 'task_complete', message: 'Bolt completed: portfolio P&L chart', agent: 'Bolt', project: 'TradVue › Development', timestamp: new Date(Date.now() - 5400000).toISOString() },
-  { id: 'a4', type: 'task_complete', message: 'Bolt completed: news feed expansion', agent: 'Bolt', project: 'TradVue › Development', timestamp: new Date(Date.now() - 3600000).toISOString() },
-  { id: 'a5', type: 'task_start', message: 'Axle started: user acquisition strategy', agent: 'Axle', project: 'TradVue › Business', timestamp: new Date(Date.now() - 3600000).toISOString() },
-  { id: 'a6', type: 'task_start', message: 'Bolt started: market sentiment analysis', agent: 'Bolt', project: 'TradVue › Development', timestamp: new Date(Date.now() - 1800000).toISOString() },
-  { id: 'a7', type: 'deploy', message: 'Deployed to production: TradVue v2.4', agent: 'Bolt', project: 'TradVue › Operations', timestamp: new Date(Date.now() - 10800000).toISOString() },
-]
-
-const DEFAULT_SETTINGS: DashboardSettings = {
-  theme: 'dark',
-  defaultView: 'overview',
-  agentCosts: { Axle: 15, Bolt: 3, Zip: 0.25 },
-}
+import { useAuth } from '../context/AuthContext'
+import { useDashboardData, DEFAULT_TASKS, DEFAULT_ACTIVITY, DEFAULT_COMPANIES, DEFAULT_SETTINGS } from '../hooks/useDashboardData'
+import type { Task, ActivityItem, Company, DashboardSettings, TaskStatus, Priority, AgentName } from '../lib/dashboardApi'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function useLocalStorage<T>(key: string, defaultValue: T): [T, (v: T) => void] {
-  const [value, setValue] = useState<T>(defaultValue)
-  const initialized = useRef(false)
-
-  useEffect(() => {
-    if (initialized.current) return
-    initialized.current = true
-    try {
-      const raw = localStorage.getItem(key)
-      if (raw) setValue(JSON.parse(raw))
-      else { localStorage.setItem(key, JSON.stringify(defaultValue)); setValue(defaultValue) }
-    } catch { setValue(defaultValue) }
-  }, [key])
-
-  const set = useCallback((v: T) => {
-    setValue(v)
-    try { localStorage.setItem(key, JSON.stringify(v)) } catch {}
-  }, [key])
-
-  return [value, set]
-}
+const todayStr = new Date().toISOString().split('T')[0]
 
 function formatTime(iso: string) {
   if (!iso) return ''
@@ -618,10 +455,13 @@ function KanbanColumn({
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useLocalStorage<Task[]>('cg_dashboard_tasks', DEFAULT_TASKS)
-  const [activity, setActivity] = useLocalStorage<ActivityItem[]>('cg_dashboard_activity', DEFAULT_ACTIVITY)
-  const [companies, setCompanies] = useLocalStorage<Company[]>('cg_dashboard_companies', DEFAULT_COMPANIES)
-  const [settings, setSettings] = useLocalStorage<DashboardSettings>('cg_dashboard_settings', DEFAULT_SETTINGS)
+  const { token } = useAuth()
+  const {
+    tasks, activity, companies, settings,
+    setTasks, setActivity, setCompanies, setSettings,
+    addTask, updateTask, deleteTask, addActivityItem,
+    addCompany, deleteCompany,
+  } = useDashboardData(token)
 
   const [activeSection, setActiveSection] = useState<string>('overview')
   const [showAddTask, setShowAddTask] = useState(false)
@@ -659,37 +499,39 @@ export default function DashboardPage() {
   // Task board
   function handleDrop(status: TaskStatus) {
     if (!dragId) return
-    setTasks(tasks.map(t => t.id === dragId ? {
-      ...t, status,
-      completedAt: status === 'done' && !t.completedAt ? new Date().toISOString() : t.completedAt,
-    } : t))
-    const t = tasks.find(t => t.id === dragId)
-    if (t && status !== t.status) {
-      addActivity(`${t.agent || 'Someone'} moved: ${t.title} → ${status === 'done' ? 'Done' : status === 'inprogress' ? 'In Progress' : 'To Do'}`, t.agent, t.project)
+    const target = tasks.find(t => t.id === dragId)
+    if (!target) return
+    const updated = {
+      ...target, status,
+      completedAt: status === 'done' && !target.completedAt ? new Date().toISOString() : target.completedAt,
+    }
+    updateTask(updated)
+    if (status !== target.status) {
+      logActivity(`${target.agent || 'Someone'} moved: ${target.title} → ${status === 'done' ? 'Done' : status === 'inprogress' ? 'In Progress' : 'To Do'}`, target.agent, target.project)
     }
     setDragId(null)
   }
 
-  function addActivity(message: string, agent: AgentName | '', project: string) {
-    setActivity([{ id: uid(), type: 'update', message, agent, project, timestamp: new Date().toISOString() }, ...activity].slice(0, 50))
+  function logActivity(message: string, agent: AgentName | '', project: string) {
+    addActivityItem({ id: uid(), type: 'update', message, agent, project, timestamp: new Date().toISOString() })
   }
 
   function handleAddTask(task: Task) {
-    setTasks([...tasks, task])
-    addActivity(`Added task: ${task.title}`, task.agent, task.project)
+    addTask(task)
+    logActivity(`Added task: ${task.title}`, task.agent, task.project)
   }
 
   function handleUpdateTask(task: Task) {
-    setTasks(tasks.map(t => t.id === task.id ? task : t))
+    updateTask(task)
   }
 
   function handleDeleteTask(id: string) {
-    setTasks(tasks.filter(t => t.id !== id))
+    deleteTask(id)
   }
 
   function handleAddNote() {
     if (!addNote.trim()) return
-    addActivity(`Note: ${addNote}`, '', '')
+    logActivity(`Note: ${addNote}`, '', '')
     setAddNote('')
     setShowNoteInput(false)
   }
@@ -1181,7 +1023,7 @@ export default function DashboardPage() {
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button className="btn btn-primary" style={{ flex: 1, fontSize: 12 }} onClick={() => {
                             if (!newCompanyName.trim()) return
-                            setCompanies([...companies, { id: uid(), name: newCompanyName.trim(), projects: [] }])
+                            addCompany({ id: uid(), name: newCompanyName.trim(), projects: [] })
                             setNewCompanyName(''); setShowAddCompany(false)
                           }}>Add</button>
                           <button className="btn" style={{ fontSize: 12 }} onClick={() => setShowAddCompany(false)}>Cancel</button>
@@ -1509,7 +1351,7 @@ export default function DashboardPage() {
                         <div style={{ fontSize: 11, color: 'var(--text-2)' }}>{c.projects.length} projects</div>
                       </div>
                       <button className="btn" style={{ fontSize: 11, color: 'var(--red)', padding: '5px 10px' }}
-                        onClick={() => setCompanies(companies.filter(x => x.id !== c.id))}>
+                        onClick={() => deleteCompany(c.id)}>
                         Remove
                       </button>
                     </div>
@@ -1524,7 +1366,7 @@ export default function DashboardPage() {
                         onChange={e => setNewCompanyName(e.target.value)} style={{ flex: 1 }} autoFocus />
                       <button className="btn btn-primary" onClick={() => {
                         if (!newCompanyName.trim()) return
-                        setCompanies([...companies, { id: uid(), name: newCompanyName.trim(), projects: [] }])
+                        addCompany({ id: uid(), name: newCompanyName.trim(), projects: [] })
                         setNewCompanyName(''); setShowAddCompany(false)
                       }}>Add</button>
                       <button className="btn" onClick={() => setShowAddCompany(false)}>Cancel</button>
