@@ -16,8 +16,9 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/favicon.ico', sizes: 'any' },
     ],
     apple: [
@@ -34,9 +35,9 @@ export const metadata: Metadata = {
     siteName: 'TradVue',
     images: [
       {
-        url: '/logo-tagline.png',
-        width: 1024,
-        height: 1024,
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
         alt: 'TradVue — Your Trading Edge',
       },
     ],
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TradVue',
     description: 'Professional trading platform with real-time market data, portfolio analytics, and 18+ trading tools.',
-    images: ['/logo-tagline.png'],
+    images: ['/og-twitter.png'],
   },
   appleWebApp: {
     capable: true,
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#6366f1" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
       </head>

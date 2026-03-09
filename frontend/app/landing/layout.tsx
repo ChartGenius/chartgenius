@@ -29,9 +29,9 @@ export const metadata: Metadata = {
       'AI-powered news feeds, sentiment analysis, and smart alerts for traders who can\'t afford to miss a move.',
     images: [
       {
-        url: 'https://www.tradvue.com/logo-tagline.png',
-        width: 1024,
-        height: 1024,
+        url: 'https://www.tradvue.com/og-image.png',
+        width: 1200,
+        height: 630,
         alt: 'TradVue — AI Driven Alpha',
       },
     ],
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     creator: '@tradvue',
     title: 'TradVue — Real-Time Market Intelligence for Active Traders',
     description: 'AI-powered news, sentiment analysis, and smart alerts. Free beta access.',
-    images: ['https://www.tradvue.com/logo-tagline.png'],
+    images: ['https://www.tradvue.com/og-twitter.png'],
   },
 
   // ── Robots ────────────────────────────────────────────────────────────
