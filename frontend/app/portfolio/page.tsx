@@ -23,6 +23,8 @@ interface Holding {
   divOverrideAnnual?: number // user override per share annual
   totalDividendsReceived: number
   notes?: string
+  dripEnabled?: boolean      // DRIP tracking toggle
+  currency?: string          // stock's native currency (e.g. "USD", "GBP")
   // transaction log
   transactions?: Transaction[]
 }
@@ -50,6 +52,7 @@ interface StockInfo {
   dayChangePct?: number | null
   '52WeekHigh'?: number | null
   '52WeekLow'?: number | null
+  beta?: number | null
   peRatio?: number | null
   dividendPerShareAnnual?: number | null
   dividendYield?: number | null
@@ -57,6 +60,31 @@ interface StockInfo {
   dividendGrowthRate5Y?: number | null
   dividendHistory: { date: string; amount: number }[]
   fetchedAt?: string
+}
+
+interface AllocationTarget {
+  sector: string
+  targetPct: number
+}
+
+interface ExchangeRates {
+  base: string
+  rates: Record<string, number>
+  fetchedAt: number
+}
+
+interface PortfolioSettings {
+  dripEnabled: Record<string, boolean>  // ticker -> dripEnabled
+  allocationTargets: AllocationTarget[]
+  homeCurrency: string
+}
+
+const SUPPORTED_CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF']
+
+const DEFAULT_SETTINGS: PortfolioSettings = {
+  dripEnabled: {},
+  allocationTargets: [],
+  homeCurrency: 'USD',
 }
 
 interface DividendCell {
@@ -441,6 +469,11 @@ export default function PortfolioPage() {
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>([])
   const [alertNotifications, setAlertNotifications] = useState<PriceAlert[]>([])
 
+  // Portfolio settings (DRIP, allocation targets, home currency)
+  const [portfolioSettings, setPortfolioSettings] = useState<PortfolioSettings>(DEFAULT_SETTINGS)
+  // Exchange rates cache
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null)
+
   // ─── Check auth and load data ─────────────────────────────────────────────
 
   useEffect(() => {
@@ -458,6 +491,7 @@ export default function PortfolioPage() {
       setSoldPositions(loadLS('cg_portfolio_sold', []))
       setWatchlist(loadLS('cg_portfolio_watchlist', []))
       setSnapshots(loadLS('cg_portfolio_snapshots', []))
+      setPortfolioSettings(loadLS('cg_portfolio_settings', DEFAULT_SETTINGS))
       setDataLoaded(true)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -474,11 +508,12 @@ export default function PortfolioPage() {
   }, [isLoggedIn, dataLoaded, holdings.length])
 
   const loadFromAPI = useCallback(async () => {
-    const [holdingsRes, soldRes, watchlistRes, dividendsRes] = await Promise.all([
+    const [holdingsRes, soldRes, watchlistRes, dividendsRes, settingsRes] = await Promise.all([
       apiGet<{ holdings: Record<string, unknown>[] }>('/api/portfolio/holdings'),
       apiGet<{ sold: Record<string, unknown>[] }>('/api/portfolio/sold'),
       apiGet<{ watchlist: Record<string, unknown>[] }>('/api/portfolio/watchlist'),
       apiGet<{ overrides: DividendCell }>('/api/portfolio/dividends'),
+      apiGet<{ settings: PortfolioSettings }>('/api/portfolio/settings'),
     ])
 
     if (holdingsRes?.holdings) {
@@ -522,6 +557,12 @@ export default function PortfolioPage() {
     }
     if (dividendsRes?.overrides) {
       setDividendOverrides(dividendsRes.overrides)
+    }
+    if (settingsRes?.settings) {
+      setPortfolioSettings({ ...DEFAULT_SETTINGS, ...settingsRes.settings })
+    } else {
+      // Fall back to localStorage settings
+      setPortfolioSettings(loadLS('cg_portfolio_settings', DEFAULT_SETTINGS))
     }
 
     setDataLoaded(true)
@@ -622,6 +663,22 @@ export default function PortfolioPage() {
     if (isLoggedIn) await apiDelete(`/api/portfolio/watchlist/${ticker}`)
   }, [isLoggedIn])
 
+  const savePortfolioSettings = useCallback(async (newSettings: PortfolioSettings) => {
+    setPortfolioSettings(newSettings)
+    saveLS('cg_portfolio_settings', newSettings)
+    if (isLoggedIn) {
+      await apiPost('/api/portfolio/settings', { settings: newSettings })
+    }
+  }, [isLoggedIn])
+
+  const toggleDRIP = useCallback(async (ticker: string, enabled: boolean) => {
+    const newSettings = {
+      ...portfolioSettings,
+      dripEnabled: { ...portfolioSettings.dripEnabled, [ticker]: enabled },
+    }
+    await savePortfolioSettings(newSettings)
+  }, [portfolioSettings, savePortfolioSettings])
+
   // Price alert helpers
   const addPriceAlert = useCallback(async (symbol: string, target_price: number, direction: 'above' | 'below') => {
     if (!isLoggedIn) {
@@ -657,6 +714,27 @@ export default function PortfolioPage() {
   useEffect(() => { if (!isLoggedIn && dataLoaded) saveLS('cg_portfolio_sold', soldPositions) }, [soldPositions, isLoggedIn, dataLoaded])
   useEffect(() => { if (!isLoggedIn && dataLoaded) saveLS('cg_portfolio_watchlist', watchlist) }, [watchlist, isLoggedIn, dataLoaded])
   useEffect(() => { saveLS('cg_portfolio_snapshots', snapshots) }, [snapshots])
+
+  // Fetch exchange rates when home currency changes or on mount
+  useEffect(() => {
+    const cached = loadLS<ExchangeRates | null>('cg_exchange_rates', null)
+    const now = Date.now()
+    const ONE_HOUR = 60 * 60 * 1000
+    if (cached && now - cached.fetchedAt < ONE_HOUR) {
+      setExchangeRates(cached)
+      return
+    }
+    fetch('https://open.er-api.com/v6/latest/USD')
+      .then(r => r.json())
+      .then(data => {
+        if (data?.rates) {
+          const rates: ExchangeRates = { base: 'USD', rates: data.rates, fetchedAt: now }
+          setExchangeRates(rates)
+          saveLS('cg_exchange_rates', rates)
+        }
+      })
+      .catch(() => { /* silent fail */ })
+  }, [])
 
   // ─── Fetch stock prices ───────────────────────────────────────────────────
 
@@ -878,6 +956,10 @@ export default function PortfolioPage() {
             projAnnualIncome={projAnnualIncome} sectorData={sectorData}
             barChartData={barChartData} snapshots={snapshots} holdings={holdings}
             holdingsEnriched={holdingsEnriched}
+            stockInfos={stockInfos}
+            portfolioSettings={portfolioSettings}
+            savePortfolioSettings={savePortfolioSettings}
+            exchangeRates={exchangeRates}
           />
         )}
         {activeTab === 'holdings' && (
@@ -889,6 +971,7 @@ export default function PortfolioPage() {
             persistHolding={persistHolding} deleteHoldingAPI={deleteHoldingAPI}
             onSellPosition={(h) => { setSellFromHolding({ holding: h }); setActiveTab('sold') }}
             priceAlerts={priceAlerts} addPriceAlert={addPriceAlert} deletePriceAlert={deletePriceAlert}
+            portfolioSettings={portfolioSettings} toggleDRIP={toggleDRIP}
           />
         )}
         {activeTab === 'dividends' && (
@@ -950,6 +1033,7 @@ function DashboardTab({
   totalReturn, totalReturnPct, totalDayGain, totalDayGainPct,
   divYieldPortfolio, yieldOnCostPortfolio, projAnnualIncome,
   sectorData, barChartData, snapshots, holdings, holdingsEnriched,
+  stockInfos, portfolioSettings, savePortfolioSettings, exchangeRates,
 }: {
   totalCostBasis: number; totalMarketValue: number; totalMarketReturn: number; totalMarketReturnPct: number;
   totalReturn: number; totalReturnPct: number; totalDayGain: number; totalDayGainPct: number;
@@ -957,7 +1041,11 @@ function DashboardTab({
   sectorData: { label: string; value: number; color: string }[];
   barChartData: { label: string; value: number }[];
   snapshots: MonthlySnapshot[]; holdings: Holding[];
-  holdingsEnriched: (Holding & { currentPrice: number; marketValue: number; marketReturnPct: number })[];
+  holdingsEnriched: (Holding & { currentPrice: number; marketValue: number; marketReturnPct: number; annualDivIncome: number; divYield: number })[];
+  stockInfos: Record<string, StockInfo>;
+  portfolioSettings: PortfolioSettings;
+  savePortfolioSettings: (s: PortfolioSettings) => Promise<void>;
+  exchangeRates: ExchangeRates | null;
 }) {
   if (holdings.length === 0) {
     return (
@@ -968,18 +1056,49 @@ function DashboardTab({
       </div>
     )
   }
+
+  // Currency conversion helper
+  const homeCurrency = portfolioSettings.homeCurrency || 'USD'
+  const convertToHome = (usdAmount: number, stockCurrency?: string | null): number => {
+    if (!exchangeRates || homeCurrency === 'USD') return usdAmount
+    const rate = exchangeRates.rates[homeCurrency] || 1
+    // If stock is already in another currency, first convert to USD then to home
+    if (stockCurrency && stockCurrency !== 'USD' && exchangeRates.rates[stockCurrency]) {
+      const usdValue = usdAmount / exchangeRates.rates[stockCurrency]
+      return usdValue * rate
+    }
+    return usdAmount * rate
+  }
+  const currencySymbol = { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$', JPY: '¥', CHF: 'CHF ' }[homeCurrency] || '$'
+  const fmtHome = (n: number) => `${currencySymbol}${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+  const mvHome = convertToHome(totalMarketValue)
+  const costHome = convertToHome(totalCostBasis)
+  const returnHome = mvHome - costHome
+  const incomeHome = convertToHome(projAnnualIncome)
+
   const kpis = [
-    { label: 'COST BASIS', value: fmtDollar(totalCostBasis) },
-    { label: 'MARKET VALUE', value: fmtDollar(totalMarketValue) },
-    { label: 'MARKET RETURN', value: fmtDollar(totalMarketReturn), sub: fmtPct(totalMarketReturnPct), color: totalMarketReturn >= 0 ? 'var(--green)' : 'var(--red)' },
-    { label: 'TOTAL RETURN', value: fmtDollar(totalReturn), sub: fmtPct(totalReturnPct), color: totalReturn >= 0 ? 'var(--green)' : 'var(--red)' },
-    { label: 'DAY GAIN', value: fmtDollar(totalDayGain), sub: fmtPct(totalDayGainPct), color: totalDayGain >= 0 ? 'var(--green)' : 'var(--red)' },
+    { label: 'COST BASIS', value: fmtHome(costHome) },
+    { label: 'MARKET VALUE', value: fmtHome(mvHome) },
+    { label: 'MARKET RETURN', value: fmtHome(convertToHome(totalMarketReturn)), sub: fmtPct(totalMarketReturnPct), color: totalMarketReturn >= 0 ? 'var(--green)' : 'var(--red)' },
+    { label: 'TOTAL RETURN', value: fmtHome(convertToHome(totalReturn)), sub: fmtPct(totalReturnPct), color: totalReturn >= 0 ? 'var(--green)' : 'var(--red)' },
+    { label: 'DAY GAIN', value: fmtHome(convertToHome(totalDayGain)), sub: fmtPct(totalDayGainPct), color: totalDayGain >= 0 ? 'var(--green)' : 'var(--red)' },
     { label: 'DIVIDEND YIELD', value: `${divYieldPortfolio.toFixed(2)}%`, color: 'var(--yellow)' },
     { label: 'YIELD ON COST', value: `${yieldOnCostPortfolio.toFixed(2)}%`, color: 'var(--yellow)' },
-    { label: 'PROJ. ANNUAL INCOME', value: fmtDollar(projAnnualIncome), sub: `${fmtDollar(projAnnualIncome / 12)}/mo · ${fmtDollar(projAnnualIncome / 52)}/wk · ${fmtDollar(projAnnualIncome / 365)}/day`, color: 'var(--green)' },
+    { label: 'PROJ. ANNUAL INCOME', value: fmtHome(incomeHome), sub: `${fmtHome(incomeHome / 12)}/mo · ${fmtHome(incomeHome / 52)}/wk · ${fmtHome(incomeHome / 365)}/day`, color: 'var(--green)' },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Currency & Home Currency indicator */}
+      {homeCurrency !== 'USD' && exchangeRates && (
+        <div style={{ fontSize: 11, color: 'var(--text-3)', background: 'var(--bg-2)', padding: '6px 12px', borderRadius: 6, border: '1px solid var(--border)' }}>
+          💱 Values shown in <strong>{homeCurrency}</strong> · Rate: 1 USD = {(exchangeRates.rates[homeCurrency] || 1).toFixed(4)} {homeCurrency}
+        </div>
+      )}
+
+      {/* Ex-Dividend Alert Banners */}
+      <ExDivAlerts holdingsEnriched={holdingsEnriched} stockInfos={stockInfos} />
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
         {kpis.map((k, i) => <KpiCard key={i} label={k.label} value={k.value} sub={k.sub} color={k.color} />)}
       </div>
@@ -997,6 +1116,28 @@ function DashboardTab({
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 12 }}>PORTFOLIO GROWTH (MONTHLY SNAPSHOTS)</div>
         <LineChart data={snapshots} />
       </div>
+
+      {/* DRIP Summary */}
+      <DRIPSummary holdingsEnriched={holdingsEnriched} stockInfos={stockInfos} portfolioSettings={portfolioSettings} />
+
+      {/* Asset Allocation Targets */}
+      <AllocationTargetsSection
+        holdingsEnriched={holdingsEnriched} totalMarketValue={totalMarketValue}
+        portfolioSettings={portfolioSettings} savePortfolioSettings={savePortfolioSettings}
+      />
+
+      {/* Risk Metrics */}
+      <RiskMetricsSection holdingsEnriched={holdingsEnriched} stockInfos={stockInfos} totalMarketValue={totalMarketValue} />
+
+      {/* AI Portfolio Analysis */}
+      <AIAnalysisSection holdingsEnriched={holdingsEnriched} totalMarketValue={totalMarketValue} projAnnualIncome={projAnnualIncome} />
+
+      {/* What-If Scenarios */}
+      <WhatIfSection holdingsEnriched={holdingsEnriched} totalMarketValue={totalMarketValue} projAnnualIncome={projAnnualIncome} stockInfos={stockInfos} />
+
+      {/* Currency Settings */}
+      <CurrencySettings portfolioSettings={portfolioSettings} savePortfolioSettings={savePortfolioSettings} exchangeRates={exchangeRates} />
+
       {/* Performance Benchmarking Section */}
       <BenchmarkSection holdingsEnriched={holdingsEnriched} totalCostBasis={totalCostBasis} />
     </div>
@@ -1014,7 +1155,7 @@ type HoldingEnriched = Holding & {
 function HoldingsTab({
   holdings, setHoldings, holdingsEnriched, totalMarketValue, stockInfos,
   isLoggedIn, persistHolding, deleteHoldingAPI, onSellPosition,
-  priceAlerts, addPriceAlert, deletePriceAlert,
+  priceAlerts, addPriceAlert, deletePriceAlert, portfolioSettings, toggleDRIP,
 }: {
   holdings: Holding[]
   setHoldings: React.Dispatch<React.SetStateAction<Holding[]>>
@@ -1028,6 +1169,8 @@ function HoldingsTab({
   priceAlerts: PriceAlert[]
   addPriceAlert: (symbol: string, target_price: number, direction: 'above' | 'below') => Promise<PriceAlert | null>
   deletePriceAlert: (id: string) => Promise<void>
+  portfolioSettings: PortfolioSettings
+  toggleDRIP: (ticker: string, enabled: boolean) => Promise<void>
 }) {
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -1311,6 +1454,11 @@ function HoldingsTab({
                         <button onClick={() => openAddShares(h)} style={{ fontSize: 9.5, color: 'var(--green)', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>+Shares</button>
                         <button onClick={() => onSellPosition(h)} style={{ fontSize: 9.5, color: 'var(--yellow)', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>Sell</button>
                         <button onClick={() => openAlertModal(h.ticker, h.currentPrice)} style={{ fontSize: 9.5, color: '#f59e0b', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>🔔</button>
+                        <button
+                          onClick={() => toggleDRIP(h.ticker, !portfolioSettings.dripEnabled[h.ticker])}
+                          title={portfolioSettings.dripEnabled[h.ticker] ? 'DRIP enabled — click to disable' : 'Enable DRIP'}
+                          style={{ fontSize: 9.5, color: portfolioSettings.dripEnabled[h.ticker] ? 'var(--green)' : 'var(--text-3)', cursor: 'pointer', padding: '2px 5px', border: `1px solid ${portfolioSettings.dripEnabled[h.ticker] ? 'var(--green)' : 'var(--border)'}`, borderRadius: 3 }}
+                        >DRIP</button>
                         <button onClick={() => handleDelete(h)} style={{ fontSize: 9.5, color: 'var(--red)', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>Del</button>
                       </div>
                     </td>
@@ -2695,6 +2843,644 @@ function TaxTab({ holdings, soldPositions, stockInfos }: {
             </table>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Feature: Ex-Dividend Date Alerts ─────────────────────────────────────────
+
+type HoldingEnrichedWithDiv = Holding & {
+  currentPrice: number; marketValue: number; marketReturnPct: number; annualDivIncome: number; divYield: number
+}
+
+function computeNextExDiv(dividendHistory: { date: string; amount: number }[]): { date: Date; daysAway: number } | null {
+  if (!dividendHistory || dividendHistory.length < 2) return null
+  const sorted = [...dividendHistory].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const lastDate = new Date(sorted[0].date)
+
+  // Compute average interval in days
+  let totalDays = 0, count = 0
+  for (let i = 0; i < Math.min(sorted.length - 1, 8); i++) {
+    const diff = new Date(sorted[i].date).getTime() - new Date(sorted[i + 1].date).getTime()
+    totalDays += diff / (1000 * 60 * 60 * 24)
+    count++
+  }
+  if (count === 0) return null
+  const avgInterval = totalDays / count
+
+  // Project next ex-div date
+  const now = new Date()
+  let next = new Date(lastDate.getTime() + avgInterval * 24 * 60 * 60 * 1000)
+  // If projected is in the past, keep adding intervals until future
+  while (next <= now) {
+    next = new Date(next.getTime() + avgInterval * 24 * 60 * 60 * 1000)
+  }
+  const daysAway = Math.ceil((next.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  return { date: next, daysAway }
+}
+
+function ExDivAlerts({ holdingsEnriched, stockInfos }: {
+  holdingsEnriched: HoldingEnrichedWithDiv[]
+  stockInfos: Record<string, StockInfo>
+}) {
+  const alerts = holdingsEnriched
+    .map(h => {
+      const info = stockInfos[h.ticker]
+      if (!info?.dividendHistory?.length) return null
+      const next = computeNextExDiv(info.dividendHistory)
+      if (!next) return null
+      return { ticker: h.ticker, ...next }
+    })
+    .filter((a): a is { ticker: string; date: Date; daysAway: number } => a !== null && a.daysAway <= 14)
+    .sort((a, b) => a.daysAway - b.daysAway)
+
+  if (alerts.length === 0) return null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {alerts.map(a => {
+        const urgent = a.daysAway <= 3
+        const soon = a.daysAway <= 7
+        const color = urgent ? '#ef4444' : soon ? '#f59e0b' : 'var(--text-2)'
+        const bg = urgent ? 'rgba(239,68,68,0.1)' : soon ? 'rgba(245,158,11,0.1)' : 'var(--bg-2)'
+        const border = urgent ? '#ef4444' : soon ? '#f59e0b' : 'var(--border)'
+        const label = a.daysAway === 0 ? 'today' : a.daysAway === 1 ? 'tomorrow' : `in ${a.daysAway} days`
+        return (
+          <div key={a.ticker} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 6, padding: '8px 14px', fontSize: 12, color, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span>📅</span>
+            <span><strong>{a.ticker}</strong> goes ex-dividend <strong>{label}</strong> ({a.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })})</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Feature: DRIP Summary ────────────────────────────────────────────────────
+
+function DRIPSummary({ holdingsEnriched, stockInfos, portfolioSettings }: {
+  holdingsEnriched: HoldingEnrichedWithDiv[]
+  stockInfos: Record<string, StockInfo>
+  portfolioSettings: PortfolioSettings
+}) {
+  const dripHoldings = holdingsEnriched.filter(h => portfolioSettings.dripEnabled[h.ticker])
+  if (dripHoldings.length === 0) return null
+
+  const items = dripHoldings.map(h => {
+    const info = stockInfos[h.ticker]
+    const history = info?.dividendHistory || []
+    const buyDate = h.buyDate ? new Date(h.buyDate) : null
+    let dripShares = 0
+    let dripValue = 0
+    history.forEach(div => {
+      const divDate = new Date(div.date)
+      if (buyDate && divDate <= buyDate) return
+      const priceAtDiv = h.currentPrice || h.avgCost // approximate with current price
+      if (priceAtDiv > 0) {
+        const reinvestedShares = (div.amount * h.shares) / priceAtDiv
+        dripShares += reinvestedShares
+      }
+    })
+    dripValue = dripShares * (h.currentPrice || h.avgCost)
+    return { ticker: h.ticker, dripShares, dripValue, currentPrice: h.currentPrice }
+  }).filter(x => x.dripShares > 0)
+
+  if (items.length === 0) return null
+
+  const totalDripValue = items.reduce((s, x) => s + x.dripValue, 0)
+  return (
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 12 }}>
+        🔄 DRIP REINVESTMENT SUMMARY
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10, marginBottom: 12 }}>
+        {items.map(x => (
+          <div key={x.ticker} style={{ background: 'var(--bg-3)', borderRadius: 6, padding: '10px 12px', fontSize: 12 }}>
+            <div style={{ fontWeight: 700, color: 'var(--text-0)', marginBottom: 4 }}>{x.ticker}</div>
+            <div style={{ color: 'var(--green)' }}>+{x.dripShares.toFixed(4)} shares reinvested</div>
+            <div style={{ color: 'var(--text-2)', fontSize: 11 }}>Worth {fmtDollar(x.dripValue)} today</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--text-2)' }}>
+        DRIP added an estimated <strong style={{ color: 'var(--green)' }}>{fmtDollar(totalDripValue)}</strong> in compounded value across {items.length} holding{items.length > 1 ? 's' : ''}.
+      </div>
+      <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 6 }}>
+        * Approximate — uses current price as proxy for price at each dividend payment.
+      </div>
+    </div>
+  )
+}
+
+// ─── Feature: Asset Allocation Targets ───────────────────────────────────────
+
+function AllocationTargetsSection({ holdingsEnriched, totalMarketValue, portfolioSettings, savePortfolioSettings }: {
+  holdingsEnriched: HoldingEnrichedWithDiv[]
+  totalMarketValue: number
+  portfolioSettings: PortfolioSettings
+  savePortfolioSettings: (s: PortfolioSettings) => Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draftTargets, setDraftTargets] = useState<AllocationTarget[]>([])
+  const [newSector, setNewSector] = useState(SECTORS[0])
+  const [newPct, setNewPct] = useState('')
+
+  const targets = portfolioSettings.allocationTargets || []
+
+  // Current sector breakdown
+  const sectorValues: Record<string, number> = {}
+  holdingsEnriched.forEach(h => {
+    const s = h.sector || 'Other'
+    sectorValues[s] = (sectorValues[s] || 0) + h.marketValue
+  })
+
+  const startEdit = () => {
+    setDraftTargets([...targets])
+    setEditing(true)
+  }
+  const cancelEdit = () => setEditing(false)
+  const saveTargets = async () => {
+    await savePortfolioSettings({ ...portfolioSettings, allocationTargets: draftTargets })
+    setEditing(false)
+  }
+  const addTarget = () => {
+    const pct = parseFloat(newPct)
+    if (isNaN(pct) || pct <= 0 || pct > 100) return
+    setDraftTargets(prev => {
+      const existing = prev.find(t => t.sector === newSector)
+      if (existing) return prev.map(t => t.sector === newSector ? { ...t, targetPct: pct } : t)
+      return [...prev, { sector: newSector, targetPct: pct }]
+    })
+    setNewPct('')
+  }
+  const removeTarget = (sector: string) => setDraftTargets(prev => prev.filter(t => t.sector !== sector))
+
+  if (targets.length === 0 && !editing) {
+    return (
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}>🎯 ALLOCATION TARGETS</div>
+          <button onClick={startEdit} style={{ fontSize: 11, color: 'var(--accent)', cursor: 'pointer', padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent' }}>Set Targets</button>
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Set target allocation percentages by sector to track rebalancing needs.</div>
+      </div>
+    )
+  }
+
+  const totalTargetPct = draftTargets.reduce((s, t) => s + t.targetPct, 0)
+
+  return (
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}>🎯 ALLOCATION TARGETS</div>
+        {!editing ? (
+          <button onClick={startEdit} style={{ fontSize: 11, color: 'var(--accent)', cursor: 'pointer', padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent' }}>Edit Targets</button>
+        ) : (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={saveTargets} style={{ fontSize: 11, color: '#fff', cursor: 'pointer', padding: '4px 10px', border: 'none', borderRadius: 4, background: 'var(--accent)' }}>Save</button>
+            <button onClick={cancelEdit} style={{ fontSize: 11, color: 'var(--text-2)', cursor: 'pointer', padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent' }}>Cancel</button>
+          </div>
+        )}
+      </div>
+
+      {editing && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <select value={newSector} onChange={e => setNewSector(e.target.value)} style={{ fontSize: 11, padding: '4px 8px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text-0)', flex: 1 }}>
+              {SECTORS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <input type="number" value={newPct} onChange={e => setNewPct(e.target.value)} placeholder="%" min="0" max="100" style={{ fontSize: 11, padding: '4px 8px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text-0)', width: 60 }} />
+            <button onClick={addTarget} style={{ fontSize: 11, color: '#fff', cursor: 'pointer', padding: '4px 10px', border: 'none', borderRadius: 4, background: 'var(--accent)' }}>Add</button>
+          </div>
+          {totalTargetPct > 0 && <div style={{ fontSize: 10, color: totalTargetPct > 100 ? 'var(--red)' : 'var(--text-3)' }}>Total: {totalTargetPct.toFixed(1)}% {totalTargetPct > 100 ? '⚠ exceeds 100%' : ''}</div>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+            {draftTargets.map(t => (
+              <div key={t.sector} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, background: 'var(--bg-3)', padding: '4px 8px', borderRadius: 4 }}>
+                <span>{t.sector}</span>
+                <span style={{ color: 'var(--accent)' }}>{t.targetPct}%</span>
+                <button onClick={() => removeTarget(t.sector)} style={{ fontSize: 10, color: 'var(--red)', cursor: 'pointer', padding: '2px 4px' }}>✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Comparison table */}
+      {targets.length > 0 && !editing && (
+        <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {targets.map(t => {
+              const currentVal = sectorValues[t.sector] || 0
+              const currentPct = totalMarketValue > 0 ? (currentVal / totalMarketValue) * 100 : 0
+              const diff = currentPct - t.targetPct
+              const overweight = diff > 2
+              const underweight = diff < -2
+              return (
+                <div key={t.sector}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
+                    <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{t.sector}</span>
+                    <span style={{ color: overweight ? 'var(--red)' : underweight ? 'var(--yellow)' : 'var(--green)' }}>
+                      {currentPct.toFixed(1)}% vs {t.targetPct}% target
+                      {overweight && ` (+${diff.toFixed(1)}%)`}
+                      {underweight && ` (${diff.toFixed(1)}%)`}
+                    </span>
+                  </div>
+                  {/* Bar comparison */}
+                  <div style={{ position: 'relative', height: 6, background: 'var(--bg-3)', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${Math.min(currentPct, 100)}%`, background: SECTOR_COLORS[t.sector] || '#888', borderRadius: 3, opacity: 0.8 }} />
+                    <div style={{ position: 'absolute', left: `${Math.min(t.targetPct, 100)}%`, top: 0, width: 2, height: '100%', background: 'var(--text-2)' }} />
+                  </div>
+                  {overweight && (
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>Based on your targets, your portfolio is overweight in {t.sector} by {diff.toFixed(1)}%</div>
+                  )}
+                  {underweight && (
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>Based on your targets, your portfolio is underweight in {t.sector} by {Math.abs(diff).toFixed(1)}%</div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Feature: Risk Metrics ────────────────────────────────────────────────────
+
+function RiskMetricsSection({ holdingsEnriched, stockInfos, totalMarketValue }: {
+  holdingsEnriched: HoldingEnrichedWithDiv[]
+  stockInfos: Record<string, StockInfo>
+  totalMarketValue: number
+}) {
+  // Portfolio Beta (weighted average)
+  let betaSum = 0, betaWeight = 0
+  holdingsEnriched.forEach(h => {
+    const beta = stockInfos[h.ticker]?.beta
+    if (beta != null && h.marketValue > 0 && totalMarketValue > 0) {
+      betaSum += beta * (h.marketValue / totalMarketValue)
+      betaWeight += h.marketValue / totalMarketValue
+    }
+  })
+  const portfolioBeta = betaWeight > 0 ? betaSum / betaWeight : null
+
+  // Volatility & Max Drawdown from daily return changes (use dayChangePct as proxy for 1-day returns)
+  const dayReturns = holdingsEnriched
+    .filter(h => stockInfos[h.ticker]?.dayChangePct != null)
+    .map(h => {
+      const wt = totalMarketValue > 0 ? h.marketValue / totalMarketValue : 0
+      return (stockInfos[h.ticker]?.dayChangePct || 0) * wt
+    })
+  const portfolioDayReturn = dayReturns.reduce((s, r) => s + r, 0)
+
+  // Annualized volatility estimate (from individual holding day changes, weighted)
+  let volatility: number | null = null
+  const returns: number[] = holdingsEnriched.map(h => {
+    const wt = totalMarketValue > 0 ? h.marketValue / totalMarketValue : 0
+    return ((stockInfos[h.ticker]?.dayChangePct || 0) / 100) * wt
+  })
+  if (returns.length > 1) {
+    const mean = returns.reduce((s, r) => s + r, 0) / returns.length
+    const variance = returns.reduce((s, r) => s + Math.pow(r - mean, 2), 0) / returns.length
+    volatility = Math.sqrt(variance) * Math.sqrt(252) * 100 // annualized %
+  }
+
+  // Max Drawdown — use 52W high vs current as proxy
+  let maxDrawdown: number | null = null
+  const drawdowns: number[] = []
+  holdingsEnriched.forEach(h => {
+    const info = stockInfos[h.ticker]
+    const high52 = info?.['52WeekHigh']
+    const curr = info?.currentPrice
+    if (high52 && curr && high52 > 0) {
+      const dd = (curr - high52) / high52 * 100
+      if (dd < 0) drawdowns.push(dd * (h.marketValue / totalMarketValue))
+    }
+  })
+  if (drawdowns.length > 0) maxDrawdown = drawdowns.reduce((s, d) => s + d, 0)
+
+  // Sharpe Ratio — (annualized return - risk-free) / volatility
+  // Use total market return pct as annualized return approximation
+  const totalReturnPct = holdingsEnriched.reduce((s, h) => {
+    const wt = totalMarketValue > 0 ? h.marketValue / totalMarketValue : 0
+    return s + ((h as HoldingEnrichedWithDiv & { marketReturnPct?: number }).marketReturnPct || 0) * wt
+  }, 0)
+  const riskFreeRate = 5.0 // %
+  const sharpe = volatility && volatility > 0 ? (totalReturnPct - riskFreeRate) / volatility : null
+
+  const cards = [
+    {
+      label: 'PORTFOLIO BETA',
+      value: portfolioBeta != null ? portfolioBeta.toFixed(2) : 'N/A',
+      desc: portfolioBeta != null
+        ? portfolioBeta > 1.2 ? `Your portfolio moves ~${((portfolioBeta - 1) * 100).toFixed(0)}% more than the market`
+        : portfolioBeta < 0.8 ? `Your portfolio moves ~${((1 - portfolioBeta) * 100).toFixed(0)}% less than the market`
+        : 'Your portfolio moves roughly in line with the market'
+        : 'Beta data not yet available for your holdings',
+      color: portfolioBeta != null ? (portfolioBeta > 1.5 ? 'var(--red)' : portfolioBeta > 1 ? 'var(--yellow)' : 'var(--green)') : 'var(--text-3)',
+    },
+    {
+      label: 'VOLATILITY (ANN.)',
+      value: volatility != null ? `${volatility.toFixed(1)}%` : 'N/A',
+      desc: volatility != null
+        ? volatility > 30 ? 'High volatility — prices can swing significantly'
+        : volatility > 15 ? 'Moderate volatility — typical for equity portfolios'
+        : 'Low volatility — relatively stable portfolio'
+        : 'Insufficient data',
+      color: volatility != null ? (volatility > 30 ? 'var(--red)' : volatility > 15 ? 'var(--yellow)' : 'var(--green)') : 'var(--text-3)',
+    },
+    {
+      label: 'MAX DRAWDOWN (52W)',
+      value: maxDrawdown != null ? `${maxDrawdown.toFixed(1)}%` : 'N/A',
+      desc: maxDrawdown != null
+        ? `Weighted avg decline from 52-week highs across your holdings`
+        : 'No 52-week high data available',
+      color: maxDrawdown != null ? (maxDrawdown < -20 ? 'var(--red)' : maxDrawdown < -10 ? 'var(--yellow)' : 'var(--green)') : 'var(--text-3)',
+    },
+    {
+      label: 'SHARPE RATIO',
+      value: sharpe != null ? sharpe.toFixed(2) : 'N/A',
+      desc: sharpe != null
+        ? sharpe > 2 ? 'Excellent risk-adjusted return'
+        : sharpe > 1 ? 'Good risk-adjusted return'
+        : sharpe > 0 ? 'Positive but modest risk-adjusted return'
+        : 'Negative — return below risk-free rate after adjusting for volatility'
+        : 'Insufficient data for Sharpe calculation',
+      color: sharpe != null ? (sharpe > 1 ? 'var(--green)' : sharpe > 0 ? 'var(--yellow)' : 'var(--red)') : 'var(--text-3)',
+    },
+  ]
+
+  return (
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 12 }}>📉 RISK METRICS</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+        {cards.map((c, i) => (
+          <div key={i} style={{ background: 'var(--bg-3)', borderRadius: 6, padding: '12px 14px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-3)', marginBottom: 4 }}>{c.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: c.color, fontFamily: 'var(--mono)', marginBottom: 4 }}>{c.value}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.4 }}>{c.desc}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 10, fontStyle: 'italic' }}>
+        ⚠ Risk metrics are estimates based on limited historical data. Sharpe uses 5% risk-free rate. Not financial advice.
+      </div>
+    </div>
+  )
+}
+
+// ─── Feature: AI Portfolio Analysis ──────────────────────────────────────────
+
+function AIAnalysisSection({ holdingsEnriched, totalMarketValue, projAnnualIncome }: {
+  holdingsEnriched: HoldingEnrichedWithDiv[]
+  totalMarketValue: number
+  projAnnualIncome: number
+}) {
+  const [expanded, setExpanded] = useState(false)
+
+  // Rule-based analysis
+  const insights: { level: 'info' | 'warn' | 'alert'; text: string }[] = []
+
+  // Sector concentration
+  const sectorPcts: Record<string, number> = {}
+  holdingsEnriched.forEach(h => {
+    const s = h.sector || 'Other'
+    sectorPcts[s] = (sectorPcts[s] || 0) + h.marketValue / totalMarketValue * 100
+  })
+  Object.entries(sectorPcts).forEach(([sector, pct]) => {
+    if (pct > 60) insights.push({ level: 'alert', text: `Your portfolio is ${pct.toFixed(0)}% ${sector} — heavily concentrated in a single sector.` })
+    else if (pct > 40) insights.push({ level: 'warn', text: `${sector} makes up ${pct.toFixed(0)}% of your portfolio — consider whether this matches your goals.` })
+  })
+
+  // Individual concentration risk
+  holdingsEnriched.forEach(h => {
+    const pct = totalMarketValue > 0 ? h.marketValue / totalMarketValue * 100 : 0
+    if (pct > 30) insights.push({ level: 'alert', text: `${h.ticker} is ${pct.toFixed(0)}% of your portfolio — high single-stock concentration risk.` })
+    else if (pct > 20) insights.push({ level: 'warn', text: `${h.ticker} represents ${pct.toFixed(0)}% of your portfolio — a meaningful concentration.` })
+  })
+
+  // Dividend yield sustainability
+  const highYieldHoldings = holdingsEnriched.filter(h => h.divYield > 10)
+  if (highYieldHoldings.length > 0) {
+    const avgYield = highYieldHoldings.reduce((s, h) => s + h.divYield, 0) / highYieldHoldings.length
+    insights.push({ level: 'warn', text: `${highYieldHoldings.map(h => h.ticker).join(', ')} ${highYieldHoldings.length > 1 ? 'have' : 'has'} dividend yield${highYieldHoldings.length > 1 ? 's' : ''} above 10% (avg ${avgYield.toFixed(0)}%) — verify dividend sustainability.` })
+  }
+
+  // Sector gaps
+  const allMajorSectors = ['Information Technology', 'Health Care', 'Financials', 'Consumer Staples', 'Energy']
+  const missingSectors = allMajorSectors.filter(s => !sectorPcts[s] || sectorPcts[s] < 1)
+  if (missingSectors.length >= 3) insights.push({ level: 'info', text: `You have no exposure to: ${missingSectors.join(', ')}.` })
+
+  // Income vs growth balance
+  const divYieldOverall = totalMarketValue > 0 ? projAnnualIncome / totalMarketValue * 100 : 0
+  if (divYieldOverall > 5) insights.push({ level: 'info', text: `Your portfolio has a ${divYieldOverall.toFixed(1)}% dividend yield — income-oriented portfolio.` })
+  else if (divYieldOverall < 0.5 && holdingsEnriched.length > 2) insights.push({ level: 'info', text: `Your portfolio generates minimal dividend income (${divYieldOverall.toFixed(1)}% yield) — growth-oriented.` })
+
+  // Diversification score
+  const numSectors = Object.keys(sectorPcts).length
+  if (numSectors <= 2 && holdingsEnriched.length > 3) insights.push({ level: 'warn', text: `Your portfolio spans only ${numSectors} sector${numSectors > 1 ? 's' : ''}. Consider broader diversification.` })
+  else if (numSectors >= 5) insights.push({ level: 'info', text: `Good diversification across ${numSectors} sectors.` })
+
+  // Number of holdings
+  if (holdingsEnriched.length < 5) insights.push({ level: 'info', text: `You hold ${holdingsEnriched.length} position${holdingsEnriched.length > 1 ? 's' : ''} — a concentrated portfolio can amplify both gains and losses.` })
+
+  if (insights.length === 0) insights.push({ level: 'info', text: 'Your portfolio looks well-structured based on current data.' })
+
+  const iconMap = { info: 'ℹ️', warn: '⚠️', alert: '🚨' }
+  const colorMap = { info: 'var(--text-2)', warn: '#f59e0b', alert: 'var(--red)' }
+
+  return (
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}>🤖 AI PORTFOLIO ANALYSIS</div>
+        <button onClick={() => setExpanded(!expanded)} style={{ fontSize: 11, color: 'var(--accent)', cursor: 'pointer', padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent' }}>
+          {expanded ? 'Collapse ↑' : 'View Analysis ↓'}
+        </button>
+      </div>
+      {expanded && (
+        <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+            {insights.map((ins, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 12, color: colorMap[ins.level], background: 'var(--bg-3)', padding: '8px 12px', borderRadius: 6 }}>
+                <span style={{ flexShrink: 0 }}>{iconMap[ins.level]}</span>
+                <span>{ins.text}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', fontStyle: 'italic', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+            This analysis is informational only and is generated from your portfolio data using rule-based logic. Not personalized investment advice. Always consult a qualified financial advisor before making investment decisions.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Feature: What-If Scenarios ───────────────────────────────────────────────
+
+function WhatIfSection({ holdingsEnriched, totalMarketValue, projAnnualIncome, stockInfos }: {
+  holdingsEnriched: HoldingEnrichedWithDiv[]
+  totalMarketValue: number
+  projAnnualIncome: number
+  stockInfos: Record<string, StockInfo>
+}) {
+  const [symbol, setSymbol] = useState('')
+  const [shares, setShares] = useState('')
+  const [price, setPrice] = useState('')
+  const [projection, setProjection] = useState<{
+    newTotalValue: number
+    newAnnualIncome: number
+    newDivYield: number
+    addedValue: number
+    newSectorPcts: Record<string, number>
+    ticker: string
+    shares: number
+    cost: number
+    annualDiv: number
+  } | null>(null)
+  const [error, setError] = useState('')
+  const [expanded, setExpanded] = useState(false)
+
+  const handleProject = () => {
+    const sym = symbol.trim().toUpperCase()
+    const sh = parseFloat(shares)
+    let pr = parseFloat(price)
+    if (!sym || isNaN(sh) || sh <= 0) { setError('Enter symbol and shares'); return }
+
+    // Use current price from stockInfos if available and no price specified
+    if (isNaN(pr) || pr <= 0) {
+      pr = stockInfos[sym]?.currentPrice || 0
+    }
+    if (pr <= 0) { setError('Enter a valid price (or refresh prices to auto-fill)'); return }
+
+    const annualDiv = (stockInfos[sym]?.dividendPerShareAnnual || 0) * sh
+    const addedValue = sh * pr
+    const newTotalValue = totalMarketValue + addedValue
+    const newAnnualIncome = projAnnualIncome + annualDiv
+    const newDivYield = newTotalValue > 0 ? newAnnualIncome / newTotalValue * 100 : 0
+
+    // New sector breakdown
+    const sectorPcts: Record<string, number> = {}
+    holdingsEnriched.forEach(h => {
+      const s = h.sector || 'Other'
+      sectorPcts[s] = (sectorPcts[s] || 0) + h.marketValue / newTotalValue * 100
+    })
+    const newSector = stockInfos[sym]?.sector || 'Other'
+    sectorPcts[newSector] = (sectorPcts[newSector] || 0) + addedValue / newTotalValue * 100
+
+    setProjection({ newTotalValue, newAnnualIncome, newDivYield, addedValue, newSectorPcts: sectorPcts, ticker: sym, shares: sh, cost: pr, annualDiv })
+    setError('')
+  }
+
+  const currentDivYield = totalMarketValue > 0 ? projAnnualIncome / totalMarketValue * 100 : 0
+
+  return (
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}>🔮 WHAT-IF SCENARIOS</div>
+        <button onClick={() => setExpanded(!expanded)} style={{ fontSize: 11, color: 'var(--accent)', cursor: 'pointer', padding: '4px 10px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent' }}>
+          {expanded ? 'Collapse ↑' : 'Try Scenario ↓'}
+        </button>
+      </div>
+      {expanded && (
+        <div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+            <input value={symbol} onChange={e => setSymbol(e.target.value)} placeholder="Symbol (e.g. SCHD)" style={{ fontSize: 11, padding: '6px 10px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text-0)', width: 100 }} />
+            <input type="number" value={shares} onChange={e => setShares(e.target.value)} placeholder="Shares" style={{ fontSize: 11, padding: '6px 10px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text-0)', width: 80 }} />
+            <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="Price (auto if loaded)" style={{ fontSize: 11, padding: '6px 10px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text-0)', width: 140 }} />
+            <button onClick={handleProject} style={{ fontSize: 11, color: '#fff', cursor: 'pointer', padding: '6px 14px', border: 'none', borderRadius: 4, background: 'var(--accent)' }}>What if I add this?</button>
+          </div>
+          {error && <div style={{ fontSize: 11, color: 'var(--red)', marginBottom: 8 }}>{error}</div>}
+
+          {projection && (
+            <div style={{ background: 'var(--bg-3)', borderRadius: 6, padding: '12px 14px' }}>
+              <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: 'var(--text-0)' }}>
+                If you buy {projection.shares} shares of {projection.ticker} @ {fmtDollar(projection.cost)}:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+                <div style={{ background: 'var(--bg-2)', borderRadius: 4, padding: '8px 10px' }}>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em' }}>NEW PORTFOLIO VALUE</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-0)', fontFamily: 'var(--mono)' }}>{fmtDollar(projection.newTotalValue)}</div>
+                  <div style={{ fontSize: 10, color: 'var(--green)' }}>+{fmtDollar(projection.addedValue)} added</div>
+                </div>
+                <div style={{ background: 'var(--bg-2)', borderRadius: 4, padding: '8px 10px' }}>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em' }}>ANNUAL INCOME</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--mono)' }}>{fmtDollar(projection.newAnnualIncome)}/yr</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-2)' }}>Monthly: {fmtDollar(projection.newAnnualIncome / 12)} vs {fmtDollar(projAnnualIncome / 12)} now</div>
+                </div>
+                <div style={{ background: 'var(--bg-2)', borderRadius: 4, padding: '8px 10px' }}>
+                  <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em' }}>DIV YIELD</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--yellow)', fontFamily: 'var(--mono)' }}>{projection.newDivYield.toFixed(2)}%</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-2)' }}>vs {currentDivYield.toFixed(2)}% now</div>
+                </div>
+                {projection.annualDiv > 0 && (
+                  <div style={{ background: 'var(--bg-2)', borderRadius: 4, padding: '8px 10px' }}>
+                    <div style={{ fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.06em' }}>ADDED INCOME</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--mono)' }}>+{fmtDollar(projection.annualDiv)}/yr</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-2)' }}>+{fmtDollar(projection.annualDiv / 12)}/mo</div>
+                  </div>
+                )}
+              </div>
+              {/* New sector breakdown */}
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 6, letterSpacing: '0.06em' }}>NEW SECTOR BREAKDOWN</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {Object.entries(projection.newSectorPcts).sort(([, a], [, b]) => b - a).map(([sector, pct]) => (
+                    <div key={sector} style={{ fontSize: 10, padding: '3px 8px', background: 'var(--bg-2)', borderRadius: 10, color: 'var(--text-1)' }}>
+                      {sector}: {pct.toFixed(1)}%
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 10, fontStyle: 'italic' }}>
+                * Projected values only. Annual income estimate uses current dividend data. Not investment advice.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Feature: Currency Settings ───────────────────────────────────────────────
+
+function CurrencySettings({ portfolioSettings, savePortfolioSettings, exchangeRates }: {
+  portfolioSettings: PortfolioSettings
+  savePortfolioSettings: (s: PortfolioSettings) => Promise<void>
+  exchangeRates: ExchangeRates | null
+}) {
+  const [saving, setSaving] = useState(false)
+
+  const handleChange = async (currency: string) => {
+    setSaving(true)
+    await savePortfolioSettings({ ...portfolioSettings, homeCurrency: currency })
+    setSaving(false)
+  }
+
+  return (
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}>💱 DISPLAY CURRENCY</div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {SUPPORTED_CURRENCIES.map(c => (
+          <button key={c} onClick={() => handleChange(c)} style={{
+            fontSize: 11, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+            background: portfolioSettings.homeCurrency === c ? 'var(--accent)' : 'var(--bg-3)',
+            color: portfolioSettings.homeCurrency === c ? '#fff' : 'var(--text-2)',
+            border: '1px solid var(--border)', fontWeight: portfolioSettings.homeCurrency === c ? 700 : 400,
+          }}>{c}</button>
+        ))}
+      </div>
+      {saving && <span style={{ fontSize: 10, color: 'var(--text-3)' }}>Saving…</span>}
+      {exchangeRates && portfolioSettings.homeCurrency !== 'USD' && (
+        <span style={{ fontSize: 10, color: 'var(--text-3)' }}>
+          1 USD = {(exchangeRates.rates[portfolioSettings.homeCurrency] || 1).toFixed(4)} {portfolioSettings.homeCurrency}
+          {' '}· Rates via open.er-api.com
+        </span>
+      )}
+      {!exchangeRates && portfolioSettings.homeCurrency !== 'USD' && (
+        <span style={{ fontSize: 10, color: 'var(--yellow)' }}>Loading exchange rates…</span>
       )}
     </div>
   )

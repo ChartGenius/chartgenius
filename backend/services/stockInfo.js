@@ -233,6 +233,7 @@ async function getStockInfo(symbol) {
       dayChangePct,
       '52WeekHigh': week52High ? parseFloat(week52High.toFixed(4)) : null,
       '52WeekLow': week52Low ? parseFloat(week52Low.toFixed(4)) : null,
+      beta: metrics.beta || null,
       peRatio: metrics.peBasicExclExtraTTM || metrics.peTTM || null,
       // Use computed annual dividend from actual history if available — far more
       // accurate for monthly payers (TSLY, AMDY) vs Finnhub metrics field.

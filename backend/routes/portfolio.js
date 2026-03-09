@@ -365,4 +365,40 @@ router.post('/sync', async (req, res) => {
   }
 });
 
+// ─── Portfolio Settings (DRIP toggles, allocation targets, home currency) ──────
+
+router.get('/settings', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT settings FROM portfolio_settings WHERE user_id = $1`,
+      [req.user.userId]
+    );
+    res.json({ settings: rows[0]?.settings || {} });
+  } catch (e) {
+    // Table may not exist yet — return empty
+    res.json({ settings: {} });
+  }
+});
+
+router.post('/settings', async (req, res) => {
+  try {
+    const { settings } = req.body;
+    if (!settings || typeof settings !== 'object') {
+      return res.status(400).json({ error: 'settings object required' });
+    }
+    await db.query(
+      `INSERT INTO portfolio_settings (user_id, settings)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id)
+       DO UPDATE SET settings = $2, updated_at = NOW()`,
+      [req.user.userId, JSON.stringify(settings)]
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    // Table may not exist yet — store in fallback
+    console.warn('[Portfolio] settings table missing, skipping persist');
+    res.json({ ok: true, warn: 'settings not persisted' });
+  }
+});
+
 module.exports = router;
