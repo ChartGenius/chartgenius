@@ -481,6 +481,7 @@ export default function DashboardPage() {
   const [showAddCompany, setShowAddCompany] = useState(false)
   const [importJson, setImportJson] = useState('')
   const [showImport, setShowImport] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Derived stats
   const todayTasks = tasks.filter(t => t.createdAt.startsWith(todayStr) || t.completedAt.startsWith(todayStr))
@@ -617,15 +618,16 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div style={{
-      display: 'flex', height: '100vh', background: 'var(--bg-0)',
-      fontFamily: 'var(--font)', overflow: 'hidden',
+    <div className="dashboard-layout" style={{
+      background: 'var(--bg-0)', fontFamily: 'var(--font)',
     }}>
+      {/* ── Mobile sidebar backdrop ── */}
+      <div
+        className={`dashboard-sidebar-backdrop ${sidebarOpen ? 'open' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
       {/* ── Sidebar ── */}
-      <aside style={{
-        width: 220, background: 'var(--bg-1)', borderRight: '1px solid var(--border)',
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
-      }}>
+      <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : ''}`}>
         {/* Brand */}
         <div style={{ padding: '20px 20px 16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
@@ -645,7 +647,7 @@ export default function DashboardPage() {
         {/* Nav */}
         <nav style={{ flex: 1, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {navItems.map(item => (
-            <button key={item.id} onClick={() => setActiveSection(item.id)} style={{
+            <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false) }} style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
               borderRadius: 8, width: '100%', textAlign: 'left',
               background: activeSection === item.id ? 'var(--bg-3)' : 'transparent',
@@ -681,14 +683,20 @@ export default function DashboardPage() {
       </aside>
 
       {/* ── Main Content ── */}
-      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <main className="dashboard-main">
         {/* Header */}
         <header style={{
           padding: '16px 28px', borderBottom: '1px solid var(--border)',
           background: 'var(--bg-1)', display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', flexShrink: 0,
         }}>
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              className="dashboard-sidebar-toggle"
+              onClick={() => setSidebarOpen(o => !o)}
+              aria-label="Toggle sidebar"
+            >☰</button>
+            <div>
             <h1 style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>
               {navItems.find(n => n.id === activeSection)?.emoji}{' '}
               {navItems.find(n => n.id === activeSection)?.label}
@@ -696,6 +704,7 @@ export default function DashboardPage() {
             <p style={{ fontSize: 11, color: 'var(--text-2)' }}>
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {activeSection === 'overview' && (
@@ -738,7 +747,7 @@ export default function DashboardPage() {
               )}
 
               {/* Status cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              <div className="dashboard-grid-4">
                 {/* Active Agents */}
                 <div className="ds-card" style={{ padding: '16px 20px' }}>
                   <div style={{ fontSize: 10, color: 'var(--text-2)', letterSpacing: '0.06em', marginBottom: 10 }}>ACTIVE AGENTS</div>
@@ -824,7 +833,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Activity Feed */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+              <div className="dashboard-grid-overview">
                 <div className="ds-card" style={{ padding: 0, overflow: 'hidden' }}>
                   <div style={{
                     padding: '14px 20px', borderBottom: '1px solid var(--border)',
@@ -1003,7 +1012,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Kanban */}
-              <div style={{ display: 'flex', gap: 16, flex: 1, alignItems: 'flex-start', minHeight: 0 }}>
+              <div className="dashboard-kanban">
                 <KanbanColumn title="To Do" status="todo" color="var(--text-2)"
                   tasks={filteredTasks.filter(t => t.status === 'todo')}
                   onTaskClick={setSelectedTask}
@@ -1029,7 +1038,7 @@ export default function DashboardPage() {
           {/* ── COMPANIES ── */}
           {activeSection === 'companies' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 20 }}>
+              <div className="dashboard-grid-companies">
                 {/* Hierarchy */}
                 <div className="ds-card" style={{ padding: 0, overflow: 'hidden' }}>
                   <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1141,7 +1150,7 @@ export default function DashboardPage() {
           {/* ── AGENTS ── */}
           {activeSection === 'agents' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+              <div className="dashboard-grid-agents">
                 {(['Axle', 'Bolt', 'Zip'] as AgentName[]).map(agent => {
                   const agentData = agents.find(a => a.name === agent)
                   const agentTasks = tasks.filter(t => t.agent === agent)
@@ -1403,7 +1412,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div className="dashboard-grid-metrics-2">
                 {/* Tasks by Day */}
                 <div className="ds-card">
                   <h3 style={{ fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Tasks Completed — Last 14 Days</h3>
