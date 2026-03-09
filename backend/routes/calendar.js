@@ -13,22 +13,64 @@ const router = express.Router();
 const economicCalendar = require('../services/economicCalendar');
 const calendarService = require('../services/calendarService');
 
-// ─── NEW: Comprehensive events endpoint ────────────────────────────────────
+// ─── In-memory cache for calendar events ───────────────────────────────────
 
-// GET /api/calendar/events?from=YYYY-MM-DD&to=YYYY-MM-DD&type=all
+const eventsCache = new Map(); // key -> { data, timestamp }
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+function getCacheKey(from, to, type) {
+  return `${from}|${to}|${type}`;
+}
+
+function getCached(key) {
+  const entry = eventsCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    eventsCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCache(key, data) {
+  eventsCache.set(key, { data, timestamp: Date.now() });
+}
+
+// ─── Comprehensive events endpoint (with pagination + caching) ─────────────
+
+// GET /api/calendar/events?from=YYYY-MM-DD&to=YYYY-MM-DD&type=all&page=1&limit=50
 router.get('/events', async (req, res) => {
   try {
     const { from, to, type = 'all' } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
 
     // Default: next 30 days if not specified
     const now = new Date();
     const fromStr = from || now.toISOString().slice(0, 10);
     const toStr = to || new Date(now.getTime() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);
 
-    const events = await calendarService.getEvents({ from: fromStr, to: toStr, type });
+    // Check cache first
+    const cacheKey = getCacheKey(fromStr, toStr, type);
+    let allEvents = getCached(cacheKey);
+
+    if (!allEvents) {
+      allEvents = await calendarService.getEvents({ from: fromStr, to: toStr, type });
+      setCache(cacheKey, allEvents);
+    }
+
+    // Paginate
+    const total = allEvents.length;
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const events = allEvents.slice(offset, offset + limit);
 
     res.json({
       success: true,
+      total,
+      page,
+      limit,
+      totalPages,
       count: events.length,
       events,
       filters: { from: fromStr, to: toStr, type },
