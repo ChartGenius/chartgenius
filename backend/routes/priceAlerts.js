@@ -97,9 +97,9 @@ router.post('/check', async (req, res) => {
 
 async function checkAndTriggerAlerts() {
   try {
-    // Get all non-triggered alerts
+    // Get all active, non-triggered alerts
     const { rows: alerts } = await db.query(
-      `SELECT * FROM price_alerts WHERE triggered = FALSE`
+      `SELECT * FROM price_alerts WHERE triggered = FALSE AND is_active = TRUE`
     );
 
     if (!alerts.length) return 0;
@@ -135,7 +135,7 @@ async function checkAndTriggerAlerts() {
 
       if (shouldTrigger) {
         await db.query(
-          `UPDATE price_alerts SET triggered = TRUE, triggered_at = NOW() WHERE id = $1`,
+          `UPDATE price_alerts SET triggered = TRUE, is_active = FALSE, triggered_at = NOW() WHERE id = $1`,
           [alert.id]
         );
         triggered++;
