@@ -1865,6 +1865,7 @@ export default function Home() {
             window.open('/calendar', '_blank')
           }}>Calendar</button>
           <a href="/portfolio" className={`nav-item${activeNav === 'Portfolio' ? ' active' : ''}`} style={{ textDecoration: 'none' }}>Portfolio</a>
+          <a href="/tools" className={`nav-item${activeNav === 'Tools' ? ' active' : ''}`} style={{ textDecoration: 'none' }}>Tools</a>
         </nav>
 
         <div className="header-right">

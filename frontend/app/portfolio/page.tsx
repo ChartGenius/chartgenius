@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
+import Tooltip from '../components/Tooltip'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -353,10 +354,13 @@ function LineChart({ data }: { data: MonthlySnapshot[] }) {
   )
 }
 
-function KpiCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+function KpiCard({ label, value, sub, color, tooltip }: { label: string; value: string; sub?: string; color?: string; tooltip?: string }) {
   return (
     <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
-      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 2 }}>
+        {label}
+        {tooltip && <Tooltip text={tooltip} position="bottom" />}
+      </div>
       <div style={{ fontSize: 17, fontWeight: 700, fontFamily: 'var(--mono)', color: color || 'var(--text-0)' }}>{value}</div>
       {sub && <div style={{ fontSize: 10, color: 'var(--text-2)', marginTop: 3 }}>{sub}</div>}
     </div>
@@ -1078,14 +1082,14 @@ function DashboardTab({
   const incomeHome = convertToHome(projAnnualIncome)
 
   const kpis = [
-    { label: 'COST BASIS', value: fmtHome(costHome) },
-    { label: 'MARKET VALUE', value: fmtHome(mvHome) },
-    { label: 'MARKET RETURN', value: fmtHome(convertToHome(totalMarketReturn)), sub: fmtPct(totalMarketReturnPct), color: totalMarketReturn >= 0 ? 'var(--green)' : 'var(--red)' },
-    { label: 'TOTAL RETURN', value: fmtHome(convertToHome(totalReturn)), sub: fmtPct(totalReturnPct), color: totalReturn >= 0 ? 'var(--green)' : 'var(--red)' },
-    { label: 'DAY GAIN', value: fmtHome(convertToHome(totalDayGain)), sub: fmtPct(totalDayGainPct), color: totalDayGain >= 0 ? 'var(--green)' : 'var(--red)' },
-    { label: 'DIVIDEND YIELD', value: `${divYieldPortfolio.toFixed(2)}%`, color: 'var(--yellow)' },
-    { label: 'YIELD ON COST', value: `${yieldOnCostPortfolio.toFixed(2)}%`, color: 'var(--yellow)' },
-    { label: 'PROJ. ANNUAL INCOME', value: fmtHome(incomeHome), sub: `${fmtHome(incomeHome / 12)}/mo · ${fmtHome(incomeHome / 52)}/wk · ${fmtHome(incomeHome / 365)}/day`, color: 'var(--green)' },
+    { label: 'COST BASIS', value: fmtHome(costHome), tooltip: 'The total amount you originally paid for all your holdings (purchase price × shares). This is your "money in" baseline.' },
+    { label: 'MARKET VALUE', value: fmtHome(mvHome), tooltip: 'Current market value of all your holdings (current price × shares). This is what your portfolio is worth right now.' },
+    { label: 'MARKET RETURN', value: fmtHome(convertToHome(totalMarketReturn)), sub: fmtPct(totalMarketReturnPct), color: totalMarketReturn >= 0 ? 'var(--green)' : 'var(--red)', tooltip: 'Profit or loss from price appreciation only — does not include dividends. Market Value minus Cost Basis.' },
+    { label: 'TOTAL RETURN', value: fmtHome(convertToHome(totalReturn)), sub: fmtPct(totalReturnPct), color: totalReturn >= 0 ? 'var(--green)' : 'var(--red)', tooltip: 'Your complete gain/loss including both price appreciation AND dividends received. This is the true performance of your portfolio.' },
+    { label: 'DAY GAIN', value: fmtHome(convertToHome(totalDayGain)), sub: fmtPct(totalDayGainPct), color: totalDayGain >= 0 ? 'var(--green)' : 'var(--red)', tooltip: "How much your portfolio's value has changed today compared to yesterday's close." },
+    { label: 'DIVIDEND YIELD', value: `${divYieldPortfolio.toFixed(2)}%`, color: 'var(--yellow)', tooltip: 'Annual dividend income divided by current market value. Shows what % return you earn from dividends at current prices. Higher = more income per dollar invested.' },
+    { label: 'YIELD ON COST', value: `${yieldOnCostPortfolio.toFixed(2)}%`, color: 'var(--yellow)', tooltip: 'Annual dividend income divided by your original cost basis. Shows your dividend return on what you actually paid. Great for long-term holders who bought at lower prices.' },
+    { label: 'PROJ. ANNUAL INCOME', value: fmtHome(incomeHome), sub: `${fmtHome(incomeHome / 12)}/mo · ${fmtHome(incomeHome / 52)}/wk · ${fmtHome(incomeHome / 365)}/day`, color: 'var(--green)', tooltip: 'Estimated total dividend income you will receive over the next 12 months, based on current dividend rates and your share count.' },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -1100,7 +1104,7 @@ function DashboardTab({
       <ExDivAlerts holdingsEnriched={holdingsEnriched} stockInfos={stockInfos} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
-        {kpis.map((k, i) => <KpiCard key={i} label={k.label} value={k.value} sub={k.sub} color={k.color} />)}
+        {kpis.map((k, i) => <KpiCard key={i} label={k.label} value={k.value} sub={k.sub} color={k.color} tooltip={k.tooltip} />)}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
@@ -1383,18 +1387,18 @@ function HoldingsTab({
                 <th style={{ ...colHdr, textAlign: 'left' }}>TICKER</th>
                 <th style={colHdr}>BUY DATE</th>
                 <th style={colHdr}>SHARES</th>
-                <th style={colHdr}>AVG COST</th>
+                <th style={colHdr}><span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>AVG COST<Tooltip text="Average price per share you paid, including all purchases averaged together." position="bottom"/></span></th>
                 <th style={colHdr}>PRICE</th>
-                <th style={colHdr}>DAY CHG</th>
-                <th style={colHdr}>MKT RETURN</th>
-                <th style={colHdr}>TOTAL RETURN</th>
+                <th style={colHdr}><span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>DAY CHG<Tooltip text="How much this stock's price has changed today vs yesterday's closing price." position="bottom"/></span></th>
+                <th style={colHdr}><span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>MKT RETURN<Tooltip text="Profit or loss from price change only (not counting dividends). Current Value minus what you paid." position="bottom"/></span></th>
+                <th style={colHdr}><span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>TOTAL RETURN<Tooltip text="Complete profit/loss including both price appreciation AND dividends received. Your true total gain." position="bottom"/></span></th>
                 <th style={{ ...colHdr, textAlign: 'left' }}>SECTOR</th>
-                <th style={colHdr}>ALLOC %</th>
+                <th style={colHdr}><span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>ALLOC %<Tooltip text="What percentage of your total portfolio value this holding represents. Helps identify concentration risk." position="bottom"/></span></th>
                 <th style={colHdr}>ANN DIV/SH</th>
                 <th style={colHdr}>FREQ</th>
-                <th style={colHdr}>DIV YIELD</th>
-                <th style={colHdr}>YOC</th>
-                <th style={colHdr}>COST BASIS</th>
+                <th style={colHdr}><span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>DIV YIELD<Tooltip text="Annual dividend per share divided by current stock price. Shows income return at today's prices." position="bottom"/></span></th>
+                <th style={colHdr}><span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>YOC<Tooltip text="Yield on Cost — annual dividend divided by YOUR purchase price (not current price). Long-term holders often have high YOC." position="bottom"/></span></th>
+                <th style={colHdr}><span style={{display:'flex',alignItems:'center',justifyContent:'center',gap:2}}>COST BASIS<Tooltip text="Total amount you paid for this position (avg cost × shares). Your investment in this stock." position="bottom"/></span></th>
                 <th style={colHdr}>MKT VALUE</th>
                 <th style={colHdr}>ANN DIV INC</th>
                 <th style={colHdr}>DIVS RCVD</th>
@@ -2718,7 +2722,10 @@ function TaxTab({ holdings, soldPositions, stockInfos }: {
       {/* Controls */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
-          <label style={labelStyle}>Cost Basis Method</label>
+          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 4 }}>
+            Cost Basis Method
+            <Tooltip text="How your broker determines which shares were sold. FIFO sells oldest shares first (common default). LIFO sells newest first. Specific Lot lets you choose which shares to sell for tax optimization." position="right" />
+          </label>
           <select style={{ ...inputStyle, width: 'auto' }} value={costBasisMethod}
             onChange={e => setCostBasisMethod(e.target.value as 'FIFO' | 'LIFO' | 'SpecificLot')}>
             <option value="FIFO">FIFO (First In, First Out)</option>
@@ -2727,7 +2734,10 @@ function TaxTab({ holdings, soldPositions, stockInfos }: {
           </select>
         </div>
         <div>
-          <label style={labelStyle}>Your Short-Term Tax Bracket</label>
+          <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 4 }}>
+            Your Short-Term Tax Bracket
+            <Tooltip text="Short-term gains (held under 1 year) are taxed as ordinary income at your regular tax rate. Long-term gains (held over 1 year) get a lower rate: 0%, 15%, or 20%." position="right" />
+          </label>
           <select style={{ ...inputStyle, width: 'auto' }} value={bracket} onChange={e => setBracket(e.target.value)}>
             <option value="10">10%</option>
             <option value="12">12%</option>
@@ -2745,10 +2755,10 @@ function TaxTab({ holdings, soldPositions, stockInfos }: {
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <KpiCard label="NET SHORT-TERM" value={fmtDollar(netShortTerm)} color={netShortTerm >= 0 ? 'var(--red)' : 'var(--green)'} sub={`Rate: ${bracket}%`} />
-        <KpiCard label="NET LONG-TERM" value={fmtDollar(netLongTerm)} color={netLongTerm >= 0 ? 'var(--yellow)' : 'var(--green)'} sub="Rate: 15%" />
-        <KpiCard label="EST. TAX OWED" value={fmtDollar(totalEstimatedTax)} color="var(--red)" />
-        <KpiCard label="UNREALIZED GAIN" value={fmtDollar(unrealizedGain)} color={unrealizedGain >= 0 ? 'var(--green)' : 'var(--red)'} sub="If sold today" />
+        <KpiCard label="NET SHORT-TERM" value={fmtDollar(netShortTerm)} color={netShortTerm >= 0 ? 'var(--red)' : 'var(--green)'} sub={`Rate: ${bracket}%`} tooltip="Net gains/losses from positions held LESS than 1 year. Short-term gains are taxed at your ordinary income rate (same as your salary)." />
+        <KpiCard label="NET LONG-TERM" value={fmtDollar(netLongTerm)} color={netLongTerm >= 0 ? 'var(--yellow)' : 'var(--green)'} sub="Rate: 15%" tooltip="Net gains/losses from positions held MORE than 1 year. Long-term gains get preferential tax rates: 0%, 15%, or 20% depending on your income. Holding over 1 year saves taxes!" />
+        <KpiCard label="EST. TAX OWED" value={fmtDollar(totalEstimatedTax)} color="var(--red)" tooltip="Rough estimate of taxes owed on your realized gains. This is approximate — consult a tax professional for your actual liability." />
+        <KpiCard label="UNREALIZED GAIN" value={fmtDollar(unrealizedGain)} color={unrealizedGain >= 0 ? 'var(--green)' : 'var(--red)'} sub="If sold today" tooltip="Profit or loss on positions you still hold. You don't owe taxes on this until you actually sell. Sometimes called 'paper gains/losses'." />
       </div>
 
       {/* Realized lots table */}
@@ -3172,6 +3182,7 @@ function RiskMetricsSection({ holdingsEnriched, stockInfos, totalMarketValue }: 
   const cards = [
     {
       label: 'PORTFOLIO BETA',
+      tooltip: 'Beta measures how much your portfolio moves relative to the overall market (S&P 500). Beta = 1.0 means it moves with the market. Beta > 1.0 means more volatile (higher risk/reward). Beta < 1.0 means more stable.',
       value: portfolioBeta != null ? portfolioBeta.toFixed(2) : 'N/A',
       desc: portfolioBeta != null
         ? portfolioBeta > 1.2 ? `Your portfolio moves ~${((portfolioBeta - 1) * 100).toFixed(0)}% more than the market`
@@ -3182,6 +3193,7 @@ function RiskMetricsSection({ holdingsEnriched, stockInfos, totalMarketValue }: 
     },
     {
       label: 'VOLATILITY (ANN.)',
+      tooltip: 'Annualized volatility measures how much your portfolio\'s value fluctuates. Higher volatility = bigger price swings = more risk. Under 15% is low, 15-30% is moderate, over 30% is high.',
       value: volatility != null ? `${volatility.toFixed(1)}%` : 'N/A',
       desc: volatility != null
         ? volatility > 30 ? 'High volatility — prices can swing significantly'
@@ -3192,6 +3204,7 @@ function RiskMetricsSection({ holdingsEnriched, stockInfos, totalMarketValue }: 
     },
     {
       label: 'MAX DRAWDOWN (52W)',
+      tooltip: 'Maximum Drawdown shows the largest peak-to-trough decline in your portfolio over the past 52 weeks. E.g., -15% means your portfolio fell 15% from its high point. Smaller is better.',
       value: maxDrawdown != null ? `${maxDrawdown.toFixed(1)}%` : 'N/A',
       desc: maxDrawdown != null
         ? `Weighted avg decline from 52-week highs across your holdings`
@@ -3200,6 +3213,7 @@ function RiskMetricsSection({ holdingsEnriched, stockInfos, totalMarketValue }: 
     },
     {
       label: 'SHARPE RATIO',
+      tooltip: 'Sharpe Ratio measures risk-adjusted return — how much return you earn per unit of risk taken. Above 1.0 is good, above 2.0 is great. Negative means you\'d have been better off in a risk-free savings account.',
       value: sharpe != null ? sharpe.toFixed(2) : 'N/A',
       desc: sharpe != null
         ? sharpe > 2 ? 'Excellent risk-adjusted return'
@@ -3217,7 +3231,10 @@ function RiskMetricsSection({ holdingsEnriched, stockInfos, totalMarketValue }: 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
         {cards.map((c, i) => (
           <div key={i} style={{ background: 'var(--bg-3)', borderRadius: 6, padding: '12px 14px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-3)', marginBottom: 4 }}>{c.label}</div>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-3)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+              {c.label}
+              {c.tooltip && <Tooltip text={c.tooltip} position="bottom" />}
+            </div>
             <div style={{ fontSize: 22, fontWeight: 700, color: c.color, fontFamily: 'var(--mono)', marginBottom: 4 }}>{c.value}</div>
             <div style={{ fontSize: 10, color: 'var(--text-3)', lineHeight: 1.4 }}>{c.desc}</div>
           </div>
