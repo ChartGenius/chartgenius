@@ -76,7 +76,7 @@ export default function Breadcrumbs({ items, maxWidth = '1100px' }: BreadcrumbsP
     '@type': 'ListItem',
     position: i + 1,
     name: item.label,
-    ...(item.href ? { item: `https://tradvue.io${item.href}` } : {}),
+    ...(item.href ? { item: `https://tradvue.com${item.href}` } : {}),
   }))
 
   const schemaData = {

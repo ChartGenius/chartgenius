@@ -23,7 +23,7 @@ const finnhub = require('./finnhub');
 const parser = new RSSParser({
   timeout: 12000,
   headers: {
-    'User-Agent': 'TradVue/1.0 (tradvue.io; news-aggregator)'
+    'User-Agent': 'TradVue/1.0 (tradvue.com; news-aggregator)'
   }
 });
 

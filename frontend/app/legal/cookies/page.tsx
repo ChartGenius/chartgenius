@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Cookie Policy — TradVue',
   description: 'Learn about the cookies TradVue uses and how to manage your cookie preferences.',
   alternates: {
-    canonical: 'https://tradvue.io/legal/cookies',
+    canonical: 'https://tradvue.com/legal/cookies',
   },
   robots: 'noindex, follow',
 }
@@ -193,7 +193,7 @@ export default function CookiesPage() {
       <Section id="contact" title="8. Contact & More Information">
         <p>
           Questions about cookies? Email:{' '}
-          <a href="mailto:privacy@tradvue.io" style={{ color: '#4a9eff' }}>privacy@tradvue.io</a>
+          <a href="mailto:privacy@tradvue.com" style={{ color: '#4a9eff' }}>privacy@tradvue.com</a>
         </p>
         <p>Learn more about cookies:</p>
         <UL items={[

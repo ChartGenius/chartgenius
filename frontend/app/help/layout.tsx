@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: 'Help Center & FAQ | TradVue',
     description:
       'Find answers to common questions about TradVue — account setup, pricing, data sources, alerts, troubleshooting, and more.',
-    url: 'https://tradvue.io/help',
+    url: 'https://tradvue.com/help',
     siteName: 'TradVue',
     type: 'website',
   },
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
       'Answers to common questions about TradVue — accounts, billing, data, and troubleshooting.',
   },
   alternates: {
-    canonical: 'https://tradvue.io/help',
+    canonical: 'https://tradvue.com/help',
   },
 }
 

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Disclaimer — TradVue',
   description: 'Important legal disclaimer: TradVue is not a financial advisor and does not provide investment advice. Read before using the platform.',
   alternates: {
-    canonical: 'https://tradvue.io/legal/disclaimer',
+    canonical: 'https://tradvue.com/legal/disclaimer',
   },
   robots: 'noindex, follow',
 }
@@ -366,11 +366,11 @@ export default function DisclaimerPage() {
       <Section id="contact" title="17. CONTACT">
         <p>
           Questions about this disclaimer?{' '}
-          <a href="mailto:legal@tradvue.io" style={{ color: '#4a9eff' }}>legal@tradvue.io</a>
+          <a href="mailto:legal@tradvue.com" style={{ color: '#4a9eff' }}>legal@tradvue.com</a>
         </p>
         <p>
           Reporting data errors?{' '}
-          <a href="mailto:support@tradvue.io" style={{ color: '#4a9eff' }}>support@tradvue.io</a>{' '}
+          <a href="mailto:support@tradvue.com" style={{ color: '#4a9eff' }}>support@tradvue.com</a>{' '}
           — include "Data Error" in the subject line.
         </p>
       </Section>

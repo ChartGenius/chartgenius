@@ -10,7 +10,7 @@ These names have .com + .io + .ai all UNREGISTERED, zero Google/DuckDuckGo resul
 
 ### 1. **TradVue**
 - 🟢 tradvue.com — AVAILABLE
-- 🟢 tradvue.io — AVAILABLE
+- 🟢 tradvue.com — AVAILABLE
 - 🟢 tradvue.ai — AVAILABLE
 - 🟢 GitHub: AVAILABLE
 - 🟢 No existing company found
@@ -90,7 +90,7 @@ These have 2+ domains available, GitHub clear, and no existing companies:
 - Clean, professional, easy to remember
 - Immediately communicates what we do
 - Short (7 letters) — works on logos, favicons, everything
-- Works as tradvue.com, tradvue.io, or tradvue.ai
+- Works as tradvue.com, tradvue.com, or tradvue.ai
 - No conflicts anywhere
 
 ### Pick #2: **Vestrik**

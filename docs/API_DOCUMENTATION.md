@@ -1679,7 +1679,7 @@ async function apiCall(endpoint, options = {}) {
 For issues, feature requests, or API documentation updates:
 - Email: api-support@apexlogics.com
 - GitHub Issues: [tradvue/api-issues](https://github.com/apexlogics/tradvue/issues)
-- Status Page: [status.tradvue.io](https://status.tradvue.io)
+- Status Page: [status.tradvue.com](https://status.tradvue.com)
 
 ---
 

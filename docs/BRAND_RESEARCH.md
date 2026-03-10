@@ -165,5 +165,5 @@ Domain and social media availability check for trading platform brand candidates
 4. **Strategy Suggestion**: 
    - Secure all three domain extensions once you pick
    - Use .com as primary
-   - Use .io or .ai for secondary brand positioning (e.g., "app.tradvue.io" or "api.tradvue.ai")
+   - Use .io or .ai for secondary brand positioning (e.g., "app.tradvue.com" or "api.tradvue.ai")
    - Build social presence with available handles + branding

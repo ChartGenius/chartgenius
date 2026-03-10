@@ -269,7 +269,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Name** | Public Portfolio Share Links |
-| **Description** | Generate read-only share link for watchlist (e.g., `tradvue.io/share/xyz123`). Show top holdings, allocation %, and performance. |
+| **Description** | Generate read-only share link for watchlist (e.g., `tradvue.com/share/xyz123`). Show top holdings, allocation %, and performance. |
 | **Effort** | M (link generation + public route + permission checks) |
 | **Impact** | Low-Medium (enables influencers, advisory, community sharing) |
 | **Priority Score** | **6.9/10** |

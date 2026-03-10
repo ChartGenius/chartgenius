@@ -26,7 +26,7 @@ const parser = new RSSParser({
   },
   timeout: 10000,
   headers: {
-    'User-Agent': 'TradVue/1.0 (tradvue.io; economic-calendar-bot)'
+    'User-Agent': 'TradVue/1.0 (tradvue.com; economic-calendar-bot)'
   }
 });
 

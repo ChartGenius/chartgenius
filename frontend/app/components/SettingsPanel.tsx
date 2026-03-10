@@ -166,7 +166,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
         <div className="settings-footer">
           <span>TradVue v0.1 · ApexLogics</span>
           <a
-            href="https://tradvue.io/privacy"
+            href="https://tradvue.com/privacy"
             target="_blank"
             rel="noopener noreferrer"
             className="settings-footer-link"

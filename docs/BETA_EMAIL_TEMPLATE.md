@@ -40,7 +40,7 @@ We want to hear what works, what doesn't, and what's missing.
 
 ### First Steps
 
-1. **Log in** → https://tradvue.io/beta
+1. **Log in** → https://tradvue.com/beta
 2. **Add your first watchlist** — Start with stocks/assets you're actively trading
 3. **Set up alerts** — Price targets, volume thresholds, or just monitor sentiment
 4. **Check the news feed** — See how we score impact vs. just dumping 50 articles at you
@@ -65,7 +65,7 @@ We know about these and are fixing them:
 
 ### Questions?
 
-- **General help** → support@tradvue.io
+- **General help** → support@tradvue.com
 - **Technical issues** → Report in Discord #bugs channel
 - **Feature requests** → Discord #feature-requests
 - **Direct question** → Reply to this email

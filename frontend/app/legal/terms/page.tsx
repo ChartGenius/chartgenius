@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Terms of Service — TradVue',
   description: 'Read the TradVue Terms of Service. By using our platform you agree to these terms.',
   alternates: {
-    canonical: 'https://tradvue.io/legal/terms',
+    canonical: 'https://tradvue.com/legal/terms',
   },
   robots: 'noindex, follow',
 }
@@ -221,7 +221,7 @@ export default function TermsPage() {
       <Section id="contact" title="14. Contact">
         <p>
           For questions about these Terms, contact:{' '}
-          <a href="mailto:legal@tradvue.io" style={{ color: '#4a9eff' }}>legal@tradvue.io</a>
+          <a href="mailto:legal@tradvue.com" style={{ color: '#4a9eff' }}>legal@tradvue.com</a>
         </p>
       </Section>
 

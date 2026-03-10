@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy — TradVue',
   description: 'Learn how TradVue collects, uses, and protects your personal information.',
   alternates: {
-    canonical: 'https://tradvue.io/legal/privacy',
+    canonical: 'https://tradvue.com/legal/privacy',
   },
   robots: 'noindex, follow',
 }
@@ -231,7 +231,7 @@ export default function PrivacyPage() {
         ]} />
         <InfoBox>
           To exercise these rights, contact{' '}
-          <a href="mailto:privacy@tradvue.io" style={{ color: '#4a9eff' }}>privacy@tradvue.io</a>{' '}
+          <a href="mailto:privacy@tradvue.com" style={{ color: '#4a9eff' }}>privacy@tradvue.com</a>{' '}
           with "GDPR Request" in the subject line.
         </InfoBox>
       </Section>
@@ -246,7 +246,7 @@ export default function PrivacyPage() {
         ]} />
         <InfoBox>
           To submit a CCPA request, contact{' '}
-          <a href="mailto:privacy@tradvue.io" style={{ color: '#4a9eff' }}>privacy@tradvue.io</a>{' '}
+          <a href="mailto:privacy@tradvue.com" style={{ color: '#4a9eff' }}>privacy@tradvue.com</a>{' '}
           with "CCPA Request" in the subject line. Include your name and email.
           We will respond within 45 days.
         </InfoBox>
@@ -297,8 +297,8 @@ export default function PrivacyPage() {
 
       <Section id="contact" title="15. Contact & Complaints">
         <UL items={[
-          'Privacy Questions: privacy@tradvue.io',
-          'Data Protection Officer: dpo@tradvue.io',
+          'Privacy Questions: privacy@tradvue.com',
+          'Data Protection Officer: dpo@tradvue.com',
           'Mailing Address: TradVue Privacy Team, [Company Address]',
         ]} />
         <p>

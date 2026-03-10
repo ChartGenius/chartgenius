@@ -716,7 +716,7 @@ performance.memory
 railway logs
 
 # Test API health
-curl https://api.tradvue.io/health
+curl https://api.tradvue.com/health
 
 # Check Supabase connection
 psql -h db.supabase.co -U postgres -d tradvue -c "SELECT NOW();"

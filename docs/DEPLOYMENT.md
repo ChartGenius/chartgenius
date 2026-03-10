@@ -155,7 +155,7 @@ curl https://YOUR-RAILWAY-URL.up.railway.app/api/market-data/quote/AAPL
 # 3. Auth — Register
 curl -X POST https://YOUR-RAILWAY-URL.up.railway.app/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@tradvue.io","password":"TestPass123!","name":"Test User"}'
+  -d '{"email":"test@tradvue.com","password":"TestPass123!","name":"Test User"}'
 
 # 4. Frontend
 open https://YOUR-VERCEL-URL.vercel.app
@@ -163,11 +163,11 @@ open https://YOUR-VERCEL-URL.vercel.app
 
 ---
 
-## Step 5: Point tradvue.io DNS to Vercel
+## Step 5: Point tradvue.com DNS to Vercel
 
 In your domain registrar (or Cloudflare if using that):
 
-### Root domain (tradvue.io)
+### Root domain (tradvue.com)
 - Add **A record**: `@` → `76.76.19.61` (Vercel's IP)
 - OR **CNAME** (if your registrar supports CNAME flattening): `@` → `cname.vercel-dns.com`
 
@@ -176,7 +176,7 @@ In your domain registrar (or Cloudflare if using that):
 
 ### Then in Vercel Dashboard:
 1. Go to your project → **Settings** → **Domains**
-2. Add `tradvue.io` and `www.tradvue.io`
+2. Add `tradvue.com` and `www.tradvue.com`
 3. Vercel auto-provisions SSL (Let's Encrypt)
 
 ---
@@ -184,7 +184,7 @@ In your domain registrar (or Cloudflare if using that):
 ## Architecture Overview
 
 ```
-tradvue.io (DNS → Vercel)
+tradvue.com (DNS → Vercel)
        │
        ▼
   Vercel (Next.js frontend)
@@ -205,7 +205,7 @@ tradvue.io (DNS → Vercel)
 
 2. **CORS**: Currently set to `cors()` (allow all). For production hardening, update `server.js` to:
    ```js
-   app.use(cors({ origin: 'https://tradvue.io' }));
+   app.use(cors({ origin: 'https://tradvue.com' }));
    ```
 
 3. **Railway pricing**: Hobby plan ($5/mo) is enough for initial launch. Scales automatically.

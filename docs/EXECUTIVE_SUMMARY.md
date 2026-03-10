@@ -86,7 +86,7 @@ A **single unified platform** that:
 
 ### What's Live
 
-- **Domain:** tradvue.io (registered ✅)
+- **Domain:** tradvue.com (registered ✅)
 - **Database:** Production schema deployed
 - **APIs:** Connected to real market data providers
 - **Frontend:** 40% UI complete, core features functional

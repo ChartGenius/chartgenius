@@ -171,7 +171,7 @@
 "Head to TradVue.io and join thousands of smarter traders."
 
 ### On-Screen Text
-- Large: "tradvue.io"
+- Large: "tradvue.com"
 - Medium: "Sign Up for Free Beta"
 - Subtext: "Free during beta. No credit card required."
 - Button animation: "GET STARTED →"
@@ -240,7 +240,7 @@
 - [ ] Timestamps align with voiceover (tight sync)
 - [ ] Final video uploaded to YouTube, Vimeo, or TikTok
 - [ ] Social posts scheduled (LinkedIn, Twitter, email)
-- [ ] Landing page ready (tradvue.io beta signup form working)
+- [ ] Landing page ready (tradvue.com beta signup form working)
 
 ---
 

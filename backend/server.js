@@ -33,8 +33,8 @@ app.use(helmet({
 
 // ── CORS — locked to known origins ───────────────────────────────────────────
 const allowedOrigins = [
-  'https://www.tradvue.io',
-  'https://tradvue.io',
+  'https://www.tradvue.com',
+  'https://tradvue.com',
   'https://www.tradvue.com',
   'https://tradvue.com',
 ];

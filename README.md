@@ -8,7 +8,7 @@ TradVue is a comprehensive trading intelligence platform that aggregates market 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](https://typescriptlang.org)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)](https://supabase.com)
-[![Vercel](https://img.shields.io/badge/Deployed-Vercel-000?logo=vercel)](https://tradvue.io)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-000?logo=vercel)](https://tradvue.com)
 
 ---
 
@@ -400,8 +400,8 @@ New features follow **Test-Driven Development** — write failing tests first, t
 | Full docs | [`/docs`](./docs/) |
 | API spec | [`/docs/api`](./docs/) |
 | Changelog | [`/CHANGELOG.md`](./CHANGELOG.md) |
-| Status page | https://tradvue.io/status |
-| Support | support@tradvue.io |
+| Status page | https://tradvue.com/status |
+| Support | support@tradvue.com |
 | Discord | https://discord.gg/tradvue |
 
 ---
