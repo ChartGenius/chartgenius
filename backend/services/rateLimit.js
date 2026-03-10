@@ -19,9 +19,11 @@ const redisClient = Redis.createClient({
 });
 
 // General API rate limiting
+// TradVue SPA makes ~12 API calls per page load + auto-refresh every 30-60s
+// 1000/15min = ~67 req/min = comfortable headroom for normal browsing
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 1000, // Limit each IP to 1000 requests per window
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: '15 minutes'
@@ -33,7 +35,7 @@ const generalLimiter = rateLimit({
 // Strict rate limiting for auth endpoints (brute-force protection)
 const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Only 5 requests per 15 minutes per IP
+  max: 15, // 15 attempts per 15 minutes per IP (covers typos + retries)
   message: {
     error: 'Too many attempts. Please try again in 15 minutes.',
     retryAfter: '15 minutes'
