@@ -18,6 +18,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const compression = require('compression');
 const { generalLimiter } = require('./services/rateLimit');
 require('dotenv').config();
 
@@ -62,6 +63,9 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// ── Response compression (gzip/deflate) — cuts response sizes 60-80% ─────────
+app.use(compression());
+
 // ── Request logging ───────────────────────────────────────────────────────────
 app.use(morgan('combined'));
 
@@ -72,28 +76,37 @@ app.use(express.urlencoded({ extended: true, limit: '50kb' }));
 // ── Global rate limiting ──────────────────────────────────────────────────────
 app.use(generalLimiter);
 
+// ── Cache-control middleware helpers ─────────────────────────────────────────
+// Applied per route group so each gets the right browser cache duration.
+const cachePublic30s  = (_, res, next) => { res.set('Cache-Control', 'public, max-age=30');   next(); };
+const cachePublic2m   = (_, res, next) => { res.set('Cache-Control', 'public, max-age=120');  next(); };
+const cachePublic1h   = (_, res, next) => { res.set('Cache-Control', 'public, max-age=3600'); next(); };
+const cachePrivate    = (_, res, next) => { res.set('Cache-Control', 'private, no-cache');    next(); };
+
 // ── Routes ────────────────────────────────────────────────────────────────────
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/markets', require('./routes/markets'));        // Legacy mock routes (kept for compat)
-app.use('/api/news', require('./routes/news'));              // Legacy mock news (kept for compat)
-app.use('/api/watchlist', require('./routes/watchlist'));
+app.use('/api/auth',       cachePrivate, require('./routes/auth'));
+app.use('/api/markets',    cachePublic30s, require('./routes/markets'));   // Legacy mock routes (kept for compat)
+app.use('/api/news',       cachePublic2m,  require('./routes/news'));      // Legacy mock news (kept for compat)
+app.use('/api/watchlist',  cachePrivate, require('./routes/watchlist'));
 
 // NEW: Data pipeline routes
-app.use('/api/market-data', require('./routes/marketData'));      // Finnhub-backed real market data
-app.use('/api/feed/news', require('./routes/aggregatedNews'));    // RSS + NewsAPI aggregated feed
-app.use('/api/calendar', require('./routes/calendar'));           // Economic calendar
-app.use('/api/waitlist', require('./routes/waitlist'));           // Landing page waitlist
-app.use('/api/alerts', require('./routes/alerts'));               // Real-time market alerts + SSE
-app.use('/api/crypto', require('./routes/crypto'));               // CoinGecko crypto prices & trending
-app.use('/api/market-movers', require('./routes/marketMovers')); // High-impact news scanner
-app.use('/api/stock-info', require('./routes/stockInfo'));         // Comprehensive stock info (Finnhub + Yahoo)
-app.use('/api/portfolio', require('./routes/portfolio'));           // Portfolio persistence (Supabase)
-app.use('/api/alerts/price', require('./routes/priceAlerts'));      // User price alerts
-app.use('/api/tools', require('./routes/tools'));                   // Trading tools (screener, fear-greed, gas, correlation)
-app.use('/api/dashboard', require('./routes/dashboard'));             // CEO dashboard persistence (tasks, activity, companies, settings)
-app.use('/api/stocks', require('./routes/stocks'));                     // Analyst ratings + stock scoring
-app.use('/api/journal', require('./routes/journal'));                   // Journal CSV import & trade management
-app.use('/api/backup', require('./routes/backup'));                     // Data export/backup/restore
+// Note: marketData.js sets its own per-endpoint Cache-Control headers (more granular),
+// so we don't add a blanket middleware here.
+app.use('/api/market-data',   require('./routes/marketData'));      // Finnhub-backed real market data
+app.use('/api/feed/news',     cachePublic2m,  require('./routes/aggregatedNews')); // RSS + NewsAPI aggregated feed
+app.use('/api/calendar',      cachePublic1h,  require('./routes/calendar'));        // Economic calendar
+app.use('/api/waitlist',      cachePrivate,   require('./routes/waitlist'));        // Landing page waitlist
+app.use('/api/alerts',        cachePrivate,   require('./routes/alerts'));          // Real-time market alerts + SSE
+app.use('/api/crypto',        cachePublic30s, require('./routes/crypto'));          // CoinGecko crypto prices & trending
+app.use('/api/market-movers', cachePublic2m,  require('./routes/marketMovers'));   // High-impact news scanner
+app.use('/api/stock-info',    cachePublic30s, require('./routes/stockInfo'));       // Comprehensive stock info (Finnhub + Yahoo)
+app.use('/api/portfolio',     cachePrivate,   require('./routes/portfolio'));       // Portfolio persistence (Supabase)
+app.use('/api/alerts/price',  cachePrivate,   require('./routes/priceAlerts'));    // User price alerts
+app.use('/api/tools',         cachePublic2m,  require('./routes/tools'));           // Trading tools (screener, fear-greed, gas, correlation)
+app.use('/api/dashboard',     cachePrivate,   require('./routes/dashboard'));       // CEO dashboard persistence
+app.use('/api/stocks',        cachePublic1h,  require('./routes/stocks'));          // Analyst ratings + stock scoring
+app.use('/api/journal',       cachePrivate,   require('./routes/journal'));         // Journal CSV import & trade management
+app.use('/api/backup',        cachePrivate,   require('./routes/backup'));          // Data export/backup/restore
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
@@ -129,11 +142,20 @@ app.listen(PORT, () => {
   console.log(`₿  Crypto:       http://localhost:${PORT}/api/crypto/snapshot`);
   console.log(`🚨 Movers:       http://localhost:${PORT}/api/market-movers`);
 
-  // Delay DB-dependent background tasks by 10s to let healthcheck pass first
-  // This prevents Railway deploy failures when DB connection is slow/unreachable
+  // Delay DB-dependent background tasks by 15s to let healthcheck pass first.
+  // By the time the first real user hits the site the data prefetcher will have
+  // already warmed the cache, so they get sub-50ms responses instead of cold API calls.
   setTimeout(() => {
     console.log('[Startup] Initializing background services...');
-    
+
+    // ── Data prefetcher: warms cache for quotes, crypto, news, movers, etc. ──
+    try {
+      const dataPrefetcher = require('./services/dataPrefetcher');
+      dataPrefetcher.start();
+    } catch (err) {
+      console.error('[Startup] Data prefetcher failed to start:', err.message);
+    }
+
     // Start real-time alert poll loop (every 5 minutes)
     try {
       const alertService = require('./services/alertService');
@@ -151,7 +173,7 @@ app.listen(PORT, () => {
     } catch (err) {
       console.error('[Startup] Price alerts failed to start:', err.message);
     }
-  }, 10000);
+  }, 15000);
   
   // Start market mover scanner (every 10 minutes)
   const marketMoverBot = require('./services/marketMoverBot');
