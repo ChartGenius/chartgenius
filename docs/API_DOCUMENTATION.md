@@ -1,6 +1,6 @@
 # TradVue API Documentation
 
-**API Base URL:** `https://tradvue-production.up.railway.app/api`
+**API Base URL:** `https://tradvue-api.onrender.com/api`
 
 ---
 
@@ -1272,7 +1272,7 @@ connectToAlertStream();
 #### Register and Login
 ```javascript
 // Register
-const registerResponse = await fetch('https://tradvue-production.up.railway.app/api/auth/register', {
+const registerResponse = await fetch('https://tradvue-api.onrender.com/api/auth/register', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -1286,7 +1286,7 @@ const { token, user } = await registerResponse.json();
 localStorage.setItem('tradvue_token', token);
 
 // Login
-const loginResponse = await fetch('https://tradvue-production.up.railway.app/api/auth/login', {
+const loginResponse = await fetch('https://tradvue-api.onrender.com/api/auth/login', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -1304,7 +1304,7 @@ localStorage.setItem('tradvue_token', token);
 const token = localStorage.getItem('tradvue_token');
 
 const response = await fetch(
-  'https://tradvue-production.up.railway.app/api/market-data/quote/AAPL',
+  'https://tradvue-api.onrender.com/api/market-data/quote/AAPL',
   {
     headers: { 'Authorization': `Bearer ${token}` }
   }
@@ -1319,7 +1319,7 @@ console.log(`${data.symbol}: $${data.current} (${data.changePct}%)`);
 const token = localStorage.getItem('tradvue_token');
 
 const response = await fetch(
-  'https://tradvue-production.up.railway.app/api/watchlist',
+  'https://tradvue-api.onrender.com/api/watchlist',
   {
     headers: { 'Authorization': `Bearer ${token}` }
   }
@@ -1336,7 +1336,7 @@ watchlist.forEach(item => {
 const token = localStorage.getItem('tradvue_token');
 
 const response = await fetch(
-  'https://tradvue-production.up.railway.app/api/watchlist',
+  'https://tradvue-api.onrender.com/api/watchlist',
   {
     method: 'POST',
     headers: {
@@ -1361,7 +1361,7 @@ console.log(`Added ${item.symbol} to watchlist`);
 const token = localStorage.getItem('tradvue_token');
 
 const eventSource = new EventSource(
-  `https://tradvue-production.up.railway.app/api/alerts/live?token=${token}`
+  `https://tradvue-api.onrender.com/api/alerts/live?token=${token}`
 );
 
 eventSource.addEventListener('alert', (event) => {
@@ -1390,7 +1390,7 @@ eventSource.onerror = () => {
 import requests
 import json
 
-BASE_URL = 'https://tradvue-production.up.railway.app/api'
+BASE_URL = 'https://tradvue-api.onrender.com/api'
 
 # Login
 response = requests.post(
@@ -1414,7 +1414,7 @@ print(profile_response.json()['user'])
 ```python
 import requests
 
-BASE_URL = 'https://tradvue-production.up.railway.app/api'
+BASE_URL = 'https://tradvue-api.onrender.com/api'
 
 # Get multiple quotes
 response = requests.get(
@@ -1434,7 +1434,7 @@ for symbol, quote in quotes.items():
 ```python
 import requests
 
-BASE_URL = 'https://tradvue-production.up.railway.app/api'
+BASE_URL = 'https://tradvue-api.onrender.com/api'
 token = 'your_jwt_token'
 headers = {'Authorization': f'Bearer {token}'}
 
@@ -1468,7 +1468,7 @@ print(f"Deleted: {delete_response.json()['message']}")
 ```python
 import requests
 
-BASE_URL = 'https://tradvue-production.up.railway.app/api'
+BASE_URL = 'https://tradvue-api.onrender.com/api'
 
 # Get aggregated news
 response = requests.get(
@@ -1490,7 +1490,7 @@ for article in articles:
 ```python
 import requests
 
-BASE_URL = 'https://tradvue-production.up.railway.app/api'
+BASE_URL = 'https://tradvue-api.onrender.com/api'
 
 # High-impact events
 response = requests.get(
@@ -1510,7 +1510,7 @@ for event in events:
 #### Authentication
 ```bash
 # Register
-curl -X POST https://tradvue-production.up.railway.app/api/auth/register \
+curl -X POST https://tradvue-api.onrender.com/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -1518,7 +1518,7 @@ curl -X POST https://tradvue-production.up.railway.app/api/auth/register \
   }'
 
 # Login
-curl -X POST https://tradvue-production.up.railway.app/api/auth/login \
+curl -X POST https://tradvue-api.onrender.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -1526,36 +1526,36 @@ curl -X POST https://tradvue-production.up.railway.app/api/auth/login \
   }'
 
 # Get Profile (requires token)
-curl -X GET https://tradvue-production.up.railway.app/api/auth/profile \
+curl -X GET https://tradvue-api.onrender.com/api/auth/profile \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 #### Market Data
 ```bash
 # Get single quote
-curl https://tradvue-production.up.railway.app/api/market-data/quote/AAPL
+curl https://tradvue-api.onrender.com/api/market-data/quote/AAPL
 
 # Batch quotes
-curl "https://tradvue-production.up.railway.app/api/market-data/batch?symbols=AAPL,TSLA,MSFT"
+curl "https://tradvue-api.onrender.com/api/market-data/batch?symbols=AAPL,TSLA,MSFT"
 
 # Candlestick data
-curl "https://tradvue-production.up.railway.app/api/market-data/candles/AAPL?resolution=D"
+curl "https://tradvue-api.onrender.com/api/market-data/candles/AAPL?resolution=D"
 
 # Market status
-curl "https://tradvue-production.up.railway.app/api/market-data/status?exchange=US"
+curl "https://tradvue-api.onrender.com/api/market-data/status?exchange=US"
 
 # Movers
-curl https://tradvue-production.up.railway.app/api/market-data/movers
+curl https://tradvue-api.onrender.com/api/market-data/movers
 ```
 
 #### Watchlist Operations
 ```bash
 # Get watchlist
-curl -X GET https://tradvue-production.up.railway.app/api/watchlist \
+curl -X GET https://tradvue-api.onrender.com/api/watchlist \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
 # Add item
-curl -X POST https://tradvue-production.up.railway.app/api/watchlist \
+curl -X POST https://tradvue-api.onrender.com/api/watchlist \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1565,7 +1565,7 @@ curl -X POST https://tradvue-production.up.railway.app/api/watchlist \
   }'
 
 # Update alerts
-curl -X PUT https://tradvue-production.up.railway.app/api/watchlist/1/alerts \
+curl -X PUT https://tradvue-api.onrender.com/api/watchlist/1/alerts \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1574,23 +1574,23 @@ curl -X PUT https://tradvue-production.up.railway.app/api/watchlist/1/alerts \
   }'
 
 # Delete item
-curl -X DELETE https://tradvue-production.up.railway.app/api/watchlist/1 \
+curl -X DELETE https://tradvue-api.onrender.com/api/watchlist/1 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 #### News and Alerts
 ```bash
 # Get news feed
-curl "https://tradvue-production.up.railway.app/api/feed/news?limit=10&category=stocks"
+curl "https://tradvue-api.onrender.com/api/feed/news?limit=10&category=stocks"
 
 # Get sentiment
-curl "https://tradvue-production.up.railway.app/api/feed/news/sentiment/AAPL"
+curl "https://tradvue-api.onrender.com/api/feed/news/sentiment/AAPL"
 
 # Get alerts
-curl "https://tradvue-production.up.railway.app/api/alerts?limit=20&category=FED"
+curl "https://tradvue-api.onrender.com/api/alerts?limit=20&category=FED"
 
 # Subscribe to alerts
-curl -X POST https://tradvue-production.up.railway.app/api/alerts/subscribe \
+curl -X POST https://tradvue-api.onrender.com/api/alerts/subscribe \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1602,16 +1602,16 @@ curl -X POST https://tradvue-production.up.railway.app/api/alerts/subscribe \
 #### Economic Calendar
 ```bash
 # Upcoming events
-curl "https://tradvue-production.up.railway.app/api/calendar/upcoming?days=7&currencies=USD,EUR"
+curl "https://tradvue-api.onrender.com/api/calendar/upcoming?days=7&currencies=USD,EUR"
 
 # Today's events
-curl "https://tradvue-production.up.railway.app/api/calendar/today"
+curl "https://tradvue-api.onrender.com/api/calendar/today"
 
 # High-impact only
-curl "https://tradvue-production.up.railway.app/api/calendar/high-impact?days=3"
+curl "https://tradvue-api.onrender.com/api/calendar/high-impact?days=3"
 
 # Macro snapshot
-curl https://tradvue-production.up.railway.app/api/calendar/macro
+curl https://tradvue-api.onrender.com/api/calendar/macro
 ```
 
 ---
@@ -1632,7 +1632,7 @@ curl https://tradvue-production.up.railway.app/api/calendar/macro
 ### Error Handling
 ```javascript
 async function apiCall(endpoint, options = {}) {
-  const response = await fetch(`https://tradvue-production.up.railway.app/api${endpoint}`, {
+  const response = await fetch(`https://tradvue-api.onrender.com/api${endpoint}`, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('tradvue_token')}`,
       ...options.headers
@@ -1685,4 +1685,4 @@ For issues, feature requests, or API documentation updates:
 
 **Last Updated:** March 6, 2025  
 **API Version:** 1.0.0  
-**Base URL:** https://tradvue-production.up.railway.app/api
+**Base URL:** https://tradvue-api.onrender.com/api

@@ -20,7 +20,7 @@
 **Root Causes:**
 - Incorrect email/password
 - Email verification not completed
-- Railway backend temporarily down
+- Render backend temporarily down
 - Browser cache/cookies issue
 - Account not yet provisioned
 
@@ -47,7 +47,7 @@
 - 500 error or network timeout
 
 **Root Causes:**
-- Railway backend stalled/crashed
+- Render backend stalled/crashed
 - Finnhub API quota exceeded
 - Supabase connection timeout
 - Browser JavaScript error (broken state)
@@ -114,7 +114,7 @@
 - Network requests taking >3s
 
 **Root Causes:**
-- Railway backend overloaded
+- Render backend overloaded
 - Finnhub API slow response
 - Browser running too many tabs (memory leak)
 - Very large dataset (10k+ prices in one watchlist)
@@ -484,13 +484,13 @@ Hey! Sorry you hit that. DM us your email and we'll dig in right away.
 
 ## 5. Known Issues
 
-### Issue 1: Database Auth Pending Railway Fix
+### Issue 1: Database Auth (historical — Railway pool issue, now on Render)
 
 **Status:** In Progress (ETA: March 12, 2026)
 
 **Description:**
 - Sporadic authentication failures during peak hours (2-4pm EST)
-- Caused by Railway connection pool exhaustion
+- Caused by connection pool exhaustion (occurred on Railway prior to Render migration)
 - Affects ~2-3% of login attempts
 
 **Symptoms:**
@@ -503,7 +503,7 @@ Hey! Sorry you hit that. DM us your email and we'll dig in right away.
 - Use different browser if immediate access needed
 - Escalate to Erick if failure persistent >5 minutes
 
-**Tracking:** GitHub Issue #47 (Railway pool optimization)
+**Tracking:** GitHub Issue #47 (historical — resolved via Render migration)
 
 ---
 
@@ -712,8 +712,8 @@ performance.memory
 ### Server Diagnostics (Backend check)
 
 ```bash
-# Check Railway logs
-railway logs
+# Check Render logs
+# Go to: https://dashboard.render.com → tradvue-api → Logs
 
 # Test API health
 curl https://api.tradvue.com/health
