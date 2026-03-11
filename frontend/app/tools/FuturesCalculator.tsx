@@ -101,17 +101,31 @@ const fmtPrice = (n: number, tickSize: number) => {
   return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
 }
 
-function getETHour(): number {
+function getETDateTime(): { hour: number; day: number } {
   try {
     const now = new Date()
-    const etStr = now.toLocaleString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false })
-    const parts = etStr.split(':')
-    const h = parseInt(parts[0]) || 0
-    const m = parseInt(parts[1]) || 0
-    return h + m / 60
+    const parts = Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      hour: 'numeric', minute: 'numeric', weekday: 'short', hour12: false,
+    }).formatToParts(now)
+    const h = parseInt(parts.find(p => p.type === 'hour')?.value ?? '0')
+    const m = parseInt(parts.find(p => p.type === 'minute')?.value ?? '0')
+    const wd = parts.find(p => p.type === 'weekday')?.value ?? 'Mon'
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
+    return { hour: (h === 24 ? 0 : h) + m / 60, day: dayMap[wd] ?? 1 }
   } catch {
-    return new Date().getHours() + new Date().getMinutes() / 60
+    const d = new Date()
+    return { hour: d.getHours() + d.getMinutes() / 60, day: d.getDay() }
   }
+}
+
+/** Returns true if CME Globex is currently trading */
+function isGlobexOpen(hour: number, day: number): boolean {
+  if (day === 6) return false                  // Saturday: always closed
+  if (day === 5 && hour >= 17) return false    // Friday: closed after 5pm ET
+  if (day === 0 && hour < 18) return false     // Sunday: closed before 6pm ET
+  if (hour >= 17 && hour < 18) return false    // Daily maintenance break 5–6pm ET
+  return true
 }
 
 function isSessionActive(openHour: number, closeHour: number, currentHour: number): boolean {
@@ -191,8 +205,8 @@ function QuickBtns({ values, active, onClick, prefix = '', suffix = '' }: {
   )
 }
 
-function ResultCard({ label, value, sub, borderColor, badge }: {
-  label: string; value: string; sub?: string; borderColor?: string; badge?: { text: string; color: string }
+function ResultCard({ label, desc, value, sub, borderColor, badge }: {
+  label: string; desc?: string; value: string; sub?: string; borderColor?: string; badge?: { text: string; color: string }
 }) {
   return (
     <div style={{
@@ -200,7 +214,8 @@ function ResultCard({ label, value, sub, borderColor, badge }: {
       borderLeft: borderColor ? `3px solid ${borderColor}` : '3px solid transparent',
       flex: '1 1 0', minWidth: 0,
     }}>
-      <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+      {desc && <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 5, fontStyle: 'italic', lineHeight: 1.3 }}>{desc}</div>}
       <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--mono)', color: 'var(--text-0)', lineHeight: 1.2 }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>{sub}</div>}
       {badge && (
@@ -227,12 +242,13 @@ function RRBar({ entry, stop, targets, direction, contract }: {
   const minP = Math.min(...allPrices)
   const maxP = Math.max(...allPrices)
   const range = maxP - minP || 1
-  const pad = range * 0.18
+  const pad = range * 0.2
   const lo = minP - pad
   const hi = maxP + pad
   const totalRange = hi - lo
 
-  const toX = (price: number) => Math.max(0, Math.min(100, ((price - lo) / totalRange) * 100))
+  // Clamp to [3, 97] so labels at edges don't overflow
+  const toX = (price: number) => Math.max(3, Math.min(97, ((price - lo) / totalRange) * 100))
 
   const stopX  = toX(stop)
   const entryX = toX(entry)
@@ -242,81 +258,118 @@ function RRBar({ entry, stop, targets, direction, contract }: {
   const riskTicks = Math.abs(entry - stop) / contract.tickSize
   const riskDollar = riskTicks * contract.tickValue
 
+  const markers = [
+    { x: stopX,  label: 'STOP',  price: stop,  color: '#ef4444' },
+    { x: entryX, label: 'ENTRY', price: entry, color: 'var(--text-1)' },
+    ...validTargets.map((t, i) => ({ x: targetXs[i], label: `T${i + 1}`, price: t.price, color: '#22c55e' })),
+  ]
+
   return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', marginBottom: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+    <div style={{ marginBottom: 20 }}>
+      {/* Section title */}
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', marginBottom: 2, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
         Visual Risk / Reward
       </div>
-      <div style={{ position: 'relative', height: 70, userSelect: 'none' }}>
-        {/* Track */}
-        <div style={{
-          position: 'absolute', top: 22, left: 0, right: 0, height: 16,
-          background: 'var(--bg-2)', borderRadius: 8,
-        }} />
+      <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 10 }}>
+        Red = your risk (entry to stop loss) | Green = your reward (entry to target)
+      </div>
 
-        {/* Risk zone: between stop and entry */}
-        {isLong ? (
-          <div style={{
-            position: 'absolute', top: 22, left: `${Math.min(stopX, entryX)}%`,
-            width: `${Math.abs(entryX - stopX)}%`, height: 16,
-            background: 'rgba(239,68,68,0.6)', borderRadius: stopX < entryX ? '8px 0 0 8px' : '0 8px 8px 0',
-          }} />
-        ) : (
-          <div style={{
-            position: 'absolute', top: 22, left: `${Math.min(stopX, entryX)}%`,
-            width: `${Math.abs(entryX - stopX)}%`, height: 16,
-            background: 'rgba(239,68,68,0.6)', borderRadius: entryX < stopX ? '8px 0 0 8px' : '0 8px 8px 0',
-          }} />
-        )}
-
-        {/* Reward zones: between entry and each target */}
-        {validTargets.map((t, i) => {
-          const txX = targetXs[i]
-          const l = Math.min(entryX, txX)
-          const w = Math.abs(txX - entryX)
-          const opacity = 0.8 - i * 0.15
-          return (
-            <div key={i} style={{
-              position: 'absolute', top: 22, left: `${l}%`, width: `${w}%`, height: 16,
-              background: `rgba(34,197,94,${opacity})`,
-              borderRadius: isLong ? (txX > entryX ? '0 8px 8px 0' : '8px 0 0 8px') : (txX < entryX ? '8px 0 0 8px' : '0 8px 8px 0'),
-            }} />
-          )
-        })}
-
-        {/* Price markers */}
-        {[
-          { x: stopX,  label: 'STOP',  price: stop,  color: '#ef4444', index: 0 },
-          { x: entryX, label: 'ENTRY', price: entry, color: 'var(--text-0)', index: 1 },
-          ...validTargets.map((t, i) => ({ x: targetXs[i], label: `T${i + 1}`, price: t.price, color: '#22c55e', index: i + 2 })),
-        ].map(marker => (
-          <div key={marker.label} style={{ position: 'absolute', left: `${marker.x}%`, top: 0, transform: 'translateX(-50%)' }}>
-            {/* Vertical line */}
-            <div style={{ position: 'absolute', left: '50%', top: 18, width: 2, height: 24, background: marker.color, transform: 'translateX(-50%)', borderRadius: 1 }} />
-            {/* Label above */}
-            <div style={{ position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap', textAlign: 'center' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: marker.color, letterSpacing: '0.04em' }}>{marker.label}</div>
-              <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: marker.color }}>{fmtPrice(marker.price, contract.tickSize)}</div>
+      {/* Price labels ABOVE bar — in their own 36px row, no overflow into siblings */}
+      <div style={{ position: 'relative', height: 36, marginBottom: 0 }}>
+        {markers.map(m => (
+          <div
+            key={m.label}
+            style={{
+              position: 'absolute',
+              left: `${m.x}%`,
+              transform: 'translateX(-50%)',
+              textAlign: 'center',
+              whiteSpace: 'nowrap',
+              top: 0,
+            }}
+          >
+            <div style={{ fontSize: 9, fontWeight: 700, color: m.color, letterSpacing: '0.04em' }}>{m.label}</div>
+            <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: m.color, lineHeight: 1.3 }}>
+              {fmtPrice(m.price, contract.tickSize)}
             </div>
           </div>
         ))}
-
-        {/* R:R label below bar */}
-        {validTargets.length > 0 && (
-          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
-            {validTargets.map((t, i) => {
-              const rewardTicks = Math.abs(t.price - entry) / contract.tickSize
-              const rewardDollar = rewardTicks * contract.tickValue
-              const rr = riskDollar > 0 ? rewardDollar / riskDollar : 0
-              return (
-                <span key={i} style={{ fontSize: 11, color: '#22c55e', fontWeight: 700, fontFamily: 'var(--mono)', marginRight: 10 }}>
-                  T{i + 1}: 1:{fmt2(rr)}
-                </span>
-              )
-            })}
-          </div>
-        )}
       </div>
+
+      {/* Tick stems connecting labels to bar */}
+      <div style={{ position: 'relative', height: 8 }}>
+        {markers.map(m => (
+          <div
+            key={m.label}
+            style={{
+              position: 'absolute',
+              left: `${m.x}%`,
+              transform: 'translateX(-50%)',
+              width: 2,
+              height: 8,
+              background: m.color,
+              borderRadius: '1px 1px 0 0',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* The bar itself */}
+      <div style={{ position: 'relative', height: 18, background: 'var(--bg-2)', borderRadius: 8, overflow: 'hidden' }}>
+        {/* Risk zone (red): stop → entry */}
+        <div style={{
+          position: 'absolute', top: 0, bottom: 0,
+          left: `${Math.min(stopX, entryX)}%`,
+          width: `${Math.max(2, Math.abs(entryX - stopX))}%`,
+          background: 'rgba(239,68,68,0.65)',
+          borderRadius: stopX < entryX ? '8px 0 0 8px' : '0 8px 8px 0',
+        }} />
+
+        {/* Reward zones (green): entry → target */}
+        {validTargets.map((t, i) => {
+          const txX = targetXs[i]
+          const l = Math.min(entryX, txX)
+          const w = Math.max(2, Math.abs(txX - entryX))
+          const opacity = 0.9 - i * 0.15
+          return (
+            <div key={i} style={{
+              position: 'absolute', top: 0, bottom: 0,
+              left: `${l}%`, width: `${w}%`,
+              background: `rgba(34,197,94,${opacity})`,
+              borderRadius: isLong
+                ? (txX > entryX ? '0 8px 8px 0' : '8px 0 0 8px')
+                : (txX < entryX ? '8px 0 0 8px' : '0 8px 8px 0'),
+            }} />
+          )
+        })}
+      </div>
+
+      {/* Dollar amounts and R:R ratios BELOW bar */}
+      <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: '4px 16px', alignItems: 'flex-start' }}>
+        <span style={{ fontSize: 11, color: '#ef4444', fontFamily: 'var(--mono)' }}>
+          Risk: {fmtDollar(riskDollar)}/contract
+        </span>
+        {validTargets.map((t, i) => {
+          const rewardTicks = Math.abs(t.price - entry) / contract.tickSize
+          const rewardDollar = rewardTicks * contract.tickValue
+          const rr = riskDollar > 0 ? rewardDollar / riskDollar : 0
+          return (
+            <span key={i} style={{ fontSize: 11, color: '#22c55e', fontFamily: 'var(--mono)', fontWeight: 700 }}>
+              T{i + 1}: +{fmtDollar(rewardDollar)}/contract · Risk:Reward = 1:{fmt2(rr)}
+            </span>
+          )
+        })}
+      </div>
+      {validTargets.length > 0 && (() => {
+        const rewardTicks0 = Math.abs(validTargets[0].price - entry) / contract.tickSize
+        const rewardDollar0 = rewardTicks0 * contract.tickValue
+        const rr0 = riskDollar > 0 ? rewardDollar0 / riskDollar : 0
+        return (
+          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 3 }}>
+            For every $1 you risk, you stand to make ${fmt2(rr0)} at T1
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -324,45 +377,66 @@ function RRBar({ entry, stop, targets, direction, contract }: {
 // ─── Session Indicators ────────────────────────────────────────────────────────
 
 function SessionIndicators() {
-  const [etHour, setEtHour] = useState(getETHour)
+  const [etInfo, setEtInfo] = useState(getETDateTime)
 
   useEffect(() => {
-    const t = setInterval(() => setEtHour(getETHour()), 10000)
+    const t = setInterval(() => setEtInfo(getETDateTime()), 10000)
     return () => clearInterval(t)
   }, [])
 
+  const { hour: etHour, day: etDay } = etInfo
+  const globexOpen = isGlobexOpen(etHour, etDay)
+
+  // CME Globex futures sessions (all times ET)
+  // Asian: 6pm–3am ET (Sun eve – Fri morn)
+  // London: 3am–12pm ET (Mon–Fri)
+  // New York: 9:30am–5pm ET (Mon–Fri)
   const sessions = [
-    { name: 'Asian',    flag: '🌏', open: 18, close: 3,  color: '#f59e0b', desc: 'CME Globex open' },
-    { name: 'London',   flag: '🇬🇧', open: 3,  close: 12, color: '#3b82f6', desc: 'High liquidity' },
-    { name: 'New York', flag: '🗽', open: 8.5,close: 16, color: '#22c55e', desc: 'US pit session' },
+    { name: 'Asian',    flag: '🌏', open: 18,  close: 3,  color: '#f59e0b', hours: '6pm–3am ET' },
+    { name: 'London',   flag: '🇬🇧', open: 3,   close: 12, color: '#3b82f6', hours: '3am–12pm ET' },
+    { name: 'New York', flag: '🗽', open: 9.5, close: 17, color: '#22c55e', hours: '9:30am–5pm ET' },
   ]
 
   return (
-    <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-      {sessions.map(s => {
-        const active = isSessionActive(s.open, s.close, etHour)
-        const nextChangeHour = active ? s.close : s.open
-        const hoursLeft = hoursUntil(nextChangeHour, etHour)
-        return (
-          <div key={s.name} style={{
-            display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px',
-            borderRadius: 20, border: `1px solid ${active ? s.color : 'var(--border)'}`,
-            background: active ? s.color + '15' : 'var(--bg-3)',
-            flex: '1 1 auto', minWidth: 130,
-          }}>
-            <span style={{ fontSize: 14 }}>{s.flag}</span>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? s.color : 'var(--text-3)', display: 'inline-block' }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: active ? s.color : 'var(--text-2)' }}>{s.name}</span>
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-3)' }}>
-                {active ? `Closes in ${fmtCountdown(hoursLeft)}` : `Opens in ${fmtCountdown(hoursLeft)}`}
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span>Current futures trading sessions (times in ET)</span>
+        {!globexOpen && (
+          <span style={{ color: '#ef4444', fontWeight: 700 }}>
+            ● Globex CLOSED {(etDay === 6 || (etDay === 5 && etHour >= 17) || (etDay === 0 && etHour < 18)) ? '(weekend)' : '(maintenance 5–6pm ET)'}
+          </span>
+        )}
+        {globexOpen && (
+          <span style={{ color: '#22c55e', fontWeight: 700 }}>● Globex OPEN</span>
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {sessions.map(s => {
+          const timeActive = isSessionActive(s.open, s.close, etHour)
+          const active = timeActive && globexOpen
+          const nextChangeHour = active ? s.close : s.open
+          const hoursLeft = hoursUntil(nextChangeHour, etHour)
+          return (
+            <div key={s.name} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px',
+              borderRadius: 20, border: `1px solid ${active ? s.color : 'var(--border)'}`,
+              background: active ? s.color + '15' : 'var(--bg-3)',
+              flex: '1 1 auto', minWidth: 140,
+            }}>
+              <span style={{ fontSize: 14 }}>{s.flag}</span>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? s.color : 'var(--text-3)', display: 'inline-block', flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: active ? s.color : 'var(--text-2)' }}>{s.name}</span>
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>
+                  {s.hours} · {active ? `Closes in ${fmtCountdown(hoursLeft)}` : `Opens in ${fmtCountdown(hoursLeft)}`}
+                </div>
               </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -375,9 +449,12 @@ function RiskGrid({ accountSize, dollarRiskPerContract }: { accountSize: number;
 
   return (
     <div style={{ marginTop: 20 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', marginBottom: 2, letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
         Risk % Matrix
         <Tooltip text="Shows how many contracts you can trade at different risk percentages. Green = conservative (≤1%), Yellow = moderate (≤3%), Red = aggressive (>3%)." position="right" />
+      </div>
+      <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 8 }}>
+        Shows how many contracts you can trade at each risk level
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -714,7 +791,9 @@ export default function FuturesCalculator() {
             step={String(contract.tickSize)}
           />
           <div style={{ marginTop: -4, marginBottom: 4 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4 }}>Quick-set stop distance (points from entry):</div>
+            <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4 }}>
+              Quick-set: how many points away from entry should your stop be?
+            </div>
             <QuickBtns
               values={[5, 10, 15, 20, 30, 50]}
               active={activeStopPoints ?? undefined}
@@ -783,6 +862,7 @@ export default function FuturesCalculator() {
             onChange={v => set('accountSize', v)}
             placeholder="e.g. 25000"
           />
+          <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4, marginTop: -4 }}>Quick-set your total account balance:</div>
           <QuickBtns
             values={['5000', '10000', '25000', '50000', '100000']}
             active={accountSize}
@@ -810,6 +890,7 @@ export default function FuturesCalculator() {
               <span style={{ fontSize: 13, color: 'var(--text-3)' }}>%</span>
             </div>
           </div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4, marginTop: -4 }}>Quick-set max % of your account to risk per trade:</div>
           <QuickBtns
             values={['0.5', '1', '1.5', '2', '3']}
             active={maxRiskPct}
@@ -888,24 +969,28 @@ export default function FuturesCalculator() {
           <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
             <ResultCard
               label="Contracts"
+              desc="Number of futures contracts in this trade"
               value={String(c.contractsN)}
               sub={`${contract.symbol} — ${contract.name}`}
               borderColor="var(--accent)"
             />
             <ResultCard
               label="Risk Amount"
+              desc="Maximum dollar loss if stop loss is hit"
               value={fmtDollar(c.totalRisk)}
               sub={`${fmtDollar(c.dollarRiskPerContr)} per contract`}
               borderColor="#ef4444"
             />
             <ResultCard
               label="Margin Required"
+              desc="Deposit your broker holds for this trade"
               value={fmtDollar(c.marginRequired)}
               sub={c.accountN > 0 ? `${fmt2(c.marginPctOfAcct)}% of account` : `${contract.exchange}`}
               borderColor="var(--accent)"
             />
             <ResultCard
               label="Risk Level"
+              desc="Percentage of your account at risk"
               value={c.accountN > 0 ? `${fmt2(c.riskPctOfAccount)}%` : '—'}
               borderColor="#22c55e"
               badge={c.accountN > 0 ? { text: c.riskLevel, color: c.riskLevelColor } : undefined}
@@ -914,7 +999,10 @@ export default function FuturesCalculator() {
 
           {/* ── Buying Power Bar ───────────────────────────────────────────── */}
           {c.accountN > 0 && (
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 5 }}>
+                Shows how much of your account is used as margin for this trade
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                 <span style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   Buying Power Usage
@@ -924,18 +1012,19 @@ export default function FuturesCalculator() {
                   {fmt2(c.marginPctOfAcct)}% used
                 </span>
               </div>
-              <div style={{ height: 10, background: 'var(--bg-3)', borderRadius: 5, overflow: 'hidden' }}>
+              <div style={{ height: 12, background: 'var(--bg-3)', borderRadius: 6, overflow: 'hidden' }}>
                 <div style={{
                   height: '100%',
                   width: `${Math.min(100, c.marginPctOfAcct)}%`,
-                  borderRadius: 5,
+                  minWidth: c.marginPctOfAcct > 0 ? 4 : 0,
+                  borderRadius: 6,
                   background: c.marginPctOfAcct > 50 ? '#ef4444' : c.marginPctOfAcct > 25 ? '#f59e0b' : 'var(--accent)',
                   transition: 'width 0.3s, background 0.3s',
                 }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'var(--text-3)', marginTop: 2 }}>
-                <span>${c.marginRequired.toLocaleString()} margin</span>
-                <span>${c.accountN.toLocaleString()} account</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>
+                <span>${c.marginRequired.toLocaleString('en-US')} margin used</span>
+                <span>${c.accountN.toLocaleString('en-US')} total account</span>
               </div>
             </div>
           )}
@@ -955,8 +1044,11 @@ export default function FuturesCalculator() {
           {/* ── Quick Profit Target Cards (1:1, 1:2, 1:3) ─────────────────── */}
           {c.entryN > 0 && c.stopN > 0 && c.dollarRiskPerContr > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', marginBottom: 2, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Auto Profit Targets
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 8 }}>
+                Click to set as T1 — calculated at common Risk:Reward ratios
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {c.quickTargets.map((qt, i) => {
@@ -1014,9 +1106,12 @@ export default function FuturesCalculator() {
                 {c.targetCalcs.map((tc, i) => tc && (
                   <>
                     <div key={`t${i}rr`} style={{ padding: '6px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 11, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                        T{i + 1} R:R Ratio<Tooltip text={`Target ${i + 1}: How many dollars reward per dollar risked.`} position="right" />
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                          T{i + 1} Risk:Reward<Tooltip text={`For every $1 you risk, T${i+1} returns $${fmt2(tc.rr)}. Aim for at least 1:2 on most trades.`} position="right" />
+                        </span>
+                        <span style={{ fontSize: 9, color: 'var(--text-3)' }}>For every $1 risked → ${fmt2(tc.rr)} potential</span>
+                      </div>
                       <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--mono)', color: tc.rr >= 2 ? '#22c55e' : tc.rr >= 1 ? '#f59e0b' : '#ef4444' }}>1:{fmt2(tc.rr)}</span>
                     </div>
                     <div key={`t${i}profit`} style={{ padding: '6px 0', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
