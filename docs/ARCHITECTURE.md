@@ -1,7 +1,7 @@
 # TradVue System Architecture
 
-**Last Updated:** March 6, 2026  
-**Status:** Production (Vercel → Railway → Supabase)
+**Last Updated:** March 11, 2026  
+**Status:** Production (Vercel → Render → Supabase)
 
 ---
 
@@ -14,7 +14,7 @@ TradVue is a **full-stack trading intelligence platform** that aggregates real-t
 | Component | Technology | Hosting |
 |-----------|-----------|---------|
 | **Frontend** | Next.js 14 (React 18) + TypeScript + TailwindCSS | Vercel |
-| **Backend API** | Node.js/Express + PostgreSQL client | Railway |
+| **Backend API** | Node.js/Express + PostgreSQL client | Render |
 | **Primary Database** | PostgreSQL 15+ (Supabase) | Supabase |
 | **Cache/Real-Time** | Redis (planned for v2) | _(currently mock)_ |
 | **External APIs** | Finnhub (quotes), RSS feeds, NewsAPI, Alpha Vantage | Third-party |
@@ -252,11 +252,11 @@ vercel deploy    # Auto-deploy to Vercel
 
 ---
 
-### 3.2 Backend (Railway)
+### 3.2 Backend (Render)
 
 **Framework:** Express.js  
 **Language:** JavaScript (Node.js 18+)  
-**Hosting:** Railway (auto-deploy from git)
+**Hosting:** Render (auto-deploy from git, $7/mo)
 
 #### Entrypoint
 
@@ -376,7 +376,7 @@ Test structure: `tests/**/*.test.js`
 
 **Engine:** PostgreSQL 15+  
 **Hosting:** Supabase (AWS-backed, managed)  
-**Connection:** Transaction mode (port 6543) for serverless/Railway compatibility
+**Connection:** Transaction mode (port 6543) for serverless/Render compatibility
 
 #### Schema Overview
 
@@ -511,12 +511,12 @@ ORDER BY published_at DESC;
 postgresql://postgres:password@localhost:5432/tradvue
 ```
 
-**Production (Railway):**
+**Production (Render):**
 ```
 postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 ```
 
-⚠️ **Important:** Use port **6543** (transaction mode) not 5432 (direct) for Railway/serverless compatibility.
+⚠️ **Important:** Use port **6543** (transaction mode) not 5432 (direct) for serverless/pooled compatibility.
 
 ---
 
@@ -707,7 +707,7 @@ Frontend              Backend                  External API
 | Layer | Service | Region | Notes |
 |-------|---------|--------|-------|
 | **Frontend** | Vercel | iad1 (N. Virginia) | Auto-deploy from git, CDN, edge functions |
-| **Backend** | Railway | US (auto-select) | Node.js service, auto-scaling, webhook deploys |
+| **Backend** | Render | US West (Oregon) | Docker service, auto-deploy on push, Starter $7/mo |
 | **Database** | Supabase | AWS (us-east-1) | Transaction pooler on port 6543 for serverless |
 | **DNS/WAF** | Cloudflare | Global | DDoS protection, SSL/TLS, caching |
 
@@ -717,13 +717,13 @@ Frontend              Backend                  External API
 
 ```bash
 # .env.local
-NEXT_PUBLIC_API_URL=https://tradvue-production.up.railway.app
+NEXT_PUBLIC_API_URL=https://tradvue-api.onrender.com
 ```
 
-#### Backend (Railway)
+#### Backend (Render)
 
 ```bash
-# Critical (must be set in Railway dashboard)
+# Critical (must be set in Render dashboard)
 DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 JWT_SECRET=<random 256-bit: openssl rand -hex 32>
 NODE_ENV=production
@@ -753,21 +753,21 @@ RATE_LIMIT_ENTERPRISE=5000
 3. ✅ Auto-deploy on push to `main` branch
 4. ✅ Check build logs for errors
 
-**Backend (Railway):**
-1. ✅ Add to Railway project
-2. ✅ Set all env vars in Railway → Variables tab (see table above)
-3. ✅ Verify `railway.json` is committed
-4. ✅ Trigger redeploy
-5. ✅ Test: `GET https://your-app.railway.app/health`
+**Backend (Render):**
+1. ✅ Create service at https://dashboard.render.com
+2. ✅ Set all env vars in Render → Environment tab (see table above)
+3. ✅ Render uses `Dockerfile` for build
+4. ✅ Auto-deploys on push to `master`
+5. ✅ Test: `GET https://tradvue-api.onrender.com/health`
 6. ✅ Test auth: `POST /api/auth/register` with test email
-7. ✅ Check Railway logs for DB connection errors
+7. ✅ Check Render logs for DB connection errors
 
 **Database (Supabase):**
 1. ✅ Create new Postgres project
 2. ✅ Run `schema.sql` in SQL editor
 3. ✅ Verify tables created
 4. ✅ Get connection string (Transaction mode, port 6543)
-5. ✅ Add to Railway env vars as `DATABASE_URL`
+5. ✅ Add to Render env vars as `DATABASE_URL`
 
 ### 5.4 Monitoring & Health Checks
 
@@ -777,7 +777,7 @@ RATE_LIMIT_ENTERPRISE=5000
 
 **Backend:**
 - `GET /health` endpoint returns `{ status: "OK", timestamp, service: "TradVue API" }`
-- Railway logs (stderr, stdout)
+- Render logs (stderr, stdout)
 - Database connection status logged on startup
 
 **Database:**
@@ -796,8 +796,8 @@ RATE_LIMIT_ENTERPRISE=5000
 - No backup needed (static assets, code in git)
 
 **Backend:**
-- Railway automatic backups (deployment history)
-- Environment variables backed up in Railway dashboard
+- Render automatic backups (deployment history)
+- Environment variables backed up in Render dashboard
 - Code in git, deployments immutable
 
 ---
@@ -818,12 +818,12 @@ RATE_LIMIT_ENTERPRISE=5000
 
 **Phase 1 (Current):** ~100 concurrent users
 - Single Vercel instance (auto-scales)
-- Single Railway instance
+- Single Render Starter instance
 - Single Supabase database (max connections: 100)
 - In-memory cache + SSE streaming
 
 **Phase 2 (When needed):** ~1k concurrent users
-- ✅ Multiple Railway instances (load balancer)
+- ✅ Multiple Render instances (load balancer)
 - ✅ Redis cache layer (5-10 GB)
 - ✅ Database connection pooling (PgBouncer)
 - ✅ Price data partitioning (TimescaleDB)
@@ -993,12 +993,12 @@ git push origin main
 # Check: https://vercel.com/dashboard
 ```
 
-### Deploy Backend to Railway
+### Deploy Backend to Render
 
 ```bash
-git push origin main
-# Railway webhook auto-triggers
-# Check: Railway dashboard → Deployments
+git push origin master
+# Render auto-deploys from GitHub
+# Check: https://dashboard.render.com → tradvue-api → Deployments
 ```
 
 ### Add New API Endpoint
@@ -1062,7 +1062,7 @@ const result = await db.query(
 **Fix:**
 ```bash
 # Check frontend .env.local
-NEXT_PUBLIC_API_URL=https://your-railway-url.railway.app  # Production
+NEXT_PUBLIC_API_URL=https://tradvue-api.onrender.com  # Production
 NEXT_PUBLIC_API_URL=http://localhost:3001                  # Local dev
 ```
 
@@ -1072,7 +1072,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001                  # Local dev
 **Cause:** Bad `DATABASE_URL`  
 **Fix:**
 ```bash
-# Check Railway env vars
+# Check Render env vars
 DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 #                                                                                      ^^^^
 #                                                                              Port 6543 (not 5432)
@@ -1083,9 +1083,9 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supaba
 **Symptom:** POST /api/auth/register → 500 Internal Server Error  
 **Cause:** Database connection not working  
 **Fix:**
-1. Check DATABASE_URL in Railway vars
+1. Check DATABASE_URL in Render vars
 2. Verify Supabase connection string is correct
-3. Check Railway logs for DB errors
+3. Check Render logs for DB errors
 4. Test with: `GET /health` (should return OK)
 
 ### News Feed Not Updating
@@ -1095,7 +1095,7 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supaba
 **Fix:**
 1. Check `services/alertService.js` startPolling interval
 2. Verify RSS feed URLs are valid
-3. Check Railway logs for fetch errors
+3. Check Render logs for fetch errors
 4. Manual test: `GET /api/feed/news`
 
 ---
@@ -1107,7 +1107,7 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supaba
 - **Database:** https://supabase.com/docs
 - **Hosting:**
   - Vercel: https://vercel.com/docs
-  - Railway: https://railway.app/docs
+  - Render: https://render.com/docs
 - **APIs:**
   - Finnhub: https://finnhub.io/docs/api
   - NewsAPI: https://newsapi.org
@@ -1124,7 +1124,7 @@ DATABASE_URL=postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supaba
 |------|-------|-------|
 | **Frontend Dev** | React, Next.js, UI | `/frontend` |
 | **Backend Dev** | Express, APIs, services | `/backend` |
-| **DevOps** | Hosting, scaling, monitoring | Railway, Vercel, Supabase config |
+| **DevOps** | Hosting, scaling, monitoring | Render, Vercel, Supabase config |
 | **Data** | SQL, schema design, scaling | `/database`, schema.sql |
 
 ---
@@ -1177,7 +1177,7 @@ tradvue/
 │   ├── tests/                # Jest unit tests
 │   ├── package.json
 │   ├── .env.example
-│   ├── railway.json          # Railway config
+│   ├── railway.json          # Legacy Railway config (kept for reference)
 │   └── DEPLOYMENT_CHECKLIST.md
 │
 ├── database/                 # Schema & migrations

@@ -122,11 +122,13 @@ function normalizeFfDate(dateStr) {
 // ─── ForexFactory (JSON) ─────────────────────────────────────────────────────
 
 async function fetchForexFactoryWeek(week = 'thisweek') {
-  const CACHE_KEY = `calendar:ff:${week}`;
+  // Include today's ET date in cache key so cache auto-busts at midnight ET
+  const todayET = toDateStr(new Date());
+  const CACHE_KEY = `calendar:ff:${week}:${todayET}`;
   const cached = await cache.get(CACHE_KEY).catch(() => null);
   if (cached) return cached;
 
-  return dedupedFetch(`ff:${week}`, async () => {
+  return dedupedFetch(`ff:${week}:${todayET}`, async () => {
     // Double-check cache after acquiring dedup lock
     const cachedAgain = await cache.get(CACHE_KEY).catch(() => null);
     if (cachedAgain) return cachedAgain;
@@ -301,7 +303,14 @@ async function fetchFinnhubEconomic(from, to) {
     await cache.set(CACHE_KEY, events, 3600).catch(() => {});
     return events;
   } catch (err) {
-    console.error('[CalendarService] Finnhub economic calendar fetch failed:', err.message);
+    const status = err.response?.status;
+    if (status === 403) {
+      console.warn('[CalendarService] Finnhub economic calendar returned 403 — API limit or endpoint blocked. Skipping gracefully.');
+      // Cache empty result briefly to avoid hammering blocked endpoint
+      await cache.set(CACHE_KEY, [], 600).catch(() => {});
+    } else {
+      console.error('[CalendarService] Finnhub economic calendar fetch failed:', err.message);
+    }
     return [];
   }
 }
@@ -327,7 +336,10 @@ async function fetchFedRSS() {
       })
       .map(item => {
         const title = item.title || '';
-        const date = item.pubDate || item.isoDate || new Date().toISOString();
+        // Parse pubDate through Date to normalize malformed strings like "Tue, 10 Ma"
+        const rawDate = item.pubDate || item.isoDate || '';
+        const parsedDate = rawDate ? new Date(rawDate) : new Date();
+        const date = !isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString();
         const lower = title.toLowerCase();
 
         let impact = 'Medium';

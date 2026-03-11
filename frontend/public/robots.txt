@@ -1,1 +1,34 @@
-# Wed Mar 11 11:49:48 EDT 2026
+# robots.txt — TradVue (https://www.tradvue.com)
+# Updated: 2026-03-11
+
+User-agent: *
+
+# Allow public marketing and content pages
+Allow: /
+Allow: /tools
+Allow: /news
+Allow: /calendar
+Allow: /portfolio
+Allow: /journal
+Allow: /help
+Allow: /stock/
+Allow: /changelog
+Allow: /status
+Allow: /legal/
+
+# Block authenticated/private app routes
+Disallow: /dashboard
+Disallow: /watchlist
+Disallow: /alerts
+Disallow: /settings
+Disallow: /onboarding
+
+# Block API routes (backend is on a separate domain but just in case)
+Disallow: /api/
+
+# Block Next.js internals
+Disallow: /_next/
+Disallow: /static/
+
+# Sitemap
+Sitemap: https://www.tradvue.com/sitemap.xml

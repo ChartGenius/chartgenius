@@ -26,8 +26,17 @@ const economicCalendar = require('../services/economicCalendar');
 const eventsCache = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
+/**
+ * Get current ET date as YYYY-MM-DD string.
+ * Used to auto-bust cache when the date rolls over in Eastern Time.
+ */
+function getETDateStr() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
+
 function getCacheKey(from, to, type) {
-  return `${from}|${to}|${type}`;
+  // Include ET date in key so cache auto-invalidates at midnight ET
+  return `${from}|${to}|${type}|${getETDateStr()}`;
 }
 
 function getCached(key) {

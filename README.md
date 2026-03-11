@@ -1,8 +1,8 @@
 # TradVue 📊
 
-**Real-time market intelligence, AI-powered news analysis, and social sentiment tracking for traders.**
+**AI-powered trading journal and portfolio tracker with real-time market intelligence.**
 
-TradVue is a comprehensive trading intelligence platform that aggregates market data, financial news, and social sentiment into actionable insights. Track multiple asset classes, set intelligent alerts, and make data-driven trading decisions.
+TradVue is a full-stack trading platform — part journal, part portfolio tracker, part market dashboard. It aggregates real-time market data, financial news, and economic events so traders can log trades, track portfolios, and make data-driven decisions.
 
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)](https://nodejs.org)
@@ -95,7 +95,7 @@ Power-user navigation — press `?` anywhere in the app to see the full shortlis
 | Cache | Redis |
 | Auth | JWT with refresh tokens |
 | Job Queue | Bull (background tasks) |
-| Deployment | Railway |
+| Deployment | Render (Hobby, $7/mo) |
 
 ### External APIs
 | Service | Purpose |
@@ -327,12 +327,20 @@ Configuration lives in `frontend/vercel.json`:
 - Region: `iad1` (US East)
 - Security headers: `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`
 
-### Backend — Railway
+### Backend — Render
+
+The backend auto-deploys on push to `master` via Render's GitHub integration.
+
+**Service:** `tradvue-api` on [Render](https://render.com) (Hobby plan, Starter instance, $7/mo)  
+**URL:** `https://tradvue-api.onrender.com`
 
 ```bash
-cd backend
-# Railway auto-deploys from the backend/ directory
-# See backend/railway.json for config
+# Render auto-deploys from GitHub on every push to master
+# No manual deploy steps needed
+git push origin master
+
+# To trigger a manual deploy, go to:
+# https://dashboard.render.com → tradvue-api → Manual Deploy
 ```
 
 ---
@@ -420,4 +428,4 @@ TradVue is for informational and educational purposes only. It is **not** financ
 
 **Made with ❤️ by [ApexLogics](https://apexlogics.dev)**
 
-*Last updated: March 7, 2026*
+*Last updated: March 11, 2026*

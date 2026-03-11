@@ -46,7 +46,10 @@ interface CalendarEvent {
   id: string
   title: string
   currency: string
-  impact: number
+  country?: string
+  impact: number | string // supports both legacy numeric (1/2/3) and new string ('Low'/'Medium'/'High')
+  type?: 'economic' | 'earnings' | 'speech' | 'holiday'
+  symbol?: string // for earnings events
   datetime?: string
   date?: string
   actual: string | null
@@ -215,6 +218,22 @@ const NEWS_CAT_MAP: Record<string, string> = {
 
 const CALENDAR_IMPACT_FILTERS = ['All', 'High', 'Medium', 'Low']
 const CALENDAR_CURRENCIES = ['All', 'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'NZD']
+
+// Major-cap earnings filter — dashboard widget shows ONLY these symbols
+const MAJOR_CAP_SYMBOLS = new Set([
+  'AAPL','MSFT','NVDA','GOOGL','GOOG','AMZN','META','TSLA','NFLX',
+  'AMD','INTC','QCOM','AVGO','TXN','ORCL','CRM','ADBE','SNOW','PLTR',
+  'V','MA','JPM','BAC','GS','MS','WFC','C','SCHW',
+  'JNJ','UNH','PFE','MRK','ABBV','LLY','BMY',
+  'WMT','COST','TGT','HD','SBUX','NKE','MCD',
+  'XOM','CVX','COP','OXY',
+  'BRK.A','BRK.B',
+  'DIS','CMCSA','NFLX','SPOT',
+  'T','VZ',
+  'BA','RTX','LMT','GE',
+  'COIN','HOOD','ROBINHOOD',
+  'SPY','QQQ','IWM', // ETFs sometimes in earnings
+])
 
 const MAX_TICKER_CUSTOM = 15
 
@@ -1017,12 +1036,27 @@ function EconomicCalendar({ events, loading }: EcalProps) {
   const [impactFilter, setImpactFilter] = useState('All')
   const [currencyFilter, setCurrencyFilter] = useState('All')
 
+  // Normalize impact to string for consistent comparison
+  function normalizeImpact(impact: number | string): string {
+    if (typeof impact === 'string') return impact
+    if (impact >= 3) return 'High'
+    if (impact >= 2) return 'Medium'
+    return 'Low'
+  }
+
+  // Type icon for event
+  function typeIcon(e: CalendarEvent): string {
+    if (e.type === 'speech') return '🎤'
+    if (e.type === 'earnings') return '📊'
+    if (e.type === 'holiday') return '🏛'
+    return ''
+  }
+
   const filtered = events.filter(e => {
-    const matchImpact = impactFilter === 'All'
-      || (impactFilter === 'High' && e.impact === 3)
-      || (impactFilter === 'Medium' && e.impact === 2)
-      || (impactFilter === 'Low' && e.impact === 1)
-    const matchCurrency = currencyFilter === 'All' || e.currency === currencyFilter
+    const impStr = normalizeImpact(e.impact)
+    const matchImpact = impactFilter === 'All' || impStr === impactFilter
+    const ccy = (e.currency || e.country || '').toUpperCase()
+    const matchCurrency = currencyFilter === 'All' || ccy === currencyFilter
     return matchImpact && matchCurrency
   })
 
@@ -1035,13 +1069,18 @@ function EconomicCalendar({ events, loading }: EcalProps) {
     groups[dayKey].push(e)
   })
 
-  const impactColor = (impact: number) => {
-    if (impact === 3) return 'ecal-impact-high'
-    if (impact === 2) return 'ecal-impact-medium'
+  const impactColorClass = (impact: number | string) => {
+    const s = normalizeImpact(impact)
+    if (s === 'High') return 'ecal-impact-high'
+    if (s === 'Medium') return 'ecal-impact-medium'
     return 'ecal-impact-low'
   }
 
   const getEventTime = (e: CalendarEvent) => fmtEventTime(e.datetime || e.date || '')
+
+  // Counts for header badge
+  const speechCount = filtered.filter(e => e.type === 'speech').length
+  const earningsCount = filtered.filter(e => e.type === 'earnings').length
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -1049,11 +1088,23 @@ function EconomicCalendar({ events, loading }: EcalProps) {
       <div className="ecal-header">
         <span className="ecal-title">
           <span style={{ color: 'var(--yellow)' }}>◈</span>
-          ECONOMIC CALENDAR
+          CALENDAR
         </span>
 
+        {/* Type badges */}
+        {speechCount > 0 && (
+          <span style={{ fontSize: 9, background: 'rgba(245,158,11,0.18)', color: '#f59e0b', padding: '2px 5px', borderRadius: 3, fontWeight: 700 }}>
+            🎤 {speechCount}
+          </span>
+        )}
+        {earningsCount > 0 && (
+          <span style={{ fontSize: 9, background: 'rgba(139,92,246,0.18)', color: '#8b5cf6', padding: '2px 5px', borderRadius: 3, fontWeight: 700 }}>
+            📊 {earningsCount}
+          </span>
+        )}
+
         {/* Impact filter */}
-        <div style={{ display: 'flex', gap: 3, marginLeft: 4 }}>
+        <div style={{ display: 'flex', gap: 3, marginLeft: 2 }}>
           {CALENDAR_IMPACT_FILTERS.map(f => (
             <button
               key={f}
@@ -1113,25 +1164,39 @@ function EconomicCalendar({ events, loading }: EcalProps) {
           Object.entries(groups).map(([day, dayEvents]) => (
             <div key={day} className="ecal-day-group">
               <div className="ecal-day-label">{day}</div>
-              {dayEvents.map(ev => (
-                <div key={ev.id} className="ecal-event">
-                  <span className="ecal-time">{getEventTime(ev)}</span>
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <span className={`ecal-impact-dot ${impactColor(ev.impact)}`} />
+              {dayEvents.map(ev => {
+                const icon = typeIcon(ev)
+                const ccy = (ev.currency || ev.country || '').toUpperCase()
+                return (
+                  <div key={ev.id} className="ecal-event" style={
+                    ev.type === 'speech' ? { borderLeft: '2px solid #f59e0b' } :
+                    ev.type === 'earnings' ? { borderLeft: '2px solid #8b5cf6' } : {}
+                  }>
+                    <span className="ecal-time">{getEventTime(ev)}</span>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      {icon ? (
+                        <span style={{ fontSize: 10 }}>{icon}</span>
+                      ) : (
+                        <span className={`ecal-impact-dot ${impactColorClass(ev.impact)}`} />
+                      )}
+                    </div>
+                    <span className="ecal-currency">{ccy}</span>
+                    <div className="ecal-body">
+                      <span className="ecal-event-name" style={
+                        ev.type === 'speech' ? { color: '#f59e0b' } :
+                        ev.type === 'earnings' ? { color: '#8b5cf6' } : {}
+                      }>{ev.title}</span>
+                      {(ev.actual || ev.forecast || ev.previous) && (
+                        <div className="ecal-values">
+                          {ev.actual && <span className="ecal-actual">A: {ev.actual}</span>}
+                          {ev.forecast && <span className="ecal-forecast">F: {ev.forecast}</span>}
+                          {ev.previous && <span className="ecal-previous">P: {ev.previous}</span>}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <span className="ecal-currency">{ev.currency}</span>
-                  <div className="ecal-body">
-                    <span className="ecal-event-name">{ev.title}</span>
-                    {(ev.actual || ev.forecast || ev.previous) && (
-                      <div className="ecal-values">
-                        {ev.actual && <span className="ecal-actual">A: {ev.actual}</span>}
-                        {ev.forecast && <span className="ecal-forecast">F: {ev.forecast}</span>}
-                        {ev.previous && <span className="ecal-previous">P: {ev.previous}</span>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ))
         )}
@@ -1618,25 +1683,39 @@ export default function Home() {
     if (j?.success && j.data) setCryptoCoins(j.data)
   }, [isOffline])
 
-  // ── Fetch economic calendar — HIGH IMPACT only for dashboard widget ─────────
-  // Dashboard shows: FOMC, CPI, GDP, Jobs + major earnings (same source as Calendar page)
-  // Full calendar page shows everything.
+  // ── Fetch economic calendar — dashboard widget (today + tomorrow) ─────────
+  // Shows: all speeches + high-impact events + major-cap earnings only
+  // Full calendar page (/calendar) shows everything without filtering.
   const fetchCalendar = useCallback(async () => {
     if (isOffline) return
     setLoadingCalendar(true)
     try {
-      // Fetch high-impact economic events only (impact = 3 = High)
-      const j = await apiFetchSafe<{ success: boolean; data: CalendarEvent[] }>(
-        `${API_BASE}/api/calendar/upcoming?days=7&minImpact=3`
+      // Fetch all events for next 2 days (speeches can be Medium impact, so use minImpact=1)
+      const j = await apiFetchSafe<{ success: boolean; data?: CalendarEvent[]; events?: CalendarEvent[] }>(
+        `${API_BASE}/api/calendar/upcoming?days=2&minImpact=1`
       )
-      if (j?.success && j.data) {
-        setCalendarEvents(j.data)
+      const raw = j?.success ? (j.data ?? j.events ?? []) : []
+      if (raw.length > 0) {
+        // Client-side filter: speeches (all), high-impact economic, major-cap earnings only
+        const filtered = raw.filter(e => {
+          if (e.type === 'speech') return true
+          if (e.type === 'earnings') {
+            // Only show major-cap earnings
+            const sym = (e.symbol || e.title?.split(' ')[0] || '').toUpperCase()
+            return MAJOR_CAP_SYMBOLS.has(sym)
+          }
+          // Economic events: only High impact
+          const imp = e.impact
+          return imp === 'High' || imp === 3
+        })
+        setCalendarEvents(filtered)
       } else {
-        // Fallback: fetch today's high-impact events
-        const j2 = await apiFetchSafe<{ success: boolean; data: CalendarEvent[] }>(
-          `${API_BASE}/api/calendar/today?minImpact=3`
+        // Fallback: today's events
+        const j2 = await apiFetchSafe<{ success: boolean; data?: CalendarEvent[]; events?: CalendarEvent[] }>(
+          `${API_BASE}/api/calendar/today`
         )
-        if (j2?.success) setCalendarEvents(j2.data || [])
+        const raw2 = j2?.success ? (j2.data ?? j2.events ?? []) : []
+        setCalendarEvents(raw2)
       }
     } finally {
       setLoadingCalendar(false)
