@@ -1034,8 +1034,11 @@ export default function HelpPage() {
             />
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-              {/* Email card */}
-              <div style={{ background: 'var(--card-bg)', border: 'var(--card-border)', borderRadius: 'var(--card-radius)', boxShadow: 'var(--card-shadow)', padding: '20px 22px' }}>
+              {/* Email card — entire card is clickable */}
+              <a href="mailto:support@tradvue.com" style={{ background: 'var(--card-bg)', border: 'var(--card-border)', borderRadius: 'var(--card-radius)', boxShadow: 'var(--card-shadow)', padding: '20px 22px', textDecoration: 'none', display: 'block', cursor: 'pointer', transition: 'border-color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = '')}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                   <div className="tv-card-icon" style={{ width: 36, height: 36, borderRadius: 9, flexShrink: 0 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1045,9 +1048,9 @@ export default function HelpPage() {
                   </div>
                   <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-0)' }}>Email Support</span>
                 </div>
-                <a href="mailto:support@tradvue.com" style={{ fontSize: 15, fontWeight: 600, color: '#4a9eff', textDecoration: 'none', display: 'block', marginBottom: 10 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: '#4a9eff', display: 'block', marginBottom: 10 }}>
                   support@tradvue.com
-                </a>
+                </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
                     <span style={{ color: '#22c55e', flexShrink: 0, marginTop: 1 }}>✓</span>
@@ -1058,7 +1061,7 @@ export default function HelpPage() {
                     <span>Urgent issues? Include <strong style={{ color: 'var(--text-1)' }}>"URGENT"</strong> in the subject line</span>
                   </div>
                 </div>
-              </div>
+              </a>
 
               {/* Bug Reports card */}
               <div style={{ background: 'var(--card-bg)', border: 'var(--card-border)', borderRadius: 'var(--card-radius)', boxShadow: 'var(--card-shadow)', padding: '20px 22px' }}>
