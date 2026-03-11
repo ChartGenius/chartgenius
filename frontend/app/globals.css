@@ -5138,12 +5138,30 @@ a.alert-row-title:hover {
     display: none !important;
   }
 
-  /* Stop header from being sticky — let it scroll away */
-  .app-persistent-nav {
-    position: relative !important;
+  /* Hide the main page header nav tabs too (page.tsx uses .header-nav) */
+  .header-nav {
+    display: none !important;
   }
 
-  /* Show hamburger button */
+  /* Show hamburger on main page */
+  .mobile-hamburger {
+    display: flex !important;
+  }
+
+  /* Stop headers from being sticky in landscape — reclaim vertical space */
+  .app-persistent-nav,
+  .site-header {
+    position: relative !important;
+    top: unset !important;
+  }
+
+  /* Unstick ticker bar */
+  .ticker-bar-wrap {
+    position: relative !important;
+    top: unset !important;
+  }
+
+  /* Show hamburger button (PersistentNav pages) */
   .apn-hamburger {
     display: flex !important;
     align-items: center;
