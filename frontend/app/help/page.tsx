@@ -11,12 +11,97 @@ import { IconArrowLeft } from '../components/Icons'
 // FAQ data (sourced from docs/HELP_CENTER_FAQ.md)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Getting Started Guide steps
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GETTING_STARTED_STEPS = [
+  {
+    step: 1,
+    icon: '🏠',
+    title: 'Explore the Dashboard',
+    desc: 'Start with the market overview — live indices, trending tickers, top news, and the economic calendar all in one place. Get a feel for what\'s moving today.',
+    href: '/dashboard',
+    linkLabel: 'Open Dashboard',
+  },
+  {
+    step: 2,
+    icon: '👁️',
+    title: 'Set Up Your Watchlist',
+    desc: 'Go to Portfolio → Watchlist tab and add your favorite tickers. Set optional target buy prices. TradVue will track live prices and performance automatically.',
+    href: '/portfolio',
+    linkLabel: 'Go to Portfolio',
+  },
+  {
+    step: 3,
+    icon: '📒',
+    title: 'Log Your First Trade',
+    desc: 'Head to the Journal and click "+ New Trade." Fill in your entry/exit prices, position size, and stop loss. P&L and R-Multiple are calculated for you. Add a setup tag to unlock analytics.',
+    href: '/journal',
+    linkLabel: 'Open Journal',
+  },
+  {
+    step: 4,
+    icon: '📊',
+    title: 'Track Holdings',
+    desc: 'Add your current positions under Portfolio → Holdings. Enter your shares, buy date, and average cost. TradVue shows unrealized gains, allocation %, yield on cost, and projected dividends.',
+    href: '/portfolio',
+    linkLabel: 'Go to Portfolio',
+  },
+  {
+    step: 5,
+    icon: '🔧',
+    title: 'Use the Tools',
+    desc: 'The Tools page has a position size calculator, risk/reward calculator, options Greeks, Fibonacci levels, and more. Run quick math before entering a trade.',
+    href: '/tools',
+    linkLabel: 'Open Tools',
+  },
+  {
+    step: 6,
+    icon: '⚙️',
+    title: 'Customize Settings',
+    desc: 'Click the settings gear (top-right) to switch themes (dark/light/system), set your timezone, adjust ticker bar size, and configure your preferred defaults.',
+    href: '/',
+    linkLabel: 'Open Settings',
+  },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Keyboard shortcuts (sourced from components/KeyboardShortcuts.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const KEYBOARD_SHORTCUTS = [
+  { keys: '/', description: 'Focus search bar', category: 'Navigation' },
+  { keys: '⌘K', description: 'Focus search bar', category: 'Navigation' },
+  { keys: 'Esc', description: 'Close modal / dismiss panel', category: 'Navigation' },
+  { keys: '?', description: 'Show keyboard shortcuts overlay', category: 'Navigation' },
+  { keys: 'g h', description: 'Go to Home / Dashboard', category: 'Go To' },
+  { keys: 'g a', description: 'Go to Alerts', category: 'Go To' },
+  { keys: 'g s', description: 'Open Settings panel', category: 'Go To' },
+]
+
 const FAQ_DATA = [
   {
     id: 'getting-started',
     category: 'Getting Started',
     icon: '🚀',
     questions: [
+      {
+        q: 'What is TradVue?',
+        a: 'TradVue is a free, browser-based trading platform and research toolkit. It combines a real-time market dashboard, trading journal with analytics, portfolio tracker, financial tools (calculators, screener), news feed, and economic calendar — all in one place. No download required.',
+      },
+      {
+        q: 'Is TradVue free?',
+        a: 'Yes — TradVue is free to use. Core features including the dashboard, journal, portfolio tracker, tools, news, and calendar are available at no cost. Some data sources have a 15-minute delay on free API tiers. Premium features (real-time data across all sources, cloud sync, advanced analytics) may require an account in a future update.',
+      },
+      {
+        q: 'Do I need an account?',
+        a: 'No account is required to use TradVue. All data (journal entries, portfolio holdings, watchlist) is saved locally in your browser. Creating an account will unlock cloud sync and cross-device access — that feature is coming soon.',
+      },
+      {
+        q: 'What markets and assets are supported?',
+        a: 'TradVue covers US equities (NYSE, NASDAQ, AMEX), ETFs, and mutual funds for the journal and portfolio. The Tools section includes crypto calculators (Fear & Greed, Gas Tracker, Staking Calculator). International equities and options chains are on the roadmap.',
+      },
       {
         q: 'How do I create an account?',
         a: 'Go to tradvue.com and click "Sign Up." Enter your email, create a password, and verify your email address. You\'ll be all set with a free account in seconds.',
@@ -86,10 +171,45 @@ const FAQ_DATA = [
     ],
   },
   {
+    id: 'data-privacy',
+    category: 'Data & Privacy',
+    icon: '🔒',
+    questions: [
+      {
+        q: 'Where is my data stored?',
+        a: 'Currently, all your data — journal entries, portfolio holdings, watchlist — is stored locally in your browser\'s localStorage. Nothing is sent to a server. This means it\'s private by default, but also device-specific. Account-based cloud sync is coming soon.',
+      },
+      {
+        q: 'Do you sell my data?',
+        a: 'No. Never. We do not sell, share, or monetize your personal data or trading activity. Your journal and portfolio data never leaves your browser unless you explicitly export it.',
+      },
+      {
+        q: 'What data sources do you use?',
+        a: 'TradVue pulls data from Finnhub (stock quotes, fundamentals), CoinGecko (crypto), ForexFactory (economic calendar), NewsAPI (news feed), Yahoo Finance (supplemental), and RSS feeds from major financial publishers. See the Data Sources section below for full details.',
+      },
+      {
+        q: 'Can I export my data?',
+        a: 'Yes — you can export everything as JSON or CSV. In the Journal, click the Export button to download your trade log. In the Portfolio, use the Export button for holdings and watchlist. JSON exports can be re-imported to restore your data.',
+      },
+    ],
+  },
+  {
     id: 'troubleshooting',
-    category: 'Troubleshooting',
+    category: 'Technical',
     icon: '🔧',
     questions: [
+      {
+        q: 'Why is some data delayed?',
+        a: 'Free API tiers from some data providers include a 15-minute delay on certain data streams. Real-time quotes from Finnhub are available during trading hours, but some supplemental sources (extended hours, certain market indices) may lag. We display delay notices where applicable.',
+      },
+      {
+        q: "The site is slow / data isn't loading — what should I do?",
+        a: 'Try these steps in order: (1) Check your internet connection. (2) Hard-refresh the page (Cmd+Shift+R on Mac, Ctrl+Shift+R on Windows). (3) Clear your browser cache. (4) Try a different browser (Chrome, Firefox, Edge all work well). (5) Disable browser extensions or ad blockers — these can block API calls. (6) Check tradvue.com/status for any known outages.',
+      },
+      {
+        q: 'How do I report a bug?',
+        a: 'Email support@tradvue.com with: (1) what you were trying to do, (2) what happened instead, (3) your browser name and version, (4) your operating system, and (5) any screenshots or screen recordings. We aim to respond within 24 hours.',
+      },
       {
         q: "Why isn't my data loading?",
         a: 'Check your internet connection and refresh the page. If the problem persists, try clearing your browser cache or switching browsers. Contact us if the issue continues.',
@@ -160,12 +280,20 @@ const FAQ_DATA = [
     icon: '📊',
     questions: [
       {
-        q: 'How do I add a stock to my watchlist?',
-        a: 'Go to Portfolio → Watchlist tab → click "+ Add to Watchlist". Enter the ticker symbol (e.g. AAPL) and an optional target buy price. Company info, current price, and key metrics are fetched automatically.',
+        q: 'How do I add holdings?',
+        a: 'Go to Portfolio → Holdings tab → click "+ Add Position". Enter ticker, number of shares, buy date, and average cost per share. The company name, sector, current price, and dividend data populate automatically.',
       },
       {
-        q: 'How do I add a stock to my holdings?',
-        a: 'Go to Portfolio → Holdings tab → click "+ Add Position". Enter ticker, number of shares, buy date, and average cost per share. The company name, sector, current price, and dividend data populate automatically.',
+        q: "What's the privacy toggle?",
+        a: 'The privacy toggle (🙈 icon in the portfolio header) hides all dollar amounts and percentages, replacing them with "••••". Useful when sharing your screen or working in a public place. Your data is not deleted — just masked until you toggle it off.',
+      },
+      {
+        q: 'How is performance calculated?',
+        a: 'Unrealized gain/loss = (current price − average cost) × shares. Total return % = (current market value − total cost basis) / total cost basis × 100. Projected dividend income = most recent dividend rate × share count × payment frequency. All figures are estimates — verify against your broker for tax purposes.',
+      },
+      {
+        q: 'How do I add a stock to my watchlist?',
+        a: 'Go to Portfolio → Watchlist tab → click "+ Add to Watchlist". Enter the ticker symbol (e.g. AAPL) and an optional target buy price. Company info, current price, and key metrics are fetched automatically.',
       },
       {
         q: 'How do I remove a stock from my watchlist or holdings?',
@@ -191,20 +319,24 @@ const FAQ_DATA = [
   },
   {
     id: 'journal',
-    category: 'Journal',
+    category: 'Trading Journal',
     icon: '📒',
     questions: [
       {
-        q: 'How do I log a trade manually?',
+        q: 'How do I log a trade?',
         a: 'Go to Journal → Trade Log tab → click "+ New Trade". Fill in the symbol, entry price, exit price, position size, and stop loss. P&L, R-Multiple, and % gain/loss are calculated automatically. Add a setup tag and rating to enable analytics.',
       },
       {
-        q: 'What CSV formats does the import support?',
-        a: 'TradVue Journal supports three CSV formats: Generic (our standard template — download from the import dialog), Robinhood (exported from the app or website), and IBKR (Interactive Brokers trade confirmations). Other brokers may work with the Generic format if columns match.',
+        q: 'Can I import trades from my broker?',
+        a: 'Yes — CSV import supports three formats: Robinhood (exported from the app or website), IBKR / Interactive Brokers (trade confirmations), and a Generic format (download the template from the import dialog). Most brokers that export CSV can be mapped to the Generic format.',
       },
       {
-        q: 'What are setup tags and how should I use them?',
-        a: 'Setup tags label the type of trade you took — e.g. "Breakout", "Pullback", "Gap Fill", "VWAP Bounce". Tag every trade consistently, and the Analytics tab will show you which setups have the best win rate and profit factor. This reveals your edge.',
+        q: 'What analytics are available?',
+        a: 'The Analytics tab shows win rate, profit factor, average R-multiple, P&L by setup tag, P&L by mistake tag, trade distribution by day/hour, and streak analysis. The more consistently you tag your trades, the more useful the analytics become.',
+      },
+      {
+        q: 'How do tags work?',
+        a: 'There are two types: Setup tags label the trade type (e.g. "Breakout", "Pullback", "VWAP Bounce") and Mistake tags track errors (e.g. "FOMO", "Oversize", "Held Too Long"). Tag every trade consistently — the Analytics tab will show which setups have the best win rate and which mistakes cost you the most.',
       },
       {
         q: 'What are mistake tags?',
@@ -746,6 +878,268 @@ export default function HelpPage() {
                 </div>
               </section>
             ))}
+        </div>
+
+        {/* ── Getting Started Guide ── */}
+        <div id="getting-started-guide" style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-1)' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(40px, 5vw, 60px) 24px' }}>
+            {/* Section header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'rgba(74,158,255,0.1)', border: '1px solid rgba(74,158,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                flexShrink: 0,
+              }}>🗺️</div>
+              <h2 style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-0)', margin: 0 }}>
+                Getting Started Guide
+              </h2>
+            </div>
+            <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 32, lineHeight: 1.6, maxWidth: 640, marginLeft: 48 }}>
+              New to TradVue? Follow these six steps to get fully set up in under 10 minutes.
+            </p>
+
+            {/* Steps grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+              {GETTING_STARTED_STEPS.map(step => (
+                <div
+                  key={step.step}
+                  style={{
+                    background: 'var(--card-bg)',
+                    border: 'var(--card-border)',
+                    borderRadius: 'var(--card-radius)',
+                    boxShadow: 'var(--card-shadow)',
+                    padding: '20px 20px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Step number badge */}
+                  <div style={{
+                    position: 'absolute', top: 12, right: 14,
+                    fontSize: 11, fontWeight: 700, color: 'var(--text-3)',
+                    letterSpacing: '0.05em',
+                  }}>
+                    STEP {step.step}
+                  </div>
+
+                  {/* Icon + title */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{
+                      width: 36, height: 36, borderRadius: 9,
+                      background: 'var(--bg-3)', border: '1px solid var(--border)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 20, flexShrink: 0,
+                    }}>{step.icon}</span>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-0)', lineHeight: 1.3 }}>
+                      {step.title}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.65, margin: 0, flex: 1 }}>
+                    {step.desc}
+                  </p>
+
+                  {/* Link */}
+                  <a
+                    href={step.href}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      fontSize: 12, fontWeight: 600, color: '#4a9eff',
+                      textDecoration: 'none', marginTop: 4,
+                      transition: 'opacity 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.75')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                  >
+                    {step.linkLabel}
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Keyboard Shortcuts ── */}
+        <div id="keyboard-shortcuts" style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-0)' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(40px, 5vw, 60px) 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'rgba(74,158,255,0.1)', border: '1px solid rgba(74,158,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                flexShrink: 0,
+              }}>⌨️</div>
+              <h2 style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-0)', margin: 0 }}>
+                Keyboard Shortcuts
+              </h2>
+            </div>
+            <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 28, lineHeight: 1.6, maxWidth: 560, marginLeft: 48 }}>
+              Speed up your workflow with these keyboard shortcuts. Press <kbd style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 7px', background: 'var(--bg-3)', border: '1px solid var(--border)', borderBottomWidth: 2, borderRadius: 4, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-1)' }}>?</kbd> anywhere on the site to show the shortcuts overlay.
+            </p>
+
+            {/* Shortcuts grouped by category */}
+            {(['Navigation', 'Go To'] as const).map(category => {
+              const shortcuts = KEYBOARD_SHORTCUTS.filter(s => s.category === category)
+              return (
+                <div key={category} style={{
+                  background: 'var(--card-bg)',
+                  border: 'var(--card-border)',
+                  borderRadius: 'var(--card-radius)',
+                  boxShadow: 'var(--card-shadow)',
+                  marginBottom: 16,
+                  overflow: 'hidden',
+                }}>
+                  {/* Category header */}
+                  <div style={{
+                    padding: '10px 18px',
+                    background: 'var(--bg-2)',
+                    borderBottom: '1px solid var(--border)',
+                    fontSize: 11, fontWeight: 700, letterSpacing: '0.1em',
+                    textTransform: 'uppercase', color: '#4a9eff',
+                  }}>
+                    {category}
+                  </div>
+                  {/* Rows */}
+                  {shortcuts.map(s => (
+                    <div key={s.keys} style={{
+                      display: 'flex', alignItems: 'center', gap: 16,
+                      padding: '11px 18px',
+                      borderBottom: '1px solid var(--border)',
+                    }}>
+                      <kbd style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        minWidth: 58, padding: '4px 10px',
+                        background: 'var(--bg-3)', border: '1px solid var(--border)',
+                        borderBottomWidth: 2, borderRadius: 6,
+                        fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--text-0)',
+                        whiteSpace: 'nowrap', flexShrink: 0,
+                      }}>
+                        {s.keys}
+                      </kbd>
+                      <span style={{ fontSize: 13.5, color: 'var(--text-1)' }}>{s.description}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 8 }}>
+              More shortcuts will be added as the platform grows. Shortcuts are disabled when typing in an input field.
+            </p>
+          </div>
+        </div>
+
+        {/* ── Contact Support ── */}
+        <div id="contact-support" style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-1)' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(40px, 5vw, 60px) 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'rgba(74,158,255,0.1)', border: '1px solid rgba(74,158,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                flexShrink: 0,
+              }}>🛟</div>
+              <h2 style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-0)', margin: 0 }}>
+                Contact Support
+              </h2>
+            </div>
+            <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 28, lineHeight: 1.6, maxWidth: 560, marginLeft: 48 }}>
+              Can't find what you're looking for? We're here to help.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+              {/* Email card */}
+              <div style={{
+                background: 'var(--card-bg)', border: 'var(--card-border)',
+                borderRadius: 'var(--card-radius)', boxShadow: 'var(--card-shadow)',
+                padding: '20px 22px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <span style={{ fontSize: 22 }}>📧</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-0)' }}>Email Support</span>
+                </div>
+                <a href="mailto:support@tradvue.com" style={{ fontSize: 15, fontWeight: 600, color: '#4a9eff', textDecoration: 'none', display: 'block', marginBottom: 10 }}>
+                  support@tradvue.com
+                </a>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                    <span style={{ color: '#22c55e', flexShrink: 0, marginTop: 1 }}>✓</span>
+                    <span>Response within <strong style={{ color: 'var(--text-1)' }}>24 hours</strong> on weekdays (Mon–Fri)</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                    <span style={{ color: '#f59e0b', flexShrink: 0, marginTop: 1 }}>⚡</span>
+                    <span>Urgent issues? Include <strong style={{ color: 'var(--text-1)' }}>"URGENT"</strong> in the subject line</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bug Reports card */}
+              <div style={{
+                background: 'var(--card-bg)', border: 'var(--card-border)',
+                borderRadius: 'var(--card-radius)', boxShadow: 'var(--card-shadow)',
+                padding: '20px 22px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <span style={{ fontSize: 22 }}>🐛</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-0)' }}>Bug Reports</span>
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, lineHeight: 1.5 }}>
+                  When reporting a bug, please include:
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  {['Your browser (Chrome 120, Safari 17, etc.)', 'Steps to reproduce the issue', 'What you expected vs. what happened', 'Screenshots or screen recordings if possible'].map((item, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                      <span style={{
+                        width: 18, height: 18, borderRadius: '50%',
+                        background: 'rgba(74,158,255,0.15)', border: '1px solid rgba(74,158,255,0.25)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 10, fontWeight: 700, color: '#4a9eff',
+                        flexShrink: 0, marginTop: 1,
+                      }}>{i + 1}</span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Feature requests card */}
+              <div style={{
+                background: 'var(--card-bg)', border: 'var(--card-border)',
+                borderRadius: 'var(--card-radius)', boxShadow: 'var(--card-shadow)',
+                padding: '20px 22px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <span style={{ fontSize: 22 }}>💡</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-0)' }}>Feature Requests</span>
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12, lineHeight: 1.5 }}>
+                  Got an idea? We'd love to hear it.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                    <span style={{ color: '#4a9eff', flexShrink: 0, marginTop: 1 }}>→</span>
+                    <span>Email subject: <strong style={{ color: 'var(--text-1)' }}>"Feature Request: [short description]"</strong></span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                    <span style={{ color: '#4a9eff', flexShrink: 0, marginTop: 1 }}>→</span>
+                    <span>Describe the use case and why it matters to you</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                    <span style={{ color: '#4a9eff', flexShrink: 0, marginTop: 1 }}>→</span>
+                    <span>We prioritize based on request volume — the more people ask, the faster it ships</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ── Data Sources & Attribution ── */}
