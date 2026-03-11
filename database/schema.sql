@@ -205,3 +205,20 @@ CREATE TRIGGER users_updated_at BEFORE UPDATE ON users
 
 CREATE TRIGGER calendar_updated_at BEFORE UPDATE ON calendar_events
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ────────────────────────────────────────────
+-- Row Level Security (RLS)
+-- ────────────────────────────────────────────
+-- RLS is enabled on all tables via migration 010_enable_rls_all_tables.sql
+-- Policies are defined there and not duplicated here to keep this file
+-- as the structural reference only.
+--
+-- Summary of policy strategy:
+--   User-scoped tables   → user_id = public.current_user_id()
+--   Market data tables   → public SELECT, service_role writes
+--   System/admin tables  → service_role only
+--
+-- The helper function public.current_user_id() extracts the integer
+-- `userId` claim from the custom JWT (signed by the backend).
+--
+-- See: database/migrations/010_enable_rls_all_tables.sql

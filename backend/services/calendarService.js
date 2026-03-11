@@ -65,16 +65,33 @@ function classifyEventType(title, source, impact) {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/**
+ * Convert a Date to YYYY-MM-DD string in US Eastern Time (most financial events are ET).
+ * This ensures "today" matches ForexFactory's ET-based dates.
+ */
 function toDateStr(date) {
-  return date.toISOString().slice(0, 10);
+  return date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); // en-CA gives YYYY-MM-DD
 }
 
 function parseDate(str) {
   try {
-    return new Date(str);
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? new Date(0) : d;
   } catch {
     return new Date(0);
   }
+}
+
+/**
+ * Get start/end of a date in ET for proper "today" filtering.
+ * ForexFactory events use ET dates, so we must compare in ET.
+ */
+function getETDayBounds(date) {
+  const etDateStr = date.toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  // Create boundaries using ET midnight
+  const start = new Date(`${etDateStr}T00:00:00-04:00`);
+  const end = new Date(`${etDateStr}T23:59:59-04:00`);
+  return { start, end, dateStr: etDateStr };
 }
 
 // ─── Request deduplication ───────────────────────────────────────────────────
@@ -204,9 +221,9 @@ async function fetchFinnhubEarnings(from, to) {
       const dateStr = e.date || '';
       const hour = e.hour || '';
       let timeStr = dateStr;
-      if (hour === 'bmo') timeStr = `${dateStr}T09:30:00`;
-      else if (hour === 'amc') timeStr = `${dateStr}T16:00:00`;
-      else timeStr = `${dateStr}T12:00:00`;
+      if (hour === 'bmo') timeStr = `${dateStr}T07:00:00-04:00`;       // Before market open (ET)
+      else if (hour === 'amc') timeStr = `${dateStr}T16:30:00-04:00`; // After market close (ET)
+      else timeStr = `${dateStr}T12:00:00-04:00`;                     // During market hours (ET)
 
       return {
         id: `fh-earn-${symbol.toLowerCase()}-${dateStr}`,
@@ -372,11 +389,14 @@ async function getEvents({ from, to, type = 'all' } = {}) {
     fetchFedRSS()
   ]);
 
-  // Merge + filter by date range
+  // Merge + filter by date range (compare date strings in ET to avoid timezone drift)
   const all = [...ffEvents, ...finnhubEarnings, ...finnhubEcon, ...fedEvents].filter(e => {
     try {
       const d = parseDate(e.date);
-      return !isNaN(d.getTime()) && d >= fromDate && d <= toDate;
+      if (isNaN(d.getTime())) return false;
+      // Compare using ET date strings (YYYY-MM-DD) to match ForexFactory's ET-based dates
+      const eventDateStr = toDateStr(d);
+      return eventDateStr >= fromStr && eventDateStr <= toStr;
     } catch {
       return false;
     }
@@ -410,13 +430,11 @@ async function getEarnings({ from, to } = {}) {
  * Get today's events
  */
 async function getTodaysEvents({ currencies = null } = {}) {
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const endOfDay = new Date(startOfDay.getTime() + 24 * 3600 * 1000 - 1);
+  const { start, end, dateStr } = getETDayBounds(new Date());
 
   let events = await getEvents({
-    from: toDateStr(startOfDay),
-    to: toDateStr(endOfDay)
+    from: dateStr,
+    to: dateStr
   });
 
   if (currencies && currencies.length > 0) {
