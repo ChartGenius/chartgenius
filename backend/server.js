@@ -42,7 +42,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://tradvue-production.up.railway.app"]
+      connectSrc: ["'self'", "https://tradvue-api.onrender.com", "https://tradvue-production.up.railway.app"]
     }
   },
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
