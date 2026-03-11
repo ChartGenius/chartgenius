@@ -90,82 +90,82 @@ const MISTAKE_TAGS = [
 const NOTE_TEMPLATES = {
   'Daily Trading Plan': `# Daily Trading Plan — {{date}}
 
-## 📊 Market Outlook
+## Market Outlook
 - Overall market bias: 
 - Key indices: SPY, QQQ, DIA levels to watch:
 - VIX level / volatility expectation:
 
-## 👀 Watchlist (Top 3-5)
+## Watchlist (Top 3-5)
 1. {{symbol}} — Setup: | Key level: | Entry trigger:
 2. 
 3. 
 
-## 🎯 Key Levels Today
+## Key Levels Today
 - Support: 
 - Resistance: 
 - Gap levels: 
 
-## ⚠️ Risk Limits
+## Risk Limits
 - Max loss today (daily stop): $
 - Max trades per session: 
 - Max size per trade: 
 
-## 📝 Pre-Market Notes
+## Pre-Market Notes
 `,
   'Weekly Recap': `# Weekly Recap — Week of {{date}}
 
-## 📈 Stats This Week
+## Stats This Week
 - Total trades: 
 - Win rate: 
 - Gross P&L: 
 - Best trade: 
 - Worst trade: 
 
-## ✅ What Worked
+## What Worked
 1. 
 2. 
 3. 
 
-## ❌ What Didn't Work
+## What Didn't Work
 1. 
 2. 
 3. 
 
-## 💡 Lessons Learned
+## Lessons Learned
 1. 
 2. 
 
-## 🎯 Goals for Next Week
+## Goals for Next Week
 1. 
 2. 
 3. 
 `,
   'Strategy Playbook': `# Strategy Playbook — {{name}}
 
-## 📋 Setup Name
+## Setup Name
 
 
-## 🎯 Entry Rules
+## Entry Rules
 1. 
 2. 
 3. 
 
-## 🚪 Exit Rules
+## Exit Rules
 - Take profit target: 
 - Stop loss: 
 - Time-based exit: 
 
-## ⚠️ Risk Rules
+## Risk Rules
 - Max position size: 
 - Risk per trade: %
 - Max trades with this setup per day: 
 
-## 📊 Historical Performance
+## Historical Performance
 - Win rate: %
 - Avg R-Multiple: 
 - Best market conditions: 
 
-## 📝 Notes & Tips
+## Notes & Tips
 `
 }
 
