@@ -53,10 +53,22 @@ class FinnhubService {
   // ──────────────────────────────────────────
 
   /**
-   * Get real-time quote for a stock symbol
+   * Get real-time quote for a stock symbol.
+   * Routes forex pairs to getForexQuote() and VIX to getVixQuote()
+   * before hitting Finnhub (free tier doesn't support those).
    */
   async getQuote(symbol) {
     const upperSymbol = symbol.toUpperCase();
+
+    // ── Special routing ──────────────────────────────────────────────────────
+    if (this._isForexSymbol(upperSymbol)) {
+      return this.getForexQuote(upperSymbol);
+    }
+    if (upperSymbol === 'VIX' || upperSymbol === '^VIX') {
+      return this.getVixQuote();
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     const cacheKey = `finnhub:quote:${upperSymbol}`;
 
     return await cache.cacheAPICall(cacheKey, async () => {
@@ -95,6 +107,154 @@ class FinnhubService {
         return this._mockQuote(upperSymbol);
       }
     }, 60); // Cache 1 minute (real-time-ish)
+  }
+
+  /**
+   * Detect if a symbol is a forex pair (e.g. EURUSD, GBPUSD, USDJPY).
+   * Matches exactly 6 uppercase letters that look like two 3-letter currency codes.
+   */
+  _isForexSymbol(symbol) {
+    const CURRENCIES = new Set([
+      'USD','EUR','GBP','JPY','CAD','AUD','CHF','NZD','CNY','HKD',
+      'SEK','NOK','DKK','SGD','MXN','ZAR','BRL','INR','RUB','TRY',
+    ]);
+    if (!/^[A-Z]{6}$/.test(symbol)) return false;
+    const base = symbol.slice(0, 3);
+    const quote = symbol.slice(3, 6);
+    return CURRENCIES.has(base) && CURRENCIES.has(quote);
+  }
+
+  /**
+   * Fetch forex exchange rate using the free open.er-api.com (no key required).
+   * Caches for 60 seconds.
+   */
+  async getForexQuote(pair) {
+    const upperPair = pair.toUpperCase();
+    const cacheKey = `forex:quote:${upperPair}`;
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      const base = upperPair.slice(0, 3);
+      const quote = upperPair.slice(3, 6);
+
+      try {
+        const response = await axios.get(`https://open.er-api.com/v6/latest/${base}`, {
+          timeout: 8000
+        });
+
+        const rates = response.data?.rates;
+        if (!rates || !rates[quote]) {
+          console.warn(`[Forex] Rate not found for ${upperPair}`);
+          return this._naQuote(upperPair);
+        }
+
+        const current = rates[quote];
+        // Derive a rough change from USD baseline (open.er-api doesn't give daily change)
+        return {
+          symbol: upperPair,
+          current,
+          change: 0,
+          changePct: 0,
+          high: current,
+          low: current,
+          open: current,
+          prevClose: current,
+          timestamp: new Date().toISOString(),
+          source: 'open.er-api'
+        };
+      } catch (error) {
+        console.error(`[Forex] Quote error for ${upperPair}:`, error.message);
+        return this._naQuote(upperPair);
+      }
+    }, 60); // Cache 60 seconds
+  }
+
+  /**
+   * Fetch VIX from Yahoo Finance's free chart endpoint.
+   * Falls back to "N/A" instead of the misleading $100 mock.
+   */
+  async getVixQuote() {
+    const cacheKey = 'vix:quote';
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      try {
+        const response = await axios.get(
+          'https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX',
+          {
+            params: { range: '1d', interval: '1m' },
+            timeout: 8000,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+          }
+        );
+
+        const result = response.data?.chart?.result?.[0];
+        const meta = result?.meta;
+        if (!meta || !meta.regularMarketPrice) {
+          return this._naQuote('VIX');
+        }
+
+        const current = meta.regularMarketPrice;
+        const prevClose = meta.chartPreviousClose || meta.previousClose || current;
+        const change = current - prevClose;
+        const changePct = prevClose > 0 ? (change / prevClose) * 100 : 0;
+
+        return {
+          symbol: 'VIX',
+          current,
+          change: parseFloat(change.toFixed(2)),
+          changePct: parseFloat(changePct.toFixed(2)),
+          high: meta.regularMarketDayHigh || current,
+          low: meta.regularMarketDayLow || current,
+          open: meta.regularMarketOpen || current,
+          prevClose,
+          timestamp: new Date().toISOString(),
+          source: 'yahoo'
+        };
+      } catch (error) {
+        console.error('[VIX] Quote error:', error.message);
+        // Try fallback with different Yahoo endpoint
+        try {
+          const r2 = await axios.get(
+            'https://query2.finance.yahoo.com/v8/finance/chart/%5EVIX',
+            { params: { range: '1d', interval: '5m' }, timeout: 6000, headers: { 'User-Agent': 'Mozilla/5.0' } }
+          );
+          const meta2 = r2.data?.chart?.result?.[0]?.meta;
+          if (meta2?.regularMarketPrice) {
+            const current = meta2.regularMarketPrice;
+            const prevClose = meta2.chartPreviousClose || current;
+            return {
+              symbol: 'VIX', current,
+              change: parseFloat((current - prevClose).toFixed(2)),
+              changePct: parseFloat((prevClose > 0 ? ((current - prevClose) / prevClose) * 100 : 0).toFixed(2)),
+              high: meta2.regularMarketDayHigh || current,
+              low: meta2.regularMarketDayLow || current,
+              open: meta2.regularMarketOpen || current,
+              prevClose,
+              timestamp: new Date().toISOString(),
+              source: 'yahoo2'
+            };
+          }
+        } catch (_) { /* ignore second fallback failure */ }
+        return this._naQuote('VIX');
+      }
+    }, 60); // Cache 60 seconds
+  }
+
+  /**
+   * Return an "N/A" quote object instead of a misleading $100 mock.
+   */
+  _naQuote(symbol) {
+    return {
+      symbol,
+      current: null,
+      change: null,
+      changePct: null,
+      high: null,
+      low: null,
+      open: null,
+      prevClose: null,
+      timestamp: new Date().toISOString(),
+      source: 'n/a'
+    };
   }
 
   /**

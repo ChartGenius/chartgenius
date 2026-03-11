@@ -1110,6 +1110,7 @@ export default function PortfolioPage() {
             savePortfolioSettings={savePortfolioSettings}
             exchangeRates={exchangeRates}
             privacyMode={privacyMode}
+            setActiveTab={setActiveTab}
           />
         )}
         {activeTab === 'holdings' && (
@@ -1197,6 +1198,7 @@ function DashboardTab({
   divYieldPortfolio, yieldOnCostPortfolio, projAnnualIncome,
   sectorData, barChartData, snapshots, holdings, holdingsEnriched,
   stockInfos, portfolioSettings, savePortfolioSettings, exchangeRates, privacyMode = false,
+  setActiveTab,
 }: {
   totalCostBasis: number; totalMarketValue: number; totalMarketReturn: number; totalMarketReturnPct: number;
   totalReturn: number; totalReturnPct: number; totalDayGain: number; totalDayGainPct: number;
@@ -1210,6 +1212,7 @@ function DashboardTab({
   savePortfolioSettings: (s: PortfolioSettings) => Promise<void>;
   exchangeRates: ExchangeRates | null;
   privacyMode?: boolean;
+  setActiveTab: (tab: 'dashboard' | 'holdings' | 'dividends' | 'sold' | 'watchlist' | 'tax') => void;
 })
 {
   const pv = (n: number) => privacyMode ? '•••••' : fmtDollar(n)
@@ -1230,15 +1233,26 @@ function DashboardTab({
         {/* Feature cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 32 }}>
           {[
-            { Icon: IconFolder,      title: 'Holdings',  desc: 'Track shares, avg cost, P&L, and allocation % for every position.' },
-            { Icon: IconDollar,      title: 'Dividends', desc: 'Automatic dividend tracking from history. Override any value.' },
-            { Icon: IconEye,         title: 'Watchlist', desc: 'Monitor stocks you\'re watching with price alerts and target prices.' },
-            { Icon: IconReceiptTax,  title: 'Tax',       desc: 'Estimate realized gains, short vs long-term, and tax impact.' },
+            { Icon: IconFolder,      title: 'Holdings',  tabId: 'holdings'  as const, desc: 'Track shares, avg cost, P&L, and allocation % for every position.' },
+            { Icon: IconDollar,      title: 'Dividends', tabId: 'dividends' as const, desc: 'Automatic dividend tracking from history. Override any value.' },
+            { Icon: IconCheck,       title: 'Sold',      tabId: 'sold'      as const, desc: 'Record and review your closed positions and realized gains/losses.' },
+            { Icon: IconEye,         title: 'Watchlist', tabId: 'watchlist' as const, desc: 'Monitor stocks you\'re watching with price alerts and target prices.' },
+            { Icon: IconReceiptTax,  title: 'Tax',       tabId: 'tax'       as const, desc: 'Estimate realized gains, short vs long-term, and tax impact.' },
           ].map(f => (
-            <div key={f.title} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
+            <div
+              key={f.title}
+              onClick={() => setActiveTab(f.tabId)}
+              style={{
+                background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 10,
+                padding: '14px 16px', cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-3)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-2)' }}
+            >
               <div className="tv-card-icon" style={{ width: 36, height: 36, marginBottom: 6 }}><f.Icon size={16} /></div>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', marginBottom: 4 }}>{f.title}</div>
               <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.5 }}>{f.desc}</div>
+              <div style={{ fontSize: 10, color: 'var(--accent)', marginTop: 8 }}>Go to {f.title} →</div>
             </div>
           ))}
         </div>
