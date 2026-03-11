@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Help Center & FAQ | TradVue',
+  title: 'Help & Support — TradVue',
   description:
     'Find answers to common questions about TradVue — account setup, pricing, data sources, alerts, troubleshooting, and more.',
   keywords: [
@@ -14,21 +14,21 @@ export const metadata: Metadata = {
     'TradVue support',
   ],
   openGraph: {
-    title: 'Help Center & FAQ | TradVue',
+    title: 'Help & Support — TradVue',
     description:
       'Find answers to common questions about TradVue — account setup, pricing, data sources, alerts, troubleshooting, and more.',
-    url: 'https://tradvue.com/help',
+    url: 'https://www.tradvue.com/help',
     siteName: 'TradVue',
     type: 'website',
   },
   twitter: {
-    card: 'summary',
-    title: 'Help Center & FAQ | TradVue',
+    card: 'summary_large_image',
+    title: 'Help & Support — TradVue',
     description:
-      'Answers to common questions about TradVue — accounts, billing, data, and troubleshooting.',
+      'Answers to common questions about TradVue — accounts, data, alerts, and troubleshooting.',
   },
   alternates: {
-    canonical: 'https://tradvue.com/help',
+    canonical: 'https://www.tradvue.com/help',
   },
 }
 

@@ -70,7 +70,7 @@ export function trackEvent(eventName: string, parameters: Record<string, unknown
  */
 export function trackPageView(pagePath?: string): void {
   if (!hasAnalyticsConsent()) return
-  const gaId = process.env.NEXT_PUBLIC_GA_ID
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || process.env.NEXT_PUBLIC_GA_ID
   if (!gaId) return
   gtag('config', gaId, {
     page_path: pagePath ?? (typeof window !== 'undefined' ? window.location.pathname : undefined),

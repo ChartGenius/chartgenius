@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import './globals.css'
 import { AuthProvider } from './context/AuthContext'
 import { SettingsProvider } from './context/SettingsContext'
@@ -8,12 +7,33 @@ import { ToastProvider } from './context/ToastContext'
 import OnboardingOverlay from './components/OnboardingOverlay'
 import CookieConsent from './components/CookieConsent'
 import ToastContainer from './components/Toast'
+import GoogleAnalytics from './components/GoogleAnalytics'
+
+// ─── Default Metadata ─────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.tradvue.com'),
-  title: 'TradVue — Your Trading Edge',
-  description: 'TradVue - Professional trading platform with portfolio tracking, market analysis, trading tools, economic calendar, and trading journal.',
+
+  title: {
+    default: 'TradVue — AI-Powered Trading Journal & Portfolio Tracker',
+    template: '%s | TradVue',
+  },
+  description:
+    'Track trades, analyze performance, monitor markets. Free trading journal with AI-powered insights, real-time data, and portfolio tracking.',
+
+  keywords: [
+    'trading journal',
+    'portfolio tracker',
+    'AI trading insights',
+    'stock market dashboard',
+    'real-time market data',
+    'trading tools',
+    'economic calendar',
+    'trading analytics',
+  ],
+
   manifest: '/manifest.json',
+
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -28,39 +48,74 @@ export const metadata: Metadata = {
       { rel: 'icon', url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
     ],
   },
+
   openGraph: {
-    title: 'TradVue',
-    description: 'Professional trading platform with real-time market data, portfolio analytics, and 18+ trading tools.',
+    type: 'website',
     url: 'https://www.tradvue.com',
     siteName: 'TradVue',
+    title: 'TradVue — AI-Powered Trading Journal & Portfolio Tracker',
+    description:
+      'Track trades, analyze performance, monitor markets. Free trading journal with AI-powered insights, real-time data, and portfolio tracking.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'TradVue — Your Trading Edge',
+        alt: 'TradVue — AI-Powered Trading Journal & Portfolio Tracker',
       },
     ],
     locale: 'en_US',
-    type: 'website',
   },
+
   twitter: {
     card: 'summary_large_image',
-    title: 'TradVue',
-    description: 'Professional trading platform with real-time market data, portfolio analytics, and 18+ trading tools.',
-    images: ['/og-twitter.png'],
+    title: 'TradVue — AI-Powered Trading Journal & Portfolio Tracker',
+    description:
+      'Track trades, analyze performance, monitor markets. Free trading journal with AI-powered insights, real-time data, and portfolio tracking.',
+    images: ['/og-image.png'],
   },
+
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'TradVue',
   },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+    },
+  },
+
   other: {
     'mobile-web-app-capable': 'yes',
   },
 }
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID
+// ─── JSON-LD Structured Data ──────────────────────────────────────────────────
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'TradVue',
+  description: 'AI-Powered Trading Journal & Portfolio Tracker',
+  url: 'https://www.tradvue.com',
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Web',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+}
+
+// ─── Root Layout ──────────────────────────────────────────────────────────────
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -72,29 +127,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body>
-        {/* Google Analytics 4 — only load in production and when a GA ID is configured */}
-        {GA_ID && process.env.NODE_ENV === 'production' && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="ga4-init" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${GA_ID}', {
-                  page_path: window.location.pathname,
-                  anonymize_ip: true,
-                  cookie_flags: 'SameSite=None;Secure'
-                });
-              `}
-            </Script>
-          </>
-        )}
+        {/* Google Analytics 4 — consent-gated, production only */}
+        <GoogleAnalytics />
 
         <ToastProvider>
           <SettingsProvider>
