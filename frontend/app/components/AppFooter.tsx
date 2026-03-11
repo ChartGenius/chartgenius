@@ -13,7 +13,6 @@ interface FooterLink {
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: 'Help & Support', href: '/help' },
-  { label: 'FAQ',            href: '/help#faq' },
   { label: 'Status',         href: '/status' },
   { label: 'Changelog',      href: '/changelog' },
   { label: 'Terms',          href: '/legal/terms' },
