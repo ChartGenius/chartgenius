@@ -748,6 +748,72 @@ export default function HelpPage() {
             ))}
         </div>
 
+        {/* ── Data Sources & Attribution ── */}
+        <div id="data-sources" style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-0)' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto', padding: 'clamp(40px, 5vw, 60px) 24px' }}>
+            <h2 style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.5rem)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-0)', marginBottom: 8 }}>
+              📊 Data Sources &amp; Attribution
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 28, lineHeight: 1.6 }}>
+              TradVue aggregates data from multiple trusted providers. We&apos;re grateful to these services for powering our platform.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+              {[
+                {
+                  name: 'Finnhub',
+                  url: 'https://finnhub.io',
+                  icon: '📈',
+                  desc: 'Real-time US stock quotes, company profiles, earnings, and financial news. Powers our equity market data.',
+                },
+                {
+                  name: 'CoinGecko',
+                  url: 'https://www.coingecko.com',
+                  icon: '🦎',
+                  desc: 'Cryptocurrency prices, market caps, and trading volumes. Powers all crypto market data and the ticker bar.',
+                },
+                {
+                  name: 'ForexFactory',
+                  url: 'https://www.forexfactory.com',
+                  icon: '📅',
+                  desc: 'Economic calendar events, central bank announcements, and macroeconomic news releases.',
+                },
+                {
+                  name: 'Yahoo Finance',
+                  url: 'https://finance.yahoo.com',
+                  icon: '💹',
+                  desc: 'Supplemental stock data, historical prices, and market indices for broader coverage.',
+                },
+                {
+                  name: 'NewsAPI',
+                  url: 'https://newsapi.org',
+                  icon: '📰',
+                  desc: 'Financial news aggregation from hundreds of sources. Powers the news feed and market sentiment analysis.',
+                },
+                {
+                  name: 'RSS Feeds',
+                  url: '#',
+                  icon: '📡',
+                  desc: 'Direct RSS feeds from major financial publishers including Reuters, Bloomberg, and MarketWatch.',
+                },
+              ].map(source => (
+                <div key={source.name} style={{ background: 'var(--card-bg)', border: 'var(--card-border)', borderRadius: 10, padding: '16px 20px', boxShadow: 'var(--card-shadow)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    <span style={{ fontSize: 22 }}>{source.icon}</span>
+                    <a href={source.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700, fontSize: 15, color: 'var(--accent)', textDecoration: 'none' }}>
+                      {source.name}
+                    </a>
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>{source.desc}</p>
+                </div>
+              ))}
+            </div>
+            <p style={{ marginTop: 24, fontSize: 12, color: 'var(--text-3)', lineHeight: 1.7 }}>
+              Data is provided for informational purposes only and is not intended as financial advice. Prices may be delayed.
+              TradVue is not affiliated with any of the above data providers. All trademarks belong to their respective owners.
+            </p>
+          </div>
+        </div>
+
         {/* ── Still need help? ── */}
         <div
           style={{

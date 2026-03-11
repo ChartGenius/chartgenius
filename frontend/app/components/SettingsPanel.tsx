@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSettings, type Theme, type DefaultMarket } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { trackSettingsChanged } from '../utils/analytics'
@@ -15,6 +15,18 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
   const detectedTz = typeof window !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC'
   const activeTz = settings.timezone || detectedTz
   const { user, logout } = useAuth()
+
+  // Ticker size (managed via localStorage, not SettingsContext)
+  const [tickerSize, setTickerSizeState] = useState<'compact' | 'normal' | 'large'>('compact')
+  useEffect(() => {
+    try { setTickerSizeState((localStorage.getItem('cg_ticker_size') as 'compact' | 'normal' | 'large') || 'compact') } catch {}
+  }, [])
+  function setTickerSizeLocal(size: 'compact' | 'normal' | 'large') {
+    setTickerSizeState(size)
+    try { localStorage.setItem('cg_ticker_size', size) } catch {}
+    // Dispatch a storage event so the main page can react
+    window.dispatchEvent(new StorageEvent('storage', { key: 'cg_ticker_size', newValue: size }))
+  }
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Escape key or click outside closes
@@ -108,6 +120,28 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                   onClick={() => { setTheme(t); trackSettingsChanged('theme', t) }}
                 >
                   {t === 'dark' ? '🌙 Dark' : '☀️ Light'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Ticker Size */}
+        <div className="settings-section">
+          <div className="settings-section-label">Ticker Bar Size</div>
+          <div className="settings-row settings-row-col">
+            <span className="settings-row-desc" style={{ marginBottom: 8 }}>
+              Controls the font size of the scrolling ticker bar
+            </span>
+            <div className="settings-market-toggle">
+              {(['compact', 'normal', 'large'] as const).map(s => (
+                <button
+                  key={s}
+                  className={`settings-market-btn${tickerSize === s ? ' settings-market-btn-active' : ''}`}
+                  onClick={() => setTickerSizeLocal(s)}
+                  style={{ textTransform: 'capitalize' }}
+                >
+                  {s === 'compact' ? '🔹 Compact' : s === 'normal' ? '🔷 Normal' : '🔵 Large'}
                 </button>
               ))}
             </div>

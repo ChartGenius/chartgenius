@@ -689,10 +689,14 @@ function TickerSettingsDropdown({
   hiddenSymbols,
   onToggle,
   onClose,
+  tickerSize,
+  onSizeChange,
 }: {
   hiddenSymbols: Set<string>
   onToggle: (sym: string) => void
   onClose: () => void
+  tickerSize: 'compact' | 'normal' | 'large'
+  onSizeChange: (size: 'compact' | 'normal' | 'large') => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
 
@@ -718,7 +722,35 @@ function TickerSettingsDropdown({
       zIndex: 200,
       boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
     }}>
+      {/* Size selector */}
       <div style={{ padding: '4px 12px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+        TICKER SIZE
+      </div>
+      <div style={{ display: 'flex', gap: 4, padding: '4px 12px 8px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+        {(['compact', 'normal', 'large'] as const).map(s => (
+          <button
+            key={s}
+            onClick={() => onSizeChange(s)}
+            style={{
+              flex: 1,
+              padding: '4px 6px',
+              fontSize: 10,
+              fontWeight: 600,
+              borderRadius: 4,
+              cursor: 'pointer',
+              textTransform: 'capitalize',
+              background: tickerSize === s ? 'var(--accent)' : 'var(--bg-3)',
+              color: tickerSize === s ? '#fff' : 'var(--text-2)',
+              border: 'none',
+              letterSpacing: '0.03em',
+            }}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ padding: '4px 12px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 4 }}>
         TICKER SYMBOLS
       </div>
       {TICKER_SYMBOLS.map(sym => (
@@ -753,12 +785,14 @@ function TickerBar({
   isLoading,
   hiddenSymbols = new Set<string>(),
   onOpenSettings,
+  size = 'compact',
 }: {
   tickerQuotes: Record<string, Quote>
   customSymbols: string[]
   isLoading: boolean
   hiddenSymbols?: Set<string>
   onOpenSettings?: () => void
+  size?: 'compact' | 'normal' | 'large'
 }) {
   const defaultItems = Object.keys(tickerQuotes).length > 0
     ? TICKER_SYMBOLS
@@ -786,7 +820,7 @@ function TickerBar({
   const duped = [...items, ...items, ...items]
 
   return (
-    <div className="ticker-bar" style={{ position: 'relative' }}>
+    <div className={`ticker-bar ticker-${size}`} style={{ position: 'relative' }}>
       {isLoading && Object.keys(tickerQuotes).length === 0 && (
         <div className="connecting-banner" style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 3, padding: '0 16px' }}>
           <span className="connecting-dot" />
@@ -1429,6 +1463,9 @@ export default function Home() {
   const [customTickerSymbols, setCustomTickerSymbols] = useState<string[]>([])
   const [tickerHiddenSymbols, setTickerHiddenSymbols] = useState<Set<string>>(new Set())
   const [tickerSettingsOpen, setTickerSettingsOpen] = useState(false)
+  const [tickerSize, setTickerSize] = useState<'compact' | 'normal' | 'large'>(() => {
+    try { return (localStorage.getItem('cg_ticker_size') as 'compact' | 'normal' | 'large') || 'compact' } catch { return 'compact' }
+  })
 
   // Column widths (resizable)
   const [colWidths, setColWidths] = useState<[number, number, number]>([32, 36, 32])
@@ -1460,7 +1497,7 @@ export default function Home() {
   const [newsSymbolFilter, setNewsSymbolFilter] = useState('')
   const [newsArticleCount, setNewsArticleCount] = useState<number>(() => {
     if (typeof window !== 'undefined') {
-      try { return Number(localStorage.getItem('cg_news_count')) || 10 } catch {}
+      try { return Number(localStorage.getItem('cg_news_count')) || 25 } catch {}
     }
     return 10
   })
@@ -1563,6 +1600,22 @@ export default function Home() {
   useEffect(() => {
     try { localStorage.setItem('cg_ticker_prefs', JSON.stringify([...tickerHiddenSymbols])) } catch {}
   }, [tickerHiddenSymbols])
+
+  // ── Persist: ticker size ───────────────────────────────────────────────────
+  useEffect(() => {
+    try { localStorage.setItem('cg_ticker_size', tickerSize) } catch {}
+  }, [tickerSize])
+
+  // ── Sync ticker size from other panels (SettingsPanel) ────────────────────
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === 'cg_ticker_size' && e.newValue) {
+        setTickerSize(e.newValue as 'compact' | 'normal' | 'large')
+      }
+    }
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
+  }, [])
 
   // ── Persist: news count preference ───────────────────────────────────────
   useEffect(() => {
@@ -2028,6 +2081,7 @@ export default function Home() {
           isLoading={tickerLoading}
           hiddenSymbols={tickerHiddenSymbols}
           onOpenSettings={() => setTickerSettingsOpen(s => !s)}
+          size={tickerSize}
         />
         {tickerSettingsOpen && (
           <div style={{ position: 'absolute', right: 8, top: '100%', zIndex: 200 }}>
@@ -2035,6 +2089,8 @@ export default function Home() {
               hiddenSymbols={tickerHiddenSymbols}
               onToggle={toggleTickerSymbol}
               onClose={() => setTickerSettingsOpen(false)}
+              tickerSize={tickerSize}
+              onSizeChange={setTickerSize}
             />
           </div>
         )}
@@ -2387,7 +2443,7 @@ export default function Home() {
               gap: '0 8px',
               padding: '4px 14px',
               borderBottom: '1px solid var(--border-b)',
-              background: '#0f0f12',
+              background: 'var(--bg-0)',
             }}>
               {['AGO', 'SOURCE', 'HEADLINE', '', 'SYMS'].map((h, i) => (
                 <span key={i} style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-3)', textAlign: i === 0 ? 'right' : 'left' }}>
@@ -2523,7 +2579,11 @@ export default function Home() {
         <span>
           <strong style={{ color: '#a0a0b0' }}>TradVue</strong> — © 2026 TradVue. All rights reserved.
         </span>
-        <span>Data: Finnhub · CoinGecko · NewsAPI · RSS · Not financial advice</span>
+        <span>
+          <a href="/help#data-sources" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 11 }}>Data Sources</a>
+          <span style={{ margin: '0 6px', color: 'var(--text-3)' }}>·</span>
+          <span style={{ color: 'var(--text-3)', fontSize: 11 }}>Not financial advice</span>
+        </span>
         <span>
           {isOffline
             ? <span style={{ color: '#ff4560' }}>● OFFLINE</span>
