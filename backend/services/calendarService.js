@@ -1,11 +1,13 @@
 /**
  * Comprehensive Calendar Service
- * 
+ *
  * Aggregates events from:
- *  1. ForexFactory JSON API (economic events + speakers)
- *  2. Finnhub Earnings Calendar
- *  3. Federal Reserve RSS feed (speeches, statements)
- * 
+ *  1. ForexFactory JSON API — this week  (economic events + speakers)
+ *  2. ForexFactory JSON API — next week
+ *  3. Finnhub Earnings Calendar
+ *  4. Finnhub Economic Calendar (speeches, rate decisions, etc.)
+ *  5. Federal Reserve RSS feed (speeches, statements)
+ *
  * Unified endpoint returns typed events:
  *   economic | earnings | speech | holiday
  */
@@ -24,20 +26,35 @@ const rssParser = new RSSParser({
 const SPEECH_KEYWORDS = [
   'speaks', 'speech', 'testimony', 'chair', 'governor', 'president',
   'member', 'comments', 'statement', 'press conference', 'press briefing',
-  'remarks', 'forum', 'panel', 'interview', 'hearing', 'speaks at',
-  'hawker', 'dove', 'minutes', 'reserve bank', 'central bank',
+  'remarks', 'forum', 'panel', 'interview', 'hearing',
+  'minutes', 'reserve bank', 'central bank',
   'fomc', 'mpc', 'ecb', 'boe', 'boc', 'rba', 'rbnz', 'boj',
   'lagarde', 'powell', 'bailey', 'waller', 'bowman', 'jefferson',
   'kashkari', 'bostic', 'logan', 'daly', 'kugler', 'cook', 'williams',
-  'barkin', 'harker', 'mester', 'collins', 'schmid'
+  'barkin', 'harker', 'mester', 'collins', 'schmid', 'goolsbee',
+  'hammack', 'mueller', 'nagel', 'villeroy', 'lane', 'schnabel',
+  'de guindos', 'elderson', 'panetta', 'cipollone'
+];
+
+const RATE_DECISION_KEYWORDS = [
+  'interest rate', 'rate decision', 'monetary policy', 'rate statement',
+  'fed decision', 'fomc decision', 'ecb decision', 'boe decision',
+  'boc decision', 'rba decision', 'rbnz decision', 'boj decision',
+  'cash rate', 'refinancing rate', 'bank rate'
 ];
 
 function classifyEventType(title, source, impact) {
   const lower = title.toLowerCase();
 
-  if (lower.includes('holiday')) return 'holiday';
-  if (impact === 'Holiday') return 'holiday';
+  if (lower.includes('holiday') || lower.includes('daylight saving') || impact === 'Holiday') {
+    return 'holiday';
+  }
   if (source === 'Finnhub') return 'earnings';
+
+  // Check rate decisions first (subset of speech but important to flag as speech)
+  for (const kw of RATE_DECISION_KEYWORDS) {
+    if (lower.includes(kw)) return 'speech';
+  }
 
   for (const kw of SPEECH_KEYWORDS) {
     if (lower.includes(kw)) return 'speech';
@@ -46,15 +63,59 @@ function classifyEventType(title, source, impact) {
   return 'economic';
 }
 
-// ─── ForexFactory ────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-async function fetchForexFactory() {
-  const CACHE_KEY = 'calendar:ff:events';
+function toDateStr(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function parseDate(str) {
+  try {
+    return new Date(str);
+  } catch {
+    return new Date(0);
+  }
+}
+
+// ─── Request deduplication ───────────────────────────────────────────────────
+// Prevents multiple simultaneous fetches to the same URL (startup stampede)
+const inflight = new Map();
+
+async function dedupedFetch(key, fn) {
+  if (inflight.has(key)) return inflight.get(key);
+  const promise = fn().finally(() => inflight.delete(key));
+  inflight.set(key, promise);
+  return promise;
+}
+
+/**
+ * Normalize a ForexFactory date string to ISO 8601.
+ * FF format: "03-11-2026T08:30:00-0500"  (MM-DD-YYYYTHH:MM:SS±HHMM)
+ */
+function normalizeFfDate(dateStr) {
+  if (!dateStr) return dateStr;
+  const ffMatch = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})T(.+)$/);
+  if (!ffMatch) return dateStr;
+  let iso = `${ffMatch[3]}-${ffMatch[1]}-${ffMatch[2]}T${ffMatch[4]}`;
+  // Normalize timezone offset: -0500 → -05:00
+  iso = iso.replace(/([+-])(\d{2})(\d{2})$/, '$1$2:$3');
+  return iso;
+}
+
+// ─── ForexFactory (JSON) ─────────────────────────────────────────────────────
+
+async function fetchForexFactoryWeek(week = 'thisweek') {
+  const CACHE_KEY = `calendar:ff:${week}`;
   const cached = await cache.get(CACHE_KEY).catch(() => null);
   if (cached) return cached;
 
+  return dedupedFetch(`ff:${week}`, async () => {
+    // Double-check cache after acquiring dedup lock
+    const cachedAgain = await cache.get(CACHE_KEY).catch(() => null);
+    if (cachedAgain) return cachedAgain;
+
   try {
-    const url = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
+    const url = `https://nfs.faireconomy.media/ff_calendar_${week}.json`;
     const { data } = await axios.get(url, {
       timeout: 15000,
       headers: { 'User-Agent': 'TradVue/1.0 (tradvue.com; calendar-bot)' }
@@ -64,25 +125,14 @@ async function fetchForexFactory() {
       const title = e.title || '';
       const impact = e.impact || 'Low';
       const type = classifyEventType(title, 'ForexFactory', impact);
+      const isoDate = normalizeFfDate(e.date || '');
 
-      // Build ISO date from FF format (e.g. "03-11-2026T08:30:00-0500")
-      let dateStr = e.date || '';
-      // FF returns: "03-11-2026T08:30:00-0500" → convert to standard ISO
-      // format is MM-DD-YYYYTHH:MM:SS±HHMM
-      let isoDate = dateStr;
-      const ffMatch = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})T(.+)$/);
-      if (ffMatch) {
-        isoDate = `${ffMatch[3]}-${ffMatch[1]}-${ffMatch[2]}T${ffMatch[4]}`;
-        // normalize timezone offset from -0500 to -05:00
-        isoDate = isoDate.replace(/([+-])(\d{2})(\d{2})$/, '$1$2:$3');
-      }
-
-      const id = `ff-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${dateStr.slice(0, 10)}`;
+      const id = `ff-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${(e.date || '').slice(0, 10)}`;
 
       return {
         id,
         title,
-        date: isoDate,
+        date: isoDate || e.date || '',
         type,
         impact,
         country: (e.country || 'USD').toUpperCase(),
@@ -93,12 +143,42 @@ async function fetchForexFactory() {
       };
     });
 
-    await cache.set(CACHE_KEY, events, 1800).catch(() => {});
+    // Longer TTL for next week (less likely to change)
+    const ttl = week === 'thisweek' ? 1800 : 3600;
+    await cache.set(CACHE_KEY, events, ttl).catch(() => {});
     return events;
   } catch (err) {
-    console.error('[CalendarService] ForexFactory fetch failed:', err.message);
+    const status = err.response?.status;
+    if (status === 404) {
+      // Next week not published yet — cache empty result briefly
+      await cache.set(CACHE_KEY, [], 600).catch(() => {});
+    } else if (status === 429) {
+      console.warn(`[CalendarService] ForexFactory ${week} rate limited (429) — using cached data if available`);
+    } else {
+      console.error(`[CalendarService] ForexFactory ${week} fetch failed:`, err.message);
+    }
     return [];
   }
+  }); // end dedupedFetch
+}
+
+async function fetchForexFactory() {
+  // Fetch both this week and next week in parallel
+  const [thisWeek, nextWeek] = await Promise.all([
+    fetchForexFactoryWeek('thisweek'),
+    fetchForexFactoryWeek('nextweek')
+  ]);
+
+  // Deduplicate by ID (in case of overlap at week boundary)
+  const seen = new Set();
+  const all = [];
+  for (const e of [...thisWeek, ...nextWeek]) {
+    if (!seen.has(e.id)) {
+      seen.add(e.id);
+      all.push(e);
+    }
+  }
+  return all;
 }
 
 // ─── Finnhub Earnings ────────────────────────────────────────────────────────
@@ -122,7 +202,6 @@ async function fetchFinnhubEarnings(from, to) {
     const events = earningsList.map(e => {
       const symbol = e.symbol || '';
       const dateStr = e.date || '';
-      // hour: 'bmo' (before market open), 'amc' (after market close), or time string
       const hour = e.hour || '';
       let timeStr = dateStr;
       if (hour === 'bmo') timeStr = `${dateStr}T09:30:00`;
@@ -130,7 +209,7 @@ async function fetchFinnhubEarnings(from, to) {
       else timeStr = `${dateStr}T12:00:00`;
 
       return {
-        id: `fh-${symbol.toLowerCase()}-${dateStr}`,
+        id: `fh-earn-${symbol.toLowerCase()}-${dateStr}`,
         title: `${symbol} Earnings`,
         date: timeStr,
         type: 'earnings',
@@ -153,6 +232,59 @@ async function fetchFinnhubEarnings(from, to) {
     return events;
   } catch (err) {
     console.error('[CalendarService] Finnhub earnings fetch failed:', err.message);
+    return [];
+  }
+}
+
+// ─── Finnhub Economic Calendar ───────────────────────────────────────────────
+
+async function fetchFinnhubEconomic(from, to) {
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) return [];
+
+  const CACHE_KEY = `calendar:finnhub-econ:${from}:${to}`;
+  const cached = await cache.get(CACHE_KEY).catch(() => null);
+  if (cached) return cached;
+
+  try {
+    const url = `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=${apiKey}`;
+    const { data } = await axios.get(url, { timeout: 15000 });
+
+    const econList = data?.economicCalendar || [];
+    const events = econList.map(e => {
+      const title = e.event || '';
+      const country = (e.country || 'USD').toUpperCase();
+
+      // Map Finnhub impact (number) to string
+      let impact = 'Low';
+      if (e.impact != null) {
+        if (e.impact >= 3) impact = 'High';
+        else if (e.impact >= 2) impact = 'Medium';
+        else impact = 'Low';
+      }
+
+      const type = classifyEventType(title, 'FinnhubEcon', impact);
+      const dateStr = e.time || e.date || '';
+
+      return {
+        id: `fh-econ-${title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}-${dateStr.slice(0, 10)}`,
+        title,
+        date: dateStr,
+        type,
+        impact,
+        country,
+        forecast: e.estimate != null ? String(e.estimate) : null,
+        previous: e.prev != null ? String(e.prev) : null,
+        actual: e.actual != null ? String(e.actual) : null,
+        unit: e.unit || null,
+        source: 'Finnhub'
+      };
+    });
+
+    await cache.set(CACHE_KEY, events, 3600).catch(() => {});
+    return events;
+  } catch (err) {
+    console.error('[CalendarService] Finnhub economic calendar fetch failed:', err.message);
     return [];
   }
 }
@@ -182,8 +314,10 @@ async function fetchFedRSS() {
         const lower = title.toLowerCase();
 
         let impact = 'Medium';
-        if (lower.includes('chair') || lower.includes('fomc') || lower.includes('minutes')) impact = 'High';
-        else if (lower.includes('speech') || lower.includes('remarks')) impact = 'Medium';
+        if (lower.includes('chair') || lower.includes('fomc') || lower.includes('minutes') ||
+            lower.includes('rate decision') || lower.includes('monetary policy')) impact = 'High';
+        else if (lower.includes('speech') || lower.includes('remarks') || lower.includes('governor') ||
+                 lower.includes('president') || lower.includes('member')) impact = 'Medium';
         else impact = 'Low';
 
         const type = classifyEventType(title, 'FederalReserve', impact);
@@ -211,21 +345,11 @@ async function fetchFedRSS() {
   }
 }
 
-// ─── Date helpers ────────────────────────────────────────────────────────────
-
-function toDateStr(date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function parseDate(str) {
-  return new Date(str);
-}
-
 // ─── Unified getEvents ───────────────────────────────────────────────────────
 
 /**
  * Get all calendar events within a date range.
- * 
+ *
  * @param {Object} opts
  * @param {string} opts.from - YYYY-MM-DD
  * @param {string} opts.to   - YYYY-MM-DD
@@ -241,17 +365,18 @@ async function getEvents({ from, to, type = 'all' } = {}) {
   const toStr = toDateStr(toDate);
 
   // Fetch all sources in parallel
-  const [ffEvents, finnhubEvents, fedEvents] = await Promise.all([
+  const [ffEvents, finnhubEarnings, finnhubEcon, fedEvents] = await Promise.all([
     fetchForexFactory(),
     fetchFinnhubEarnings(fromStr, toStr),
+    fetchFinnhubEconomic(fromStr, toStr),
     fetchFedRSS()
   ]);
 
   // Merge + filter by date range
-  const all = [...ffEvents, ...finnhubEvents, ...fedEvents].filter(e => {
+  const all = [...ffEvents, ...finnhubEarnings, ...finnhubEcon, ...fedEvents].filter(e => {
     try {
       const d = parseDate(e.date);
-      return d >= fromDate && d <= toDate;
+      return !isNaN(d.getTime()) && d >= fromDate && d <= toDate;
     } catch {
       return false;
     }
@@ -281,4 +406,71 @@ async function getEarnings({ from, to } = {}) {
   return getEvents({ from, to, type: 'earnings' });
 }
 
-module.exports = { getEvents, getEarnings, fetchForexFactory, fetchFinnhubEarnings, fetchFedRSS };
+/**
+ * Get today's events
+ */
+async function getTodaysEvents({ currencies = null } = {}) {
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfDay = new Date(startOfDay.getTime() + 24 * 3600 * 1000 - 1);
+
+  let events = await getEvents({
+    from: toDateStr(startOfDay),
+    to: toDateStr(endOfDay)
+  });
+
+  if (currencies && currencies.length > 0) {
+    const upper = currencies.map(c => c.toUpperCase());
+    events = events.filter(e => upper.includes((e.country || '').toUpperCase()));
+  }
+
+  return events;
+}
+
+/**
+ * Get upcoming events for next N days
+ */
+async function getUpcomingEvents({ days = 7, currencies = null, minImpact = 1 } = {}) {
+  const now = new Date();
+  const to = new Date(now.getTime() + days * 24 * 3600 * 1000);
+
+  const IMPACT_RANK = { Low: 1, Medium: 2, High: 3, Holiday: 0 };
+  const minRank = minImpact;
+
+  let events = await getEvents({
+    from: toDateStr(now),
+    to: toDateStr(to)
+  });
+
+  // Apply impact filter
+  events = events.filter(e => {
+    const rank = IMPACT_RANK[e.impact] ?? 1;
+    return rank >= minRank;
+  });
+
+  if (currencies && currencies.length > 0) {
+    const upper = currencies.map(c => c.toUpperCase());
+    events = events.filter(e => upper.includes((e.country || '').toUpperCase()));
+  }
+
+  return events;
+}
+
+/**
+ * Get high-impact events only
+ */
+async function getHighImpactEvents({ days = 7 } = {}) {
+  return getUpcomingEvents({ days, minImpact: 3 });
+}
+
+module.exports = {
+  getEvents,
+  getEarnings,
+  getTodaysEvents,
+  getUpcomingEvents,
+  getHighImpactEvents,
+  fetchForexFactory,
+  fetchFinnhubEarnings,
+  fetchFinnhubEconomic,
+  fetchFedRSS
+};

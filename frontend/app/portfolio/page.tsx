@@ -381,15 +381,18 @@ function LineChart({ data }: { data: MonthlySnapshot[] }) {
   )
 }
 
-function KpiCard({ label, value, sub, color, tooltip }: { label: string; value: string; sub?: string; color?: string; tooltip?: string }) {
+function KpiCard({ label, value, sub, color, tooltip, icon }: { label: string; value: string; sub?: string; color?: string; tooltip?: string; icon?: string }) {
   return (
-    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--card-radius)', padding: '12px 14px' }}>
-      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 2 }}>
-        {label}
+    <div className="ds-card" style={{ padding: '14px 16px' }}>
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {icon && (
+          <div className="tv-card-icon" style={{ width: 28, height: 28, fontSize: 13 }}>{icon}</div>
+        )}
+        <span>{label}</span>
         {tooltip && <Tooltip text={tooltip} position="bottom" />}
       </div>
-      <div style={{ fontSize: 17, fontWeight: 700, fontFamily: 'var(--mono)', color: color || 'var(--text-0)' }}>{value}</div>
-      {sub && <div style={{ fontSize: 10, color: 'var(--text-2)', marginTop: 3 }}>{sub}</div>}
+      <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--mono)', color: color || 'var(--text-0)' }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: 'var(--text-2)', marginTop: 4 }}>{sub}</div>}
     </div>
   )
 }

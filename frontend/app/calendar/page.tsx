@@ -165,7 +165,7 @@ function MonthGrid({
 
       {cells.map((day, idx) => {
         if (!day) return (
-          <div key={`e-${idx}`} style={{ minHeight: 80, background: 'var(--bg-1)', borderRadius: 4, opacity: 0.3 }} />
+          <div key={`e-${idx}`} style={{ minHeight: 90, background: 'var(--bg-1)', borderRadius: 4, opacity: 0.25 }} />
         )
 
         const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -173,37 +173,118 @@ function MonthGrid({
         const isToday = key === today
         const isSelected = key === selectedDay
 
-        // Show up to 3 dots grouped by type/impact
-        const dots = dayEvents.slice(0, 5)
+        // Count by impact level for the badge row
+        const highCount = dayEvents.filter(e => e.impact === 'High').length
+        const medCount = dayEvents.filter(e => e.impact === 'Medium').length
+        const lowCount = dayEvents.filter(e => e.impact === 'Low' || e.impact === 'Holiday').length
+        const speechCount = dayEvents.filter(e => e.type === 'speech').length
+        const earningsCount = dayEvents.filter(e => e.type === 'earnings').length
+
+        // Border color: red if high-impact day, orange if medium, else default
+        const borderColor = isToday
+          ? 'var(--accent)'
+          : isSelected
+            ? 'rgba(74,158,255,0.5)'
+            : highCount > 0
+              ? 'rgba(255,69,96,0.3)'
+              : medCount > 0
+                ? 'rgba(240,165,0,0.2)'
+                : '1px solid transparent'
 
         return (
           <div
             key={key}
             onClick={() => onSelectDay(key)}
             style={{
-              minHeight: 80,
-              padding: '5px 5px 4px',
-              background: isToday ? 'rgba(74,158,255,0.12)' : isSelected ? 'rgba(74,158,255,0.07)' : 'var(--bg-2)',
-              border: isToday ? '1.5px solid var(--accent)' : isSelected ? '1px solid rgba(59,130,246,0.5)' : '1px solid transparent',
+              minHeight: 90,
+              padding: '5px 6px 5px',
+              background: isToday
+                ? 'rgba(74,158,255,0.1)'
+                : isSelected
+                  ? 'rgba(74,158,255,0.06)'
+                  : highCount > 0
+                    ? 'rgba(255,69,96,0.04)'
+                    : 'var(--bg-2)',
+              border: `1px solid ${borderColor}`,
               borderRadius: 4,
-              cursor: 'pointer',
+              cursor: dayEvents.length > 0 ? 'pointer' : 'default',
               display: 'flex',
               flexDirection: 'column',
-              gap: 3,
-              transition: 'background 0.1s',
+              gap: 2,
+              transition: 'background 0.1s, border-color 0.1s',
+            }}
+            onMouseEnter={e => { if (dayEvents.length > 0) (e.currentTarget as HTMLDivElement).style.background = 'rgba(74,158,255,0.08)' }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLDivElement
+              el.style.background = isToday
+                ? 'rgba(74,158,255,0.1)'
+                : isSelected
+                  ? 'rgba(74,158,255,0.06)'
+                  : highCount > 0
+                    ? 'rgba(255,69,96,0.04)'
+                    : 'var(--bg-2)'
             }}
           >
-            <div style={{ fontSize: 11, fontWeight: 700, color: isToday ? 'var(--accent)' : 'var(--text-1)' }}>
-              {day}
+            {/* Day number + total count badge */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: isToday ? 'var(--accent)' : 'var(--text-1)' }}>
+                {day}
+              </span>
+              {dayEvents.length > 0 && (
+                <span style={{
+                  fontSize: 8, fontWeight: 700,
+                  background: highCount > 0 ? 'rgba(255,69,96,0.2)' : medCount > 0 ? 'rgba(240,165,0,0.15)' : 'var(--bg-3)',
+                  color: highCount > 0 ? '#ff4560' : medCount > 0 ? '#f0a500' : 'var(--text-3)',
+                  padding: '1px 4px', borderRadius: 3,
+                }}>
+                  {dayEvents.length}
+                </span>
+              )}
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              {dots.map(e => (
-                <ImpactDot key={e.id} impact={e.impact} type={e.type} />
-              ))}
-            </div>
+
+            {/* Impact pill row */}
             {dayEvents.length > 0 && (
-              <div style={{ fontSize: 8.5, color: 'var(--text-3)', marginTop: 'auto', fontWeight: 600 }}>
-                {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2, marginTop: 2 }}>
+                {highCount > 0 && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 8, fontWeight: 700,
+                    background: 'rgba(255,69,96,0.18)', color: '#ff4560',
+                    padding: '1px 4px', borderRadius: 3 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ff4560', flexShrink: 0 }} />
+                    {highCount}
+                  </span>
+                )}
+                {medCount > 0 && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 8, fontWeight: 700,
+                    background: 'rgba(240,165,0,0.15)', color: '#f0a500',
+                    padding: '1px 4px', borderRadius: 3 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#f0a500', flexShrink: 0 }} />
+                    {medCount}
+                  </span>
+                )}
+                {(earningsCount > 0 || speechCount > 0) && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 8, fontWeight: 700,
+                    background: 'rgba(139,92,246,0.15)', color: '#8b5cf6',
+                    padding: '1px 4px', borderRadius: 3 }}>
+                    {earningsCount > 0 && `📊${earningsCount}`}
+                    {speechCount > 0 && ` 🎤${speechCount}`}
+                  </span>
+                )}
+                {lowCount > 0 && highCount === 0 && medCount === 0 && (
+                  <span style={{ fontSize: 8, color: 'var(--text-3)', padding: '1px 3px' }}>
+                    {lowCount} low
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Top event preview (high-impact only) */}
+            {highCount > 0 && (
+              <div style={{
+                fontSize: 8, color: '#ff4560', lineHeight: 1.2,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                marginTop: 1,
+              }}>
+                {dayEvents.find(e => e.impact === 'High')?.title}
               </div>
             )}
           </div>
@@ -920,82 +1001,99 @@ export default function CalendarPage() {
                 }}>✕</button>
               </div>
 
-              {/* Events */}
+              {/* Events — Forex Factory style table */}
               <div style={{ flex: 1, overflowY: 'auto' }}>
                 {selectedDayEvents.length === 0 ? (
-                  <div style={{ padding: 20, textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
-                    No events for this day
+                  <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-3)', fontSize: 12 }}>
+                    No events scheduled for this day
                   </div>
                 ) : (
-                  selectedDayEvents.map(event => (
-                    <div key={event.id} style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                        <span style={{ color: TYPE_COLORS[event.type] }}>{React.createElement(TYPE_ICON_COMPONENTS[event.type], { size: 14 })}</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-0)', lineHeight: 1.3 }}>
-                            {event.title}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                            <span style={{ fontSize: 10 }}>{COUNTRY_FLAGS[event.country] || '🌐'}</span>
-                            <span style={{ fontSize: 9, fontWeight: 700,
-                              color: IMPACT_COLORS[event.impact],
-                              background: `${IMPACT_COLORS[event.impact]}22`,
-                              padding: '1px 5px', borderRadius: 3,
-                            }}>{event.impact}</span>
-                            <span style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>
-                              {fmtTime(event.date)}
-                            </span>
-                          </div>
-
-                          {/* Values */}
-                          {(event.forecast || event.previous || event.actual || event.epsEstimate != null) && (
-                            <div style={{
-                              marginTop: 8, padding: 8, background: 'var(--bg-1)', borderRadius: 4,
-                              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, fontSize: 10,
-                            }}>
-                              <div>
-                                <div style={{ fontSize: 8, color: 'var(--text-3)', marginBottom: 2 }}>
-                                  {event.type === 'earnings' ? 'EPS EST' : 'FORECAST'}
-                                </div>
-                                <div style={{ fontFamily: 'var(--mono)', color: 'var(--blue)', fontWeight: 600 }}>
-                                  {event.type === 'earnings' ? (event.epsEstimate != null ? `$${event.epsEstimate}` : '—') : (event.forecast || '—')}
-                                </div>
-                              </div>
-                              <div>
-                                <div style={{ fontSize: 8, color: 'var(--text-3)', marginBottom: 2 }}>
-                                  {event.type === 'earnings' ? 'EPS ACT' : 'PREVIOUS'}
-                                </div>
-                                <div style={{ fontFamily: 'var(--mono)', color: 'var(--text-2)', fontWeight: 600 }}>
-                                  {event.type === 'earnings'
-                                    ? (event.epsActual != null ? `$${event.epsActual}` : '—')
-                                    : (event.previous || '—')}
-                                </div>
-                              </div>
-                              <div>
-                                <div style={{ fontSize: 8, color: 'var(--text-3)', marginBottom: 2 }}>ACTUAL</div>
-                                <div style={{
-                                  fontFamily: 'var(--mono)', fontWeight: 600,
-                                  color: event.actual
-                                    ? beatsMiss(event.actual, event.forecast) === 'beat' ? '#00c06a'
-                                    : beatsMiss(event.actual, event.forecast) === 'miss' ? '#ff4560'
-                                    : 'var(--text-0)'
-                                    : 'var(--text-3)',
-                                }}>
-                                  {event.actual || '—'}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {event.type === 'earnings' && (
-                            <div style={{ marginTop: 6, fontSize: 10, color: 'var(--text-3)' }}>
-                              Rev est: {fmtRevenue(event.revenueEstimate)} · Act: {fmtRevenue(event.revenueActual)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                  <>
+                    {/* Column headers */}
+                    <div style={{
+                      display: 'grid', gridTemplateColumns: '42px 18px 1fr 52px 52px 52px',
+                      gap: 4, padding: '4px 10px',
+                      background: 'var(--bg-3)', borderBottom: '1px solid var(--border)',
+                      fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)',
+                    }}>
+                      <div>TIME</div>
+                      <div></div>
+                      <div>EVENT</div>
+                      <div style={{ textAlign: 'right' }}>FCST</div>
+                      <div style={{ textAlign: 'right' }}>PREV</div>
+                      <div style={{ textAlign: 'right' }}>ACT</div>
                     </div>
-                  ))
+
+                    {selectedDayEvents.map(event => {
+                      const bm = beatsMiss(event.actual, event.forecast)
+                      const impactColor = IMPACT_COLORS[event.impact] || 'var(--text-3)'
+                      return (
+                        <div key={event.id} style={{
+                          display: 'grid', gridTemplateColumns: '42px 18px 1fr 52px 52px 52px',
+                          gap: 4, padding: '7px 10px',
+                          borderBottom: '1px solid var(--border)',
+                          alignItems: 'start',
+                          borderLeft: `3px solid ${impactColor}`,
+                          background: event.impact === 'High' ? 'rgba(255,69,96,0.03)' : 'transparent',
+                        }}>
+                          {/* Time */}
+                          <div style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: 'var(--mono)', paddingTop: 1 }}>
+                            {fmtTime(event.date)}
+                          </div>
+                          {/* Flag */}
+                          <div style={{ fontSize: 11, paddingTop: 1 }}>
+                            {COUNTRY_FLAGS[event.country] || '🌐'}
+                          </div>
+                          {/* Title + meta */}
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-0)', lineHeight: 1.3, marginBottom: 2 }}>
+                              {event.title}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                              <span style={{
+                                fontSize: 8, fontWeight: 700, padding: '1px 4px', borderRadius: 2,
+                                background: `${impactColor}22`, color: impactColor,
+                              }}>{event.impact}</span>
+                              <span style={{ fontSize: 8, color: TYPE_COLORS[event.type] }}>
+                                {event.type === 'earnings' ? '📊' : event.type === 'speech' ? '🎤' : event.type === 'holiday' ? '🏛' : '📈'}
+                              </span>
+                              {event.country && (
+                                <span style={{ fontSize: 8, color: 'var(--text-3)', fontWeight: 600 }}>{event.country}</span>
+                              )}
+                            </div>
+                            {event.type === 'earnings' && event.revenueEstimate != null && (
+                              <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 2 }}>
+                                Rev: {fmtRevenue(event.revenueEstimate)} est
+                                {event.revenueActual != null && ` / ${fmtRevenue(event.revenueActual)} act`}
+                              </div>
+                            )}
+                          </div>
+                          {/* Forecast */}
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--blue)', textAlign: 'right', paddingTop: 1 }}>
+                            {event.type === 'earnings'
+                              ? (event.epsEstimate != null ? `$${event.epsEstimate}` : '—')
+                              : (event.forecast || '—')}
+                          </div>
+                          {/* Previous */}
+                          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)', textAlign: 'right', paddingTop: 1 }}>
+                            {event.type === 'earnings'
+                              ? (event.epsActual != null ? `$${event.epsActual}` : '—')
+                              : (event.previous || '—')}
+                          </div>
+                          {/* Actual */}
+                          <div style={{
+                            fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 700, textAlign: 'right', paddingTop: 1,
+                            color: event.actual
+                              ? bm === 'beat' ? '#00c06a' : bm === 'miss' ? '#ff4560' : 'var(--text-0)'
+                              : 'var(--text-3)',
+                          }}>
+                            {event.actual || '—'}
+                            {bm && <span style={{ fontSize: 7, marginLeft: 2 }}>{bm === 'beat' ? '▲' : '▼'}</span>}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </>
                 )}
               </div>
             </div>

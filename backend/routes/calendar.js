@@ -1,21 +1,29 @@
 /**
  * Economic Calendar Routes
- * GET /api/calendar/upcoming         - Events for next N days (legacy)
- * GET /api/calendar/today            - Today's events
- * GET /api/calendar/high-impact      - High-impact events only (impact=3)
- * GET /api/calendar/macro            - Macro indicator snapshot (FRED data)
- * GET /api/calendar/events           - Comprehensive events (earnings + speeches + economic)
- * GET /api/calendar/earnings         - Earnings-only events
+ *
+ * GET /api/calendar/events       — Comprehensive events (earnings + speeches + economic)
+ * GET /api/calendar/earnings     — Earnings-only events
+ * GET /api/calendar/today        — Today's events (real data, no mocks)
+ * GET /api/calendar/upcoming     — Events for next N days
+ * GET /api/calendar/high-impact  — High-impact events only
+ * GET /api/calendar/macro        — Macro indicator snapshot (FRED data)
+ *
+ * All event endpoints return the SAME schema:
+ *   { success, count, events[], filters, timestamp }
+ *
+ * The /today and /upcoming endpoints now delegate to calendarService
+ * (ForexFactory JSON + Finnhub) instead of the old XML-based parser
+ * that was silently falling back to mock data.
  */
 
 const express = require('express');
 const router = express.Router();
-const economicCalendar = require('../services/economicCalendar');
 const calendarService = require('../services/calendarService');
+const economicCalendar = require('../services/economicCalendar');
 
-// ─── In-memory cache for calendar events ───────────────────────────────────
+// ─── In-memory cache ──────────────────────────────────────────────────────────
 
-const eventsCache = new Map(); // key -> { data, timestamp }
+const eventsCache = new Map();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 function getCacheKey(from, to, type) {
@@ -36,21 +44,25 @@ function setCache(key, data) {
   eventsCache.set(key, { data, timestamp: Date.now() });
 }
 
-// ─── Comprehensive events endpoint (with pagination + caching) ─────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// GET /api/calendar/events?from=YYYY-MM-DD&to=YYYY-MM-DD&type=all&page=1&limit=50
+function toDateStr(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+// ─── Comprehensive events endpoint ───────────────────────────────────────────
+
+// GET /api/calendar/events?from=YYYY-MM-DD&to=YYYY-MM-DD&type=all&page=1&limit=200
 router.get('/events', async (req, res) => {
   try {
     const { from, to, type = 'all' } = req.query;
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit) || 200));
 
-    // Default: next 30 days if not specified
     const now = new Date();
-    const fromStr = from || now.toISOString().slice(0, 10);
-    const toStr = to || new Date(now.getTime() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const fromStr = from || toDateStr(now);
+    const toStr = to || toDateStr(new Date(now.getTime() + 30 * 24 * 3600 * 1000));
 
-    // Check cache first
     const cacheKey = getCacheKey(fromStr, toStr, type);
     let allEvents = getCached(cacheKey);
 
@@ -59,7 +71,6 @@ router.get('/events', async (req, res) => {
       setCache(cacheKey, allEvents);
     }
 
-    // Paginate
     const total = allEvents.length;
     const totalPages = Math.ceil(total / limit);
     const offset = (page - 1) * limit;
@@ -86,10 +97,9 @@ router.get('/events', async (req, res) => {
 router.get('/earnings', async (req, res) => {
   try {
     const { from, to } = req.query;
-
     const now = new Date();
-    const fromStr = from || now.toISOString().slice(0, 10);
-    const toStr = to || new Date(now.getTime() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const fromStr = from || toDateStr(now);
+    const toStr = to || toDateStr(new Date(now.getTime() + 30 * 24 * 3600 * 1000));
 
     const events = await calendarService.getEarnings({ from: fromStr, to: toStr });
 
@@ -106,7 +116,45 @@ router.get('/earnings', async (req, res) => {
   }
 });
 
-// GET /api/calendar/upcoming?days=7&currencies=USD,EUR&minImpact=2
+// GET /api/calendar/today?currencies=USD,EUR
+// Returns today's events using real ForexFactory + Finnhub data (no mocks)
+router.get('/today', async (req, res) => {
+  try {
+    const { currencies } = req.query;
+    const currencyList = currencies
+      ? currencies.split(',').map(c => c.trim().toUpperCase())
+      : null;
+
+    // Use calendarService directly — getTodaysEvents delegates to getEvents
+    // which uses FF JSON API (not the broken XML path that returned mocks)
+    const events = await calendarService.getTodaysEvents({ currencies: currencyList });
+
+    // Normalize field names: calendarService returns {country} but old schema used {currency}
+    // Include both for backwards compatibility
+    const normalized = events.map(e => ({
+      ...e,
+      currency: e.country || e.currency || 'USD',
+      datetime: e.date,
+      impactLabel: e.impact,
+      impact: ['Low', 'Medium', 'High', 'Holiday'].includes(e.impact) ? e.impact : 'Low'
+    }));
+
+    res.json({
+      success: true,
+      count: normalized.length,
+      events: normalized,   // new field name
+      data: normalized,     // legacy field name (some frontend code uses .data)
+      date: new Date().toISOString().split('T')[0],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('[Calendar] /today error:', error);
+    res.status(500).json({ success: false, error: "Failed to fetch today's events" });
+  }
+});
+
+// GET /api/calendar/upcoming?days=7&currencies=USD,EUR&minImpact=1
+// Returns events for next N days — real data, no mocks
 router.get('/upcoming', async (req, res) => {
   try {
     const { days = 7, currencies, minImpact = 1 } = req.query;
@@ -115,16 +163,27 @@ router.get('/upcoming', async (req, res) => {
       ? currencies.split(',').map(c => c.trim().toUpperCase())
       : null;
 
-    const events = await economicCalendar.getUpcomingEvents({
-      days: Math.min(parseInt(days) || 7, 30),
+    // Delegate to calendarService (FF JSON + Finnhub)
+    const events = await calendarService.getUpcomingEvents({
+      days: Math.min(parseInt(days) || 7, 60),
       currencies: currencyList,
       minImpact: parseInt(minImpact) || 1
     });
 
+    // Normalize field names for backwards compatibility
+    const normalized = events.map(e => ({
+      ...e,
+      currency: e.country || e.currency || 'USD',
+      datetime: e.date,
+      impactLabel: e.impact,
+      impact: e.impact
+    }));
+
     res.json({
       success: true,
-      count: events.length,
-      data: events,
+      count: normalized.length,
+      events: normalized,   // new field name
+      data: normalized,     // legacy field name
       filters: { days, currencies: currencyList, minImpact },
       timestamp: new Date().toISOString()
     });
@@ -134,42 +193,19 @@ router.get('/upcoming', async (req, res) => {
   }
 });
 
-// GET /api/calendar/today?currencies=USD
-router.get('/today', async (req, res) => {
-  try {
-    const { currencies } = req.query;
-    const currencyList = currencies
-      ? currencies.split(',').map(c => c.trim().toUpperCase())
-      : null;
-
-    const events = await economicCalendar.getTodaysEvents({ currencies: currencyList });
-
-    res.json({
-      success: true,
-      count: events.length,
-      data: events,
-      date: new Date().toISOString().split('T')[0],
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('[Calendar] /today error:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch today\'s events' });
-  }
-});
-
 // GET /api/calendar/high-impact?days=3
 router.get('/high-impact', async (req, res) => {
   try {
     const { days = 3 } = req.query;
-
-    const events = await economicCalendar.getHighImpactEvents({
+    const events = await calendarService.getHighImpactEvents({
       days: Math.min(parseInt(days) || 3, 14)
     });
 
     res.json({
       success: true,
       count: events.length,
-      data: events,
+      events,
+      data: events, // legacy
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -178,7 +214,7 @@ router.get('/high-impact', async (req, res) => {
   }
 });
 
-// GET /api/calendar/macro - Macro snapshot (FRED indicators + upcoming high-impact)
+// GET /api/calendar/macro — Macro snapshot (FRED indicators + upcoming high-impact)
 router.get('/macro', async (req, res) => {
   try {
     const snapshot = await economicCalendar.getMacroSnapshot();

@@ -265,21 +265,23 @@ function KpiCard({ label, value, sub, color, tooltip, icon }: {
   tooltip: string; icon: string
 }) {
   return (
-    <div style={{
-      background: 'var(--bg-2)',
-      border: '1px solid var(--border)',
-      borderRadius: 12,
-      padding: '16px 20px',
+    <div className="ds-card" style={{
       display: 'flex',
       flexDirection: 'column',
       gap: 6,
       minWidth: 140,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-2)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-        <span>{label}</span>
-        <Tooltip text={tooltip} position="bottom" />
+      {/* Icon + label row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="tv-card-icon" style={{ width: 32, height: 32, fontSize: 15 }}>
+          {icon}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          {label}
+          <Tooltip text={tooltip} position="bottom" />
+        </div>
       </div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: color || 'var(--text-0)', fontFamily: 'var(--mono)' }}>{value}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: color || 'var(--text-0)', fontFamily: 'var(--mono)' }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--text-2)' }}>{sub}</div>}
     </div>
   )

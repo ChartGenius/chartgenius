@@ -697,70 +697,52 @@ export default function HelpPage() {
             .filter(cat => !activeCategory || cat.id === activeCategory || isSearching)
             .map(cat => (
               <section key={cat.id} id={cat.id}>
-                {/* Category header */}
-                <div
-                  style={{
+                {/* TV-card wrapper — matches Tools page tile styling */}
+                <div style={{
+                  background: 'var(--card-bg)',
+                  border: 'var(--card-border)',
+                  borderRadius: 'var(--card-radius)',
+                  boxShadow: 'var(--card-shadow)',
+                  overflow: 'hidden',
+                }}>
+                  {/* Category header inside card */}
+                  <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '12px',
-                    marginBottom: '16px',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      background: 'var(--bg-2)',
-                      border: '1px solid var(--border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '18px',
-                    }}
-                  >
-                    {cat.icon}
+                    padding: '16px 20px',
+                    borderBottom: '1px solid var(--border)',
+                  }}>
+                    {/* Circular icon badge */}
+                    <div className="tv-card-icon">
+                      {cat.icon}
+                    </div>
+                    <div>
+                      <h2 className="tv-card-title" style={{ fontSize: '15px', margin: 0 }}>
+                        {cat.category}
+                      </h2>
+                      <span style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: 2, display: 'block' }}>
+                        {cat.questions.length} question{cat.questions.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h2
-                      style={{
-                        fontSize: '17px',
-                        fontWeight: 700,
-                        letterSpacing: '-0.02em',
-                        color: 'var(--text-0)',
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {cat.category}
-                    </h2>
-                    <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>
-                      {cat.questions.length} question{cat.questions.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Accordion */}
-                <div
-                  style={{
-                    background: 'var(--bg-1)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {cat.questions.map((item, idx) => {
-                    const key = `${cat.id}-${idx}`
-                    return (
-                      <AccordionItem
-                        key={key}
-                        question={item.q}
-                        answer={item.a}
-                        isOpen={!!openItems[key]}
-                        onToggle={() => toggle(key)}
-                        highlight={search}
-                      />
-                    )
-                  })}
+                  {/* Accordion items */}
+                  <div style={{ background: 'var(--bg-1)' }}>
+                    {cat.questions.map((item, idx) => {
+                      const key = `${cat.id}-${idx}`
+                      return (
+                        <AccordionItem
+                          key={key}
+                          question={item.q}
+                          answer={item.a}
+                          isOpen={!!openItems[key]}
+                          onToggle={() => toggle(key)}
+                          highlight={search}
+                        />
+                      )
+                    })}
+                  </div>
                 </div>
               </section>
             ))}

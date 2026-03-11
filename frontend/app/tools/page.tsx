@@ -1869,7 +1869,7 @@ export default function ToolsPage() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{
-                      width: 40, height: 40, borderRadius: 10,
+                      width: 40, height: 40, borderRadius: '50%',
                       background: 'var(--accent-dim)',
                       border: '1px solid rgba(74,158,255,0.15)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1883,13 +1883,6 @@ export default function ToolsPage() {
                     </div>
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6, flex: 1 }}>{tool.desc}</div>
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    style={{ alignSelf: 'flex-start' }}
-                    onClick={e => { e.stopPropagation(); if ((tool as any).href) window.location.href = (tool as any).href; else setActiveTool(tool.id) }}
-                  >
-                    Open
-                  </button>
                 </div>
               ))}
             </div>
