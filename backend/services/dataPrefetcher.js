@@ -37,9 +37,15 @@ const axios        = require('axios');
  */
 const WATCHLIST = [
   // Index ETFs
-  'SPY', 'QQQ', 'DIA', 'IWM',
-  // Big tech
-  'AAPL', 'GOOGL', 'TSLA', 'MSFT', 'META', 'NVDA', 'AMZN',
+  'SPY', 'QQQ', 'DIA', 'IWM', 'VOO', 'VTI', 'XLF', 'XLE', 'XLK', 'ARKK',
+  // Mega cap
+  'AAPL', 'GOOGL', 'TSLA', 'MSFT', 'META', 'NVDA', 'AMZN', 'NFLX', 'BRK.B',
+  // Large cap popular
+  'AMD', 'INTC', 'CRM', 'ORCL', 'UBER', 'COIN', 'SQ', 'SHOP', 'PLTR', 'SNOW',
+  'PYPL', 'DIS', 'BA', 'NKE', 'JPM', 'BAC', 'GS', 'V', 'MA', 'WMT',
+  'COST', 'HD', 'MCD', 'KO', 'PEP', 'JNJ', 'PFE', 'UNH', 'XOM', 'CVX',
+  // Meme / high-interest
+  'GME', 'AMC', 'RIVN', 'LCID', 'SOFI', 'HOOD', 'RBLX', 'ROKU',
   // Metals (NYSE ETFs)
   'GLD', 'SLV',
   // Volatility
@@ -78,35 +84,46 @@ async function safe(label, fn) {
 // ─── Prefetch Cycles ─────────────────────────────────────────────────────────
 
 /**
- * Every 60 seconds DURING market hours:
- *  - Batch quotes for the default watchlist
+ * Every 30 seconds DURING market hours:
+ *  - Batch quotes for top ~55 tickers (split into two halves to stay under 60 req/min)
  *  - Market status
- *  - Top 10 crypto prices
+ *  - Top 10 crypto prices (every other cycle)
+ *
+ * Finnhub free tier = 60 calls/min. With 55 tickers at 30s intervals, we fetch
+ * ~28 tickers per cycle (alternating halves) = ~56 calls/min. Safe margin.
  */
+let _highFreqCycle = 0;
+
 async function prefetchHighFrequency() {
   if (!isMarketHours()) return;
+  _highFreqCycle++;
 
   let quotesCount = 0;
   let cryptoCount = 0;
 
-  // Batch quotes — getQuote() caches each symbol individually under `finnhub:quote:SYM`.
-  // Calling getBatchQuotes() on the full default watchlist ensures all symbols are fresh
-  // before any user requests them.  Shared cache: 1 refresh serves all concurrent users.
+  // Split watchlist into two halves, alternate each cycle
+  const mid = Math.ceil(WATCHLIST.length / 2);
+  const batch = _highFreqCycle % 2 === 0
+    ? WATCHLIST.slice(0, mid)
+    : WATCHLIST.slice(mid);
+
   await safe('batch quotes', async () => {
-    const quotes = await finnhub.getBatchQuotes(WATCHLIST);
+    const quotes = await finnhub.getBatchQuotes(batch);
     quotesCount = Object.keys(quotes).length;
   });
 
-  // Market status
+  // Market status every cycle
   await safe('market status', () => finnhub.getMarketStatus('US'));
 
-  // Top 10 crypto prices via CoinGecko
-  await safe('crypto prices', async () => {
-    const coins = await coinGecko.getTopCoins({ limit: TOP_COINS_LIMIT });
-    cryptoCount = Array.isArray(coins) ? coins.length : 0;
-  });
+  // Crypto every other cycle (CoinGecko has its own rate limits)
+  if (_highFreqCycle % 2 === 0) {
+    await safe('crypto prices', async () => {
+      const coins = await coinGecko.getTopCoins({ limit: TOP_COINS_LIMIT });
+      cryptoCount = Array.isArray(coins) ? coins.length : 0;
+    });
+  }
 
-  console.log(`[Prefetch] 60s cycle — warmed ${quotesCount}/${WATCHLIST.length} stock quotes, ${cryptoCount} crypto prices`);
+  console.log(`[Prefetch] 30s cycle #${_highFreqCycle} — warmed ${quotesCount}/${batch.length} quotes${cryptoCount ? `, ${cryptoCount} crypto` : ''} (half ${_highFreqCycle % 2 + 1}/2)`);
 }
 
 /**
@@ -253,9 +270,9 @@ function start() {
   prefetchRareData().catch(() => {});
 
   // ── Schedule recurring cycles ──
-  setInterval(() => prefetchHighFrequency().catch(() => {}), 60 * 1000);          // 60 s
+  setInterval(() => prefetchHighFrequency().catch(() => {}), 30 * 1000);           // 30 s — keep quotes fresh
   setInterval(() => prefetchMediumFrequency().catch(() => {}), 5 * 60 * 1000);    // 5 min
-  setInterval(() => prefetchLowFrequency().catch(() => {}), 30 * 60 * 1000);      // 30 min
+  setInterval(() => prefetchLowFrequency().catch(() => {}), 15 * 60 * 1000);      // 15 min (was 30)
   setInterval(() => prefetchRareData().catch(() => {}), 6 * 60 * 60 * 1000);      // 6 h
 
   console.log('[Prefetch] Scheduler running. High-freq cycles active during market hours (09:30–16:00 ET).');
