@@ -142,7 +142,7 @@ app.listen(PORT, () => {
   console.log(`₿  Crypto:       http://localhost:${PORT}/api/crypto/snapshot`);
   console.log(`🚨 Movers:       http://localhost:${PORT}/api/market-movers`);
 
-  // Delay DB-dependent background tasks by 15s to let healthcheck pass first.
+  // Delay DB-dependent background tasks by 5s to let healthcheck pass first.
   // By the time the first real user hits the site the data prefetcher will have
   // already warmed the cache, so they get sub-50ms responses instead of cold API calls.
   setTimeout(() => {
@@ -173,7 +173,17 @@ app.listen(PORT, () => {
     } catch (err) {
       console.error('[Startup] Price alerts failed to start:', err.message);
     }
-  }, 15000);
+  }, 5000);
+
+  // ── Keep-alive: ping ourselves every 10 minutes to prevent Render spin-down ──
+  if (process.env.RENDER_EXTERNAL_URL || process.env.RENDER) {
+    const KEEP_ALIVE_MS = 10 * 60 * 1000; // 10 minutes
+    const selfUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+    setInterval(() => {
+      require('http').get(`${selfUrl}/health`, () => {}).on('error', () => {});
+    }, KEEP_ALIVE_MS);
+    console.log(`[Startup] Keep-alive ping every 10m → ${selfUrl}/health`);
+  }
   
   // Start market mover scanner (every 10 minutes)
   const marketMoverBot = require('./services/marketMoverBot');
