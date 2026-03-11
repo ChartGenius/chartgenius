@@ -104,7 +104,7 @@ async function runChecks(): Promise<Service[]> {
   }
 
   // 4. Market Data — GET /api/market/quote/AAPL (or a lightweight health-style endpoint)
-  const marketResult = await checkWithTimeout(`${API_BASE}/api/market/quote/AAPL`)
+  const marketResult = await checkWithTimeout(`${API_BASE}/api/market-data/quote/AAPL`)
   const marketStatus: ServiceStatus = marketResult.ok
     ? (marketResult.latencyMs > 4000 ? 'degraded' : 'operational')
     : 'down'
