@@ -351,11 +351,13 @@ const CRYPTO_SYMBOL_MAP: Record<string, string> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function fmt(price: number, dec = 2) {
+function fmt(price: number | null | undefined, dec = 2) {
+  if (price == null || isNaN(price)) return '—'
   return price.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })
 }
 
-function fmtPct(pct: number) {
+function fmtPct(pct: number | null | undefined) {
+  if (pct == null || isNaN(pct)) return '—'
   return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`
 }
 
@@ -883,9 +885,9 @@ function TickerBar({
           <span key={i} className={`ticker-item${item.isCustom ? ' ticker-item-custom' : ''}`}>
             <span className="ticker-symbol">{item.symbol}</span>
             <span className="ticker-price">
-              {item.price < 10 ? fmt(item.price, 4) : item.price < 1000 ? fmt(item.price, 2) : fmt(item.price, 0)}
+              {item.price == null ? '—' : item.price < 10 ? fmt(item.price, 4) : item.price < 1000 ? fmt(item.price, 2) : fmt(item.price, 0)}
             </span>
-            <span className={item.change >= 0 ? 'ticker-up' : 'ticker-down'}>
+            <span className={(item.change ?? 0) >= 0 ? 'ticker-up' : 'ticker-down'}>
               {fmtPct(item.change)}
             </span>
           </span>
@@ -1070,7 +1072,7 @@ function MoverRow({
   watched?: boolean
   onClick?: (sym: string) => void
 }) {
-  const isUp = quote.changePct >= 0
+  const isUp = (quote.changePct ?? 0) >= 0
   return (
     <div
       className={`mover-row${onClick ? ' mover-row-clickable' : ''}`}
@@ -2361,14 +2363,13 @@ export default function Home() {
                     {q ? (
                       <div className="watchlist-row-right">
                         <span className="watchlist-price">
-                          {q.current >= 1000
-                            ? fmt(q.current, 0)
-                            : q.current >= 1
-                            ? fmt(q.current, 2)
+                          {q.current == null ? '—'
+                            : q.current >= 1000 ? fmt(q.current, 0)
+                            : q.current >= 1 ? fmt(q.current, 2)
                             : fmt(q.current, 4)}
                         </span>
-                        <span className={q.changePct >= 0 ? 'watchlist-chg-up' : 'watchlist-chg-down'}>
-                          {q.changePct >= 0 ? '+' : ''}{q.changePct.toFixed(2)}%
+                        <span className={(q.changePct ?? 0) >= 0 ? 'watchlist-chg-up' : 'watchlist-chg-down'}>
+                          {q.changePct == null ? '—' : `${q.changePct >= 0 ? '+' : ''}${q.changePct.toFixed(2)}%`}
                         </span>
                       </div>
                     ) : showSkeleton ? (
