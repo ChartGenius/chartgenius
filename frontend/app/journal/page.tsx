@@ -3,7 +3,14 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import Tooltip from '../components/Tooltip'
-import { IconChart, IconArrowLeft, IconUpload, IconDownload, IconBook } from '../components/Icons'
+import {
+  IconChart, IconArrowLeft, IconUpload, IconDownload, IconBook,
+  IconClipboard, IconTarget, IconDollar, IconTrendingUp, IconTrendingDown,
+  IconZap, IconHash, IconCalculator, IconStar, IconHeartCrack, IconFlame,
+  IconCalendar, IconMicroscope, IconBrain, IconNotebook,
+  IconPencil, IconFolder, IconSave, IconTrophy, IconSkull,
+  IconTag, IconSearch, IconAlert, IconCheck, IconArrowUpDown,
+} from '../components/Icons'
 import PersistentNav from '../components/PersistentNav'
 import ImportModal from './ImportModal'
 import AdvancedReports from './AdvancedReports'
@@ -262,7 +269,7 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
 
 function KpiCard({ label, value, sub, color, tooltip, icon }: {
   label: string; value: string; sub?: string; color?: string
-  tooltip: string; icon: string
+  tooltip: string; icon: React.ReactNode
 }) {
   return (
     <div className="ds-card" style={{
@@ -573,7 +580,7 @@ function TabDashboard({ trades }: { trades: Trade[] }) {
 
   if (trades.length === 0) return (
     <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', padding: '48px 20px' }}>
-      <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
+      <div className="tv-card-icon" style={{ width: 48, height: 48, fontSize: 22, margin: '0 auto 16px' }}><IconClipboard size={22} /></div>
       <h3 style={{ color: 'var(--text-0)', marginBottom: 8, fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>
         Record your first trade or import from CSV
       </h3>
@@ -582,11 +589,11 @@ function TabDashboard({ trades }: { trades: Trade[] }) {
       </p>
       <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
         <div style={{ fontSize: 12, color: 'var(--text-2)', background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 16px', textAlign: 'left', maxWidth: 200 }}>
-          <div style={{ fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>✏️ Manual Entry</div>
+          <div style={{ fontWeight: 700, color: 'var(--text-1)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}><IconPencil size={12} />Manual Entry</div>
           Go to <strong style={{ color: 'var(--accent)' }}>Trade Log</strong> → <strong style={{ color: 'var(--accent)' }}>+ New Trade</strong>
         </div>
         <div style={{ fontSize: 12, color: 'var(--text-2)', background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 16px', textAlign: 'left', maxWidth: 200 }}>
-          <div style={{ fontWeight: 700, color: 'var(--text-1)', marginBottom: 4 }}>📂 CSV Import</div>
+          <div style={{ fontWeight: 700, color: 'var(--text-1)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}><IconFolder size={12} />CSV Import</div>
           Click <strong style={{ color: 'var(--accent)' }}>Import CSV</strong> in the header. Supports Robinhood, IBKR, and Generic formats.
         </div>
       </div>
@@ -602,36 +609,36 @@ function TabDashboard({ trades }: { trades: Trade[] }) {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <KpiCard icon="📊" label="Total Trades" value={String(stats!.totalTrades)} tooltip="Total number of trades you have logged." />
-        <KpiCard icon="🎯" label="Win Rate" value={`${stats!.winRate.toFixed(1)}%`}
+        <KpiCard icon={<IconChart size={15} />} label="Total Trades" value={String(stats!.totalTrades)} tooltip="Total number of trades you have logged." />
+        <KpiCard icon={<IconTarget size={15} />} label="Win Rate" value={`${stats!.winRate.toFixed(1)}%`}
           color={stats!.winRate >= 50 ? GREEN : RED}
           sub={`${stats!.wins}W / ${stats!.losses}L`}
           tooltip="Percentage of trades that were profitable. Most profitable traders maintain 40-60% win rate — it's about how much you win vs lose, not just how often." />
-        <KpiCard icon="💰" label="Total P&L" value={fmtDollar(stats!.totalPnl)}
+        <KpiCard icon={<IconDollar size={15} />} label="Total P&L" value={fmtDollar(stats!.totalPnl)}
           color={stats!.totalPnl >= 0 ? GREEN : RED}
           tooltip="Your total net profit or loss across all logged trades, after commissions." />
-        <KpiCard icon="📈" label="Avg Win" value={`$${stats!.avgWin.toFixed(2)}`}
+        <KpiCard icon={<IconTrendingUp size={15} />} label="Avg Win" value={`$${stats!.avgWin.toFixed(2)}`}
           color={GREEN}
           tooltip="Average dollar amount you make on winning trades. Higher is better — aim to make at least 2x your average loss." />
-        <KpiCard icon="📉" label="Avg Loss" value={`$${stats!.avgLoss.toFixed(2)}`}
+        <KpiCard icon={<IconTrendingDown size={15} />} label="Avg Loss" value={`$${stats!.avgLoss.toFixed(2)}`}
           color={RED}
           tooltip="Average dollar amount you lose on losing trades. Keep this small relative to your avg win." />
-        <KpiCard icon="⚡" label="Profit Factor" value={stats!.profitFactor === Infinity ? '∞' : fmt2(stats!.profitFactor)}
+        <KpiCard icon={<IconZap size={15} />} label="Profit Factor" value={stats!.profitFactor === Infinity ? '∞' : fmt2(stats!.profitFactor)}
           color={stats!.profitFactor >= 1.5 ? GREEN : stats!.profitFactor >= 1 ? YELLOW : RED}
           tooltip="Gross profits ÷ gross losses. Above 1.0 = profitable overall. Above 1.5 = good. Above 2.0 = excellent. Below 1.0 = losing money." />
-        <KpiCard icon="🔢" label="Avg R-Multiple" value={fmtR(stats!.avgR)}
+        <KpiCard icon={<IconHash size={15} />} label="Avg R-Multiple" value={fmtR(stats!.avgR)}
           color={stats!.avgR >= 0 ? GREEN : RED}
           tooltip="Reward achieved relative to risk taken on average. 2R means you made 2x your risk. Aim for 1R+ average to be consistently profitable." />
-        <KpiCard icon="🧮" label="Expectancy" value={fmtDollar(stats!.expectancy)}
+        <KpiCard icon={<IconCalculator size={15} />} label="Expectancy" value={fmtDollar(stats!.expectancy)}
           color={stats!.expectancy >= 0 ? GREEN : RED}
           tooltip="Average $ you expect per trade based on your win rate and avg win/loss. Positive = you have a statistical edge. Negative = losing strategy." />
-        <KpiCard icon="🌟" label="Best Day" value={fmtDollar(stats!.bestDay)}
+        <KpiCard icon={<IconStar size={15} />} label="Best Day" value={fmtDollar(stats!.bestDay)}
           color={GREEN}
           tooltip="Your single best day of trading P&L (all trades on that day combined)." />
-        <KpiCard icon="💔" label="Worst Day" value={fmtDollar(stats!.worstDay)}
+        <KpiCard icon={<IconHeartCrack size={15} />} label="Worst Day" value={fmtDollar(stats!.worstDay)}
           color={RED}
           tooltip="Your single worst day of trading P&L. Use this to set daily stop-loss limits." />
-        <KpiCard icon="🔥" label="Streak"
+        <KpiCard icon={<IconFlame size={15} />} label="Streak"
           value={stats!.curStreak > 0 ? `${stats!.curStreak}W` : `${Math.abs(stats!.curStreak)}L`}
           color={stats!.curStreak > 0 ? GREEN : RED}
           sub={`Best: ${stats!.longestWin}W / ${stats!.longestLoss}L`}
@@ -642,14 +649,14 @@ function TabDashboard({ trades }: { trades: Trade[] }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>📈 Cumulative P&L Curve</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconTrendingUp size={13} />Cumulative P&L Curve</span>
             <Tooltip text="Shows how your total profit/loss has grown (or shrunk) over time. An upward-sloping curve means you're consistently growing your account." position="right" />
           </div>
           <CumulativePnlChart trades={trades} />
         </Card>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>📊 Daily P&L (Last 20 Days)</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconChart size={13} />Daily P&L (Last 20 Days)</span>
             <Tooltip text="Green bars = profitable days, Red bars = losing days. Taller bars = bigger gains/losses. Aim for more green than red!" position="right" />
           </div>
           <DailyPnlBar trades={trades} />
@@ -907,7 +914,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag }: {
       {showForm && (
         <Card style={{ marginBottom: 24, borderColor: BLUE + '44' }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-0)', marginBottom: 16 }}>
-            📝 Log a New Trade
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><IconPencil size={14} />Log a New Trade</span>
           </div>
 
           {/* Row 1: Core fields */}
@@ -970,7 +977,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag }: {
           {/* Asset-specific fields */}
           {form.assetClass === 'Option' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
-              <div style={{ gridColumn: '1 / -1', fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase' }}>📋 Option Details</div>
+              <div style={{ gridColumn: '1 / -1', fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}><IconClipboard size={11} />Option Details</div>
               <div>
                 <FieldLabel label="Strike Price" tooltip="The price at which you have the right to buy (call) or sell (put). This is the key price level your option is based on." />
                 <input type="number" value={form.strike} onChange={e => set('strike')(e.target.value)} placeholder="e.g. 150.00" step="any" style={inputSx} />
@@ -992,7 +999,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag }: {
 
           {form.assetClass === 'Forex' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
-              <div style={{ gridColumn: '1 / -1', fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase' }}>💱 Forex Details</div>
+              <div style={{ gridColumn: '1 / -1', fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}><IconDollar size={11} />Forex Details</div>
               <div>
                 <FieldLabel label="Lot Size" tooltip="Standard lot = 100,000 units. Mini lot = 10,000. Micro lot = 1,000. Larger lots = more risk and reward per pip." />
                 <input type="number" value={form.lotSize} onChange={e => set('lotSize')(e.target.value)} placeholder="e.g. 0.1 (mini lot)" step="0.01" style={inputSx} />
@@ -1097,7 +1104,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag }: {
       {/* Filters */}
       <Card style={{ marginBottom: 16, padding: 12 }}>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 600 }}>🔍 FILTER:</span>
+          <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconSearch size={11} />FILTER:</span>
           <input
             type="text" placeholder="Symbol..." value={filterSymbol}
             onChange={e => setFilterSymbol(e.target.value)}
@@ -1152,7 +1159,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag }: {
                   { key: 'pnl', label: 'P&L' },
                   { key: 'rMultiple', label: 'R' },
                   { key: 'tags', label: 'Setup' },
-                  { key: 'rating', label: '⭐' },
+                  { key: 'rating', label: '★' },
                   { key: 'actions', label: '' },
                 ].map(col => (
                   <th
@@ -1421,7 +1428,7 @@ function TabCalendar({ trades }: { trades: Trade[] }) {
         <Card style={{ marginBottom: 16, borderColor: byDay[selectedDay].pnl >= 0 ? GREEN + '44' : RED + '44' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0)' }}>
-              📅 {new Date(selectedDay + 'T12:00:00').toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconCalendar size={14} />{new Date(selectedDay + 'T12:00:00').toLocaleDateString('default', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
             </div>
             <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--mono)', color: byDay[selectedDay].pnl >= 0 ? GREEN : RED }}>
               {fmtDollar(byDay[selectedDay].pnl)}
@@ -1579,14 +1586,14 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>📅 Avg P&L by Day of Week</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconCalendar size={13} />Avg P&L by Day of Week</span>
             <Tooltip text="Which day of the week is most profitable for you on average? Some traders are better on Mondays (trend continuation), others on Fridays (position squaring). Use this to optimize your schedule." position="right" />
           </div>
           <BarChart data={byDow} title="" />
         </Card>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>🕐 Avg P&L by Hour</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconZap size={13} />Avg P&L by Hour</span>
             <Tooltip text="Best and worst trading hours. Many traders find the first hour (9-10 AM) and last hour (3-4 PM) most volatile. The lunch hour (12-1 PM) is often slow." position="right" />
           </div>
           {byHour.length > 0 ? <BarChart data={byHour} title="" /> : <div style={{ color: 'var(--text-2)', fontSize: 12 }}>Log trades with timestamps to see this.</div>}
@@ -1596,7 +1603,7 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>🎯 Performance by Setup</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconTarget size={13} />Performance by Setup</span>
             <Tooltip text="Which setups are actually making you money? Double down on profitable setups, reduce or eliminate losing ones. This is how you refine your edge." position="right" />
           </div>
           {bySetup.map(s => (
@@ -1613,25 +1620,25 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
         </Card>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>↕️ Long vs Short</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconArrowUpDown size={13} />Long vs Short</span>
             <Tooltip text="Are you better as a Long (buyer) or Short (seller)? Some traders are naturally better at one direction. Focus on your edge." position="right" />
           </div>
           <BarChart data={byDirection} title="" />
 
           <div style={{ marginTop: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>🔥 Streak Analysis</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconFlame size={13} />Streak Analysis</span>
               <Tooltip text="Streaks reveal psychological patterns. Long losing streaks may indicate you're breaking rules when frustrated. Long winning streaks often precede overconfidence." position="right" />
             </div>
             {stats && (
               <div style={{ display: 'flex', gap: 16 }}>
                 <div style={{ flex: 1, background: 'var(--bg-1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
                   <div style={{ fontSize: 10, color: 'var(--text-2)', marginBottom: 4 }}>Best Win Streak</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: GREEN }}>🔥 {stats.longestWin}</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}><IconFlame size={18} />{stats.longestWin}</div>
                 </div>
                 <div style={{ flex: 1, background: 'var(--bg-1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
                   <div style={{ fontSize: 10, color: 'var(--text-2)', marginBottom: 4 }}>Worst Loss Streak</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: RED }}>💀 {stats.longestLoss}</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: RED, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}><IconSkull size={18} />{stats.longestLoss}</div>
                 </div>
                 <div style={{ flex: 1, background: 'var(--bg-1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
                   <div style={{ fontSize: 10, color: 'var(--text-2)', marginBottom: 4 }}>Current Streak</div>
@@ -1648,14 +1655,14 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>📉 Drawdown Chart</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconTrendingDown size={13} />Drawdown Chart</span>
             <Tooltip text="The equity curve (green) shows cumulative P&L. The red shading shows drawdown — how far you've fallen from peak equity. Deep drawdowns are psychologically difficult. Aim to keep max drawdown under 10-20% of account." position="right" />
           </div>
           <DrawdownChart trades={trades} />
         </Card>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>📊 Win/Loss Distribution</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}><IconChart size={13} />Win/Loss Distribution</span>
             <Tooltip text="A histogram showing the distribution of your trade outcomes. Ideal: most wins cluster on the right (big wins), most losses cluster near zero (small losses). This is 'letting winners run, cutting losers short'." position="right" />
           </div>
           <svg viewBox={`0 0 500 100`} style={{ width: '100%', maxHeight: 120 }}>
@@ -1824,10 +1831,12 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
                     fontSize: 12, cursor: 'pointer', marginBottom: 6,
                   }}
                 >
-                  {key === 'Daily Trading Plan' && '🌅 '}
-                  {key === 'Weekly Recap' && '📊 '}
-                  {key === 'Strategy Playbook' && '📋 '}
-                  {key}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                    {key === 'Daily Trading Plan' && <IconCalendar size={12} />}
+                    {key === 'Weekly Recap' && <IconChart size={12} />}
+                    {key === 'Strategy Playbook' && <IconClipboard size={12} />}
+                    {key}
+                  </span>
                 </button>
               ))}
               <button
@@ -1839,7 +1848,7 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
                   fontSize: 12, cursor: 'pointer',
                 }}
               >
-                📄 Blank Note
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconPencil size={12} />Blank Note</span>
               </button>
             </Card>
           )}
@@ -1878,7 +1887,7 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
         <div>
           {!selectedId ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-2)' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📓</div>
+              <div className="tv-card-icon" style={{ width: 48, height: 48, fontSize: 22, margin: '0 auto 12px' }}><IconNotebook size={22} /></div>
               <div>Select a note or create a new one</div>
             </div>
           ) : (
@@ -2022,7 +2031,7 @@ function TabReports({ trades }: { trades: Trade[] }) {
             </button>
           ))}
           <button onClick={exportCSV} style={{ background: GREEN, border: 'none', borderRadius: 8, padding: '8px 16px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginLeft: 'auto' }}>
-            📥 Export CSV
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconDownload size={13} />Export CSV</span>
           </button>
         </div>
       </Card>
@@ -2036,19 +2045,19 @@ function TabReports({ trades }: { trades: Trade[] }) {
           {/* Summary KPIs */}
           {stats && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
-              <KpiCard icon="📊" label="Trades" value={String(stats.totalTrades)} tooltip="Total trades in period." />
-              <KpiCard icon="🎯" label="Win Rate" value={`${stats.winRate.toFixed(1)}%`} color={stats.winRate >= 50 ? GREEN : RED} tooltip="Win rate for this period." />
-              <KpiCard icon="💰" label="Net P&L" value={fmtDollar(stats.totalPnl)} color={stats.totalPnl >= 0 ? GREEN : RED} tooltip="Net profit/loss for the period." />
-              <KpiCard icon="⚡" label="Profit Factor" value={stats.profitFactor === Infinity ? '∞' : fmt2(stats.profitFactor)} color={stats.profitFactor >= 1 ? GREEN : RED} tooltip="Gross profits ÷ gross losses." />
-              <KpiCard icon="🔢" label="Avg R" value={fmtR(stats.avgR)} color={stats.avgR >= 0 ? GREEN : RED} tooltip="Average R-Multiple for the period." />
-              <KpiCard icon="🧮" label="Expectancy" value={fmtDollar(stats.expectancy)} color={stats.expectancy >= 0 ? GREEN : RED} tooltip="Average $ per trade." />
+              <KpiCard icon={<IconChart size={15} />} label="Trades" value={String(stats.totalTrades)} tooltip="Total trades in period." />
+              <KpiCard icon={<IconTarget size={15} />} label="Win Rate" value={`${stats.winRate.toFixed(1)}%`} color={stats.winRate >= 50 ? GREEN : RED} tooltip="Win rate for this period." />
+              <KpiCard icon={<IconDollar size={15} />} label="Net P&L" value={fmtDollar(stats.totalPnl)} color={stats.totalPnl >= 0 ? GREEN : RED} tooltip="Net profit/loss for the period." />
+              <KpiCard icon={<IconZap size={15} />} label="Profit Factor" value={stats.profitFactor === Infinity ? '∞' : fmt2(stats.profitFactor)} color={stats.profitFactor >= 1 ? GREEN : RED} tooltip="Gross profits ÷ gross losses." />
+              <KpiCard icon={<IconHash size={15} />} label="Avg R" value={fmtR(stats.avgR)} color={stats.avgR >= 0 ? GREEN : RED} tooltip="Average R-Multiple for the period." />
+              <KpiCard icon={<IconCalculator size={15} />} label="Expectancy" value={fmtDollar(stats.expectancy)} color={stats.expectancy >= 0 ? GREEN : RED} tooltip="Average $ per trade." />
             </div>
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             {/* Top 5 wins */}
             <Card>
-              <div style={{ fontSize: 13, fontWeight: 700, color: GREEN, marginBottom: 12 }}>🏆 Top 5 Best Trades</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: GREEN, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 5 }}><IconTrophy size={13} />Top 5 Best Trades</div>
               {topWins.map((t, i) => (
                 <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                   <div>
@@ -2064,7 +2073,7 @@ function TabReports({ trades }: { trades: Trade[] }) {
 
             {/* Top 5 losses */}
             <Card>
-              <div style={{ fontSize: 13, fontWeight: 700, color: RED, marginBottom: 12 }}>💀 Top 5 Worst Trades</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: RED, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 5 }}><IconSkull size={13} />Top 5 Worst Trades</div>
               {topLosses.map((t, i) => (
                 <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                   <div>
@@ -2083,7 +2092,7 @@ function TabReports({ trades }: { trades: Trade[] }) {
             {/* Setup ranking */}
             <Card>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', marginBottom: 12 }}>
-                🎯 Setup Performance Ranking
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconTarget size={13} />Setup Performance Ranking</span>
                 <Tooltip text="Rank your setups by total P&L. Focus your trading on the top setups and consider eliminating the worst performers." position="right" />
               </div>
               {setupRanking.length === 0 ? <div style={{ color: 'var(--text-2)', fontSize: 12 }}>No setups tagged.</div> : (
@@ -2112,11 +2121,11 @@ function TabReports({ trades }: { trades: Trade[] }) {
             {/* Mistake analysis */}
             <Card>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', marginBottom: 12 }}>
-                ⚠️ Mistake Frequency Analysis
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconAlert size={13} />Mistake Frequency Analysis</span>
                 <Tooltip text="Your most common trading mistakes. The #1 mistake is what to fix first. Eliminating your top mistake often has the biggest impact on profitability." position="right" />
               </div>
               {mistakeFreq.length === 0 ? (
-                <div style={{ color: GREEN, fontSize: 12 }}>✅ No mistakes tagged — or all tagged as "None". Be honest and tag your mistakes to improve!</div>
+                <div style={{ color: GREEN, fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}><IconCheck size={12} />No mistakes tagged — or all tagged as "None". Be honest and tag your mistakes to improve!</div>
               ) : (
                 mistakeFreq.map(([mistake, count]) => (
                   <div key={mistake} style={{ marginBottom: 10 }}>
@@ -2140,14 +2149,14 @@ function TabReports({ trades }: { trades: Trade[] }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const TABS = [
-  { id: 'dashboard', label: '📊 Dashboard' },
-  { id: 'log',       label: '📋 Trade Log' },
-  { id: 'calendar',  label: '📅 Calendar' },
-  { id: 'analytics', label: '🔬 Analytics' },
-  { id: 'notebook',  label: '📓 Notebook' },
-  { id: 'reports',   label: '📈 Reports' },
-  { id: 'advanced',  label: '🧠 Advanced' },
+const TABS: { id: string; label: string; Icon: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> }[] = [
+  { id: 'dashboard', label: 'Dashboard', Icon: IconChart },
+  { id: 'log',       label: 'Trade Log', Icon: IconClipboard },
+  { id: 'calendar',  label: 'Calendar',  Icon: IconCalendar },
+  { id: 'analytics', label: 'Analytics', Icon: IconMicroscope },
+  { id: 'notebook',  label: 'Notebook',  Icon: IconNotebook },
+  { id: 'reports',   label: 'Reports',   Icon: IconTrendingUp },
+  { id: 'advanced',  label: 'Advanced',  Icon: IconBrain },
 ]
 
 export default function JournalPage() {
@@ -2233,7 +2242,7 @@ export default function JournalPage() {
           </button>
           <ExportButton trades={trades} notes={notes} variant="journal" />
           <button onClick={() => setShowBackupImport(true)} className="btn btn-secondary btn-sm">
-            💾 Backup
+            <IconSave size={13} /> Backup
           </button>
         </div>
       </header>
@@ -2264,7 +2273,7 @@ export default function JournalPage() {
               transition: 'color 0.15s, border-color 0.15s',
             }}
           >
-            {tab.label}
+            <tab.Icon size={13} style={{ verticalAlign: 'middle', marginRight: 5, opacity: 0.85 }} />{tab.label}
           </button>
         ))}
       </div>
@@ -2273,37 +2282,37 @@ export default function JournalPage() {
       {trades.length === 0 && (
         <div style={{ background: 'rgba(74,158,255,0.05)', borderBottom: '1px solid rgba(74,158,255,0.15)', padding: '16px 24px' }}>
           <div style={{ maxWidth: 900, margin: '0 auto' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0)', marginBottom: 10 }}>
-              📒 Log, analyze, and improve your trades
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <IconBook size={14} />Log, analyze, and improve your trades
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, marginBottom: 14 }}>
               <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4 }}>✏️ Manual Entry</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}><IconPencil size={12} />Manual Entry</div>
                 <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.55 }}>
                   Click <strong style={{ color: 'var(--accent)' }}>Trade Log → + New Trade</strong>. Fill in symbol, entry/exit price, shares, and stop loss. P&L and R-Multiple calculate automatically.
                 </div>
               </div>
               <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4 }}>📂 CSV Import</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}><IconFolder size={12} />CSV Import</div>
                 <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.55 }}>
                   Click <strong style={{ color: 'var(--accent)' }}>Import CSV</strong> above. Supports <strong>Robinhood</strong>, <strong>IBKR</strong>, and <strong>Generic CSV</strong> formats. Download a sample template from the import dialog.
                 </div>
               </div>
               <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4 }}>🏷️ Tags &amp; Analysis</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}><IconTag size={12} />Tags &amp; Analysis</div>
                 <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.55 }}>
                   Tag each trade with a <strong>setup type</strong> (e.g. Breakout, Pullback) and <strong>mistake tag</strong> (e.g. FOMO, Oversize). Analytics will show which setups are most profitable.
                 </div>
               </div>
               <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 14px' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4 }}>📝 Notebook</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 5 }}><IconNotebook size={12} />Notebook</div>
                 <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.55 }}>
                   Use the <strong>Notebook</strong> tab for daily trading plans, weekly recaps, and strategy playbooks. Templates provided — just fill in the blanks.
                 </div>
               </div>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-3)' }}>
-              💾 All data saves locally in your browser. Use <strong style={{ color: 'var(--text-2)' }}>Backup</strong> to export a JSON snapshot you can restore anytime.
+            <div style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <IconSave size={11} />All data saves locally in your browser. Use <strong style={{ color: 'var(--text-2)' }}>Backup</strong> to export a JSON snapshot you can restore anytime.
             </div>
           </div>
         </div>
@@ -2322,7 +2331,7 @@ export default function JournalPage() {
 
       {/* Footer note */}
       <div style={{ textAlign: 'center', padding: '20px 24px 40px', fontSize: 11, color: 'var(--text-2)', borderTop: '1px solid var(--border)' }}>
-        💾 Data saved locally in your browser. Export anytime — your data is yours.
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconSave size={11} />Data saved locally in your browser. Export anytime — your data is yours.</span>
       </div>
 
       {/* Modals */}

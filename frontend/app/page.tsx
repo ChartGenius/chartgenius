@@ -26,6 +26,7 @@ import OnboardingTooltip from './components/OnboardingTooltip'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 import { apiFetchSafe } from './lib/apiFetch'
 import DataError from './components/DataError'
+import { IconTrendingUp, IconTrendingDown, IconMinus, IconMic, IconChart, IconBuilding } from './components/Icons'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -938,7 +939,11 @@ function AnalysisView({
   const sentimentScore = bullishCount + bearishCount > 0
     ? (bullishCount / (bullishCount + bearishCount)) * 100
     : 50
-  const sentimentLabel = sentimentScore > 60 ? '📈 Bullish' : sentimentScore < 40 ? '📉 Bearish' : '➡ Neutral'
+  const sentimentLabel = sentimentScore > 60
+    ? <><IconTrendingUp size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />Bullish</>
+    : sentimentScore < 40
+      ? <><IconTrendingDown size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />Bearish</>
+      : <><IconMinus size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />Neutral</>
   const sentimentColor = sentimentScore > 60 ? 'var(--green)' : sentimentScore < 40 ? 'var(--red)' : 'var(--accent)'
 
   const highImpact = newsArticles.filter(a => a.impactLabel === 'High').slice(0, 8)
@@ -1006,7 +1011,10 @@ function AnalysisView({
       {highImpact.length > 0 && (
         <div>
           <div style={{ padding: '8px 16px 4px', borderBottom: '1px solid var(--border)' }}>
-            <div className="sidebar-title">🔴 HIGH IMPACT NEWS</div>
+            <div className="sidebar-title" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--red)', flexShrink: 0 }} />
+              HIGH IMPACT NEWS
+            </div>
           </div>
           {highImpact.map((a, i) => <NewsRow key={a.id} article={a} index={i} />)}
         </div>
@@ -1129,11 +1137,11 @@ function EconomicCalendar({ events, loading }: EcalProps) {
   }
 
   // Type icon for event
-  function typeIcon(e: CalendarEvent): string {
-    if (e.type === 'speech') return '🎤'
-    if (e.type === 'earnings') return '📊'
-    if (e.type === 'holiday') return '🏛'
-    return ''
+  function typeIcon(e: CalendarEvent): React.ReactNode {
+    if (e.type === 'speech') return <IconMic size={10} />
+    if (e.type === 'earnings') return <IconChart size={10} />
+    if (e.type === 'holiday') return <IconBuilding size={10} />
+    return null
   }
 
   const filtered = events.filter(e => {
@@ -1177,13 +1185,13 @@ function EconomicCalendar({ events, loading }: EcalProps) {
 
         {/* Type badges */}
         {speechCount > 0 && (
-          <span style={{ fontSize: 9, background: 'rgba(245,158,11,0.18)', color: '#f59e0b', padding: '2px 5px', borderRadius: 3, fontWeight: 700 }}>
-            🎤 {speechCount}
+          <span style={{ fontSize: 9, background: 'rgba(245,158,11,0.18)', color: '#f59e0b', padding: '2px 5px', borderRadius: 3, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <IconMic size={9} />{speechCount}
           </span>
         )}
         {earningsCount > 0 && (
-          <span style={{ fontSize: 9, background: 'rgba(139,92,246,0.18)', color: '#8b5cf6', padding: '2px 5px', borderRadius: 3, fontWeight: 700 }}>
-            📊 {earningsCount}
+          <span style={{ fontSize: 9, background: 'rgba(139,92,246,0.18)', color: '#8b5cf6', padding: '2px 5px', borderRadius: 3, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+            <IconChart size={9} />{earningsCount}
           </span>
         )}
 

@@ -5,7 +5,12 @@ import Link from 'next/link'
 import Script from 'next/script'
 import Breadcrumbs from '../components/Breadcrumbs'
 import PersistentNav from '../components/PersistentNav'
-import { IconArrowLeft } from '../components/Icons'
+import {
+  IconArrowLeft, IconHouse, IconEye, IconBook, IconChart, IconWrench,
+  IconSettings, IconRocket, IconZap, IconCreditCard, IconShield, IconLifeBuoy,
+  IconTrendingUp, IconSatellite, IconQuestionCircle, IconMap, IconKeyboard,
+  IconSearch,
+} from '../components/Icons'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FAQ data (sourced from docs/HELP_CENTER_FAQ.md)
@@ -18,7 +23,7 @@ import { IconArrowLeft } from '../components/Icons'
 const GETTING_STARTED_STEPS = [
   {
     step: 1,
-    icon: '🏠',
+    Icon: IconHouse,
     title: 'Explore the Dashboard',
     desc: 'Start with the market overview — live indices, trending tickers, top news, and the economic calendar all in one place. Get a feel for what\'s moving today.',
     href: '/dashboard',
@@ -26,7 +31,7 @@ const GETTING_STARTED_STEPS = [
   },
   {
     step: 2,
-    icon: '👁️',
+    Icon: IconEye,
     title: 'Set Up Your Watchlist',
     desc: 'Go to Portfolio → Watchlist tab and add your favorite tickers. Set optional target buy prices. TradVue will track live prices and performance automatically.',
     href: '/portfolio',
@@ -34,7 +39,7 @@ const GETTING_STARTED_STEPS = [
   },
   {
     step: 3,
-    icon: '📒',
+    Icon: IconBook,
     title: 'Log Your First Trade',
     desc: 'Head to the Journal and click "+ New Trade." Fill in your entry/exit prices, position size, and stop loss. P&L and R-Multiple are calculated for you. Add a setup tag to unlock analytics.',
     href: '/journal',
@@ -42,7 +47,7 @@ const GETTING_STARTED_STEPS = [
   },
   {
     step: 4,
-    icon: '📊',
+    Icon: IconChart,
     title: 'Track Holdings',
     desc: 'Add your current positions under Portfolio → Holdings. Enter your shares, buy date, and average cost. TradVue shows unrealized gains, allocation %, yield on cost, and projected dividends.',
     href: '/portfolio',
@@ -50,7 +55,7 @@ const GETTING_STARTED_STEPS = [
   },
   {
     step: 5,
-    icon: '🔧',
+    Icon: IconWrench,
     title: 'Use the Tools',
     desc: 'The Tools page has a position size calculator, risk/reward calculator, options Greeks, Fibonacci levels, and more. Run quick math before entering a trade.',
     href: '/tools',
@@ -58,7 +63,7 @@ const GETTING_STARTED_STEPS = [
   },
   {
     step: 6,
-    icon: '⚙️',
+    Icon: IconSettings,
     title: 'Customize Settings',
     desc: 'Click the settings gear (top-right) to switch themes (dark/light/system), set your timezone, adjust ticker bar size, and configure your preferred defaults.',
     href: '/',
@@ -80,11 +85,24 @@ const KEYBOARD_SHORTCUTS = [
   { keys: 'g s', description: 'Open Settings panel', category: 'Go To' },
 ]
 
+const FAQ_ICONS: Record<string, React.FC<{ size?: number; style?: React.CSSProperties }>> = {
+  'getting-started': IconRocket,
+  'features': IconZap,
+  'account-billing': IconCreditCard,
+  'data-privacy': IconShield,
+  'troubleshooting': IconWrench,
+  'support': IconLifeBuoy,
+  'roadmap': IconTrendingUp,
+  'data-sources': IconSatellite,
+  'journal': IconBook,
+  'portfolio': IconChart,
+}
+
 const FAQ_DATA = [
   {
     id: 'getting-started',
     category: 'Getting Started',
-    icon: '🚀',
+    icon: 'getting-started',
     questions: [
       {
         q: 'What is TradVue?',
@@ -123,7 +141,7 @@ const FAQ_DATA = [
   {
     id: 'features',
     category: 'Features',
-    icon: '⚡',
+    icon: 'features',
     questions: [
       {
         q: 'How do alerts work?',
@@ -150,7 +168,7 @@ const FAQ_DATA = [
   {
     id: 'account-billing',
     category: 'Account & Billing',
-    icon: '💳',
+    icon: 'account-billing',
     questions: [
       {
         q: 'What are the differences between Free and Pro?',
@@ -173,7 +191,7 @@ const FAQ_DATA = [
   {
     id: 'data-privacy',
     category: 'Data & Privacy',
-    icon: '🔒',
+    icon: 'data-privacy',
     questions: [
       {
         q: 'Where is my data stored?',
@@ -933,7 +951,7 @@ export default function HelpPage() {
                       background: 'var(--bg-3)', border: '1px solid var(--border)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 20, flexShrink: 0,
-                    }}>{step.icon}</span>
+                    }}>{step.Icon ? <step.Icon size={20} /> : null}</span>
                     <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-0)', lineHeight: 1.3 }}>
                       {step.title}
                     </span>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { IconTrendingUp, IconChart, IconMic, IconFlag, IconCalendar, IconArrowLeft, IconClock } from '../components/Icons'
+import { IconTrendingUp, IconChart, IconMic, IconFlag, IconCalendar, IconArrowLeft, IconClock, IconBuilding } from '../components/Icons'
 import PersistentNav from '../components/PersistentNav'
 import { formatEventTime, formatEventDate, getUserTimezone, getTimezoneAbbr } from '../lib/timezone'
 
@@ -265,8 +265,8 @@ function MonthGrid({
                   <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 8, fontWeight: 700,
                     background: 'rgba(139,92,246,0.15)', color: '#8b5cf6',
                     padding: '1px 4px', borderRadius: 3 }}>
-                    {earningsCount > 0 && `📊${earningsCount}`}
-                    {speechCount > 0 && ` 🎤${speechCount}`}
+                    {earningsCount > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}><IconChart size={8} />{earningsCount}</span>}
+                    {speechCount > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 1, marginLeft: 2 }}><IconMic size={8} />{speechCount}</span>}
                   </span>
                 )}
                 {lowCount > 0 && highCount === 0 && medCount === 0 && (
@@ -865,7 +865,7 @@ export default function CalendarPage() {
               color: impactFilter === imp ? (imp === 'All' ? '#000' : IMPACT_COLORS[imp]) : 'var(--text-2)',
               cursor: 'pointer',
             }}>
-              {imp === 'All' ? 'All' : imp === 'High' ? '🔴 High' : imp === 'Medium' ? '🟡 Med' : '🟢 Low'}
+              {imp === 'All' ? 'All' : imp === 'High' ? 'High' : imp === 'Medium' ? 'Med' : 'Low'}
             </button>
           ))}
         </div>
@@ -1019,7 +1019,8 @@ export default function CalendarPage() {
                       {(['economic', 'speech', 'earnings', 'holiday'] as EventType[]).map(type => {
                         const typeEvents = selectedDayEvents.filter(e => e.type === type)
                         if (typeEvents.length === 0) return null
-                        const typeLabel = type === 'economic' ? '📈 Economic' : type === 'speech' ? '🎤 Speeches' : type === 'earnings' ? '📊 Earnings' : '🏛 Holidays'
+                        const typeLabel = type === 'economic' ? 'Economic' : type === 'speech' ? 'Speeches' : type === 'earnings' ? 'Earnings' : 'Holidays'
+                        const TypeIcon = type === 'economic' ? IconTrendingUp : type === 'speech' ? IconMic : type === 'earnings' ? IconChart : IconBuilding
                         return (
                           <div key={type}>
                             {/* Section header */}
@@ -1031,7 +1032,9 @@ export default function CalendarPage() {
                               fontSize: 10, fontWeight: 700, color: 'var(--text-2)',
                               letterSpacing: '0.06em',
                             }}>
-                              {typeLabel}
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                <TypeIcon size={10} />{typeLabel}
+                              </span>
                               <span style={{ marginLeft: 6, fontWeight: 400, color: 'var(--text-3)', fontSize: 9 }}>
                                 {typeEvents.length}
                               </span>
@@ -1064,7 +1067,7 @@ export default function CalendarPage() {
                                   {/* Title + meta */}
                                   <div>
                                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                                      {isSpeech && <span style={{ fontSize: 11 }}>🎤</span>}
+                                      {isSpeech && <span style={{ display: 'inline-flex', alignItems: 'center' }}><IconMic size={11} /></span>}
                                       <span>{event.title}</span>
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
@@ -1205,7 +1208,7 @@ export default function CalendarPage() {
                         {/* Title + meta */}
                         <div>
                           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-0)', lineHeight: 1.3, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 3 }}>
-                            {isSpeech && <span style={{ fontSize: 10 }}>🎤</span>}
+                            {isSpeech && <span style={{ display: 'inline-flex', alignItems: 'center' }}><IconMic size={10} /></span>}
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
@@ -1262,12 +1265,12 @@ export default function CalendarPage() {
       }}>
         <span style={{ fontWeight: 700, color: 'var(--text-2)' }}>LEGEND:</span>
         {[
-          { label: '🔴 High Impact', color: '#ff4560' },
-          { label: '🟡 Medium Impact', color: '#f0a500' },
-          { label: '🟢 Low Impact', color: '#00c06a' },
-          { label: '📊 Earnings', color: '#8b5cf6' },
-          { label: '🎤 Speech', color: '#f59e0b' },
-          { label: '🏛 Holiday', color: '#6366f1' },
+          { label: 'High Impact', color: '#ff4560' },
+          { label: 'Medium Impact', color: '#f0a500' },
+          { label: 'Low Impact', color: '#00c06a' },
+          { label: 'Earnings', color: '#8b5cf6' },
+          { label: 'Speech', color: '#f59e0b' },
+          { label: 'Holiday', color: '#6366f1' },
         ].map(item => (
           <span key={item.label} style={{ color: item.color, fontWeight: 600 }}>{item.label}</span>
         ))}

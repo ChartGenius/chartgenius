@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { IconArrowLeft, IconAlert, IconDownload, IconBriefcase } from '../components/Icons'
+import {
+  IconArrowLeft, IconAlert, IconDownload, IconBriefcase,
+  IconChart, IconFolder, IconDollar, IconEye, IconEyeOff, IconReceiptTax,
+  IconPackage, IconLightbulb, IconSave, IconFile, IconCheck,
+} from '../components/Icons'
 import Link from 'next/link'
 import PersistentNav from '../components/PersistentNav'
 import Tooltip from '../components/Tooltip'
@@ -534,12 +538,12 @@ function PortfolioExportButton() {
         }}>
           <button onClick={exportJSON} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', color: 'var(--text-0)', fontSize: 12 }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.1)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-            <div style={{ fontWeight: 600 }}>📄 Export JSON</div>
+            <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><IconFile size={13} />Export JSON</div>
             <div style={{ fontSize: 10, color: 'var(--text-2)' }}>Full data backup</div>
           </button>
           <button onClick={exportCSVFn} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderRadius: 6, padding: '8px 10px', cursor: 'pointer', color: 'var(--text-0)', fontSize: 12 }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.1)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-            <div style={{ fontWeight: 600 }}>📊 Export CSV</div>
+            <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><IconChart size={13} />Export CSV</div>
             <div style={{ fontSize: 10, color: 'var(--text-2)' }}>Spreadsheet format</div>
           </button>
         </div>
@@ -991,13 +995,13 @@ export default function PortfolioPage() {
   }, [stockInfos])
 
   // Tab list
-  const tabs: { id: typeof activeTab; label: string }[] = [
-    { id: 'dashboard', label: '📊 Dashboard' },
-    { id: 'holdings', label: '📁 Holdings' },
-    { id: 'dividends', label: '💰 Dividends' },
-    { id: 'sold', label: '✅ Sold' },
-    { id: 'watchlist', label: '👁 Watchlist' },
-    { id: 'tax', label: '🧾 Tax' },
+  const tabs: { id: typeof activeTab; label: string; Icon: React.FC<{ size?: number; style?: React.CSSProperties }> }[] = [
+    { id: 'dashboard', label: 'Dashboard', Icon: IconChart },
+    { id: 'holdings',  label: 'Holdings',  Icon: IconFolder },
+    { id: 'dividends', label: 'Dividends', Icon: IconDollar },
+    { id: 'sold',      label: 'Sold',      Icon: IconCheck },
+    { id: 'watchlist', label: 'Watchlist', Icon: IconEye },
+    { id: 'tax',       label: 'Tax',       Icon: IconReceiptTax },
   ]
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -1034,7 +1038,7 @@ export default function PortfolioPage() {
           }}
           aria-label="Toggle privacy mode"
         >
-          {privacyMode ? '👁‍🗨' : '👁'}
+          {privacyMode ? <IconEyeOff size={15} /> : <IconEye size={15} />}
         </button>
         <button onClick={fetchStockInfos} style={{ fontSize: 11, cursor: 'pointer', padding: '5px 10px', border: '1px solid var(--border)', borderRadius: 'var(--btn-radius)', background: 'var(--bg-3)', color: 'var(--text-1)' }}>
           ↻ Refresh
@@ -1055,7 +1059,7 @@ export default function PortfolioPage() {
       {/* Welcome banner for new users */}
       {holdings.length === 0 && watchlist.length === 0 && (
         <div style={{ background: 'rgba(74,158,255,0.06)', borderBottom: '1px solid rgba(74,158,255,0.15)', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: 'var(--text-2)' }}>
-          <span style={{ color: 'var(--accent)', fontSize: 16 }}>💡</span>
+          <span style={{ color: 'var(--accent)', display: 'flex' }}><IconLightbulb size={16} /></span>
           <span><strong style={{ color: 'var(--text-1)' }}>New here?</strong> Start in the <strong style={{ color: 'var(--text-1)' }}>Holdings</strong> tab to add positions, or <strong style={{ color: 'var(--text-1)' }}>Watchlist</strong> tab to track stocks you&apos;re considering. Dashboard will populate automatically.</span>
         </div>
       )}
@@ -1071,7 +1075,7 @@ export default function PortfolioPage() {
       {/* Import from localStorage banner */}
       {showImportBanner && (
         <div style={{ background: 'rgba(90,100,220,0.15)', borderBottom: '1px solid var(--accent)', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12, fontSize: 12 }}>
-          <span>📦 You have portfolio data saved locally. Import it to your account?</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><IconPackage size={14} />You have portfolio data saved locally. Import it to your account?</span>
           <button onClick={handleImportFromLS} style={{ background: 'var(--accent)', color: '#fff', padding: '4px 12px', borderRadius: 4, fontSize: 11, cursor: 'pointer' }}>Import now</button>
           <button onClick={() => setShowImportBanner(false)} style={{ color: 'var(--text-3)', fontSize: 11, cursor: 'pointer' }}>Dismiss</button>
         </div>
@@ -1085,7 +1089,7 @@ export default function PortfolioPage() {
             color: activeTab === t.id ? 'var(--accent)' : 'var(--text-2)',
             borderBottom: activeTab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
             cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
-          }}>{t.label}</button>
+          }}><t.Icon size={12} style={{ verticalAlign: 'middle', marginRight: 5, opacity: 0.85 }} />{t.label}</button>
         ))}
       </div>
 
@@ -1214,7 +1218,7 @@ function DashboardTab({
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px 20px' }}>
         {/* Welcome hero */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+          <div className="tv-card-icon" style={{ width: 56, height: 56, margin: '0 auto 16px' }}><IconChart size={24} /></div>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-0)', marginBottom: 10, letterSpacing: '-0.03em' }}>
             Track your holdings, watchlist &amp; performance
           </h2>
@@ -1226,13 +1230,13 @@ function DashboardTab({
         {/* Feature cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 32 }}>
           {[
-            { icon: '📁', title: 'Holdings', desc: 'Track shares, avg cost, P&L, and allocation % for every position.' },
-            { icon: '💰', title: 'Dividends', desc: 'Automatic dividend tracking from history. Override any value.' },
-            { icon: '👁', title: 'Watchlist', desc: 'Monitor stocks you\'re watching with price alerts and target prices.' },
-            { icon: '🧾', title: 'Tax', desc: 'Estimate realized gains, short vs long-term, and tax impact.' },
+            { Icon: IconFolder,      title: 'Holdings',  desc: 'Track shares, avg cost, P&L, and allocation % for every position.' },
+            { Icon: IconDollar,      title: 'Dividends', desc: 'Automatic dividend tracking from history. Override any value.' },
+            { Icon: IconEye,         title: 'Watchlist', desc: 'Monitor stocks you\'re watching with price alerts and target prices.' },
+            { Icon: IconReceiptTax,  title: 'Tax',       desc: 'Estimate realized gains, short vs long-term, and tax impact.' },
           ].map(f => (
             <div key={f.title} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
-              <div style={{ fontSize: 22, marginBottom: 6 }}>{f.icon}</div>
+              <div className="tv-card-icon" style={{ width: 36, height: 36, marginBottom: 6 }}><f.Icon size={16} /></div>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', marginBottom: 4 }}>{f.title}</div>
               <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.5 }}>{f.desc}</div>
             </div>
@@ -1263,7 +1267,7 @@ function DashboardTab({
         </div>
 
         <div style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' }}>
-          💾 No account required — data saves locally in your browser. <span style={{ color: 'var(--accent)' }}>Sign in</span> to enable cloud sync.
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconSave size={11} />No account required — data saves locally in your browser. <a href="/login" style={{ color: 'var(--accent)' }}>Sign in</a> to enable cloud sync.</span>
         </div>
       </div>
     )
@@ -1581,7 +1585,7 @@ function HoldingsTab({
 
       {holdings.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', border: '1px dashed var(--border)', borderRadius: 12 }}>
-          <div style={{ fontSize: 40, marginBottom: 14 }}>📁</div>
+          <div className="tv-card-icon" style={{ width: 48, height: 48, margin: '0 auto 14px' }}><IconFolder size={22} /></div>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', marginBottom: 8 }}>No positions yet</div>
           <div style={{ fontSize: 13, color: 'var(--text-2)', maxWidth: 420, margin: '0 auto 16px', lineHeight: 1.65 }}>
             Add your first stock position. You&apos;ll need: <strong style={{ color: 'var(--text-1)' }}>ticker</strong>, <strong style={{ color: 'var(--text-1)' }}>shares</strong>, <strong style={{ color: 'var(--text-1)' }}>buy date</strong>, and <strong style={{ color: 'var(--text-1)' }}>average cost</strong>. Company info and current prices are fetched automatically.

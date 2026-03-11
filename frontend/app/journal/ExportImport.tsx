@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { IconDownload, IconUpload, IconClose } from '../components/Icons'
+import { IconDownload, IconUpload, IconClose, IconFile, IconChart, IconSave, IconMerge, IconRefresh } from '../components/Icons'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -159,10 +159,10 @@ export function ExportButton({ trades, notes, variant = 'journal' }: {
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  const labels: Record<string, string> = {
-    journal: '📥 Export',
-    portfolio: '📥 Export',
-    backup: '💾 Backup',
+  const labels: Record<string, React.ReactNode> = {
+    journal: 'Export',
+    portfolio: 'Export',
+    backup: 'Backup',
   }
 
   return (
@@ -186,18 +186,18 @@ export function ExportButton({ trades, notes, variant = 'journal' }: {
         }}>
           {variant === 'journal' && trades && notes && (
             <>
-              <DropdownItem icon="📄" label="Export as JSON" sub="Full data with tags & notes" onClick={() => { exportJournalJSON(trades, notes); setOpen(false) }} />
-              <DropdownItem icon="📊" label="Export as CSV" sub="Simplified spreadsheet" onClick={() => { exportJournalCSV(trades); setOpen(false) }} />
+              <DropdownItem icon={<IconFile size={13} />} label="Export as JSON" sub="Full data with tags & notes" onClick={() => { exportJournalJSON(trades, notes); setOpen(false) }} />
+              <DropdownItem icon={<IconChart size={13} />} label="Export as CSV" sub="Simplified spreadsheet" onClick={() => { exportJournalCSV(trades); setOpen(false) }} />
             </>
           )}
           {variant === 'portfolio' && (
             <>
-              <DropdownItem icon="📄" label="Export as JSON" sub="Holdings, dividends, settings" onClick={() => { exportPortfolioJSON(); setOpen(false) }} />
-              <DropdownItem icon="📊" label="Export as CSV" sub="Holdings spreadsheet" onClick={() => { exportPortfolioCSV(); setOpen(false) }} />
+              <DropdownItem icon={<IconFile size={13} />} label="Export as JSON" sub="Holdings, dividends, settings" onClick={() => { exportPortfolioJSON(); setOpen(false) }} />
+              <DropdownItem icon={<IconChart size={13} />} label="Export as CSV" sub="Holdings spreadsheet" onClick={() => { exportPortfolioCSV(); setOpen(false) }} />
             </>
           )}
           {variant === 'backup' && trades && notes && (
-            <DropdownItem icon="💾" label="Download Full Backup" sub="Journal + Portfolio (JSON)" onClick={() => { exportFullBackup(trades, notes); setOpen(false) }} />
+            <DropdownItem icon={<IconSave size={13} />} label="Download Full Backup" sub="Journal + Portfolio (JSON)" onClick={() => { exportFullBackup(trades, notes); setOpen(false) }} />
           )}
         </div>
       )}
@@ -205,7 +205,7 @@ export function ExportButton({ trades, notes, variant = 'journal' }: {
   )
 }
 
-function DropdownItem({ icon, label, sub, onClick }: { icon: string; label: string; sub: string; onClick: () => void }) {
+function DropdownItem({ icon, label, sub, onClick }: { icon: React.ReactNode; label: string; sub: string; onClick: () => void }) {
   return (
     <button onClick={onClick} style={{
       display: 'block', width: '100%', textAlign: 'left',
@@ -216,7 +216,7 @@ function DropdownItem({ icon, label, sub, onClick }: { icon: string; label: stri
     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.1)')}
     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
-      <div style={{ fontSize: 12, fontWeight: 600 }}>{icon} {label}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>{icon}</span>{label}</div>
       <div style={{ fontSize: 10, color: 'var(--text-2)', marginTop: 1 }}>{sub}</div>
     </button>
   )
@@ -425,7 +425,7 @@ export function ImportBackupModal({ onClose, onRestore }: {
                     color: mode === m ? 'var(--accent)' : 'var(--text-1)',
                     cursor: 'pointer', textAlign: 'left',
                   }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{m === 'merge' ? '🔀 Merge' : '🔄 Replace'}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>{m === 'merge' ? <><IconMerge size={13} />Merge</> : <><IconRefresh size={13} />Replace</>}</div>
                     <div style={{ fontSize: 10, color: 'var(--text-2)', marginTop: 2 }}>
                       {m === 'merge' ? 'Add new items, keep existing' : 'Overwrite with backup data'}
                     </div>
@@ -450,7 +450,7 @@ export function ImportBackupModal({ onClose, onRestore }: {
 
             {mode === 'replace' && (
               <div style={{ background: 'rgba(239,68,68,0.08)', borderRadius: 8, padding: '8px 12px', marginBottom: 16, fontSize: 11, color: 'var(--red)' }}>
-                ⚠️ Replace mode will overwrite your current data. This cannot be undone.
+                Replace mode will overwrite your current data. This cannot be undone.
               </div>
             )}
           </>

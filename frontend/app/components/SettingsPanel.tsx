@@ -5,6 +5,7 @@ import { useSettings, type Theme, type DefaultMarket } from '../context/Settings
 import { useAuth } from '../context/AuthContext'
 import { trackSettingsChanged } from '../utils/analytics'
 import { TIMEZONES, getUserTimezone, getTimezoneAbbr } from '../lib/timezone'
+import { IconSettings, IconSun, IconMoon, IconStar, IconBell } from './Icons'
 
 interface SettingsPanelProps {
   onClose: () => void
@@ -27,6 +28,21 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
     // Dispatch a storage event so the main page can react
     window.dispatchEvent(new StorageEvent('storage', { key: 'cg_ticker_size', newValue: size }))
   }
+
+  // Font size (managed via localStorage + html class)
+  const [fontSize, setFontSizeState] = useState<'small' | 'medium' | 'large'>('small')
+  useEffect(() => {
+    try { setFontSizeState((localStorage.getItem('cg_font_size') as 'small' | 'medium' | 'large') || 'small') } catch {}
+  }, [])
+  function setFontSizeLocal(size: 'small' | 'medium' | 'large') {
+    setFontSizeState(size)
+    try { localStorage.setItem('cg_font_size', size) } catch {}
+    const html = document.documentElement
+    html.classList.remove('font-small', 'font-medium', 'font-large')
+    if (size !== 'small') html.classList.add(`font-${size}`)
+    trackSettingsChanged('font_size', size)
+  }
+
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Escape key or click outside closes
@@ -74,7 +90,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
         {/* Header */}
         <div className="settings-header">
           <span className="settings-title">
-            <span className="settings-icon">⚙</span>
+            <span className="settings-icon"><IconSettings size={15} /></span>
             Settings
           </span>
           <button className="modal-close-btn" onClick={onClose}>✕</button>
@@ -91,7 +107,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
               <div className="settings-user-info">
                 <span className="settings-user-email">{user.email}</span>
                 <span className="settings-user-tier">
-                  {user.subscription_tier === 'pro' ? '⭐ Pro' : 'Free Plan'}
+                  {user.subscription_tier === 'pro' ? <><IconStar size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />Pro</> : 'Free Plan'}
                 </span>
               </div>
               <button className="settings-logout-btn" onClick={logout} title="Sign out">
@@ -109,7 +125,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
             <div className="settings-row-info">
               <span className="settings-row-label">Theme</span>
               <span className="settings-row-desc">
-                {settings.theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+                {settings.theme === 'dark' ? <><IconMoon size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />Dark</> : <><IconSun size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />Light</>}
               </span>
             </div>
             <div className="settings-theme-toggle">
@@ -119,7 +135,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                   className={`settings-theme-btn${settings.theme === t ? ' settings-theme-btn-active' : ''}`}
                   onClick={() => { setTheme(t); trackSettingsChanged('theme', t) }}
                 >
-                  {t === 'dark' ? '🌙 Dark' : '☀️ Light'}
+                  {t === 'dark' ? <><IconMoon size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />Dark</> : <><IconSun size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />Light</>}
                 </button>
               ))}
             </div>
@@ -141,7 +157,29 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                   onClick={() => setTickerSizeLocal(s)}
                   style={{ textTransform: 'capitalize' }}
                 >
-                  {s === 'compact' ? '🔹 Compact' : s === 'normal' ? '🔷 Normal' : '🔵 Large'}
+                  {s === 'compact' ? 'Compact' : s === 'normal' ? 'Normal' : 'Large'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Font Size */}
+        <div className="settings-section">
+          <div className="settings-section-label">Font Size</div>
+          <div className="settings-row settings-row-col">
+            <span className="settings-row-desc" style={{ marginBottom: 8 }}>
+              Scales text across the entire app
+            </span>
+            <div className="settings-market-toggle">
+              {(['small', 'medium', 'large'] as const).map(s => (
+                <button
+                  key={s}
+                  className={`settings-market-btn${fontSize === s ? ' settings-market-btn-active' : ''}`}
+                  onClick={() => setFontSizeLocal(s)}
+                  style={{ textTransform: 'capitalize' }}
+                >
+                  {s === 'small' ? 'Small' : s === 'medium' ? 'Medium' : 'Large'}
                 </button>
               ))}
             </div>
@@ -163,7 +201,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
                   className={`settings-market-btn${settings.defaultMarket === m ? ' settings-market-btn-active' : ''}`}
                   onClick={() => { setDefaultMarket(m); trackSettingsChanged('default_market', m) }}
                 >
-                  {m === 'US' ? '🇺🇸 US' : m === 'Crypto' ? '₿ Crypto' : '💱 Forex'}
+                  {m === 'US' ? 'US' : m === 'Crypto' ? '₿ Crypto' : 'Forex'}
                 </button>
               ))}
             </div>
@@ -194,7 +232,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
 
           {settings.notificationsEnabled && (
             <div className="settings-notif-note">
-              <span>🔔 You'll receive alerts for price movements and major market events.</span>
+              <span><IconBell size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />You'll receive alerts for price movements and major market events.</span>
             </div>
           )}
         </div>

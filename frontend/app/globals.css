@@ -64,6 +64,10 @@
 
 html, body { height: 100%; }
 
+/* ─── Font size scaling ───────────────────────────────────────────────────── */
+html.font-medium { font-size: 115%; }
+html.font-large  { font-size: 130%; }
+
 body {
   font-family: var(--font);
   font-size: 13px;
