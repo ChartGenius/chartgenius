@@ -4931,3 +4931,188 @@ a.alert-row-title:hover {
 @keyframes tv-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOBILE PORTRAIT — 2-column dashboard layout
+   Watchlist (left) + Calendar (right) top half, News full-width below
+   DESKTOP UNAFFECTED: both max-width AND orientation required
+───────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) and (orientation: portrait) {
+  /* Override the single-column tablet layout with a 2-column grid */
+  .layout-3col {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto 1fr !important;
+    grid-template-areas:
+      "watchlist calendar"
+      "news      news" !important;
+  }
+
+  /* Watchlist: show as normal grid cell, NOT a fixed overlay */
+  .col-watchlist {
+    display: flex !important;
+    flex-direction: column;
+    position: static !important;
+    width: auto !important;
+    max-height: 45vh !important;
+    box-shadow: none !important;
+    z-index: auto !important;
+    grid-area: watchlist;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  /* Calendar: right column in top half */
+  .col-calendar {
+    grid-area: calendar;
+    border-bottom: 1px solid var(--border);
+    max-height: 45vh;
+    overflow-y: auto;
+    position: static;
+  }
+
+  /* News: full-width bottom row */
+  .col-news {
+    grid-area: news;
+    border-right: none;
+  }
+
+  /* Hamburger not needed — watchlist is visible in grid */
+  .mobile-hamburger {
+    display: none !important;
+  }
+
+  /* Sidebar close button not needed — not an overlay */
+  .mobile-sidebar-close {
+    display: none !important;
+  }
+
+  /* Compact watchlist items for portrait */
+  .watchlist-row {
+    padding: 4px 8px;
+  }
+  .watchlist-sym {
+    font-size: 10px;
+  }
+  .watchlist-price {
+    font-size: 10px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOBILE LANDSCAPE — Hide tab bar, use hamburger menu in PersistentNav
+   DESKTOP UNAFFECTED: both max-width AND orientation required
+───────────────────────────────────────────────────────────────────────────── */
+
+/* Hamburger button for landscape nav — hidden on desktop */
+.apn-hamburger {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--text-1);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.apn-hamburger:hover {
+  background: var(--bg-2);
+}
+
+/* Hamburger drawer — hidden by default */
+.apn-drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(280px, 80vw);
+  background: var(--bg-1);
+  border-left: 1px solid var(--border);
+  z-index: 9999;
+  flex-direction: column;
+  padding: 16px 0;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+}
+.apn-drawer.open {
+  display: flex;
+}
+.apn-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.apn-drawer-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  text-transform: uppercase;
+}
+.apn-drawer-close {
+  background: none;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+.apn-drawer-close:hover {
+  background: var(--bg-2);
+}
+.apn-drawer-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 8px;
+}
+.apn-drawer-items .nav-item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: left;
+  width: 100%;
+  font-weight: 500;
+}
+.apn-drawer-items .nav-item:hover {
+  background: var(--bg-2);
+}
+
+/* Backdrop for drawer */
+.apn-drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+}
+.apn-drawer-backdrop.open {
+  display: block;
+}
+
+@media (max-width: 1024px) and (orientation: landscape) {
+  /* Hide the horizontal tab bar — too wide, wastes vertical space */
+  .apn-items {
+    display: none !important;
+  }
+
+  /* Show hamburger button */
+  .apn-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
