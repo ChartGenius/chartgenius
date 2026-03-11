@@ -1907,6 +1907,14 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     padding: 0 10px;
     gap: 8px;
     height: 48px;
+    position: relative !important;
+    top: unset !important;
+  }
+
+  /* Unstick ticker bar too */
+  .ticker-bar-wrap {
+    position: relative !important;
+    top: unset !important;
   }
 
   .header-logo-img {

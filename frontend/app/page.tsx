@@ -1581,6 +1581,7 @@ export default function Home() {
 
   // Mobile sidebar open/close
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   // Track if we already did the initial backend watchlist sync for this session
   const didSyncWatchlist = useRef(false)
@@ -2162,8 +2163,8 @@ export default function Home() {
           {/* Mobile hamburger — opens watchlist sidebar */}
           <button
             className="mobile-hamburger"
-            onClick={() => setMobileSidebarOpen(o => !o)}
-            aria-label="Toggle watchlist"
+            onClick={() => setMobileNavOpen(o => !o)}
+            aria-label="Open navigation menu"
           >
             <span /><span /><span />
           </button>
@@ -2250,6 +2251,36 @@ export default function Home() {
           <button className="pro-btn">PRO</button>
         </div>
       </header>
+
+      {/* ── Mobile Nav Drawer ──────────────────────────────────────────────── */}
+      {mobileNavOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9998 }}
+          onClick={() => setMobileNavOpen(false)} />
+      )}
+      <div style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: 'min(280px, 80vw)',
+        background: 'var(--bg-1)', borderLeft: '1px solid var(--border)', zIndex: 9999,
+        display: mobileNavOpen ? 'flex' : 'none', flexDirection: 'column',
+        padding: '16px 0', boxShadow: '-4px 0 24px rgba(0,0,0,0.5)', overflowY: 'auto',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 12px', borderBottom: '1px solid var(--border)', marginBottom: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-2)', textTransform: 'uppercase' }}>Navigation</span>
+          <button onClick={() => setMobileNavOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-2)', fontSize: 18, cursor: 'pointer', padding: '4px 8px' }}>✕</button>
+        </div>
+        {[
+          { label: 'Dashboard', href: '/' },
+          { label: 'News', href: '/news' },
+          { label: 'Calendar', href: '/calendar' },
+          { label: 'Portfolio', href: '/portfolio' },
+          { label: 'Journal', href: '/journal' },
+          { label: 'Tools', href: '/tools' },
+          { label: 'Help', href: '/help' },
+        ].map(item => (
+          <a key={item.label} href={item.href} onClick={() => setMobileNavOpen(false)}
+            style={{ padding: '12px 20px', fontSize: 14, fontWeight: 500, color: 'var(--text-1)', textDecoration: 'none', borderBottom: '1px solid var(--border)' }}
+          >{item.label}</a>
+        ))}
+      </div>
 
       {/* ── Offline Banner ─────────────────────────────────────────────────── */}
       {isOffline && (
