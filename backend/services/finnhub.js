@@ -61,6 +61,21 @@ class FinnhubService {
     const upperSymbol = symbol.toUpperCase();
 
     // ── Special routing ──────────────────────────────────────────────────────
+
+    // Index symbols → ETF equivalents (Finnhub free tier doesn't support indices)
+    const INDEX_TO_ETF = {
+      'DJI': 'DIA', '^DJI': 'DIA', '.DJI': 'DIA', 'DJIA': 'DIA',
+      'IXIC': 'QQQ', '^IXIC': 'QQQ', 'COMP': 'QQQ', 'NDX': 'QQQ',
+      'GSPC': 'SPY', '^GSPC': 'SPY', 'SPX': 'SPY',
+      'RUT': 'IWM', '^RUT': 'IWM',
+      'TNX': 'TLT', '^TNX': 'TLT',
+    };
+    if (INDEX_TO_ETF[upperSymbol]) {
+      const etf = INDEX_TO_ETF[upperSymbol];
+      const quote = await this.getQuote(etf);
+      return { ...quote, symbol: upperSymbol, _mappedFrom: etf };
+    }
+
     if (this._isForexSymbol(upperSymbol)) {
       return this.getForexQuote(upperSymbol);
     }
@@ -602,10 +617,11 @@ class FinnhubService {
   _mockQuote(symbol) {
     const base = this.mockPrices[symbol];
     if (!base) {
+      // Return null values instead of fake $100 — frontend should show "N/A"
       return {
-        symbol, current: 100, change: 0, changePct: 0,
-        high: 102, low: 98, open: 100, prevClose: 100,
-        timestamp: new Date().toISOString(), source: 'mock'
+        symbol, current: null, change: null, changePct: null,
+        high: null, low: null, open: null, prevClose: null,
+        timestamp: new Date().toISOString(), source: 'unavailable'
       };
     }
     // Add tiny random noise to make it feel live
