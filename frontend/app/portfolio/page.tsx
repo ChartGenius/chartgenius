@@ -201,7 +201,10 @@ function uid() {
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const YEARS = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028]
+const YEARS = (() => {
+  const cur = new Date().getFullYear()
+  return Array.from({ length: 8 }, (_, i) => cur - 7 + i).filter(y => y <= cur)
+})()
 
 const SECTOR_COLORS: Record<string, string> = {
   'Communication Services': '#4a9eff',
