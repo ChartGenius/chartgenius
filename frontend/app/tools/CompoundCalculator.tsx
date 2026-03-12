@@ -59,7 +59,8 @@ export default function CompoundCalculator() {
 
   const { yearlyData, finalBalance, totalContrib, totalProfit } = useMemo(() => {
     const periodsPerYear = freq === 'monthly' ? 12 : 52
-    const ratePerPeriod = rateN / periodsPerYear * (freq === 'monthly' ? 1 : 12 / 52)
+    // rateN is already a monthly rate — use directly for monthly, convert for weekly
+    const ratePerPeriod = freq === 'monthly' ? rateN : rateN * 12 / 52
     const contribPerPeriod = freq === 'monthly' ? monthlyN : monthlyN * 12 / 52
 
     let balance = startN
@@ -181,7 +182,7 @@ export default function CompoundCalculator() {
             {pastYears.map(py => {
               let bal = startN
               const periods = freq === 'monthly' ? 12 : 52
-              const r = rateN / periods * (freq === 'monthly' ? 1 : 12 / 52)
+              const r = freq === 'monthly' ? rateN : rateN * 12 / 52
               const c = freq === 'monthly' ? monthlyN : monthlyN * 12 / 52
               for (let i = 0; i < py * periods; i++) bal = bal * (1 + r) + c
               return (
