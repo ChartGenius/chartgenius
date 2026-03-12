@@ -48,9 +48,11 @@ export default function PositionSizer() {
 
   const riskDollar = acctN * (riskPct / 100)
   const stopDistance = Math.abs(entryN - stopN)
-  const positionSize = stopDistance > 0
+  const rawSize = stopDistance > 0
     ? (asset === 'Futures' ? riskDollar / (stopDistance * multiplier) : riskDollar / stopDistance)
     : 0
+  // Forex: convert units to standard lots (1 lot = 100,000 units)
+  const positionSize = asset === 'Forex' ? rawSize / 100000 : rawSize
   const positionValue = asset === 'Futures'
     ? positionSize * entryN * multiplier
     : positionSize * entryN
@@ -59,10 +61,10 @@ export default function PositionSizer() {
   // Quick scenarios
   const scenarios = [0.5, 1, 1.5, 2, 3].map(r => {
     const dr = acctN * (r / 100)
-    const ps = stopDistance > 0
+    const raw = stopDistance > 0
       ? (asset === 'Futures' ? dr / (stopDistance * multiplier) : dr / stopDistance)
       : 0
-    return { risk: r, size: ps }
+    return { risk: r, size: asset === 'Forex' ? raw / 100000 : raw }
   })
 
   const fmt = (n: number, d = 0) => isNaN(n) || !isFinite(n) ? '—' : n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })
