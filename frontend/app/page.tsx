@@ -26,7 +26,7 @@ import OnboardingTooltip from './components/OnboardingTooltip'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 import { apiFetchSafe } from './lib/apiFetch'
 import DataError from './components/DataError'
-import { IconTrendingUp, IconTrendingDown, IconMinus, IconMic, IconChart, IconBuilding, IconCalendar, IconBell } from './components/Icons'
+import { IconTrendingUp, IconTrendingDown, IconMinus, IconMic, IconChart, IconBuilding, IconCalendar, IconBell, IconSettings } from './components/Icons'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1633,6 +1633,14 @@ export default function Home() {
     }
     return 'normal'
   })
+  const [watchlistSettingsOpen, setWatchlistSettingsOpen] = useState(false)
+  const [watchlistEditMode, setWatchlistEditMode] = useState(false)
+  const wlSettingsRef = useRef<HTMLDivElement>(null)
+  const dragIndexRef = useRef<number | null>(null)
+  const touchStartYRef = useRef<number>(0)
+  const touchStartIndexRef = useRef<number>(0)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null)
 
   // Calendar
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
@@ -1714,6 +1722,18 @@ export default function Home() {
   useEffect(() => {
     try { localStorage.setItem('cg_watchlist_size', watchlistSize) } catch {}
   }, [watchlistSize])
+
+  // ── Close watchlist settings dropdown on outside click ─────────────────────
+  useEffect(() => {
+    if (!watchlistSettingsOpen) return
+    const h = (e: MouseEvent) => {
+      if (wlSettingsRef.current && !wlSettingsRef.current.contains(e.target as Node)) {
+        setWatchlistSettingsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [watchlistSettingsOpen])
 
   // ── Backend watchlist sync on login ────────────────────────────────────────
   useEffect(() => {
@@ -2407,19 +2427,56 @@ export default function Home() {
               ★ WATCHLIST
             </span>
             <div className="watchlist-header-right">
-              {/* Size controls */}
-              <button
-                onClick={() => setWatchlistSize(s => s === 'large' ? 'normal' : s === 'normal' ? 'compact' : 'compact')}
-                className="wl-size-btn"
-                title="Smaller"
-                aria-label="Decrease watchlist size"
-              >−</button>
-              <button
-                onClick={() => setWatchlistSize(s => s === 'compact' ? 'normal' : s === 'normal' ? 'large' : 'large')}
-                className="wl-size-btn"
-                title="Larger"
-                aria-label="Increase watchlist size"
-              >+</button>
+              {/* Gear settings button + dropdown */}
+              <div className="wl-settings-wrap" ref={wlSettingsRef} style={{ position: 'relative' }}>
+                <button
+                  className={`wl-settings-btn${watchlistSettingsOpen ? ' active' : ''}`}
+                  onClick={() => setWatchlistSettingsOpen(o => !o)}
+                  title="Watchlist settings"
+                  aria-label="Watchlist settings"
+                >
+                  <IconSettings size={14} />
+                </button>
+                {watchlistSettingsOpen && (
+                  <div className="wl-settings-dropdown">
+                    <div className="wl-settings-section">
+                      <div className="wl-settings-label">SIZE</div>
+                      <div className="wl-settings-row">
+                        <button
+                          className={`wl-size-opt${watchlistSize === 'compact' ? ' active' : ''}`}
+                          onClick={() => { setWatchlistSize('compact'); }}
+                        >Compact</button>
+                        <button
+                          className={`wl-size-opt${watchlistSize === 'normal' ? ' active' : ''}`}
+                          onClick={() => { setWatchlistSize('normal'); }}
+                        >Normal</button>
+                        <button
+                          className={`wl-size-opt${watchlistSize === 'large' ? ' active' : ''}`}
+                          onClick={() => { setWatchlistSize('large'); }}
+                        >Large</button>
+                      </div>
+                    </div>
+                    <div className="wl-settings-section" style={{ borderTop: '1px solid var(--border)' }}>
+                      <div className="wl-settings-label">REORDER</div>
+                      <button
+                        className={`wl-reorder-btn${watchlistEditMode ? ' active' : ''}`}
+                        onClick={() => {
+                          setWatchlistEditMode(m => !m)
+                          setWatchlistSettingsOpen(false)
+                        }}
+                      >
+                        {watchlistEditMode ? 'Done Editing' : '≡ Edit Order'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {watchlistEditMode && (
+                <button
+                  className="wl-done-btn"
+                  onClick={() => setWatchlistEditMode(false)}
+                >Done</button>
+              )}
               {token && (
                 <span className={`watchlist-sync-badge${watchlistSyncing ? ' syncing' : ''}`}>
                   {watchlistSyncing ? '⟳' : '✓'}
@@ -2502,7 +2559,7 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              watchlist.map(sym => {
+              watchlist.map((sym, idx) => {
                 const q = getWatchlistQuote(sym)
                 const isCrypto = !!CRYPTO_SYMBOL_MAP[sym.toUpperCase()]
                 // Determine if we should show skeleton vs dash
@@ -2514,13 +2571,83 @@ export default function Home() {
                 const isFetched = watchlistFetchedRef.current.has(sym)
                 const showSkeleton = !q && loadingQuotes && fetchAge < 5000 && !isFetched
                 const isForex = sym.length === 6 && /^[A-Z]{6}$/.test(sym) && !isCrypto
+                const isDragging = draggingIndex === idx
+                const isDragOver = dragOverIndex === idx
                 return (
                   <div
                     key={sym}
-                    className="watchlist-row"
-                    onClick={() => openStockDetail(sym)}
-                    style={{ position: 'relative' }}
+                    className={`watchlist-row${isDragging ? ' dragging' : ''}${isDragOver ? ' drag-over' : ''}`}
+                    onClick={() => !watchlistEditMode && openStockDetail(sym)}
+                    style={{ position: 'relative', cursor: watchlistEditMode ? 'default' : 'pointer' }}
+                    draggable={watchlistEditMode}
+                    onDragStart={watchlistEditMode ? (e) => {
+                      dragIndexRef.current = idx
+                      setDraggingIndex(idx)
+                      e.dataTransfer.effectAllowed = 'move'
+                    } : undefined}
+                    onDragOver={watchlistEditMode ? (e) => {
+                      e.preventDefault()
+                      e.dataTransfer.dropEffect = 'move'
+                      if (dragIndexRef.current !== null && dragIndexRef.current !== idx) {
+                        setDragOverIndex(idx)
+                      }
+                    } : undefined}
+                    onDragLeave={watchlistEditMode ? () => {
+                      setDragOverIndex(null)
+                    } : undefined}
+                    onDrop={watchlistEditMode ? (e) => {
+                      e.preventDefault()
+                      const from = dragIndexRef.current
+                      if (from !== null && from !== idx) {
+                        const next = [...watchlist]
+                        const [item] = next.splice(from, 1)
+                        next.splice(idx, 0, item)
+                        setWatchlist(next)
+                        try { localStorage.setItem('cg_watchlist', JSON.stringify(next)) } catch {}
+                      }
+                      dragIndexRef.current = null
+                      setDraggingIndex(null)
+                      setDragOverIndex(null)
+                    } : undefined}
+                    onDragEnd={watchlistEditMode ? () => {
+                      dragIndexRef.current = null
+                      setDraggingIndex(null)
+                      setDragOverIndex(null)
+                    } : undefined}
+                    onTouchStart={watchlistEditMode ? (e) => {
+                      touchStartYRef.current = e.touches[0].clientY
+                      touchStartIndexRef.current = idx
+                    } : undefined}
+                    onTouchMove={watchlistEditMode ? (e) => {
+                      e.preventDefault()
+                      const y = e.touches[0].clientY
+                      const el = document.elementFromPoint(e.touches[0].clientX, y)
+                      const row = el?.closest('.watchlist-row')
+                      if (row) {
+                        const rows = Array.from(document.querySelectorAll('.watchlist-row'))
+                        const overIdx = rows.indexOf(row as Element)
+                        if (overIdx >= 0 && overIdx !== touchStartIndexRef.current) {
+                          setDragOverIndex(overIdx)
+                        }
+                      }
+                    } : undefined}
+                    onTouchEnd={watchlistEditMode ? () => {
+                      const from = touchStartIndexRef.current
+                      const to = dragOverIndex
+                      if (to !== null && from !== to) {
+                        const next = [...watchlist]
+                        const [item] = next.splice(from, 1)
+                        next.splice(to, 0, item)
+                        setWatchlist(next)
+                        try { localStorage.setItem('cg_watchlist', JSON.stringify(next)) } catch {}
+                      }
+                      setDragOverIndex(null)
+                      setDraggingIndex(null)
+                    } : undefined}
                   >
+                    {watchlistEditMode && (
+                      <span className="wl-drag-handle" title="Drag to reorder">≡</span>
+                    )}
                     <div className="watchlist-row-left">
                       <span className="watchlist-sym">{sym}</span>
                       {isCrypto && <span className="watchlist-tag-crypto">crypto</span>}
@@ -2549,27 +2676,31 @@ export default function Home() {
                         <span style={{ fontSize: 9, color: 'var(--text-3)' }}>n/a</span>
                       </div>
                     )}
-                    <button
-                      onClick={e => {
-                        e.stopPropagation()
-                        const q = getWatchlistQuote(sym)
-                        const price = q?.current
-                        const params = new URLSearchParams({ symbol: sym, asset: 'Stock' })
-                        if (price) params.set('price', price.toFixed(2))
-                        window.location.href = `/journal?${params.toString()}`
-                      }}
-                      title={`Log trade for ${sym}`}
-                      style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer', color: 'var(--text-3)', padding: '1px 5px', fontSize: 9, fontWeight: 700, marginRight: 2 }}
-                    >
-                      +LOG
-                    </button>
-                    <button
-                      onClick={e => { e.stopPropagation(); toggleWatch(sym) }}
-                      className="watchlist-remove-btn"
-                      title={`Remove ${sym}`}
-                    >
-                      ✕
-                    </button>
+                    {!watchlistEditMode && (
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          const q = getWatchlistQuote(sym)
+                          const price = q?.current
+                          const params = new URLSearchParams({ symbol: sym, asset: 'Stock' })
+                          if (price) params.set('price', price.toFixed(2))
+                          window.location.href = `/journal?${params.toString()}`
+                        }}
+                        title={`Log trade for ${sym}`}
+                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer', color: 'var(--text-3)', padding: '1px 5px', fontSize: 9, fontWeight: 700, marginRight: 2 }}
+                      >
+                        +LOG
+                      </button>
+                    )}
+                    {!watchlistEditMode && (
+                      <button
+                        onClick={e => { e.stopPropagation(); toggleWatch(sym) }}
+                        className="watchlist-remove-btn"
+                        title={`Remove ${sym}`}
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 )
               })
