@@ -388,9 +388,9 @@ class RSSFeedAggregator {
       const rest = filtered
         .filter(a => !recentHighIds.has(a.id))
         .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-      filtered = [...recentHigh, ...rest];
+      const sorted = [...recentHigh, ...rest];
 
-      return filtered.slice(0, limit);
+      return sorted.slice(0, limit);
     }, 600); // Cache 10 minutes
   }
 
