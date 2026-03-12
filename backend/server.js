@@ -84,8 +84,16 @@ const cachePublic1h   = (_, res, next) => { res.set('Cache-Control', 'public, ma
 const cachePrivate    = (_, res, next) => { res.set('Cache-Control', 'private, no-cache');    next(); };
 
 // ── Routes ────────────────────────────────────────────────────────────────────
-app.use('/api/auth',       cachePrivate, require('./routes/auth'));
-app.use('/api/user',       cachePrivate, require('./routes/userData'));
+// Auth routes — wrapped in try/catch so missing Supabase deps don't crash the whole server
+try {
+  app.use('/api/auth',     cachePrivate, require('./routes/auth'));
+  app.use('/api/user',     cachePrivate, require('./routes/userData'));
+} catch (e) {
+  console.warn('[auth] Auth routes failed to load:', e.message);
+  // Fallback: register a stub so users get a clear 503 instead of 404
+  app.use('/api/auth', (req, res) => res.status(503).json({ error: 'Authentication service is not available yet. Coming soon!' }));
+  app.use('/api/user', (req, res) => res.status(503).json({ error: 'Authentication service is not available yet. Coming soon!' }));
+}
 app.use('/api/markets',    cachePublic30s, require('./routes/markets'));   // Legacy mock routes (kept for compat)
 app.use('/api/news',       cachePublic2m,  require('./routes/news'));      // Legacy mock news (kept for compat)
 app.use('/api/watchlist',  cachePrivate, require('./routes/watchlist'));
