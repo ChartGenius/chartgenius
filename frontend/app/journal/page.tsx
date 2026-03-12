@@ -2565,7 +2565,7 @@ function JournalPageInner() {
       const asset = params.get('asset')
       if (sym) {
         setPrefillParams({ symbol: sym, price: price || undefined, asset: asset || undefined })
-        setActiveTab('tradelog')
+        setActiveTab('log')
         // Clean the URL
         window.history.replaceState({}, '', '/journal')
       }
