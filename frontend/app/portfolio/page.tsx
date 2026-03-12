@@ -273,7 +273,7 @@ function saveLS<T>(key: string, val: T) {
 
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('token') || localStorage.getItem('auth_token') || null
+  return localStorage.getItem('cg_token') || null
 }
 
 function authHeaders(): Record<string, string> {
@@ -645,19 +645,15 @@ export default function PortfolioPage() {
     const loggedIn = !!token
     setIsLoggedIn(loggedIn)
 
-    if (loggedIn) {
-      // Load from API
-      loadFromAPI()
-    } else {
-      // Load from localStorage
-      setHoldings(loadLS('cg_portfolio_holdings', []))
-      setDividendOverrides(loadLS('cg_portfolio_dividends', {}))
-      setSoldPositions(loadLS('cg_portfolio_sold', []))
-      setWatchlist(loadLS('cg_portfolio_watchlist', []))
-      setSnapshots(loadLS('cg_portfolio_snapshots', []))
-      setPortfolioSettings(loadLS('cg_portfolio_settings', DEFAULT_SETTINGS))
-      setDataLoaded(true)
-    }
+    // Always load from localStorage first (single source of truth for UI).
+    // Cloud sync (initPortfolioSync) handles merging cloud ↔ localStorage separately.
+    setHoldings(loadLS('cg_portfolio_holdings', []))
+    setDividendOverrides(loadLS('cg_portfolio_dividends', {}))
+    setSoldPositions(loadLS('cg_portfolio_sold', []))
+    setWatchlist(loadLS('cg_portfolio_watchlist', []))
+    setSnapshots(loadLS('cg_portfolio_snapshots', []))
+    setPortfolioSettings(loadLS('cg_portfolio_settings', DEFAULT_SETTINGS))
+    setDataLoaded(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -872,11 +868,11 @@ export default function PortfolioPage() {
     setPriceAlerts(prev => prev.filter(a => a.id !== id))
   }, [isLoggedIn])
 
-  // Save to localStorage when NOT logged in
-  useEffect(() => { if (!isLoggedIn && dataLoaded) saveLS('cg_portfolio_holdings', holdings) }, [holdings, isLoggedIn, dataLoaded])
-  useEffect(() => { if (!isLoggedIn && dataLoaded) saveLS('cg_portfolio_dividends', dividendOverrides) }, [dividendOverrides, isLoggedIn, dataLoaded])
-  useEffect(() => { if (!isLoggedIn && dataLoaded) saveLS('cg_portfolio_sold', soldPositions) }, [soldPositions, isLoggedIn, dataLoaded])
-  useEffect(() => { if (!isLoggedIn && dataLoaded) saveLS('cg_portfolio_watchlist', watchlist) }, [watchlist, isLoggedIn, dataLoaded])
+  // Save to localStorage always (cloud sync reads from localStorage)
+  useEffect(() => { if (dataLoaded) saveLS('cg_portfolio_holdings', holdings) }, [holdings, dataLoaded])
+  useEffect(() => { if (dataLoaded) saveLS('cg_portfolio_dividends', dividendOverrides) }, [dividendOverrides, dataLoaded])
+  useEffect(() => { if (dataLoaded) saveLS('cg_portfolio_sold', soldPositions) }, [soldPositions, dataLoaded])
+  useEffect(() => { if (dataLoaded) saveLS('cg_portfolio_watchlist', watchlist) }, [watchlist, dataLoaded])
   useEffect(() => { saveLS('cg_portfolio_snapshots', snapshots) }, [snapshots])
 
   // ── Cloud sync (cloudSync / cg_token) ─────────────────────────────────────
@@ -891,7 +887,7 @@ export default function PortfolioPage() {
   }, [cloudToken])
 
   useEffect(() => {
-    if (dataLoaded && holdings.length >= 0) debouncedSyncPortfolio(holdings)
+    if (dataLoaded && holdings.length > 0) debouncedSyncPortfolio(holdings)
   }, [holdings, dataLoaded])
 
   // Fetch exchange rates when home currency changes or on mount

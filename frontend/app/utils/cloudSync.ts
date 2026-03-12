@@ -242,7 +242,7 @@ let _portfolioTimer: ReturnType<typeof setTimeout> | null = null
 
 export function debouncedSyncPortfolio(holdings: unknown[]): void {
   const token = getToken()
-  if (!token) return
+  if (!token || !holdings.length) return  // Never push empty arrays to cloud
   if (_portfolioTimer) clearTimeout(_portfolioTimer)
   _portfolioTimer = setTimeout(async () => {
     _portfolioTimer = null

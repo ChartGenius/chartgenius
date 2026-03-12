@@ -3037,7 +3037,7 @@ export default function Home() {
                         const [item] = next.splice(from, 1)
                         next.splice(idx, 0, item)
                         setWatchlist(next)
-                        try { localStorage.setItem('cg_watchlist', JSON.stringify(next)) } catch {}
+                        try { localStorage.setItem('cg_wl', JSON.stringify(next)) } catch {}
                       }
                       dragIndexRef.current = null
                       setDraggingIndex(null)
@@ -3073,7 +3073,7 @@ export default function Home() {
                         const [item] = next.splice(from, 1)
                         next.splice(to, 0, item)
                         setWatchlist(next)
-                        try { localStorage.setItem('cg_watchlist', JSON.stringify(next)) } catch {}
+                        try { localStorage.setItem('cg_wl', JSON.stringify(next)) } catch {}
                       }
                       setDragOverIndex(null)
                       setDraggingIndex(null)
