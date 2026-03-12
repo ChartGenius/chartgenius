@@ -56,7 +56,7 @@ router.get('/', requireAuth, async (req, res) => {
        JOIN instruments i ON i.id = w.instrument_id
        WHERE w.user_id = $1
        ORDER BY w.created_at DESC`,
-      [req.user.userId]
+      [req.user.id]
     );
 
     if (rows.length === 0) {
@@ -101,7 +101,7 @@ router.post('/', requireAuth, async (req, res) => {
     // Check duplicate
     const { rows: existing } = await db.query(
       'SELECT id FROM watchlists WHERE user_id = $1 AND instrument_id = $2',
-      [req.user.userId, instrument.id]
+      [req.user.id, instrument.id]
     );
     if (existing.length > 0) {
       return res.status(409).json({ error: 'Instrument already in watchlist' });
@@ -111,7 +111,7 @@ router.post('/', requireAuth, async (req, res) => {
     if (req.user.subscription_tier === 'free') {
       const { rows: countRows } = await db.query(
         'SELECT COUNT(*) FROM watchlists WHERE user_id = $1',
-        [req.user.userId]
+        [req.user.id]
       );
       if (parseInt(countRows[0].count) >= 10) {
         return res.status(403).json({
@@ -126,7 +126,7 @@ router.post('/', requireAuth, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, NOW())
        RETURNING *`,
       [
-        req.user.userId,
+        req.user.id,
         instrument.id,
         alert_threshold_up || null,
         alert_threshold_down || null,
@@ -179,7 +179,7 @@ router.put('/:id/alerts', requireAuth, async (req, res) => {
         alert_threshold_up ?? null,
         alert_threshold_down ?? null,
         parseInt(id),
-        req.user.userId,
+        req.user.id,
       ]
     );
 
@@ -203,7 +203,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
     const { rows } = await db.query(
       'DELETE FROM watchlists WHERE id = $1 AND user_id = $2 RETURNING *',
-      [parseInt(id), req.user.userId]
+      [parseInt(id), req.user.id]
     );
 
     if (rows.length === 0) {
@@ -230,7 +230,7 @@ router.get('/performance', requireAuth, async (req, res) => {
        FROM watchlists w
        JOIN instruments i ON i.id = w.instrument_id
        WHERE w.user_id = $1`,
-      [req.user.userId]
+      [req.user.id]
     );
 
     if (rows.length === 0) {

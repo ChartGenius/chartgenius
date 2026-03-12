@@ -45,7 +45,7 @@ router.get('/holdings', async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT * FROM portfolio_holdings WHERE user_id = $1 ORDER BY buy_date ASC, symbol ASC`,
-      [req.user.userId]
+      [req.user.id]
     );
     res.json({ holdings: rows });
   } catch (e) {
@@ -78,7 +78,7 @@ router.post('/holdings', async (req, res) => {
          notes = EXCLUDED.notes,
          updated_at = NOW()
        RETURNING *`,
-      [req.user.userId, symbol.toUpperCase(), company_name, sector, shares, avg_cost, buy_date || null, annual_dividend || 0, div_override_annual || null, notes || null]
+      [req.user.id, symbol.toUpperCase(), company_name, sector, shares, avg_cost, buy_date || null, annual_dividend || 0, div_override_annual || null, notes || null]
     );
 
     res.json({ holding: rows[0] });
@@ -92,7 +92,7 @@ router.delete('/holdings/:symbol', async (req, res) => {
   try {
     await db.query(
       `DELETE FROM portfolio_holdings WHERE user_id = $1 AND symbol = $2`,
-      [req.user.userId, req.params.symbol.toUpperCase()]
+      [req.user.id, req.params.symbol.toUpperCase()]
     );
     res.json({ ok: true });
   } catch (e) {
@@ -110,7 +110,7 @@ router.get('/transactions/:symbol', async (req, res) => {
        JOIN portfolio_holdings ph ON pt.holding_id = ph.id
        WHERE pt.user_id = $1 AND ph.symbol = $2
        ORDER BY pt.date ASC`,
-      [req.user.userId, req.params.symbol.toUpperCase()]
+      [req.user.id, req.params.symbol.toUpperCase()]
     );
     res.json({ transactions: rows });
   } catch (e) {
@@ -129,14 +129,14 @@ router.post('/transactions', async (req, res) => {
     // Find the holding
     const { rows: holdings } = await db.query(
       `SELECT id FROM portfolio_holdings WHERE user_id = $1 AND symbol = $2`,
-      [req.user.userId, symbol.toUpperCase()]
+      [req.user.id, symbol.toUpperCase()]
     );
     if (!holdings.length) return res.status(404).json({ error: 'Holding not found' });
 
     const { rows } = await db.query(
       `INSERT INTO portfolio_transactions (holding_id, user_id, type, shares, price, date, notes)
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [holdings[0].id, req.user.userId, type, shares, price, date, notes || null]
+      [holdings[0].id, req.user.id, type, shares, price, date, notes || null]
     );
     res.json({ transaction: rows[0] });
   } catch (e) {
@@ -151,7 +151,7 @@ router.get('/dividends', async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT * FROM portfolio_dividend_overrides WHERE user_id = $1`,
-      [req.user.userId]
+      [req.user.id]
     );
     // Convert to DividendCell format: { "year-month-symbol": amount }
     const cell = {};
@@ -177,7 +177,7 @@ router.post('/dividends', async (req, res) => {
        ON CONFLICT (user_id, symbol, year, month)
        DO UPDATE SET amount = EXCLUDED.amount, updated_at = NOW()
        RETURNING *`,
-      [req.user.userId, symbol.toUpperCase(), year, month, amount]
+      [req.user.id, symbol.toUpperCase(), year, month, amount]
     );
     res.json({ override: rows[0] });
   } catch (e) {
@@ -190,7 +190,7 @@ router.delete('/dividends/:symbol/:year/:month', async (req, res) => {
   try {
     await db.query(
       `DELETE FROM portfolio_dividend_overrides WHERE user_id=$1 AND symbol=$2 AND year=$3 AND month=$4`,
-      [req.user.userId, req.params.symbol.toUpperCase(), req.params.year, req.params.month]
+      [req.user.id, req.params.symbol.toUpperCase(), req.params.year, req.params.month]
     );
     res.json({ ok: true });
   } catch (e) {
@@ -205,7 +205,7 @@ router.get('/sold', async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT * FROM portfolio_sold WHERE user_id = $1 ORDER BY sell_date DESC`,
-      [req.user.userId]
+      [req.user.id]
     );
     res.json({ sold: rows });
   } catch (e) {
@@ -225,7 +225,7 @@ router.post('/sold', async (req, res) => {
          (user_id, symbol, company_name, sector, shares, avg_cost, sale_price, buy_date, sell_date, dividends_received, notes)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
-      [req.user.userId, symbol.toUpperCase(), company_name, sector, shares, avg_cost, sale_price,
+      [req.user.id, symbol.toUpperCase(), company_name, sector, shares, avg_cost, sale_price,
        buy_date || null, sell_date, dividends_received || 0, notes || null]
     );
     res.json({ sold: rows[0] });
@@ -239,7 +239,7 @@ router.delete('/sold/:id', async (req, res) => {
   try {
     await db.query(
       `DELETE FROM portfolio_sold WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.userId]
+      [req.params.id, req.user.id]
     );
     res.json({ ok: true });
   } catch (e) {
@@ -254,7 +254,7 @@ router.get('/watchlist', async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT * FROM portfolio_watchlist WHERE user_id = $1 ORDER BY symbol`,
-      [req.user.userId]
+      [req.user.id]
     );
     res.json({ watchlist: rows });
   } catch (e) {
@@ -274,7 +274,7 @@ router.post('/watchlist', async (req, res) => {
        DO UPDATE SET company_name=EXCLUDED.company_name, sector=EXCLUDED.sector,
                      target_price=EXCLUDED.target_price, notes=EXCLUDED.notes, updated_at=NOW()
        RETURNING *`,
-      [req.user.userId, symbol.toUpperCase(), company_name, sector || 'Other', target_price || null, notes || null]
+      [req.user.id, symbol.toUpperCase(), company_name, sector || 'Other', target_price || null, notes || null]
     );
     res.json({ item: rows[0] });
   } catch (e) {
@@ -287,7 +287,7 @@ router.delete('/watchlist/:symbol', async (req, res) => {
   try {
     await db.query(
       `DELETE FROM portfolio_watchlist WHERE user_id=$1 AND symbol=$2`,
-      [req.user.userId, req.params.symbol.toUpperCase()]
+      [req.user.id, req.params.symbol.toUpperCase()]
     );
     res.json({ ok: true });
   } catch (e) {
@@ -301,7 +301,7 @@ router.delete('/watchlist/:symbol', async (req, res) => {
 router.post('/sync', async (req, res) => {
   try {
     const { holdings = [], sold = [], watchlist = [], dividendOverrides = {} } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const results = { holdings: 0, sold: 0, watchlist: 0, dividends: 0 };
 
     // Upsert holdings
@@ -371,7 +371,7 @@ router.get('/settings', async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT settings FROM portfolio_settings WHERE user_id = $1`,
-      [req.user.userId]
+      [req.user.id]
     );
     res.json({ settings: rows[0]?.settings || {} });
   } catch (e) {
@@ -391,7 +391,7 @@ router.post('/settings', async (req, res) => {
        VALUES ($1, $2)
        ON CONFLICT (user_id)
        DO UPDATE SET settings = $2, updated_at = NOW()`,
-      [req.user.userId, JSON.stringify(settings)]
+      [req.user.id, JSON.stringify(settings)]
     );
     res.json({ ok: true });
   } catch (e) {

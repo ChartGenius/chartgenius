@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT * FROM price_alerts WHERE user_id = $1 ORDER BY created_at DESC`,
-      [req.user.userId]
+      [req.user.id]
     );
     res.json({ alerts: rows });
   } catch (e) {
@@ -52,7 +52,7 @@ router.post('/', async (req, res) => {
       `INSERT INTO price_alerts (user_id, symbol, target_price, direction)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [req.user.userId, symbol.toUpperCase(), price, direction]
+      [req.user.id, symbol.toUpperCase(), price, direction]
     );
 
     res.json({ alert: rows[0] });
@@ -68,7 +68,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const { rowCount } = await db.query(
       `DELETE FROM price_alerts WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.userId]
+      [req.params.id, req.user.id]
     );
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Alert not found' });

@@ -63,7 +63,7 @@ router.get('/tasks', async (req, res) => {
        FROM dashboard_tasks
        WHERE user_id = $1
        ORDER BY created_at DESC`,
-      [req.user.userId]
+      [req.user.id]
     );
     res.json({ tasks: rows });
   } catch (e) {
@@ -90,7 +90,7 @@ router.post('/tasks', async (req, res) => {
                  due_date AS "dueDate", created_at AS "createdAt",
                  completed_at AS "completedAt", notes`,
       [
-        taskId, req.user.userId, title, description || '', status || 'todo',
+        taskId, req.user.id, title, description || '', status || 'todo',
         project || '', company || '', agent || '', priority || 'medium',
         dueDate || '', createdAt || new Date().toISOString(), completedAt || '', notes || ''
       ]
@@ -105,7 +105,7 @@ router.post('/tasks', async (req, res) => {
     db.query(
       `INSERT INTO dashboard_activity (id, user_id, type, message, agent, project, timestamp)
        VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [activityId, req.user.userId, activityType, activityMsg, agent || '', project || '', new Date().toISOString()]
+      [activityId, req.user.id, activityType, activityMsg, agent || '', project || '', new Date().toISOString()]
     ).catch(() => {}); // fire-and-forget
 
     res.json({ task: rows[0] });
@@ -137,7 +137,7 @@ router.put('/tasks/:id', async (req, res) => {
                  due_date AS "dueDate", created_at AS "createdAt",
                  completed_at AS "completedAt", notes`,
       [
-        req.params.id, req.user.userId, title, description, status,
+        req.params.id, req.user.id, title, description, status,
         project, company, agent, priority, dueDate, completedAt, notes
       ]
     );
@@ -153,7 +153,7 @@ router.put('/tasks/:id', async (req, res) => {
       db.query(
         `INSERT INTO dashboard_activity (id, user_id, type, message, agent, project, timestamp)
          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [activityId, req.user.userId, 'task_complete',
+        [activityId, req.user.id, 'task_complete',
          `${taskRow.agent || 'Someone'} completed: ${taskRow.title}`,
          taskRow.agent || '', taskRow.project || '', new Date().toISOString()]
       ).catch(() => {});
@@ -170,7 +170,7 @@ router.delete('/tasks/:id', async (req, res) => {
   try {
     const { rowCount } = await db.query(
       `DELETE FROM dashboard_tasks WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.userId]
+      [req.params.id, req.user.id]
     );
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Task not found' });
@@ -196,7 +196,7 @@ router.post('/tasks/sync', async (req, res) => {
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
          ON CONFLICT (id) DO NOTHING`,
         [
-          t.id, req.user.userId, t.title, t.description || '', t.status || 'todo',
+          t.id, req.user.id, t.title, t.description || '', t.status || 'todo',
           t.project || '', t.company || '', t.agent || '', t.priority || 'medium',
           t.dueDate || '', t.createdAt || new Date().toISOString(), t.completedAt || '', t.notes || ''
         ]
@@ -224,7 +224,7 @@ router.get('/activity', async (req, res) => {
        WHERE user_id = $1
        ORDER BY timestamp DESC
        LIMIT $2`,
-      [req.user.userId, limit]
+      [req.user.id, limit]
     );
     res.json({ activity: rows });
   } catch (e) {
@@ -247,7 +247,7 @@ router.post('/activity', async (req, res) => {
       `INSERT INTO dashboard_activity (id, user_id, type, message, agent, project, timestamp)
        VALUES ($1,$2,$3,$4,$5,$6,$7)
        RETURNING id, type, message, agent, project, timestamp`,
-      [activityId, req.user.userId, type || 'update', message, agent || '', project || '', timestamp || new Date().toISOString()]
+      [activityId, req.user.id, type || 'update', message, agent || '', project || '', timestamp || new Date().toISOString()]
     );
     res.json({ activity: rows[0] });
   } catch (e) {
@@ -264,7 +264,7 @@ router.get('/companies', async (req, res) => {
   try {
     const { rows: companies } = await db.query(
       `SELECT id, name FROM dashboard_companies WHERE user_id = $1 ORDER BY created_at ASC`,
-      [req.user.userId]
+      [req.user.id]
     );
 
     // Fetch projects for each company
@@ -297,7 +297,7 @@ router.post('/companies', async (req, res) => {
     await db.query(
       `INSERT INTO dashboard_companies (id, user_id, name) VALUES ($1,$2,$3)
        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name`,
-      [companyId, req.user.userId, name]
+      [companyId, req.user.id, name]
     );
 
     // Upsert projects if provided
@@ -308,7 +308,7 @@ router.post('/companies', async (req, res) => {
           `INSERT INTO dashboard_projects (id, company_id, user_id, name, category)
            VALUES ($1,$2,$3,$4,$5)
            ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, category = EXCLUDED.category`,
-          [projId, companyId, req.user.userId, p.name, p.category || '']
+          [projId, companyId, req.user.id, p.name, p.category || '']
         );
       }
     }
@@ -331,7 +331,7 @@ router.put('/companies/:id', async (req, res) => {
     const { name } = req.body;
     const { rowCount } = await db.query(
       `UPDATE dashboard_companies SET name = $3 WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.userId, name]
+      [req.params.id, req.user.id, name]
     );
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Company not found' });
@@ -347,7 +347,7 @@ router.delete('/companies/:id', async (req, res) => {
   try {
     const { rowCount } = await db.query(
       `DELETE FROM dashboard_companies WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.userId]
+      [req.params.id, req.user.id]
     );
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Company not found' });
@@ -368,7 +368,7 @@ router.post('/companies/:id/projects', async (req, res) => {
     // Verify company belongs to user
     const { rowCount } = await db.query(
       `SELECT 1 FROM dashboard_companies WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.userId]
+      [req.params.id, req.user.id]
     );
     if (rowCount === 0) return res.status(404).json({ error: 'Company not found' });
 
@@ -378,7 +378,7 @@ router.post('/companies/:id/projects', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, category = EXCLUDED.category
        RETURNING id, name, category`,
-      [projectId, req.params.id, req.user.userId, name, category || '']
+      [projectId, req.params.id, req.user.id, name, category || '']
     );
     res.json({ project: rows[0] });
   } catch (e) {
@@ -391,7 +391,7 @@ router.delete('/companies/:companyId/projects/:projectId', async (req, res) => {
   try {
     const { rowCount } = await db.query(
       `DELETE FROM dashboard_projects WHERE id = $1 AND user_id = $2`,
-      [req.params.projectId, req.user.userId]
+      [req.params.projectId, req.user.id]
     );
     if (rowCount === 0) return res.status(404).json({ error: 'Project not found' });
     res.json({ ok: true });
@@ -409,7 +409,7 @@ router.get('/settings', async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT settings FROM dashboard_settings WHERE user_id = $1`,
-      [req.user.userId]
+      [req.user.id]
     );
     res.json({ settings: rows[0]?.settings || {} });
   } catch (e) {
@@ -429,7 +429,7 @@ router.post('/settings', async (req, res) => {
        VALUES ($1, $2)
        ON CONFLICT (user_id)
        DO UPDATE SET settings = $2, updated_at = NOW()`,
-      [req.user.userId, JSON.stringify(settings)]
+      [req.user.id, JSON.stringify(settings)]
     );
     res.json({ ok: true });
   } catch (e) {
@@ -445,7 +445,7 @@ router.post('/settings', async (req, res) => {
 router.post('/sync', async (req, res) => {
   try {
     const { tasks = [], activity = [], companies = [], settings } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const results = { tasks: 0, activity: 0, companies: 0, projects: 0, settings: false };
 
     // Sync tasks
@@ -538,7 +538,7 @@ router.get('/agents', async (req, res) => {
        FROM dashboard_agents
        WHERE user_id = $1
        ORDER BY name`,
-      [req.user.userId]
+      [req.user.id]
     );
 
     // Seed defaults on first access
@@ -553,7 +553,7 @@ router.get('/agents', async (req, res) => {
                      current_task AS "currentTask",
                      tasks_completed_today AS "tasksCompletedToday",
                      tokens_used_today AS "tokensUsedToday"`,
-          [a.id, req.user.userId, a.name, a.role, a.status]
+          [a.id, req.user.id, a.name, a.role, a.status]
         );
         if (inserted[0]) seeded.push(inserted[0]);
       }
@@ -589,7 +589,7 @@ router.put('/agents/:name', async (req, res) => {
                  current_task AS "currentTask",
                  tasks_completed_today AS "tasksCompletedToday",
                  tokens_used_today AS "tokensUsedToday"`,
-      [req.user.userId, agentName, status, currentTask, tasksCompletedToday, tokensUsedToday]
+      [req.user.id, agentName, status, currentTask, tasksCompletedToday, tokensUsedToday]
     );
 
     if (rowCount === 0) {
@@ -618,14 +618,14 @@ router.get('/notifications', async (req, res) => {
        WHERE user_id = $1 ${whereClause}
        ORDER BY created_at DESC
        LIMIT $2`,
-      [req.user.userId, limit]
+      [req.user.id, limit]
     );
 
     // Also return unread count
     const { rows: countRows } = await db.query(
       `SELECT COUNT(*) AS count FROM dashboard_notifications
        WHERE user_id = $1 AND read = FALSE`,
-      [req.user.userId]
+      [req.user.id]
     );
 
     res.json({ notifications: rows, unreadCount: parseInt(countRows[0]?.count || '0') });
@@ -649,7 +649,7 @@ router.post('/notifications', async (req, res) => {
       `INSERT INTO dashboard_notifications (id, user_id, type, title, message)
        VALUES ($1,$2,$3,$4,$5)
        RETURNING id, type, title, message, read, created_at AS "createdAt"`,
-      [notifId, req.user.userId, type || 'info', title, message || '']
+      [notifId, req.user.id, type || 'info', title, message || '']
     );
     res.json({ notification: rows[0] });
   } catch (e) {
@@ -663,7 +663,7 @@ router.put('/notifications/:id/read', async (req, res) => {
     const { rowCount } = await db.query(
       `UPDATE dashboard_notifications SET read = TRUE
        WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.userId]
+      [req.params.id, req.user.id]
     );
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Notification not found' });
@@ -679,7 +679,7 @@ router.put('/notifications/read-all', async (req, res) => {
   try {
     await db.query(
       `UPDATE dashboard_notifications SET read = TRUE WHERE user_id = $1`,
-      [req.user.userId]
+      [req.user.id]
     );
     res.json({ ok: true });
   } catch (e) {
@@ -692,7 +692,7 @@ router.delete('/notifications/:id', async (req, res) => {
   try {
     const { rowCount } = await db.query(
       `DELETE FROM dashboard_notifications WHERE id = $1 AND user_id = $2`,
-      [req.params.id, req.user.userId]
+      [req.params.id, req.user.id]
     );
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Notification not found' });
@@ -710,7 +710,7 @@ router.delete('/notifications/:id', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
