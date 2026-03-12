@@ -43,15 +43,21 @@ export async function apiLogin(email: string, password: string): Promise<AuthRes
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   })
+  if (res.status === 503) {
+    return { token: '', user: null as any, error: 'Sign-in is coming soon! Stay tuned.' }
+  }
   return res.json()
 }
 
 export async function apiRegister(email: string, password: string): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE}/api/auth/register`, {
+  const res = await fetch(`${API_BASE}/api/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   })
+  if (res.status === 503) {
+    return { token: '', user: null as any, error: 'Account creation is coming soon! Stay tuned.' }
+  }
   return res.json()
 }
 

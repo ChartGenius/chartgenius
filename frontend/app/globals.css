@@ -65,8 +65,9 @@
 html, body { height: 100%; }
 
 /* ─── Font size scaling ───────────────────────────────────────────────────── */
-html.font-medium { font-size: 115%; }
-html.font-large  { font-size: 130%; }
+/* zoom scales everything including hardcoded px values (inline styles, etc.) */
+html.font-medium { zoom: 1.1; }
+html.font-large  { zoom: 1.2; }
 
 body {
   font-family: var(--font);

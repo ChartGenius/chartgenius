@@ -66,6 +66,13 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ── POST /api/auth/signup ─────────────────────────────────────────────────────
 router.post('/signup', authLimiter, async (req, res) => {
+  // Guard: Supabase not configured (env vars missing on this deployment)
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    return res.status(503).json({
+      error: 'Authentication service is not configured. Please try again later.',
+    });
+  }
+
   try {
     const { email: rawEmail, password, name } = req.body;
 
@@ -124,6 +131,13 @@ router.post('/signup', authLimiter, async (req, res) => {
 
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
 router.post('/login', authLimiter, async (req, res) => {
+  // Guard: Supabase not configured (env vars missing on this deployment)
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    return res.status(503).json({
+      error: 'Authentication service is not configured. Please try again later.',
+    });
+  }
+
   try {
     const { email: rawEmail, password } = req.body;
 
