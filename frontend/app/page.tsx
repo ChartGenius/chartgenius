@@ -26,7 +26,7 @@ import OnboardingTooltip from './components/OnboardingTooltip'
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 import { apiFetchSafe } from './lib/apiFetch'
 import DataError from './components/DataError'
-import { IconTrendingUp, IconTrendingDown, IconMinus, IconMic, IconChart, IconBuilding } from './components/Icons'
+import { IconTrendingUp, IconTrendingDown, IconMinus, IconMic, IconChart, IconBuilding, IconCalendar, IconBell } from './components/Icons'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -2527,7 +2527,7 @@ export default function Home() {
           {/* Custom Ticker tags */}
           {customTickerSymbols.length > 0 && (
             <div className="sidebar-section" style={{ marginTop: 'auto' }}>
-              <div className="sidebar-title">📊 MY TICKER BAR</div>
+              <div className="sidebar-title"><IconChart size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} /> MY TICKER BAR</div>
               <div style={{ padding: '4px 8px', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                 {customTickerSymbols.map(sym => (
                   <span key={sym} className="ticker-tag">
@@ -2678,7 +2678,7 @@ export default function Home() {
               }}
               onClick={() => setPortfolioCollapsed(c => !c)}
             >
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}>📈 PORTFOLIO</span>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}><IconTrendingUp size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} /> PORTFOLIO</span>
               <span style={{ fontSize: 11, color: 'var(--text-2)' }}>{portfolioCollapsed ? '▼ Show' : '▲ Hide'}</span>
             </div>
             {!portfolioCollapsed && (
@@ -2693,14 +2693,14 @@ export default function Home() {
               style={{ flex: 1, borderRadius: 0 }}
               onClick={() => setShowAlerts(false)}
             >
-              📅 Calendar
+              <IconCalendar size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Calendar
             </button>
             <button
               className={`news-filter-tab${showAlerts ? ' active' : ''}`}
               style={{ flex: 1, borderRadius: 0 }}
               onClick={() => setShowAlerts(a => !a)}
             >
-              🔔 Alerts{alertUnreadCount > 0 && (
+              <IconBell size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Alerts{alertUnreadCount > 0 && (
                 <AlertBadge count={alertUnreadCount} />
               )}
             </button>
