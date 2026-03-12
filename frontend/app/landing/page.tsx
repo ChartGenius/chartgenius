@@ -255,8 +255,8 @@ const features = [
   },
   {
     icon: <IconBell />,
-    title: 'Smart Alerts',
-    desc: 'Price, volume, earnings proximity, and sector news triggers with context. Smart alerts tell you why, not just what.',
+    title: 'Smart Market Alerts',
+    desc: 'Real-time unusual move detection with catalyst linking. Know why a stock is moving before the crowd does — with context, not just a price change.',
     color: 'var(--yellow)',
   },
   {
@@ -279,20 +279,20 @@ const features = [
   },
   {
     icon: <IconTools />,
-    title: '10 Professional Trading Tools',
-    desc: 'Options Calculator, Position Sizer, Risk of Ruin, Forex Pip, Compound Growth, Expectancy, Correlation Matrix, Session Clock, Econ Heatmap, Dividend Planner — all free.',
+    title: '11 Trading Calculators',
+    desc: 'Options Profit, Futures Risk/Reward, Position Sizing, Risk of Ruin, Compound Growth, Forex Pip, Trade Expectancy, Correlation Matrix, and more — all free, no sign-up.',
     color: 'var(--blue)',
   },
   {
     icon: <IconJournal />,
     title: 'Smart Trading Journal',
-    desc: 'Log trades with auto-filled entry prices, pattern detection, streak tracking, emotional tags, and auto-calculated expectancy.',
+    desc: 'CSV import, pattern detection, emotional tags, auto-detect asset class, streak tracking, and deep performance analytics. Your edge, quantified.',
     color: 'var(--purple)',
   },
   {
     icon: <IconPortfolio />,
-    title: 'Portfolio Analytics',
-    desc: 'Risk score, DRIP simulator, dividend calendar, correlation analysis, and benchmark comparison — all in one view.',
+    title: 'Portfolio Manager',
+    desc: 'DRIP simulator, risk scoring, dividend calendar, and full holdings tracker. Live P&L across stocks, crypto, ETFs, and forex — all in one view.',
     color: 'var(--green)',
   },
   {
@@ -396,7 +396,7 @@ export default function LandingPage() {
             '@type': 'SoftwareApplication',
             name: 'TradVue',
             applicationCategory: 'FinanceApplication',
-            description: 'Professional trading dashboard for real-time market analysis',
+            description: 'Free trading journal, portfolio tracker, and market analysis tools. 11 calculators, smart alerts, DRIP simulator, and more.',
             offers: {
               '@type': 'Offer',
               priceCurrency: 'USD',
@@ -696,7 +696,7 @@ export default function LandingPage() {
                 Everything You Need to Trade with Edge
               </h2>
               <p style={{ fontSize: '16px', color: 'var(--text-2)', maxWidth: '540px', margin: '0 auto', lineHeight: 1.6 }}>
-                Real-time intelligence, a professional trading journal, portfolio analytics, and 10 built-in calculators — all in one platform.
+                Real-time intelligence, a professional trading journal, portfolio analytics, and 11 built-in calculators — all in one platform. 100% free.
               </p>
             </div>
 

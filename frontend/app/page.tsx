@@ -16,8 +16,8 @@ const SettingsPanel = dynamic(() => import('./components/SettingsPanel'), { ssr:
 // Alert system (SSE-powered real-time market alerts)
 import { AlertBanner, AlertFeed, AlertBadge, useAlerts } from './components/AlertSystem'
 
-// Keyboard shortcuts
-import KeyboardShortcuts from './components/KeyboardShortcuts'
+// Keyboard shortcuts (lazy — no visible UI, just event listeners)
+const KeyboardShortcuts = dynamic(() => import('./components/KeyboardShortcuts'), { ssr: false })
 
 // Onboarding components
 import { WatchlistEmpty, AlertsEmpty } from './components/EmptyState'
@@ -1838,6 +1838,145 @@ function SmartAlertsBar({ watchlist }: { watchlist: string[] }) {
   )
 }
 
+// ─── Feature Showcase ─────────────────────────────────────────────────────────
+
+const PLATFORM_FEATURES = [
+  {
+    icon: '🧮',
+    title: '11 Trading Calculators',
+    desc: 'Options Profit, Futures Risk/Reward, Position Sizing, Risk of Ruin, Compound Growth, Forex Pip, Trade Expectancy, Correlation Matrix, and more.',
+    href: '/tools',
+  },
+  {
+    icon: '🔔',
+    title: 'Smart Market Alerts',
+    desc: 'Real-time unusual move detection with automatic catalyst linking — know why a stock is moving before the crowd does.',
+    href: '/news',
+  },
+  {
+    icon: '📒',
+    title: 'Trading Journal',
+    desc: 'CSV import, pattern detection, emotional tags, auto-detect asset class, streak tracking, and deep performance analytics.',
+    href: '/journal',
+  },
+  {
+    icon: '💼',
+    title: 'Portfolio Manager',
+    desc: 'DRIP simulator, risk scoring, dividend calendar, and full holdings tracker with live P&L across all asset classes.',
+    href: '/portfolio',
+  },
+  {
+    icon: '📡',
+    title: 'Real-Time Data',
+    desc: 'Live quotes, curated news feed, economic calendar with countdown timers, and earnings alerts for the stocks you own.',
+    href: '/calendar',
+  },
+  {
+    icon: '🆓',
+    title: '100% Free',
+    desc: 'No paywall for core features. No account required to start. Sign in only to sync your watchlist across devices.',
+    href: '/',
+  },
+]
+
+function FeaturesShowcase() {
+  return (
+    <section
+      aria-label="Platform features"
+      style={{
+        borderTop: '1px solid var(--border)',
+        background: 'var(--bg-1)',
+        padding: '36px 24px 32px',
+      }}
+    >
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+        {/* Heading */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              color: 'var(--text-0)',
+              margin: '0 0 6px',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Everything You Need to Trade Smarter
+          </h2>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>
+            11 calculators · Smart alerts · Journal · Portfolio tracker · Real-time data — all free
+          </p>
+        </div>
+
+        {/* Feature grid */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 14,
+          }}
+        >
+          {PLATFORM_FEATURES.map(f => (
+            <a
+              key={f.title}
+              href={f.href}
+              style={{ textDecoration: 'none' }}
+            >
+              <div
+                style={{
+                  background: 'var(--bg-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  padding: '16px 18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                  transition: 'border-color 0.15s, background 0.15s',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLDivElement
+                  el.style.borderColor = 'var(--accent)'
+                  el.style.background = 'var(--bg-3)'
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLDivElement
+                  el.style.borderColor = 'var(--border)'
+                  el.style.background = 'var(--bg-2)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden="true">{f.icon}</span>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: 'var(--text-0)',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {f.title}
+                  </span>
+                </div>
+                <p
+                  style={{
+                    fontSize: 11.5,
+                    color: 'var(--text-2)',
+                    margin: 0,
+                    lineHeight: 1.55,
+                  }}
+                >
+                  {f.desc}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -3222,6 +3361,9 @@ export default function Home() {
         title="Drag to resize"
       />
       </div>
+
+      {/* ── Feature Showcase ───────────────────────────────────────────────── */}
+      <FeaturesShowcase />
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer className="site-footer">

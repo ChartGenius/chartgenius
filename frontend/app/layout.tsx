@@ -16,22 +16,29 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.tradvue.com'),
 
   title: {
-    default: 'TradVue — AI-Powered Trading Journal & Portfolio Tracker',
+    default: 'TradVue — Free Trading Journal, Portfolio Tracker & Market Tools',
     template: '%s | TradVue',
   },
   description:
-    'Track trades, analyze performance, monitor markets. Free trading journal with AI-powered insights, real-time data, and portfolio tracking.',
+    'Track trades, analyze portfolios, calculate risk, and monitor markets — all free. 11 trading calculators, smart alerts, DRIP simulator, and more. No account required.',
 
   keywords: [
     'trading journal',
     'portfolio tracker',
-    'AI trading insights',
-    'stock market dashboard',
-    'real-time market data',
+    'stock calculator',
+    'options calculator',
+    'futures calculator',
+    'DRIP simulator',
     'trading tools',
-    'economic calendar',
-    'trading analytics',
+    'market alerts',
+    'risk management',
+    'position sizing',
+    'free trading platform',
   ],
+
+  alternates: {
+    canonical: 'https://www.tradvue.com',
+  },
 
   manifest: '/manifest.json',
 
@@ -54,15 +61,15 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.tradvue.com',
     siteName: 'TradVue',
-    title: 'TradVue — AI-Powered Trading Journal & Portfolio Tracker',
+    title: 'TradVue — Free Trading Journal, Portfolio Tracker & Market Tools',
     description:
-      'Track trades, analyze performance, monitor markets. Free trading journal with AI-powered insights, real-time data, and portfolio tracking.',
+      'Track trades, analyze portfolios, calculate risk, and monitor markets — all free. 11 trading calculators, smart alerts, DRIP simulator, and more. No account required.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'TradVue — AI-Powered Trading Journal & Portfolio Tracker',
+        alt: 'TradVue — Free Trading Journal, Portfolio Tracker & Market Tools',
       },
     ],
     locale: 'en_US',
@@ -70,9 +77,9 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: 'TradVue — AI-Powered Trading Journal & Portfolio Tracker',
+    title: 'TradVue — Free Trading Journal, Portfolio Tracker & Market Tools',
     description:
-      'Track trades, analyze performance, monitor markets. Free trading journal with AI-powered insights, real-time data, and portfolio tracking.',
+      'Track trades, analyze portfolios, calculate risk, and monitor markets — all free. 11 trading calculators, smart alerts, DRIP simulator, and more. No account required.',
     images: ['/og-image.png'],
   },
 
@@ -105,8 +112,8 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
   name: 'TradVue',
-  description: 'AI-Powered Trading Journal & Portfolio Tracker',
   url: 'https://www.tradvue.com',
+  description: 'Free trading journal, portfolio tracker, and market analysis tools',
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web',
   offers: {
@@ -123,6 +130,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="theme-dark">
       <head>
         <meta name="theme-color" content="#6366f1" />
+        <link rel="canonical" href="https://www.tradvue.com" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
