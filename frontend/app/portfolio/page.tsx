@@ -2799,127 +2799,309 @@ function BenchmarkLineChart({ benchmarkPoints, benchmarkLabel, portfolioReturnPc
 
 // ─── Income Projection Calendar ───────────────────────────────────────────────
 
+// ─── Hardcoded Dividend Calendar Data ───────────────────────────────────────
+// Quarterly payment months (0-indexed) for top dividend stocks
+const DIV_PAY_MONTHS: Record<string, number[]> = {
+  AAPL:  [1, 4, 7, 10],               // Feb/May/Aug/Nov
+  MSFT:  [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  KO:    [0, 3, 6, 9],                // Jan/Apr/Jul/Oct
+  JNJ:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  PG:    [1, 4, 7, 10],               // Feb/May/Aug/Nov
+  T:     [1, 4, 7, 10],               // Feb/May/Aug/Nov
+  VZ:    [1, 4, 7, 10],               // Feb/May/Aug/Nov
+  XOM:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  JPM:   [0, 3, 6, 9],                // Jan/Apr/Jul/Oct
+  KMB:   [0, 3, 6, 9],                // Jan/Apr/Jul/Oct
+  MO:    [0, 3, 6, 9],                // Jan/Apr/Jul/Oct
+  PM:    [0, 3, 6, 9],                // Jan/Apr/Jul/Oct
+  MCD:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  WMT:   [0, 3, 6, 9],                // Jan/Apr/Jul/Oct
+  IBM:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  CVX:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  MMM:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  HD:    [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  ABBV:  [1, 4, 7, 10],               // Feb/May/Aug/Nov
+  PFE:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  BAC:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  GS:    [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  O:     [0,1,2,3,4,5,6,7,8,9,10,11], // Monthly REIT
+  NEE:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  SO:    [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  DUK:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  COST:  [1, 4, 7, 10],               // Feb/May/Aug/Nov
+  PEP:   [0, 3, 6, 9],                // Jan/Apr/Jul/Oct
+  UNH:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  TGT:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  LOW:   [1, 4, 7, 10],               // Feb/May/Aug/Nov
+  SCHD:  [2, 5, 8, 11],               // Mar/Jun/Sep/Dec (quarterly ETF)
+  VYM:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  DVY:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  JEPI:  [0,1,2,3,4,5,6,7,8,9,10,11], // Monthly
+  JEPQ:  [0,1,2,3,4,5,6,7,8,9,10,11], // Monthly
+  MAIN:  [0,1,2,3,4,5,6,7,8,9,10,11], // Monthly BDC
+  STAG:  [0,1,2,3,4,5,6,7,8,9,10,11], // Monthly REIT
+  WPC:   [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+  NNN:   [0, 3, 6, 9],                // Jan/Apr/Jul/Oct
+  ARCC:  [2, 5, 8, 11],               // Mar/Jun/Sep/Dec
+}
+
+// Approximate payment day within month for calendar placement
+const DIV_PAY_DAY: Record<string, number> = {
+  AAPL: 16, MSFT: 12, KO: 2,  JNJ: 8,  PG: 15, T: 1,  VZ: 3,  XOM: 11,
+  JPM: 31,  KMB: 2,  MO: 10, PM: 13, MCD: 15, WMT: 4,  IBM: 9,  CVX: 12,
+  MMM: 12,  HD: 14,  ABBV: 15, PFE: 10, BAC: 24, GS: 28, O: 15,  NEE: 16,
+  SO: 6,   DUK: 16, COST: 14, PEP: 8,  UNH: 25, TGT: 10, LOW: 3,
+  SCHD: 20, VYM: 22, DVY: 30, JEPI: 8,  JEPQ: 8, MAIN: 15, STAG: 15,
+  WPC: 15,  NNN: 14, ARCC: 28,
+}
+
 function IncomeCalendar({ holdings, stockInfos }: {
   holdings: Holding[]
   stockInfos: Record<string, StockInfo>
 }) {
+  const [viewOffset, setViewOffset] = useState(0) // months relative to now
+
   if (holdings.length === 0) return null
 
   const now = new Date()
-  const currentMonth = now.getMonth()
-  const currentYear = now.getFullYear()
+  const baseYear  = now.getFullYear()
+  const baseMonth = now.getMonth()
 
-  // Build monthly income projections for next 12 months
-  const monthlyIncome: { label: string; amount: number; payments: { ticker: string; amount: number }[] }[] = []
+  // ── Resolve payment months per holding ──────────────────────────────────
+  function getPayMonths(h: Holding): number[] {
+    const hardcoded = DIV_PAY_MONTHS[h.ticker]
+    if (hardcoded) return hardcoded
+    const info = stockInfos[h.ticker]
+    const freq = info?.dividendFrequency?.toLowerCase() || 'quarterly'
+    if (freq.includes('month')) return [0,1,2,3,4,5,6,7,8,9,10,11]
+    if (info?.dividendHistory?.length) {
+      const months = new Set(info.dividendHistory.slice(-4).map(dh => new Date(dh.date).getMonth()))
+      if (months.size >= 2) return Array.from(months)
+    }
+    if (freq.includes('semi')) return [2, 8]
+    if (freq.includes('ann')) return [11]
+    return [2, 5, 8, 11] // default quarterly
+  }
+
+  // ── Build 12-month projections ───────────────────────────────────────────
+  const monthlyIncome: {
+    month: number; year: number; label: string; amount: number
+    payments: { ticker: string; amount: number; day: number }[]
+  }[] = []
 
   for (let i = 0; i < 12; i++) {
-    const d = new Date(currentYear, currentMonth + i, 1)
+    const d = new Date(baseYear, baseMonth + i, 1)
     const month = d.getMonth()
-    const year = d.getFullYear()
-    const label = `${MONTHS[month]} ${year}`
-    const payments: { ticker: string; amount: number }[] = []
+    const year  = d.getFullYear()
+    const payments: { ticker: string; amount: number; day: number }[] = []
 
     for (const h of holdings) {
       const info = stockInfos[h.ticker]
       const annualDiv = h.divOverrideAnnual ?? info?.dividendPerShareAnnual ?? h.annualDividend ?? 0
       if (annualDiv <= 0) continue
-
-      const freq = info?.dividendFrequency?.toLowerCase() || 'quarterly'
-
-      let payMonths: number[] = []
-      if (freq.includes('month')) {
-        payMonths = [month]
-      } else if (freq.includes('quarter')) {
-        // Pay in Mar, Jun, Sep, Dec (typical), or match history
-        if (info?.dividendHistory?.length) {
-          const payMonthSet = new Set(info.dividendHistory.slice(-4).map(d => new Date(d.date).getMonth()))
-          payMonths = Array.from(payMonthSet)
-        } else {
-          payMonths = [2, 5, 8, 11]
-        }
-        payMonths = payMonths.filter(m => m === month)
-      } else if (freq.includes('semi') || freq.includes('bi-ann')) {
-        payMonths = [5, 11].filter(m => m === month)
-      } else if (freq.includes('ann')) {
-        const histMonth = info?.dividendHistory?.length ? new Date(info.dividendHistory[0].date).getMonth() : 11
-        payMonths = histMonth === month ? [month] : []
-      } else {
-        // Default quarterly
-        payMonths = [2, 5, 8, 11].filter(m => m === month)
-      }
-
-      if (payMonths.length > 0) {
-        const divPerPayment = freq.includes('month') ? annualDiv / 12
-          : freq.includes('quarter') ? annualDiv / 4
-          : freq.includes('semi') ? annualDiv / 2
-          : annualDiv
-        const totalPayment = divPerPayment * h.shares
-        if (totalPayment > 0) {
-          payments.push({ ticker: h.ticker, amount: totalPayment })
-        }
-      }
-      void year // suppress unused warning
+      const payMonths = getPayMonths(h)
+      if (!payMonths.includes(month)) continue
+      const paymentsPerYear = payMonths.length
+      const divPerPayment = annualDiv / paymentsPerYear
+      const totalPayment  = divPerPayment * h.shares
+      if (totalPayment <= 0) continue
+      const day = DIV_PAY_DAY[h.ticker] ?? 15
+      payments.push({ ticker: h.ticker, amount: totalPayment, day })
     }
-
-    monthlyIncome.push({ label, amount: payments.reduce((s, p) => s + p.amount, 0), payments })
+    monthlyIncome.push({
+      month, year, label: `${MONTHS[month]} ${year}`,
+      amount: payments.reduce((s, p) => s + p.amount, 0),
+      payments,
+    })
   }
 
-  const thisMonthIncome = monthlyIncome[0]?.amount || 0
-  const next3Income = monthlyIncome.slice(0, 3).reduce((s, m) => s + m.amount, 0)
-  const maxIncome = Math.max(...monthlyIncome.map(m => m.amount), 1)
+  const safeViewIdx   = Math.max(0, Math.min(11, viewOffset))
+  const viewMonthData = monthlyIncome[safeViewIdx]
+  const thisMonthData = monthlyIncome[0]
+  const yearTotal  = monthlyIncome.reduce((s, m) => s + m.amount, 0)
+  const maxBar     = Math.max(...monthlyIncome.map(m => m.amount), 1)
+
+  // ── Calendar grid ────────────────────────────────────────────────────────
+  const calYear     = viewMonthData.year
+  const calMonth    = viewMonthData.month
+  const firstDay    = new Date(calYear, calMonth, 1).getDay()
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
+
+  // Map day → payments
+  const dayPayments: Record<number, { ticker: string; amount: number }[]> = {}
+  viewMonthData.payments.forEach(p => {
+    const day = Math.max(1, Math.min(p.day, daysInMonth))
+    if (!dayPayments[day]) dayPayments[day] = []
+    dayPayments[day].push({ ticker: p.ticker, amount: p.amount })
+  })
+
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7
+  const cells: (number | null)[] = Array(firstDay).fill(null)
+  for (let day = 1; day <= daysInMonth; day++) cells.push(day)
+  while (cells.length < totalCells) cells.push(null)
+
+  const hasDivThisMonth = viewMonthData.payments.length > 0
 
   return (
     <div style={{ marginTop: 24, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 12 }}>INCOME PROJECTION CALENDAR</div>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 12 }}>
+        DIVIDEND INCOME CALENDAR
+      </div>
 
-      {/* Summary */}
-      <div style={{ display: 'flex', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>
+      {/* KPI row */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
         <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 14px' }}>
           <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: 2 }}>THIS MONTH</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--mono)' }}>{fmtDollar(thisMonthIncome)}</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--mono)' }}>{fmtDollar(thisMonthData.amount)}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{MONTHS[baseMonth]} {baseYear}</div>
         </div>
         <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 14px' }}>
           <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: 2 }}>NEXT 3 MONTHS</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--mono)' }}>{fmtDollar(next3Income)}</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--green)', fontFamily: 'var(--mono)' }}>
+            {fmtDollar(monthlyIncome.slice(0, 3).reduce((s, m) => s + m.amount, 0))}
+          </div>
+        </div>
+        <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 14px' }}>
+          <div style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: 2 }}>PROJECTED ANNUAL</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--yellow)', fontFamily: 'var(--mono)' }}>{fmtDollar(yearTotal)}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>{fmtDollar(yearTotal / 12)}/mo avg</div>
         </div>
       </div>
 
-      {/* Bar chart */}
-      <svg viewBox="0 0 700 140" style={{ width: '100%', height: 'auto', display: 'block', marginBottom: 8 }}>
-        {monthlyIncome.map((m, i) => {
-          const barW = 50
-          const barGap = 8
-          const padL = 20
-          const H = 90
-          const padT = 10
-          const bh = maxIncome > 0 ? (m.amount / maxIncome) * H : 0
-          const x = padL + i * (barW + barGap)
-          const y = padT + H - bh
-          const isCurrentMonth = i === 0
-          return (
-            <g key={i}>
-              <rect x={x} y={y} width={barW} height={bh} rx="3"
-                fill={isCurrentMonth ? 'var(--accent)' : 'var(--green)'} opacity={isCurrentMonth ? 1 : 0.7} />
-              {bh > 14 && <text x={x + barW / 2} y={y + 12} textAnchor="middle" fontSize="7.5" fill="#fff">{fmtDollar(m.amount)}</text>}
-              <text x={x + barW / 2} y={padT + H + 14} textAnchor="middle" fontSize="8" fill="var(--text-3)">{m.label.slice(0, 3)}</text>
-            </g>
-          )
-        })}
-      </svg>
+      {/* 12-month bar chart — click to navigate */}
+      <div style={{ marginBottom: 16 }}>
+        <svg viewBox="0 0 740 112" style={{ width: '100%', height: 'auto', display: 'block' }}>
+          {monthlyIncome.map((m, i) => {
+            const barW = 52, barGap = 9, padL = 24, H = 76, padT = 8
+            const bh = maxBar > 0 ? (m.amount / maxBar) * H : 0
+            const x  = padL + i * (barW + barGap)
+            const y  = padT + H - bh
+            const isNow  = i === 0
+            const isView = i === safeViewIdx
+            return (
+              <g key={i} style={{ cursor: 'pointer' }} onClick={() => setViewOffset(i)}>
+                <rect x={x} y={padT} width={barW} height={H} rx="3" fill="transparent" />
+                <rect x={x} y={y} width={barW} height={Math.max(bh, 2)} rx="3"
+                  fill={isView ? 'var(--accent)' : isNow ? 'var(--green)' : 'rgba(0,192,106,0.45)'}
+                  stroke={isView ? 'var(--accent)' : 'none'} strokeWidth="2"
+                />
+                {bh > 16 && (
+                  <text x={x + barW / 2} y={y + 12} textAnchor="middle" fontSize="7" fill="#fff" fontFamily="var(--mono)">
+                    {fmtDollar(m.amount)}
+                  </text>
+                )}
+                <text x={x + barW / 2} y={padT + H + 14} textAnchor="middle" fontSize="8"
+                  fill={isView ? 'var(--accent)' : 'var(--text-3)'}>
+                  {MONTHS[m.month].slice(0, 3)}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
+        <div style={{ fontSize: 9.5, color: 'var(--text-3)', textAlign: 'center', marginTop: 2 }}>Click a bar to view that month's calendar</div>
+      </div>
 
-      {/* Upcoming payments detail */}
-      {monthlyIncome.slice(0, 3).map((m, i) => m.payments.length > 0 && (
-        <div key={i} style={{ marginBottom: 6 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-2)', marginBottom: 3 }}>{m.label} — {fmtDollar(m.amount)}</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {m.payments.map(p => (
-              <span key={p.ticker} style={{ fontSize: 10, background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 6px', color: 'var(--green)' }}>
-                {p.ticker}: {fmtDollar(p.amount)}
-              </span>
+      {/* Month selector + calendar grid */}
+      <div>
+        {/* Nav row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <button
+            onClick={() => setViewOffset(v => Math.max(0, v - 1))}
+            style={{ fontSize: 16, color: 'var(--text-2)', cursor: 'pointer', padding: '2px 10px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--bg-3)' }}
+          >‹</button>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-1)' }}>{viewMonthData.label}</div>
+            {hasDivThisMonth
+              ? <div style={{ fontSize: 11, color: 'var(--green)' }}>Expected: {fmtDollar(viewMonthData.amount)}</div>
+              : <div style={{ fontSize: 11, color: 'var(--text-3)' }}>No dividends expected this month</div>
+            }
+          </div>
+          <button
+            onClick={() => setViewOffset(v => Math.min(11, v + 1))}
+            style={{ fontSize: 16, color: 'var(--text-2)', cursor: 'pointer', padding: '2px 10px', border: '1px solid var(--border)', borderRadius: 4, background: 'var(--bg-3)' }}
+          >›</button>
+        </div>
+
+        {/* Calendar grid */}
+        <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+          {/* Weekday headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--bg-3)' }}>
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+              <div key={d} style={{ padding: '5px 0', textAlign: 'center', fontSize: 9, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.04em' }}>{d}</div>
             ))}
           </div>
+          {/* Day cells */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            {cells.map((day, ci) => {
+              const divs    = day ? (dayPayments[day] ?? null) : null
+              const isToday = !!(day && calMonth === baseMonth && calYear === baseYear && day === now.getDate())
+              return (
+                <div key={ci} style={{
+                  minHeight: divs?.length ? 66 : 42,
+                  padding: '4px 5px',
+                  borderTop: '1px solid var(--border-b)',
+                  borderRight: ci % 7 !== 6 ? '1px solid var(--border-b)' : 'none',
+                  background: !day ? 'var(--bg-1)' : isToday ? 'rgba(99,102,241,0.08)' : 'transparent',
+                }}>
+                  {day && (
+                    <>
+                      <div style={{
+                        fontSize: 11, fontWeight: isToday ? 700 : 400,
+                        color: isToday ? 'var(--accent)' : 'var(--text-2)',
+                        marginBottom: 2,
+                        width: 20, height: 20, borderRadius: '50%',
+                        background: isToday ? 'rgba(99,102,241,0.2)' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {day}
+                      </div>
+                      {divs?.map((p, pi) => (
+                        <div key={pi} style={{
+                          fontSize: 8, color: '#fff',
+                          background: 'rgba(0,192,106,0.75)',
+                          borderRadius: 3, padding: '1px 4px',
+                          marginBottom: 1, fontFamily: 'var(--mono)',
+                          display: 'flex', justifyContent: 'space-between', gap: 3,
+                          whiteSpace: 'nowrap', overflow: 'hidden',
+                        }}>
+                          <span style={{ fontWeight: 700 }}>{p.ticker}</span>
+                          <span style={{ opacity: 0.9 }}>{fmtDollar(p.amount)}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
-      ))}
+
+        {/* Per-holding breakdown for selected month */}
+        {hasDivThisMonth && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.05em', marginBottom: 6 }}>
+              PAYING IN {viewMonthData.label.toUpperCase()}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {viewMonthData.payments.map(p => (
+                <div key={p.ticker} style={{
+                  background: 'var(--bg-3)', border: '1px solid var(--border)',
+                  borderRadius: 6, padding: '7px 11px',
+                  display: 'flex', flexDirection: 'column', gap: 2, minWidth: 90,
+                }}>
+                  <span style={{ fontWeight: 700, color: 'var(--text-0)', fontSize: 12 }}>{p.ticker}</span>
+                  <span style={{ color: 'var(--green)', fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700 }}>{fmtDollar(p.amount)}</span>
+                  <span style={{ fontSize: 9, color: 'var(--text-3)' }}>~{MONTHS[calMonth]} {DIV_PAY_DAY[p.ticker] ?? 15}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ fontSize: 9.5, color: 'var(--text-3)', marginTop: 12, borderTop: '1px solid var(--border-b)', paddingTop: 8 }}>
+        ⚠ Projected dividends are estimates based on current rates. Payment dates are approximate. Dividends can be cut, increased, or skipped at any time. Not financial advice.
+      </div>
     </div>
   )
 }
@@ -3222,6 +3404,77 @@ function ExDivAlerts({ holdingsEnriched, stockInfos }: {
 
 // ─── Portfolio Risk Score ─────────────────────────────────────────────────────
 
+// ─── Hardcoded data for Enhanced Risk Score ──────────────────────────────────
+// Maps ticker → sector bucket (used for diversity scoring)
+const RISK_SECTOR_MAP: Record<string, string> = {
+  // Tech
+  AAPL: 'tech', MSFT: 'tech', NVDA: 'tech', GOOGL: 'tech', GOOG: 'tech', META: 'tech',
+  AMZN: 'tech', INTC: 'tech', AMD: 'tech', CRM: 'tech', ORCL: 'tech', IBM: 'tech',
+  NFLX: 'tech', SHOP: 'tech', QCOM: 'tech', TXN: 'tech', AVGO: 'tech', TSLA: 'tech',
+  // Finance
+  JPM: 'finance', BAC: 'finance', GS: 'finance', WFC: 'finance', C: 'finance',
+  V: 'finance', MA: 'finance', PYPL: 'finance', BX: 'finance', AXP: 'finance',
+  // Healthcare
+  JNJ: 'healthcare', PFE: 'healthcare', UNH: 'healthcare', ABT: 'healthcare',
+  MRK: 'healthcare', ABBV: 'healthcare', BMY: 'healthcare', CVS: 'healthcare',
+  // Energy
+  XOM: 'energy', CVX: 'energy', COP: 'energy', SLB: 'energy', EOG: 'energy',
+  // Consumer
+  KO: 'consumer', PG: 'consumer', WMT: 'consumer', MCD: 'consumer', PEP: 'consumer',
+  COST: 'consumer', HD: 'consumer', TGT: 'consumer', NKE: 'consumer', PM: 'consumer',
+  MO: 'consumer', LOW: 'consumer', KMB: 'consumer', CL: 'consumer',
+  // Industrial
+  CAT: 'industrial', DE: 'industrial', GE: 'industrial', MMM: 'industrial',
+  HON: 'industrial', RTX: 'industrial', UPS: 'industrial', BA: 'industrial',
+  // Utilities
+  NEE: 'utilities', SO: 'utilities', DUK: 'utilities', D: 'utilities',
+  EXC: 'utilities', AEP: 'utilities', ED: 'utilities', PPL: 'utilities',
+  // Real Estate
+  AMT: 'real_estate', O: 'real_estate', STAG: 'real_estate', NNN: 'real_estate',
+  WPC: 'real_estate', VICI: 'real_estate',
+  // Materials
+  LIN: 'materials', APD: 'materials', SHW: 'materials', NEM: 'materials',
+  // Comm Services
+  T: 'comm_services', VZ: 'comm_services', CMCSA: 'comm_services', DIS: 'comm_services', TMUS: 'comm_services',
+  // Bonds
+  TLT: 'bonds', BND: 'bonds', AGG: 'bonds', IEF: 'bonds', SHY: 'bonds',
+  VCSH: 'bonds', VCIT: 'bonds', HYG: 'bonds', LQD: 'bonds', VTIP: 'bonds',
+  // Gold / precious metals
+  GLD: 'gold', SLV: 'gold', IAU: 'gold', SGOL: 'gold',
+  // Crypto proxies
+  GBTC: 'crypto', ETHE: 'crypto', BITO: 'crypto',
+  // ETFs (broad — treated as mixed)
+  SPY: 'etf', QQQ: 'etf', IWM: 'etf', DIA: 'etf', VTI: 'etf',
+  VYM: 'etf', SCHD: 'etf', DVY: 'etf', JEPI: 'etf', JEPQ: 'etf',
+}
+
+// Hardcoded beta values for ~35 common stocks
+const RISK_BETA_MAP: Record<string, number> = {
+  TSLA: 1.8, NVDA: 1.6, AMD: 1.7, META: 1.3, AMZN: 1.2, GOOGL: 1.1, GOOG: 1.1,
+  AAPL: 1.2, MSFT: 1.1, SHOP: 1.5, CRM: 1.3, NFLX: 1.3, QCOM: 1.2, INTC: 1.1,
+  AVGO: 1.2, TXN: 1.0, ORCL: 0.9,
+  JPM: 1.1, BAC: 1.2, GS: 1.2, C: 1.3, WFC: 1.1, V: 1.0, MA: 1.0, PYPL: 1.5, AXP: 1.1,
+  XOM: 0.9, CVX: 0.8, COP: 1.0, SLB: 1.1, EOG: 1.0,
+  JNJ: 0.7, PFE: 0.7, UNH: 0.8, ABBV: 0.6, MRK: 0.5, BMY: 0.5, ABT: 0.7,
+  KO: 0.6, PG: 0.5, WMT: 0.5, MCD: 0.7, PEP: 0.6, COST: 0.7, PM: 0.7, MO: 0.5,
+  HD: 0.9, TGT: 0.9, LOW: 1.0, KMB: 0.6, CL: 0.5,
+  T: 0.6, VZ: 0.4, CMCSA: 0.8, DIS: 1.0, TMUS: 0.7,
+  NEE: 0.7, SO: 0.4, DUK: 0.3, D: 0.5, EXC: 0.5, AEP: 0.4, ED: 0.3,
+  AMT: 0.8, O: 0.8, STAG: 0.8, NNN: 0.6, VICI: 0.8,
+  CAT: 1.0, DE: 1.0, GE: 1.1, MMM: 0.9, HON: 0.9, BA: 1.2, UPS: 0.9,
+  SPY: 1.0, QQQ: 1.1, IWM: 1.1, DIA: 1.0, VTI: 1.0,
+  VYM: 0.7, SCHD: 0.8, DVY: 0.7, JEPI: 0.6, JEPQ: 0.7,
+  GLD: 0.2, SLV: 0.4, IAU: 0.2, TLT: 0.4, BND: 0.1,
+  GBTC: 2.5, ETHE: 2.5, BITO: 2.5,
+}
+
+const FACTOR_TOOLTIPS: Record<string, string> = {
+  'Concentration': 'Measures how much of your portfolio is in a single holding. A top position exceeding 30% is a concentration risk — if it drops sharply, your whole portfolio takes a major hit.',
+  'Sector Diversity': 'Measures how spread your holdings are across distinct economic sectors (tech, healthcare, finance, energy…). More sectors = more resilient to sector-specific downturns.',
+  'Volatility Proxy': 'Estimates portfolio volatility using each stock\'s beta — how much it historically moves relative to the market. Beta >1.5 means highly volatile. This is a proxy, not a guarantee.',
+  'Asset Class Mix': 'Measures whether you hold only equities or include stabilising asset classes like bonds (TLT, BND) and gold (GLD). A pure-equity portfolio amplifies drawdowns during market stress.',
+}
+
 function PortfolioRiskScore({ holdingsEnriched, stockInfos, totalMarketValue }: {
   holdingsEnriched: HoldingEnrichedWithDiv[]
   stockInfos: Record<string, StockInfo>
@@ -3229,123 +3482,225 @@ function PortfolioRiskScore({ holdingsEnriched, stockInfos, totalMarketValue }: 
 }) {
   if (holdingsEnriched.length === 0 || totalMarketValue <= 0) return null
 
-  // Calculate components
-  // 1. Concentration risk (0-30 pts): top holding weight
-  const weights = holdingsEnriched.map(h => h.marketValue / totalMarketValue)
-  const maxWeight = Math.max(...weights)
-  const concentrationScore = Math.round(Math.min(30, maxWeight * 100 * 0.5))
+  // ── Factor 1: Concentration Risk (0–30 pts) ──────────────────────────────
+  const weights = holdingsEnriched.map(h => ({ ticker: h.ticker, w: h.marketValue / totalMarketValue }))
+  const maxWeight   = Math.max(...weights.map(w => w.w))
+  const topHolder   = weights.find(w => Math.abs(w.w - maxWeight) < 0.0001)
+  const numHoldings = holdingsEnriched.length
 
-  // 2. Sector risk (0-20 pts): HHI index
-  const sectorPcts: Record<string, number> = {}
-  holdingsEnriched.forEach(h => {
-    const s = h.sector || 'Other'
-    sectorPcts[s] = (sectorPcts[s] || 0) + h.marketValue / totalMarketValue * 100
-  })
-  const hhi = Object.values(sectorPcts).reduce((s, p) => s + Math.pow(p / 100, 2), 0)
-  const sectorScore = Math.round(hhi * 20)
+  let concentrationPts = 0
+  if (maxWeight >= 0.5) concentrationPts += 20
+  else if (maxWeight >= 0.4) concentrationPts += 15
+  else if (maxWeight >= 0.3) concentrationPts += 12
+  else if (maxWeight >= 0.2) concentrationPts += 8
+  else if (maxWeight >= 0.1) concentrationPts += 4
+  // Holdings count penalty
+  if (numHoldings === 1) concentrationPts += 10
+  else if (numHoldings === 2) concentrationPts += 7
+  else if (numHoldings === 3) concentrationPts += 5
+  else if (numHoldings === 4) concentrationPts += 3
+  concentrationPts = Math.min(30, concentrationPts)
 
-  // 3. Beta risk (0-25 pts): portfolio beta
-  let betaSum = 0, betaWeight = 0
+  // ── Factor 2: Sector Diversity (0–25 pts) ────────────────────────────────
+  const EXCLUDED_BUCKETS = new Set(['bonds', 'gold', 'crypto', 'etf'])
+  const sectorBuckets = new Set<string>()
   holdingsEnriched.forEach(h => {
-    const beta = stockInfos[h.ticker]?.beta
-    if (beta != null && h.marketValue > 0) {
-      betaSum += beta * (h.marketValue / totalMarketValue)
-      betaWeight += h.marketValue / totalMarketValue
+    const mapped = RISK_SECTOR_MAP[h.ticker]
+    if (mapped && !EXCLUDED_BUCKETS.has(mapped)) {
+      sectorBuckets.add(mapped)
+    } else if (!mapped) {
+      const s = (h.sector || 'other').toLowerCase()
+      const norm =
+        s.includes('tech') || s.includes('information') ? 'tech' :
+        s.includes('financ') ? 'finance' :
+        s.includes('health') ? 'healthcare' :
+        s.includes('energy') ? 'energy' :
+        s.includes('consumer') ? 'consumer' :
+        s.includes('industrial') ? 'industrial' :
+        s.includes('utilit') ? 'utilities' :
+        s.includes('real') ? 'real_estate' :
+        s.includes('material') ? 'materials' :
+        s.includes('comm') ? 'comm_services' : 'other'
+      if (!EXCLUDED_BUCKETS.has(norm)) sectorBuckets.add(norm)
     }
   })
-  const portfolioBeta = betaWeight > 0 ? betaSum / betaWeight : 1
-  const betaScore = Math.round(Math.min(25, Math.max(0, (portfolioBeta - 0.5) * 25)))
+  const uniqueSectors = sectorBuckets.size
+  const sectorPts =
+    uniqueSectors <= 1 ? 25 :
+    uniqueSectors === 2 ? 20 :
+    uniqueSectors === 3 ? 15 :
+    uniqueSectors === 4 ? 10 :
+    uniqueSectors === 5 ? 6  :
+    uniqueSectors === 6 ? 3  : 0
 
-  // 4. Diversification (0-25 pts): number of holdings
-  const numHoldings = holdingsEnriched.length
-  const divScore = numHoldings <= 2 ? 20 : numHoldings <= 4 ? 12 : numHoldings <= 7 ? 6 : 2
+  // ── Factor 3: Volatility Proxy (0–25 pts) ────────────────────────────────
+  let betaSum = 0, betaWeightSum = 0
+  holdingsEnriched.forEach(h => {
+    const w    = h.marketValue / totalMarketValue
+    const beta = RISK_BETA_MAP[h.ticker] ?? stockInfos[h.ticker]?.beta ?? 1.0
+    betaSum       += (beta as number) * w
+    betaWeightSum += w
+  })
+  const portfolioBeta = betaWeightSum > 0 ? betaSum / betaWeightSum : 1.0
+  const volatilityPts =
+    portfolioBeta <= 0.6 ? 2  :
+    portfolioBeta <= 0.8 ? 5  :
+    portfolioBeta <= 1.0 ? 10 :
+    portfolioBeta <= 1.2 ? 14 :
+    portfolioBeta <= 1.4 ? 18 :
+    portfolioBeta <= 1.6 ? 21 :
+    portfolioBeta <= 2.0 ? 23 : 25
 
-  const totalScore = Math.min(100, concentrationScore + sectorScore + betaScore + divScore)
+  // ── Factor 4: Asset Class Mix (0–20 pts) ─────────────────────────────────
+  const BOND_SET   = new Set(['TLT','BND','AGG','IEF','SHY','VCSH','VCIT','HYG','LQD','VTIP','GOVT','SCHO','VGIT','BNDX'])
+  const GOLD_SET   = new Set(['GLD','SLV','IAU','SGOL','PHYS','CEF'])
+  const CRYPTO_SET = new Set(['GBTC','ETHE','BITO','BITB','FBTC'])
+  const tickers    = new Set(holdingsEnriched.map(h => h.ticker))
+  const hasBonds  = [...BOND_SET].some(t => tickers.has(t))
+  const hasGold   = [...GOLD_SET].some(t => tickers.has(t))
+  const hasCrypto = [...CRYPTO_SET].some(t => tickers.has(t))
+  let assetClassPts = 20
+  if (hasBonds)  assetClassPts -= 8
+  if (hasGold)   assetClassPts -= 6
+  if (hasCrypto) assetClassPts += 2   // crypto adds volatility
+  assetClassPts = Math.max(0, Math.min(20, assetClassPts))
 
-  const level = totalScore <= 25 ? 'Low' : totalScore <= 50 ? 'Moderate' : totalScore <= 75 ? 'High' : 'Extreme'
-  const levelColor = { Low: 'var(--green)', Moderate: 'var(--yellow)', High: '#f97316', Extreme: 'var(--red)' }[level]
+  // ── Total Score ──────────────────────────────────────────────────────────
+  const totalScore = Math.min(100, concentrationPts + sectorPts + volatilityPts + assetClassPts)
+  const scoreColor = totalScore < 30 ? 'var(--green)' : totalScore < 60 ? 'var(--yellow)' : 'var(--red)'
+  const scoreLabel = totalScore < 30 ? 'Low Risk' : totalScore < 60 ? 'Moderate Risk' : 'High Risk'
 
-  // Generate recommendations
-  const recs: string[] = []
-  if (maxWeight > 0.30) recs.push(`${holdingsEnriched.find(h => h.marketValue / totalMarketValue >= maxWeight - 0.001)?.ticker || 'Top holding'} is ${(maxWeight * 100).toFixed(0)}% of portfolio — consider trimming`)
-  const dominantSector = Object.entries(sectorPcts).sort((a, b) => b[1] - a[1])[0]
-  if (dominantSector && dominantSector[1] > 50) recs.push(`${dominantSector[1].toFixed(0)}% in ${dominantSector[0]} — diversify across sectors`)
-  if (portfolioBeta > 1.4) recs.push(`Beta ${portfolioBeta.toFixed(2)} is elevated — portfolio moves more than the market`)
-  if (numHoldings < 5) recs.push(`Only ${numHoldings} holding${numHoldings > 1 ? 's' : ''} — consider adding uncorrelated assets`)
-  if (recs.length === 0) recs.push('Portfolio risk profile looks balanced. Continue monitoring.')
+  // ── Factor list for display ──────────────────────────────────────────────
+  const factors = [
+    { label: 'Concentration',    pts: concentrationPts, max: 30,
+      sub: `Top: ${(maxWeight * 100).toFixed(0)}% (${topHolder?.ticker ?? '?'}), ${numHoldings} holdings` },
+    { label: 'Sector Diversity', pts: sectorPts,         max: 25,
+      sub: `${uniqueSectors} sector${uniqueSectors !== 1 ? 's' : ''}: ${Array.from(sectorBuckets).slice(0,4).map(s => s.replace(/_/g,' ')).join(', ')}${uniqueSectors > 4 ? '…' : ''}` },
+    { label: 'Volatility Proxy', pts: volatilityPts,     max: 25,
+      sub: `Weighted beta: ${portfolioBeta.toFixed(2)}` },
+    { label: 'Asset Class Mix',  pts: assetClassPts,     max: 20,
+      sub: `${hasBonds ? '✓ Bonds ' : '✗ No bonds  '}${hasGold ? '✓ Gold ' : ''}${hasCrypto ? '⚠ Crypto' : ''}` },
+  ]
+  const factorColors = factors.map(f =>
+    f.pts / f.max > 0.66 ? 'var(--red)' : f.pts / f.max > 0.33 ? 'var(--yellow)' : 'var(--green)'
+  )
 
-  // SVG Gauge
-  const gaugeAngle = (totalScore / 100) * 180
-  const cx = 80, cy = 80, r = 60
-  const toRad = (a: number) => (a - 180) * Math.PI / 180
-  const gaugeX = cx + r * Math.cos(toRad(gaugeAngle))
-  const gaugeY = cy + r * Math.sin(toRad(gaugeAngle))
+  // ── How-to-improve suggestions ───────────────────────────────────────────
+  const suggestions: string[] = []
+  if (concentrationPts > 15) {
+    if (maxWeight > 0.3)
+      suggestions.push(`${topHolder?.ticker ?? 'Top holding'} is ${(maxWeight * 100).toFixed(0)}% of portfolio — trim to <25% to reduce concentration risk`)
+    if (numHoldings < 5)
+      suggestions.push(`Only ${numHoldings} position${numHoldings > 1 ? 's' : ''} — aim for 8–15 holdings for diversification`)
+  }
+  if (sectorPts > 15) {
+    const listed = Array.from(sectorBuckets).map(s => s.replace(/_/g, ' ')).join(', ')
+    suggestions.push(`Concentrated in: ${listed || 'few sectors'} — add healthcare, consumer staples, utilities, or financials`)
+  }
+  if (volatilityPts > 14)
+    suggestions.push(`Portfolio beta ${portfolioBeta.toFixed(2)} is elevated — add low-beta stocks (utilities, consumer staples) to cushion swings`)
+  if (assetClassPts >= 18)
+    suggestions.push('100% equities — consider adding bonds (TLT, BND) or gold (GLD) for downside protection and lower correlation')
+  if (hasCrypto)
+    suggestions.push('Crypto holdings increase volatility significantly — size them at <5% of portfolio')
+  if (suggestions.length === 0)
+    suggestions.push('Portfolio risk profile looks well-balanced. Keep monitoring allocation drift over time.')
+
+  // ── SVG Gauge (half-circle) ──────────────────────────────────────────────
+  const CX = 110, CY = 100, R = 80
+  const toRad   = (deg: number) => (deg * Math.PI) / 180
+  const arcPath = (fromPct: number, toPct: number) => {
+    const fd = -180 + fromPct * 1.8, td = -180 + toPct * 1.8
+    const x1 = CX + R * Math.cos(toRad(fd)), y1 = CY + R * Math.sin(toRad(fd))
+    const x2 = CX + R * Math.cos(toRad(td)), y2 = CY + R * Math.sin(toRad(td))
+    return `M ${x1} ${y1} A ${R} ${R} 0 ${toPct - fromPct > 50 ? 1 : 0} 1 ${x2} ${y2}`
+  }
+  const needleDeg = -180 + (totalScore / 100) * 180
+  const needleX   = CX + R * Math.cos(toRad(needleDeg))
+  const needleY   = CY + R * Math.sin(toRad(needleDeg))
 
   return (
     <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 12 }}>PORTFOLIO RISK SCORE</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: 20, alignItems: 'center' }}>
-        {/* Gauge */}
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 16 }}>PORTFOLIO RISK SCORE</div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 240px) 1fr', gap: 24, alignItems: 'start' }}>
+
+        {/* ── Gauge ─────────────────────────────────────────────────────── */}
         <div style={{ textAlign: 'center' }}>
-          <svg viewBox="0 0 160 100" width="160" height="100">
-            {/* Background arc */}
-            <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`} fill="none" stroke="var(--bg-1)" strokeWidth="14" />
-            {/* Colored arc segments */}
-            {[
-              { from: 0, to: 25, color: 'var(--green)' },
-              { from: 25, to: 50, color: 'var(--yellow)' },
-              { from: 50, to: 75, color: '#f97316' },
-              { from: 75, to: 100, color: 'var(--red)' },
-            ].map((seg, i) => {
-              const startAngle = (seg.from / 100) * 180
-              const endAngle = (seg.to / 100) * 180
-              const x1 = cx + r * Math.cos(toRad(startAngle))
-              const y1 = cy + r * Math.sin(toRad(startAngle))
-              const x2 = cx + r * Math.cos(toRad(endAngle))
-              const y2 = cy + r * Math.sin(toRad(endAngle))
-              return (
-                <path key={i}
-                  d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`}
-                  fill="none" stroke={seg.color} strokeWidth="14" opacity="0.7" />
-              )
-            })}
+          <svg viewBox="0 0 220 130" style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
+            {/* Track */}
+            <path d={arcPath(0, 100)} fill="none" stroke="var(--bg-1)" strokeWidth="18" />
+            {/* Color segments: green 0-30, yellow 30-60, red 60-100 */}
+            <path d={arcPath(0, 30)}   fill="none" stroke="var(--green)"  strokeWidth="18" opacity="0.8" />
+            <path d={arcPath(30, 60)}  fill="none" stroke="var(--yellow)" strokeWidth="18" opacity="0.8" />
+            <path d={arcPath(60, 100)} fill="none" stroke="var(--red)"    strokeWidth="18" opacity="0.8" />
             {/* Needle */}
-            <line x1={cx} y1={cy} x2={gaugeX} y2={gaugeY} stroke="var(--text-0)" strokeWidth="2.5" strokeLinecap="round" />
-            <circle cx={cx} cy={cy} r="5" fill="var(--text-0)" />
-            {/* Score */}
-            <text x={cx} y={cy + 22} textAnchor="middle" fontSize="20" fontWeight="800" fill={levelColor} fontFamily="var(--mono)">{totalScore}</text>
-            <text x={cx} y={cy + 34} textAnchor="middle" fontSize="9" fill="var(--text-3)">out of 100</text>
+            <line x1={CX} y1={CY} x2={needleX} y2={needleY} stroke="var(--text-0)" strokeWidth="3" strokeLinecap="round" />
+            <circle cx={CX} cy={CY} r="6" fill="var(--text-0)" />
+            {/* Score text */}
+            <text x={CX} y={CY + 22} textAnchor="middle" fontSize="30" fontWeight="800" fill={scoreColor} fontFamily="var(--mono)">{totalScore}</text>
+            <text x={CX} y={CY + 36} textAnchor="middle" fontSize="9"  fill="var(--text-3)">/ 100</text>
+            {/* Edge labels */}
+            <text x={CX - R - 6} y={CY + 6} textAnchor="end"   fontSize="8" fill="var(--green)">Low</text>
+            <text x={CX + R + 6} y={CY + 6} textAnchor="start" fontSize="8" fill="var(--red)">High</text>
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 800, color: levelColor, marginTop: -4 }}>{level} Risk</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: scoreColor, marginTop: 2 }}>{scoreLabel}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4, lineHeight: 1.4 }}>
+            {totalScore < 30
+              ? 'Well-diversified portfolio'
+              : totalScore < 60
+              ? 'Some risk areas to address'
+              : 'Multiple concentration risks detected'}
+          </div>
         </div>
 
-        {/* Breakdown + recs */}
+        {/* ── Breakdown + Suggestions ───────────────────────────────────── */}
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-            {[
-              { label: 'Concentration', score: concentrationScore, max: 30 },
-              { label: 'Sector exposure', score: sectorScore, max: 20 },
-              { label: 'Beta', score: betaScore, max: 25 },
-              { label: 'Diversification', score: divScore, max: 25 },
-            ].map(c => (
-              <div key={c.label} style={{ fontSize: 11 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <span style={{ color: 'var(--text-2)' }}>{c.label}</span>
-                  <span style={{ color: 'var(--text-1)', fontFamily: 'var(--mono)' }}>{c.score}/{c.max}</span>
+          {/* Factor bars */}
+          <div style={{ marginBottom: 14 }}>
+            {factors.map((f, i) => (
+              <div key={f.label} style={{ marginBottom: 11 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
+                    <span style={{ color: 'var(--text-1)', fontWeight: 600 }}>{f.label}</span>
+                    <Tooltip text={FACTOR_TOOLTIPS[f.label]} position="top" />
+                  </div>
+                  <span style={{ fontSize: 12, fontFamily: 'var(--mono)', color: factorColors[i], fontWeight: 700 }}>
+                    {f.pts} / {f.max}
+                  </span>
                 </div>
-                <div style={{ height: 4, background: 'var(--bg-1)', borderRadius: 2 }}>
-                  <div style={{ height: '100%', width: `${(c.score / c.max) * 100}%`, background: c.score > c.max * 0.66 ? 'var(--red)' : c.score > c.max * 0.33 ? 'var(--yellow)' : 'var(--green)', borderRadius: 2 }} />
+                <div style={{ height: 8, background: 'var(--bg-1)', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: 4,
+                    width: `${(f.pts / f.max) * 100}%`,
+                    background: factorColors[i],
+                    transition: 'width 0.4s ease',
+                  }} />
                 </div>
+                <div style={{ fontSize: 9.5, color: 'var(--text-3)', marginTop: 2 }}>{f.sub}</div>
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 4, fontWeight: 700, letterSpacing: '0.05em' }}>RECOMMENDATIONS</div>
-          {recs.map((r, i) => (
-            <div key={i} style={{ fontSize: 11, color: 'var(--text-2)', padding: '3px 0', borderBottom: '1px solid var(--border)' }}>
-              {totalScore > 50 ? '⚠ ' : '• '}{r}
+
+          {/* How to improve */}
+          <div style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '10px 12px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.05em', marginBottom: 8 }}>
+              💡 HOW TO IMPROVE
             </div>
-          ))}
+            {suggestions.map((s, i) => (
+              <div key={i} style={{
+                fontSize: 11, color: 'var(--text-2)', padding: '4px 0', lineHeight: 1.45,
+                borderBottom: i < suggestions.length - 1 ? '1px solid var(--border-b)' : 'none',
+              }}>
+                {totalScore < 30 ? '✓ ' : '→ '}{s}
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
+
+      <div style={{ fontSize: 9.5, color: 'var(--text-3)', marginTop: 14, borderTop: '1px solid var(--border-b)', paddingTop: 8 }}>
+        ⚠ Risk score is a simplified estimate using hardcoded sector/beta data — for educational purposes only. Not financial advice. Higher score = historically higher risk factors, not guaranteed losses.
       </div>
     </div>
   )
