@@ -10,6 +10,8 @@ import {
 import Link from 'next/link'
 import PersistentNav from '../components/PersistentNav'
 import Tooltip from '../components/Tooltip'
+import { useAuth } from '../context/AuthContext'
+import { initPortfolioSync, debouncedSyncPortfolio } from '../utils/cloudSync'
 
 const AuthModal = dynamic(() => import('../components/AuthModal'), { ssr: false })
 
@@ -591,6 +593,7 @@ function PortfolioExportButton() {
 // ─── Portfolio Page ───────────────────────────────────────────────────────────
 
 export default function PortfolioPage() {
+  const { token: cloudToken } = useAuth()
   const [activeTab, setActiveTab] = useState<'dashboard' | 'holdings' | 'dividends' | 'drip' | 'sold' | 'watchlist' | 'tax'>('dashboard')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -875,6 +878,21 @@ export default function PortfolioPage() {
   useEffect(() => { if (!isLoggedIn && dataLoaded) saveLS('cg_portfolio_sold', soldPositions) }, [soldPositions, isLoggedIn, dataLoaded])
   useEffect(() => { if (!isLoggedIn && dataLoaded) saveLS('cg_portfolio_watchlist', watchlist) }, [watchlist, isLoggedIn, dataLoaded])
   useEffect(() => { saveLS('cg_portfolio_snapshots', snapshots) }, [snapshots])
+
+  // ── Cloud sync (cloudSync / cg_token) ─────────────────────────────────────
+  // Runs alongside the existing portfolio API sync — additive, non-breaking
+  useEffect(() => {
+    if (!cloudToken) return
+    initPortfolioSync(cloudToken).then(() => {
+      // Reload holdings from localStorage after merge
+      setHoldings(loadLS('cg_portfolio_holdings', []))
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudToken])
+
+  useEffect(() => {
+    if (dataLoaded && holdings.length >= 0) debouncedSyncPortfolio(holdings)
+  }, [holdings, dataLoaded])
 
   // Fetch exchange rates when home currency changes or on mount
   useEffect(() => {

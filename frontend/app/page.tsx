@@ -7,6 +7,7 @@ import { useSettings } from './context/SettingsContext'
 import { useOnboarding } from './context/OnboardingContext'
 import { useToast } from './context/ToastContext'
 import { trackWatchlistAdd, trackWatchlistRemove, trackStockSearch } from './utils/analytics'
+import { initWatchlistSync, debouncedSyncWatchlist } from './utils/cloudSync'
 import { formatEventTime, formatEventDate } from './lib/timezone'
 
 // Lazy-load modals so they don't bloat initial bundle
@@ -2129,7 +2130,24 @@ export default function Home() {
 
   useEffect(() => {
     try { localStorage.setItem('cg_wl', JSON.stringify(watchlist)) } catch {}
+    debouncedSyncWatchlist(watchlist)
   }, [watchlist])
+
+  // ── Cloud sync: watchlist ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!token) return
+    initWatchlistSync(token).then(() => {
+      // Reload watchlist from localStorage after merge
+      try {
+        const s = localStorage.getItem('cg_wl')
+        if (s) {
+          const parsed = JSON.parse(s)
+          if (Array.isArray(parsed) && parsed.length > 0) setWatchlist(parsed)
+        }
+      } catch {}
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
   useEffect(() => {
     try { localStorage.setItem('cg_watchlist_size', watchlistSize) } catch {}

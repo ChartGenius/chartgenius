@@ -206,16 +206,92 @@ export function debouncedSyncSettings(settings: Record<string, unknown>): void {
   }, 5000)
 }
 
-// ── Full initial sync (journal + settings) ────────────────────────────────────
+// ── Portfolio sync ────────────────────────────────────────────────────────────
+
+const PORTFOLIO_KEY = 'cg_portfolio_holdings'
+
+/**
+ * Initial sync for portfolio holdings on login/app load.
+ * Merges cloud holdings with localStorage holdings.
+ */
+export async function initPortfolioSync(token: string): Promise<void> {
+  try {
+    const cloudHoldings = await cloudGet<unknown[]>(token, 'portfolio')
+    const localHoldings = lsGet<unknown[]>(PORTFOLIO_KEY, [])
+    const cloud = Array.isArray(cloudHoldings) ? cloudHoldings : []
+
+    const merged = mergeArrays(localHoldings, cloud)
+    lsSet(PORTFOLIO_KEY, merged)
+
+    if (merged.length !== cloud.length) {
+      await cloudPut(token, 'portfolio', merged)
+    }
+  } catch {
+    // Fail silently — localStorage-only flow always works
+  }
+}
+
+let _portfolioTimer: ReturnType<typeof setTimeout> | null = null
+
+export function debouncedSyncPortfolio(holdings: unknown[]): void {
+  const token = getToken()
+  if (!token) return
+  if (_portfolioTimer) clearTimeout(_portfolioTimer)
+  _portfolioTimer = setTimeout(async () => {
+    _portfolioTimer = null
+    await cloudPut(token, 'portfolio', holdings)
+  }, 5000)
+}
+
+// ── Watchlist sync ────────────────────────────────────────────────────────────
+
+const WATCHLIST_KEY = 'cg_wl'
+
+/**
+ * Initial sync for watchlist on login/app load.
+ * Merges cloud watchlist with localStorage watchlist.
+ */
+export async function initWatchlistSync(token: string): Promise<void> {
+  try {
+    const cloudWatchlist = await cloudGet<unknown[]>(token, 'watchlist')
+    const localWatchlist = lsGet<unknown[]>(WATCHLIST_KEY, [])
+    const cloud = Array.isArray(cloudWatchlist) ? cloudWatchlist : []
+
+    const merged = mergeArrays(localWatchlist, cloud)
+    lsSet(WATCHLIST_KEY, merged)
+
+    if (merged.length !== cloud.length) {
+      await cloudPut(token, 'watchlist', merged)
+    }
+  } catch {
+    // Fail silently — localStorage-only flow always works
+  }
+}
+
+let _watchlistTimer: ReturnType<typeof setTimeout> | null = null
+
+export function debouncedSyncWatchlist(tickers: unknown[]): void {
+  const token = getToken()
+  if (!token) return
+  if (_watchlistTimer) clearTimeout(_watchlistTimer)
+  _watchlistTimer = setTimeout(async () => {
+    _watchlistTimer = null
+    await cloudPut(token, 'watchlist', tickers)
+  }, 5000)
+}
+
+// ── Full initial sync (journal + settings + portfolio + watchlist) ─────────────
 
 export async function initFullSync(token: string): Promise<void> {
   if (!token) {
     setStatus('local-only')
     return
   }
-  // Run journal and settings sync in parallel
+  // Run all 4 syncs in parallel
   await Promise.all([
     initJournalSync(token),
     initSettingsSync(token),
+    initPortfolioSync(token),
+    initWatchlistSync(token),
   ])
 }
