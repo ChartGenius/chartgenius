@@ -1346,6 +1346,19 @@ function PortfolioPanel({ quotes, onOpenStock }: { quotes: Record<string, Quote>
   })
   const [liveQuotes, setLiveQuotes] = useState<Record<string, Quote>>({})
   const [loadingPrices, setLoadingPrices] = useState(false)
+  const [hideValues, setHideValues] = useState<boolean>(() => {
+    try { return localStorage.getItem('cg_hide_values') === 'true' } catch { return false }
+  })
+
+  const toggleHideValues = () => {
+    setHideValues(prev => {
+      const next = !prev
+      try { localStorage.setItem('cg_hide_values', String(next)) } catch {}
+      return next
+    })
+  }
+
+  const maskValue = (val: string) => hideValues ? '••••••' : val
 
   // Fetch live prices for all holdings
   useEffect(() => {
@@ -1399,23 +1412,44 @@ function PortfolioPanel({ quotes, onOpenStock }: { quotes: Record<string, Quote>
       {holdings.length > 0 && (
         <>
           <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', fontSize: 10 }}>
+            {/* Eye toggle header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ color: 'var(--text-3)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Portfolio</span>
+              <button
+                onClick={toggleHideValues}
+                title={hideValues ? 'Show values' : 'Hide values'}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: '0 2px', lineHeight: 1, fontSize: 12 }}
+              >
+                {hideValues ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
+              </button>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 6 }}>
               <div>
                 <span style={{ color: 'var(--text-2)' }}>VALUE</span>
                 <div style={{ color: 'var(--text-0)', fontFamily: 'var(--mono)', fontWeight: 600 }}>
-                  ${fmt(totalValue)}
+                  {maskValue(`$${fmt(totalValue)}`)}
                 </div>
               </div>
               <div>
                 <span style={{ color: 'var(--text-2)' }}>P&L</span>
                 <div style={{ color: totalPnl >= 0 ? 'var(--green)' : 'var(--red)', fontFamily: 'var(--mono)', fontWeight: 600 }}>
-                  ${fmt(Math.abs(totalPnl))} ({totalPnlPct >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)
+                  {maskValue(`$${fmt(Math.abs(totalPnl))}`)} ({totalPnlPct >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)
                 </div>
               </div>
             </div>
             {totalDayGain !== 0 && (
               <div style={{ color: totalDayGain >= 0 ? 'var(--green)' : 'var(--red)', fontSize: 9.5 }}>
-                Day: {totalDayGain >= 0 ? '+' : ''}${fmt(Math.abs(totalDayGain))}
+                Day: {totalDayGain >= 0 ? '+' : ''}{maskValue(`$${fmt(Math.abs(totalDayGain))}`)}
               </div>
             )}
           </div>
@@ -1947,7 +1981,6 @@ function FeaturesShowcase() {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden="true">{f.icon}</span>
                   <span
                     style={{
                       fontSize: 13,
