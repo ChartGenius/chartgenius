@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function CookiesPage() {
   return (
-    <LegalPage title="Cookie Policy" lastUpdated="March 6, 2026">
+    <LegalPage title="Cookie Policy" lastUpdated="March 12, 2026">
 
       <Section id="what" title="1. What Are Cookies?">
         <p>

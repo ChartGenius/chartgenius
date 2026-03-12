@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function DisclaimerPage() {
   return (
-    <LegalPage title="Disclaimer" lastUpdated="March 6, 2026">
+    <LegalPage title="Disclaimer" lastUpdated="March 12, 2026">
 
       <WarningBox>
         <strong>⚠️ IMPORTANT LEGAL NOTICE</strong>
