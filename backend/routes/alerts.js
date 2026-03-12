@@ -12,6 +12,12 @@
 const express = require('express');
 const router = express.Router();
 const alertService = require('../services/alertService');
+const marketAlertsRouter = require('./marketAlerts');
+
+// ── Mount market-specific alert sub-routes ──────────────────────────────────
+// GET /api/alerts/market   — price-move alerts
+// GET /api/alerts/calendar — upcoming high-impact events
+router.use('/', marketAlertsRouter);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Validation helpers

@@ -5446,4 +5446,35 @@ a.alert-row-title:hover {
   }
 }
 
+/* ── Market Alert Bar ───────────────────────────────────────────────────────── */
+
+/* Hide scrollbar on the horizontal pill scroller */
+.market-alert-scroll::-webkit-scrollbar {
+  display: none;
+}
+.market-alert-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Pulse animation for imminent events */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+/* Mobile: stack alerts vertically and make them tappable */
+@media (max-width: 768px) {
+  .market-alert-scroll {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    gap: 6px !important;
+  }
+  .market-alert-scroll > * {
+    flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 /* v2026.03.12.1 */

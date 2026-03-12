@@ -1486,6 +1486,279 @@ function PortfolioPanel({ quotes, onOpenStock }: { quotes: Record<string, Quote>
   )
 }
 
+// ─── Market Alert Bar (price moves + calendar events) ────────────────────────
+
+interface PriceMoveAlert {
+  id: string
+  symbol: string
+  change_pct: number
+  timeframe: string
+  direction: 'up' | 'down'
+  timestamp: string
+  possible_catalyst: string
+}
+
+interface UpcomingEvent {
+  id: string
+  title: string
+  date: string
+  impact: string | number
+  country: string
+  type?: string
+}
+
+function useMarketAlerts() {
+  const [priceAlerts, setPriceAlerts] = useState<PriceMoveAlert[]>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const fetchAlerts = useCallback(async () => {
+    try {
+      const [alertsRes, calRes] = await Promise.allSettled([
+        fetch(`${API_BASE}/api/alerts/market`),
+        fetch(`${API_BASE}/api/alerts/calendar?hours=2`),
+      ])
+
+      if (alertsRes.status === 'fulfilled' && alertsRes.value.ok) {
+        const j = await alertsRes.value.json()
+        if (j.success) setPriceAlerts(j.data || [])
+      }
+      if (calRes.status === 'fulfilled' && calRes.value.ok) {
+        const j = await calRes.value.json()
+        if (j.success) setUpcomingEvents(j.data || [])
+      }
+    } catch { /* silently ignore */ }
+  }, [])
+
+  useEffect(() => {
+    fetchAlerts()
+    intervalRef.current = setInterval(fetchAlerts, 30_000)
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [fetchAlerts])
+
+  return { priceAlerts, upcomingEvents, refresh: fetchAlerts }
+}
+
+/** Pill badge for a single price-move alert */
+function PriceMoveAlertPill({ alert }: { alert: PriceMoveAlert }) {
+  const isUp = alert.direction === 'up'
+  const color = isUp ? 'var(--green)' : 'var(--red)'
+  const bg    = isUp ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)'
+  const border = isUp ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'
+  const sign  = isUp ? '+' : ''
+  const emoji = isUp ? '🟢' : '🔴'
+
+  return (
+    <div
+      title={alert.possible_catalyst ? `Possible catalyst: ${alert.possible_catalyst}` : undefined}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        padding: '3px 10px', background: bg,
+        border: `1px solid ${border}`, borderRadius: 20,
+        fontSize: 11, whiteSpace: 'nowrap', cursor: 'default',
+        flexShrink: 0,
+      }}
+    >
+      <span style={{ fontSize: 12 }}>{emoji}</span>
+      <span style={{ fontWeight: 700, color }}>{alert.symbol}</span>
+      <span style={{ color }}>{sign}{alert.change_pct.toFixed(1)}%</span>
+      <span style={{ color: 'var(--text-3)', fontSize: 10 }}>in {alert.timeframe}</span>
+      {alert.possible_catalyst && (
+        <span style={{ color: '#60a5fa', fontSize: 10 }}>• {alert.possible_catalyst.slice(0, 30)}</span>
+      )}
+    </div>
+  )
+}
+
+/** Pill badge for a calendar event */
+function CalendarEventPill({ event }: { event: UpcomingEvent }) {
+  const minutesUntil = Math.round((new Date(event.date).getTime() - Date.now()) / 60000)
+  const label = minutesUntil < 60
+    ? `${minutesUntil}m`
+    : `${Math.floor(minutesUntil / 60)}h ${minutesUntil % 60}m`
+  const isImminent = minutesUntil <= 5
+
+  return (
+    <div
+      style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        padding: '3px 10px',
+        background: isImminent ? 'rgba(245,158,11,0.2)' : 'rgba(96,165,250,0.12)',
+        border: `1px solid ${isImminent ? 'rgba(245,158,11,0.4)' : 'rgba(96,165,250,0.25)'}`,
+        borderRadius: 20, fontSize: 11, whiteSpace: 'nowrap',
+        flexShrink: 0,
+        animation: isImminent ? 'pulse 1.2s ease-in-out infinite' : 'none',
+      }}
+    >
+      <span style={{ fontSize: 12 }}>📅</span>
+      <a href="/calendar" style={{ color: isImminent ? '#f59e0b' : '#60a5fa', fontWeight: 600, textDecoration: 'none', fontSize: 11 }}>
+        {event.title.slice(0, 28)}
+      </a>
+      <span style={{ color: 'var(--text-3)', fontSize: 10 }}>in {label}</span>
+    </div>
+  )
+}
+
+/**
+ * MarketAlertBar — horizontal scrolling bar showing real-time price moves
+ * and upcoming high-impact events. Rendered just below SmartAlertsBar.
+ */
+function MarketAlertBar() {
+  const { priceAlerts, upcomingEvents } = useMarketAlerts()
+  const hasContent = priceAlerts.length > 0 || upcomingEvents.length > 0
+
+  return (
+    <div style={{
+      borderBottom: '1px solid var(--border)',
+      background: '#0a0a0e',
+      minHeight: 34,
+      display: 'flex', alignItems: 'center',
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 800, letterSpacing: '0.08em',
+        color: 'var(--text-3)', padding: '0 10px',
+        whiteSpace: 'nowrap', borderRight: '1px solid var(--border)',
+        alignSelf: 'stretch', display: 'flex', alignItems: 'center',
+        minWidth: 60,
+      }}>
+        ALERTS
+      </div>
+
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        overflowX: 'auto', padding: '4px 10px',
+        scrollbarWidth: 'none',
+        flex: 1,
+        /* Stacked vertically on mobile */
+      }}
+        className="market-alert-scroll"
+      >
+        {!hasContent && (
+          <span style={{ fontSize: 11, color: 'var(--text-3)', padding: '0 4px' }}>
+            No active alerts — markets quiet
+          </span>
+        )}
+
+        {priceAlerts.map(a => (
+          <PriceMoveAlertPill key={a.id} alert={a} />
+        ))}
+
+        {upcomingEvents.slice(0, 3).map(e => (
+          <CalendarEventPill key={e.id} event={e} />
+        ))}
+      </div>
+
+      {hasContent && (
+        <div style={{
+          fontSize: 9, color: 'var(--text-3)', padding: '0 8px',
+          whiteSpace: 'nowrap', borderLeft: '1px solid var(--border)',
+          alignSelf: 'stretch', display: 'flex', alignItems: 'center',
+        }}>
+          ⚠ Not financial advice
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * UpcomingEventsWidget — shows the next 3 high-impact events with countdown timers.
+ * Rendered at the top of the right (calendar) column.
+ */
+function UpcomingEventsWidget() {
+  const [events, setEvents] = useState<UpcomingEvent[]>([])
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/alerts/calendar?hours=2`)
+        if (!res.ok) return
+        const j = await res.json()
+        if (j.success) setEvents(j.data?.slice(0, 3) || [])
+      } catch { /* ignore */ }
+    }
+
+    fetchEvents()
+    const fetchInterval = setInterval(fetchEvents, 60_000)
+    // Tick every second to keep countdowns live
+    const tickInterval = setInterval(() => setTick(t => t + 1), 1000)
+    return () => { clearInterval(fetchInterval); clearInterval(tickInterval) }
+  }, [])
+
+  if (events.length === 0) return null
+
+  return (
+    <div style={{
+      padding: '8px 12px 6px',
+      borderBottom: '1px solid var(--border)',
+      background: 'var(--bg-1)',
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 700, letterSpacing: '0.07em',
+        color: 'var(--text-3)', marginBottom: 6,
+        display: 'flex', alignItems: 'center', gap: 4,
+      }}>
+        <span style={{ color: '#60a5fa' }}>📅</span> UPCOMING EVENTS
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {events.map(e => {
+          const minutesUntil = Math.round((new Date(e.date).getTime() - Date.now()) / 60000)
+          const isImminent   = minutesUntil <= 5
+          const label = minutesUntil < 1
+            ? 'NOW'
+            : minutesUntil < 60
+            ? `in ${minutesUntil}m`
+            : `in ${Math.floor(minutesUntil / 60)}h ${minutesUntil % 60}m`
+          const impactStr = (e.impact || '').toString().toLowerCase()
+          const isHigh = ['high', '3'].includes(impactStr)
+          const dotColor = isHigh ? 'var(--red)' : '#f59e0b'
+
+          return (
+            <div
+              key={e.id}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '3px 6px',
+                background: isImminent ? 'rgba(245,158,11,0.08)' : 'transparent',
+                borderRadius: 6,
+                border: isImminent ? '1px solid rgba(245,158,11,0.2)' : '1px solid transparent',
+                animation: isImminent ? 'pulse 1.2s ease-in-out infinite' : 'none',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: dotColor, flexShrink: 0,
+                  boxShadow: isImminent ? `0 0 6px ${dotColor}` : 'none',
+                }} />
+                <a
+                  href="/calendar"
+                  style={{
+                    fontSize: 11, color: 'var(--text-1)', textDecoration: 'none',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                >
+                  {e.title}
+                </a>
+              </div>
+              <span style={{
+                fontSize: 10, color: isImminent ? '#f59e0b' : 'var(--text-3)',
+                fontWeight: isImminent ? 700 : 400, flexShrink: 0, marginLeft: 8,
+              }}>
+                {label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 4, textAlign: 'right' }}>
+        Alerts are informational only. Not financial advice.
+      </div>
+    </div>
+  )
+}
+
 // ─── Smart Alerts Bar ────────────────────────────────────────────────────────
 
 function SmartAlertsBar({ watchlist }: { watchlist: string[] }) {
@@ -2402,6 +2675,9 @@ export default function Home() {
       {/* ── Smart Alerts Bar + Daily P&L Ticker ───────────────────────────── */}
       <SmartAlertsBar watchlist={watchlist} />
 
+      {/* ── Real-Time Market Alert Bar (price moves + upcoming events) ──────── */}
+      <MarketAlertBar />
+
       {/* ── 3-Column Main Layout ───────────────────────────────────────────── */}
       <div style={{ position: 'relative' }}>
       <div
@@ -2868,6 +3144,9 @@ export default function Home() {
               <PortfolioPanel quotes={{ ...quotes, ...tickerQuotes }} onOpenStock={openStockDetail} />
             )}
           </div>
+
+          {/* ── Upcoming High-Impact Events countdown widget ───────────────── */}
+          <UpcomingEventsWidget />
 
           {/* Alerts toggle tab */}
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)' }}>

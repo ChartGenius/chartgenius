@@ -173,6 +173,14 @@ app.listen(PORT, () => {
       console.error('[Startup] Alert service failed to start:', err.message);
     }
 
+    // Start market price-move alert monitor (every 30 seconds)
+    try {
+      const marketAlerts = require('./services/marketAlerts');
+      marketAlerts.start();
+    } catch (err) {
+      console.error('[Startup] Market alerts monitor failed to start:', err.message);
+    }
+
     // Check user price alerts every 5 minutes
     try {
       const { checkAndTriggerAlerts } = require('./routes/priceAlerts');

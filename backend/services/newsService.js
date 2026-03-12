@@ -222,6 +222,71 @@ class NewsService {
     return allNews.filter(article => article.impact >= impactThreshold)
                  .sort((a, b) => b.impact - a.impact);
   }
+
+  /**
+   * Get breaking / market-moving news with a short 60-second cache TTL.
+   * Used for the real-time alert bar so users see news within a minute of publication.
+   *
+   * @param {number} limit - Max articles to return (default 15)
+   * @returns {Promise<Object[]>}
+   */
+  async getBreakingNews(limit = 15) {
+    const cacheKey = `news:breaking:${limit}`;
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      try {
+        if (this.newsAPIKey) {
+          await externalAPILimiter.canMakeRequest('newsapi', 100, 3600000);
+
+          const response = await axios.get('https://newsapi.org/v2/everything', {
+            params: {
+              q: 'market OR stocks OR fed OR inflation OR earnings OR economy',
+              language: 'en',
+              sortBy: 'publishedAt',
+              pageSize: limit,
+              apiKey: this.newsAPIKey
+            },
+            timeout: 10000
+          });
+
+          if (response.data.articles) {
+            return response.data.articles.map(this.transformNewsAPIArticle);
+          }
+        }
+
+        return this.getMockNewsData(limit);
+      } catch (error) {
+        console.error('[NewsService] Breaking news fetch error:', error.message);
+        return this.getMockNewsData(limit);
+      }
+    }, 60); // ← 60-second TTL (vs 600s for regular news)
+  }
+
+  /**
+   * Force-refresh news for a specific symbol by busting the cache key.
+   * Called when a market alert fires so users immediately see relevant news.
+   *
+   * @param {string} symbol - Stock ticker (e.g. 'NVDA')
+   * @param {number} limit
+   * @returns {Promise<Object[]>}
+   */
+  async refreshNewsForSymbol(symbol, limit = 10) {
+    // Bust the cached entry so the next call fetches fresh data
+    const cacheKey = `news:symbol:${symbol}:${limit}`;
+    await cache.del(cacheKey);
+    return this.getNewsBySymbol(symbol, limit);
+  }
+
+  /**
+   * Force-refresh the breaking news cache (bypass TTL).
+   * Called by the market alerts service when a significant price move is detected.
+   *
+   * @returns {Promise<Object[]>}
+   */
+  async forceRefreshBreaking() {
+    await cache.del('news:breaking:15');
+    return this.getBreakingNews(15);
+  }
 }
 
 module.exports = new NewsService();
