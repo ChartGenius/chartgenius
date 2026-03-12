@@ -3,6 +3,11 @@
  * 
  * Supabase-backed connection pool.
  * All routes import this and call db.query() directly.
+ *
+ * NOTE: Force IPv4 before creating the Pool — Render/Supabase IPv6 is unreachable.
+ */
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
  */
 
 const { Pool } = require('pg');
