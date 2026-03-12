@@ -123,7 +123,7 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     service: 'TradVue API',
-    build: '2026-03-12-v2'
+    build: '2026-03-12-v3-ipv4fix'
   });
 });
 
