@@ -111,7 +111,7 @@ const FAQ_DATA: {
       },
       {
         q: 'Do I need an account?',
-        a: 'No account is required to use TradVue. All data (journal entries, portfolio holdings, watchlist) is saved locally in your browser. Creating an account will unlock cloud sync and cross-device access — that feature is coming soon.',
+        a: 'No account is required to use TradVue. All data (journal entries, portfolio holdings, watchlist) is saved locally in your browser. Sign in to enable cloud sync — your data will then be available on any device.',
       },
       {
         q: 'What markets and assets are supported?',
@@ -192,7 +192,7 @@ const FAQ_DATA: {
     questions: [
       {
         q: 'Where is my data stored?',
-        a: 'Currently, all your data — journal entries, portfolio holdings, watchlist — is stored locally in your browser\'s localStorage. Nothing is sent to a server. This means it\'s private by default, but also device-specific. Account-based cloud sync is coming soon.',
+        a: 'Your data is stored locally in your browser\'s localStorage by default — nothing leaves your device without your consent. When you sign in, cloud sync activates automatically and your journal, settings, and data become available on any device. You can also export a backup as JSON or CSV anytime.',
       },
       {
         q: 'Do you sell my data?',

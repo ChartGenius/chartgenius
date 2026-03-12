@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef, Suspense } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import Tooltip from '../components/Tooltip'
 import {
@@ -12,6 +12,8 @@ import {
   IconTag, IconSearch, IconAlert, IconCheck, IconArrowUpDown, IconInfo,
 } from '../components/Icons'
 import PersistentNav from '../components/PersistentNav'
+import { useAuth } from '../context/AuthContext'
+import { debouncedSyncJournal, initJournalSync } from '../utils/cloudSync'
 import ImportModal from './ImportModal'
 import AdvancedReports from './AdvancedReports'
 import { TagPicker, TagFilterBar, TagChip, loadCustomTags, saveCustomTags, type TagDefinition } from './TagManager'
@@ -2676,10 +2678,15 @@ function JournalPageInner() {
   // Pre-fill from URL params (from watchlist +LOG button)
   const [prefillParams, setPrefillParams] = useState<{ symbol?: string; price?: string; asset?: string } | null>(null)
 
+  const { token } = useAuth()
+  const initialSyncDone = useRef(false)
+  const initialLoadDone = useRef(false)
+
   useEffect(() => {
     setTrades(loadTrades())
     setNotes(loadNotes())
     setCustomTags(loadCustomTags())
+    initialLoadDone.current = true
     // Check URL params for pre-fill
     try {
       const params = new URLSearchParams(window.location.search)
@@ -2694,6 +2701,32 @@ function JournalPageInner() {
       }
     } catch {}
   }, [])
+
+  // Initial cloud sync when token becomes available (or on first load if already logged in)
+  useEffect(() => {
+    if (!token || initialSyncDone.current) return
+    initialSyncDone.current = true
+    initJournalSync(token).then(() => {
+      // Re-load from localStorage after sync (cloud may have updated local data)
+      setTrades(loadTrades())
+      setNotes(loadNotes())
+    })
+  }, [token])
+
+  // Debounced cloud sync on every trades/notes change (skip initial empty load)
+  const prevTradesRef = useRef<unknown[]>([])
+  const prevNotesRef  = useRef<unknown[]>([])
+  useEffect(() => {
+    if (!initialLoadDone.current) return
+    if (!token) return
+    const same =
+      prevTradesRef.current === trades &&
+      prevNotesRef.current  === notes
+    if (same) return
+    prevTradesRef.current = trades
+    prevNotesRef.current  = notes
+    debouncedSyncJournal(trades, notes)
+  }, [trades, notes, token])
 
   const handleImportTrades = (importedTrades: Record<string, unknown>[]) => {
     const newTrades: Trade[] = importedTrades.map(t => ({

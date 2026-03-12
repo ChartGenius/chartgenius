@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { trackLogout } from '../utils/analytics'
+import { initFullSync, getSyncStatus, subscribeSyncStatus, type SyncStatus } from '../utils/cloudSync'
 import {
   apiLogin,
   apiRegister,
@@ -34,6 +35,9 @@ interface AuthContextValue {
   syncAddToWatchlist: (symbol: string) => Promise<void>
   syncRemoveFromWatchlist: (symbol: string) => Promise<void>
   loadWatchlistFromBackend: () => Promise<string[]>
+
+  // Cloud sync status
+  syncStatus: SyncStatus
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -51,7 +55,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [backendWatchlist, setBackendWatchlist] = useState<BackendWatchlistEntry[]>([])
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => getSyncStatus())
   const didInit = useRef(false)
+
+  // Subscribe to cloud sync status changes
+  useEffect(() => {
+    return subscribeSyncStatus(setSyncStatus)
+  }, [])
 
   // ── Hydrate from localStorage ─────────────────────────────────────────────
   useEffect(() => {
@@ -63,6 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedToken && storedUser) {
         setToken(storedToken)
         setUser(JSON.parse(storedUser))
+        // Trigger initial cloud sync for returning logged-in users
+        initFullSync(storedToken)
       }
     } catch {}
     setLoading(false)
@@ -121,6 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(accessToken)
       setUser(res.user)
       persistAuth(accessToken, res.user)
+      // Trigger initial cloud sync after login
+      initFullSync(accessToken)
       return {}
     } catch {
       return { error: 'Network error — please try again' }
@@ -145,6 +159,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(accessToken)
       setUser(res.user)
       persistAuth(accessToken, res.user)
+      // Trigger initial cloud sync after registration
+      initFullSync(accessToken)
       return {}
     } catch {
       return { error: 'Network error — please try again' }
@@ -201,6 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       syncAddToWatchlist,
       syncRemoveFromWatchlist,
       loadWatchlistFromBackend,
+      syncStatus,
     }}>
       {children}
     </AuthContext.Provider>

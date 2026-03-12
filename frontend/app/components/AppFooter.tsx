@@ -2,6 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { getSyncStatus, subscribeSyncStatus, type SyncStatus } from '../utils/cloudSync'
+import { useAuth } from '../context/AuthContext'
 
 // ─── Links ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +24,44 @@ const FOOTER_LINKS: FooterLink[] = [
   { label: 'Disclaimer',     href: '/legal/disclaimer' },
   { label: 'Contact',        href: 'mailto:support@tradvue.com', external: true },
 ]
+
+// ─── Sync Indicator ───────────────────────────────────────────────────────────
+
+function SyncIndicator() {
+  const { token } = useAuth()
+  const [status, setStatus] = useState<SyncStatus>(() => getSyncStatus())
+
+  useEffect(() => {
+    return subscribeSyncStatus(setStatus)
+  }, [])
+
+  if (!token) {
+    return (
+      <span style={{ fontSize: 10, color: 'var(--text-3)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+        ☁️ Local only
+      </span>
+    )
+  }
+
+  const label =
+    status === 'syncing'    ? '☁️ Syncing…'    :
+    status === 'synced'     ? '☁️ Synced'      :
+    status === 'error'      ? '⚠️ Sync error'  :
+    status === 'local-only' ? '☁️ Local only'  :
+    '☁️ Cloud sync'
+
+  const color =
+    status === 'syncing' ? 'var(--accent)' :
+    status === 'synced'  ? '#4ade80'       :
+    status === 'error'   ? '#f87171'       :
+    'var(--text-3)'
+
+  return (
+    <span style={{ fontSize: 10, color, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+      {label}
+    </span>
+  )
+}
 
 // ─── Separator ────────────────────────────────────────────────────────────────
 
@@ -102,6 +143,8 @@ export default function AppFooter() {
           textAlign:      'center',
         }}
       >
+        <SyncIndicator />
+        <Dot />
         <span>© 2026 TradVue. All rights reserved.</span>
         <Dot />
         <span>
