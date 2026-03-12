@@ -5,7 +5,7 @@
  * We never store or see passwords — Supabase handles everything.
  *
  * Required env vars:
- *   SUPABASE_URL      = https://ryckpsjmsrxbiylddqnb.supabase.co
+ *   SUPABASE_URL      = https://<project>.supabase.co
  *   SUPABASE_ANON_KEY = <from Supabase dashboard → Project Settings → API>
  */
 

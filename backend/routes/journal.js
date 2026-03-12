@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { parse } = require('csv-parse/sync');
+const { optionalAuth } = require('../middleware/auth');
 
 // ── Multer config: 5MB max, CSV only ─────────────────────────────────────────
 const upload = multer({
@@ -332,7 +333,7 @@ function pairTrades(rawTrades) {
  * 
  * Returns: { trades: [...], rawCount: number, pairedCount: number }
  */
-router.post('/import', upload.single('file'), (req, res) => {
+router.post('/import', optionalAuth, upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No CSV file uploaded' });
@@ -403,7 +404,7 @@ router.post('/import', upload.single('file'), (req, res) => {
  * POST /api/journal/import/preview
  * Same as /import but returns only first 10 rows for preview
  */
-router.post('/import/preview', upload.single('file'), (req, res) => {
+router.post('/import/preview', optionalAuth, upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No CSV file uploaded' });
@@ -444,7 +445,7 @@ router.post('/import/preview', upload.single('file'), (req, res) => {
  * Currently a stub — frontend handles exports client-side via localStorage.
  * This endpoint will be functional when trades are stored server-side.
  */
-router.get('/export', (req, res) => {
+router.get('/export', optionalAuth, (req, res) => {
   const format = (req.query.format || 'json').toLowerCase();
   // Stub — frontend handles this client-side for now
   res.json({

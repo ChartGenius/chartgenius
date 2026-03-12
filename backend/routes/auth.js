@@ -158,7 +158,8 @@ router.post('/login', authLimiter, async (req, res) => {
       if (error.message?.toLowerCase().includes('invalid') ||
           error.message?.toLowerCase().includes('not found') ||
           error.message?.toLowerCase().includes('credentials')) {
-        console.warn(`[Auth] Failed login for ${email} from ${req.ip}`);
+        const maskedEmail = email.charAt(0) + '***@' + email.split('@')[1];
+        console.warn(`[Auth] Failed login for ${maskedEmail} from ${req.ip}`);
         return res.status(401).json({ error: 'Invalid email or password' });
       }
       if (error.message?.toLowerCase().includes('confirm')) {
@@ -198,7 +199,7 @@ router.post('/logout', requireAuth, async (req, res) => {
 });
 
 // ── POST /api/auth/refresh ────────────────────────────────────────────────────
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', authLimiter, async (req, res) => {
   try {
     const { refreshToken } = req.body;
 
@@ -258,7 +259,7 @@ router.post('/forgot', authLimiter, async (req, res) => {
 // ── POST /api/auth/reset ──────────────────────────────────────────────────────
 // Called after user clicks the reset link from email
 // The token here is the access_token from the reset email deep link
-router.post('/reset', async (req, res) => {
+router.post('/reset', authLimiter, async (req, res) => {
   try {
     const { token, newPassword } = req.body;
 

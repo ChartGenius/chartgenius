@@ -269,16 +269,6 @@ async function getStockScore(ticker) {
         symbol: upper,
         totalScore,
         grade,
-        breakdown: {
-          value: { score: value.score, weight: 25, ...value.details },
-          growth: { score: growth.score, weight: 25, ...growth.details },
-          momentum: { score: momentum.score, weight: 25, ...momentum.details },
-          profitability: { score: profitability.score, weight: 25, ...profitability.details },
-        },
-        meta: {
-          sector,
-          currentPrice,
-        },
         fetchedAt: new Date().toISOString(),
       };
     } catch (error) {

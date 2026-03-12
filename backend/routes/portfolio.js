@@ -34,10 +34,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../services/db');
-const { authenticateToken } = require('./auth');
+const { requireAuth } = require('../middleware/auth');
 
 // All portfolio routes require auth
-router.use(authenticateToken);
+router.use(requireAuth);
 
 // ─── Holdings ────────────────────────────────────────────────────────────────
 

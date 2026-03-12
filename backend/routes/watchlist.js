@@ -12,7 +12,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../services/db');
 const finnhub = require('../services/finnhub');
-const { authenticateToken } = require('./auth');
+const { requireAuth } = require('../middleware/auth');
 
 // Helper: map DB instrument + quote into enriched item
 function enrichItem(dbItem, quote) {
@@ -47,7 +47,7 @@ function enrichItem(dbItem, quote) {
 // ──────────────────────────────────────────
 // GET /api/watchlist
 // ──────────────────────────────────────────
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT w.id, w.alert_threshold_up, w.alert_threshold_down, w.notes, w.created_at,
@@ -79,7 +79,7 @@ router.get('/', authenticateToken, async (req, res) => {
 // ──────────────────────────────────────────
 // POST /api/watchlist
 // ──────────────────────────────────────────
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   try {
     const { symbol, alert_threshold_up, alert_threshold_down, purchase_price, notes } = req.body;
 
@@ -164,7 +164,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // ──────────────────────────────────────────
 // PUT /api/watchlist/:id/alerts
 // ──────────────────────────────────────────
-router.put('/:id/alerts', authenticateToken, async (req, res) => {
+router.put('/:id/alerts', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { alert_threshold_up, alert_threshold_down } = req.body;
@@ -197,7 +197,7 @@ router.put('/:id/alerts', authenticateToken, async (req, res) => {
 // ──────────────────────────────────────────
 // DELETE /api/watchlist/:id
 // ──────────────────────────────────────────
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -220,7 +220,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 // ──────────────────────────────────────────
 // GET /api/watchlist/performance
 // ──────────────────────────────────────────
-router.get('/performance', authenticateToken, async (req, res) => {
+router.get('/performance', requireAuth, async (req, res) => {
   try {
     // Must define this route BEFORE /:id — Express matches in order.
     // (OK here since 'performance' won't match a numeric id pattern from the other routes.)
