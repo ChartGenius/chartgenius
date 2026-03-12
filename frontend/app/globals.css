@@ -1992,7 +1992,9 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     display: none;
   }
 
-  .symbol-search {
+  /* Hide header search only — watchlist search stays visible */
+  .cat-tabs .symbol-search,
+  .header-nav .symbol-search {
     display: none;
   }
 
