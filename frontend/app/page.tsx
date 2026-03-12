@@ -2446,18 +2446,44 @@ export default function Home() {
 
           {/* Search + Add to Watchlist */}
           <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)' }}>
-            <OnboardingTooltip
-              id="stock-search"
-              content="Search any stock ticker to add to your watchlist"
-              position="bottom"
-              delayMs={3000}
-            >
-              <StockSearch onSelect={(sym, name) => {
-                // Add to watchlist directly, then open detail
-                if (!watchlist.includes(sym)) toggleWatch(sym)
-                openStockDetail(sym, name)
-              }} />
-            </OnboardingTooltip>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ flex: 1 }}>
+                <OnboardingTooltip
+                  id="stock-search"
+                  content="Search any stock ticker to add to your watchlist"
+                  position="bottom"
+                  delayMs={3000}
+                >
+                  <StockSearch onSelect={(sym, name) => {
+                    if (!watchlist.includes(sym)) toggleWatch(sym)
+                    openStockDetail(sym, name)
+                  }} />
+                </OnboardingTooltip>
+              </div>
+              <button
+                onClick={() => {
+                  const el = document.querySelector<HTMLInputElement>('.symbol-search')
+                  el?.focus()
+                }}
+                title="Add ticker to watchlist"
+                aria-label="Add ticker"
+                style={{
+                  background: 'var(--accent)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  width: 28,
+                  height: 28,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >+</button>
+            </div>
           </div>
 
           {/* Watchlist items */}
