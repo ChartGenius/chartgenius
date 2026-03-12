@@ -1742,6 +1742,9 @@ function JournalExpectancy({ trades }: { trades: Trade[] }) {
       <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-3)' }}>
         Use the standalone <strong>Trade Expectancy Calculator</strong> in Tools to run what-if scenarios with custom inputs.
       </div>
+      <p style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', margin: '12px 0 0', fontStyle: 'italic' }}>
+        Past trading performance does not guarantee future results. For informational purposes only.
+      </p>
     </Card>
   )
 }

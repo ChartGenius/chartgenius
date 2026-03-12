@@ -264,6 +264,9 @@ export default function ForexCalculator() {
       <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-3)', background: 'rgba(99,102,241,0.1)', borderRadius: 6, padding: '8px 12px' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconInfo size={12} />Exchange rates and swap rates are approximations. Your broker may differ. 1 lot = 100,000 units. Always verify with your broker before trading.</span>
       </div>
+      <p style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', margin: '16px 0 0', fontStyle: 'italic' }}>
+        For informational purposes only. Not financial advice. Verify all calculations independently.
+      </p>
     </div>
   )
 }

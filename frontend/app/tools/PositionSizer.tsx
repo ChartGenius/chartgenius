@@ -233,6 +233,9 @@ export default function PositionSizer() {
       <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-3)', background: 'var(--accent-dim)', borderRadius: 6, padding: '8px 12px' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconInfo size={12} />Rule of thumb: Most professionals risk 1–2% per trade. At 2% risk, it takes 50 consecutive full losses to wipe an account.</span>
       </div>
+      <p style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', margin: '16px 0 0', fontStyle: 'italic' }}>
+        For informational purposes only. Not financial advice. Verify all calculations independently.
+      </p>
     </div>
   )
 }

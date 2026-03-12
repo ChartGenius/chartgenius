@@ -248,6 +248,9 @@ export default function EconHeatmap() {
       <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-3)', background: 'rgba(239,68,68,0.08)', borderRadius: 6, padding: '8px 12px' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconInfo size={12} />High-impact events (red) often cause sharp price moves. Consider reducing position sizes or staying flat before major releases like CPI, NFP, or Fed decisions.</span>
       </div>
+      <p style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', margin: '16px 0 0', fontStyle: 'italic' }}>
+        For informational purposes only. Not financial advice. Verify all calculations independently.
+      </p>
     </div>
   )
 }

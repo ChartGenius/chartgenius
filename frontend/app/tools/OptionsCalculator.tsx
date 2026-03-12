@@ -309,6 +309,9 @@ export default function OptionsCalculator() {
       <div style={{ marginTop: 12, fontSize: 11, color: 'var(--text-3)', background: 'var(--accent-dim)', borderRadius: 6, padding: '8px 12px' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconInfo size={12} />P&L calculated at expiration. Early exit may differ due to time value and implied volatility. 1 contract = 100 shares.</span>
       </div>
+      <p style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', margin: '16px 0 0', fontStyle: 'italic' }}>
+        For informational purposes only. Not financial advice. Verify all calculations independently.
+      </p>
     </div>
   )
 }

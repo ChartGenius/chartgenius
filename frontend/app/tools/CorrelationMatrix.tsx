@@ -295,6 +295,9 @@ function CorrelationTable({ assets, getVal, footer }: {
       <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-3)', background: 'var(--accent-dim)', borderRadius: 6, padding: '8px 12px' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconInfo size={12} />{footer}. Add uncorrelated assets (near 0) to reduce portfolio risk.</span>
       </div>
+      <p style={{ fontSize: 10, color: 'var(--text-3)', textAlign: 'center', margin: '16px 0 0', fontStyle: 'italic' }}>
+        For informational purposes only. Not financial advice. Verify all calculations independently.
+      </p>
     </>
   )
 }
