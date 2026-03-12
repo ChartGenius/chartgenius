@@ -28,11 +28,13 @@ const VALID_TYPES = ['journal', 'portfolio', 'settings', 'watchlist'];
 router.get('/data', requireAuth, async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log(`[UserData] GET /data — userId: ${userId}`);
 
     const { rows } = await db.query(
       'SELECT data_type, data, updated_at FROM user_data WHERE user_id = $1',
       [userId]
     );
+    console.log(`[UserData] GET /data — found ${rows.length} rows for user ${userId}`);
 
     const result = { journal: null, portfolio: null, settings: null, watchlist: null };
     const meta = {};
@@ -102,6 +104,7 @@ router.get('/data/:type', requireAuth, async (req, res) => {
     }
 
     const userId = req.user.id;
+    console.log(`[UserData] GET /data/${type} — userId: ${userId}`);
 
     const { rows } = await db.query(
       'SELECT data, updated_at FROM user_data WHERE user_id = $1 AND data_type = $2',
@@ -133,6 +136,7 @@ router.put('/data/:type', requireAuth, async (req, res) => {
     }
 
     const userId = req.user.id;
+    console.log(`[UserData] PUT /data/${type} — userId: ${userId}, bodySize: ${JSON.stringify(req.body).length}`);
 
     await db.query(
       `INSERT INTO user_data (user_id, data_type, data, updated_at)
