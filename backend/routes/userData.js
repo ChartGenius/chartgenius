@@ -158,3 +158,13 @@ router.put('/data/:type', requireAuth, async (req, res) => {
 });
 
 module.exports = router;
+
+// Temporary debug endpoint — remove after testing
+router.get('/debug', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT COUNT(*) as cnt FROM user_data');
+    res.json({ version: 'direct-sql-v1', count: rows[0].cnt, timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.json({ version: 'direct-sql-v1', error: err.message });
+  }
+});
