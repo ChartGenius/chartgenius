@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import {
   IconArrowLeft, IconAlert, IconDownload, IconBriefcase,
   IconChart, IconFolder, IconDollar, IconEye, IconEyeOff, IconReceiptTax,
-  IconPackage, IconLightbulb, IconSave, IconFile, IconCheck,
+  IconPackage, IconLightbulb, IconSave, IconFile, IconCheck, IconTrendingUp,
 } from '../components/Icons'
 import Link from 'next/link'
 import PersistentNav from '../components/PersistentNav'
@@ -217,6 +217,36 @@ const SECTOR_COLORS: Record<string, string> = {
   'Utilities': '#1abc9c',
   'Information Technology': '#5b6cf9',
   'Other': '#888888',
+}
+
+// ─── DRIP Dividend Yield Map ──────────────────────────────────────────────────
+// Hardcoded approximate annual dividend yields (%) for common stocks.
+// Fallback when live API data is unavailable.
+const DRIP_YIELD_MAP: Record<string, number> = {
+  AAPL: 0.5,  MSFT: 0.8,  GOOGL: 0,   GOOG: 0,    AMZN: 0,    META: 0.4,
+  TSLA: 0,    NVDA: 0.03, KO: 3.0,    JNJ: 2.9,   PG: 2.4,    T: 6.5,
+  VZ: 6.8,    XOM: 3.3,   JPM: 2.5,   MO: 8.5,    PM: 5.8,    PFE: 5.5,
+  ABBV: 3.8,  MCD: 2.2,   MMM: 5.0,   HD: 2.5,    WMT: 1.3,   DIS: 0,
+  INTC: 1.5,  IBM: 4.2,   CVX: 3.8,   BAC: 2.8,   WFC: 2.7,   C: 3.3,
+  GS: 2.0,    V: 0.7,     MA: 0.5,    PYPL: 0,    CRM: 0,     NFLX: 0,
+  SHOP: 0,    COST: 0.5,  TGT: 3.0,   LOW: 2.1,   CAT: 1.8,   DE: 1.2,
+  GE: 0.3,    UNH: 1.5,   CVS: 3.5,   WBA: 8.5,   SO: 4.5,    DUK: 4.2,
+  NEE: 2.8,   O: 5.5,     AMT: 3.0,   SPY: 1.3,   QQQ: 0.5,   IWM: 1.5,
+  DIA: 1.8,   VTI: 1.4,   VYM: 2.9,   SCHD: 3.4,  DVY: 4.5,   HDV: 3.8,
+  JEPI: 8.5,  JEPQ: 9.5,  QYLD: 12.0, RYLD: 13.0, XYLD: 12.5, WPC: 5.8,
+  NNN: 4.8,   STAG: 3.8,  REALTY: 5.5, MAIN: 6.8,  ARCC: 9.2,  GOOD: 7.2,
+  BX: 3.5,    KMB: 3.5,   CLX: 3.2,   SYY: 2.6,   ADM: 3.0,   APD: 2.5,
+  D: 4.8,     EXC: 4.5,   PPL: 4.9,   AEP: 4.2,   ED: 3.9,    WEC: 3.5,
+}
+
+// Resolve effective yield for a holding (decimal, e.g. 0.03 = 3%)
+function resolveYield(ticker: string, liveDivYieldPct: number, manualYields: Record<string, string>): number {
+  if (liveDivYieldPct > 0) return liveDivYieldPct / 100
+  const mapped = DRIP_YIELD_MAP[ticker]
+  if (mapped !== undefined && mapped > 0) return mapped / 100
+  const manual = parseFloat(manualYields[ticker] || '')
+  if (!isNaN(manual) && manual > 0) return manual / 100
+  return 0
 }
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
@@ -558,7 +588,7 @@ function PortfolioExportButton() {
 // ─── Portfolio Page ───────────────────────────────────────────────────────────
 
 export default function PortfolioPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'holdings' | 'dividends' | 'sold' | 'watchlist' | 'tax'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'holdings' | 'dividends' | 'drip' | 'sold' | 'watchlist' | 'tax'>('dashboard')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [showImportBanner, setShowImportBanner] = useState(false)
@@ -1003,6 +1033,7 @@ export default function PortfolioPage() {
     { id: 'dashboard', label: 'Dashboard', Icon: IconChart },
     { id: 'holdings',  label: 'Holdings',  Icon: IconFolder },
     { id: 'dividends', label: 'Dividends', Icon: IconDollar },
+    { id: 'drip',      label: 'DRIP',      Icon: IconTrendingUp },
     { id: 'sold',      label: 'Sold',      Icon: IconCheck },
     { id: 'watchlist', label: 'Watchlist', Icon: IconEye },
     { id: 'tax',       label: 'Tax',       Icon: IconReceiptTax },
@@ -1142,6 +1173,13 @@ export default function PortfolioPage() {
             }}
           />
         )}
+        {activeTab === 'drip' && (
+          <DRIPTab
+            holdingsEnriched={holdingsEnriched}
+            portfolioSettings={portfolioSettings}
+            toggleDRIP={toggleDRIP}
+          />
+        )}
         {activeTab === 'sold' && (
           <SoldTab
             soldPositions={soldPositions} setSoldPositions={setSoldPositions}
@@ -1219,7 +1257,7 @@ function DashboardTab({
   savePortfolioSettings: (s: PortfolioSettings) => Promise<void>;
   exchangeRates: ExchangeRates | null;
   privacyMode?: boolean;
-  setActiveTab: (tab: 'dashboard' | 'holdings' | 'dividends' | 'sold' | 'watchlist' | 'tax') => void;
+  setActiveTab: (tab: 'dashboard' | 'holdings' | 'dividends' | 'drip' | 'sold' | 'watchlist' | 'tax') => void;
 })
 {
   const [dashAuthOpen, setDashAuthOpen] = useState(false)
@@ -3883,6 +3921,479 @@ function CurrencySettings({ portfolioSettings, savePortfolioSettings, exchangeRa
       {!exchangeRates && portfolioSettings.homeCurrency !== 'USD' && (
         <span style={{ fontSize: 10, color: 'var(--yellow)' }}>Loading exchange rates…</span>
       )}
+    </div>
+  )
+}
+
+// ─── Tab: DRIP ────────────────────────────────────────────────────────────────
+
+// Project forward N years for a single holding
+function dripProjectYears(
+  initialShares: number,
+  currentPrice: number,
+  yld: number,          // decimal (e.g. 0.03)
+  years: number,
+  dripEnabled: boolean,
+  extraMonthly: number, // additional $ per month
+  priceGrowthRate: number, // decimal per year
+): { totalShares: number; totalValue: number; annualIncome: number } {
+  if (years === 0) {
+    const v = initialShares * currentPrice
+    return { totalShares: initialShares, totalValue: v, annualIncome: v * yld }
+  }
+  let shares = initialShares
+  let price = currentPrice
+  for (let y = 0; y < years; y++) {
+    const annualDiv = shares * price * yld
+    if (dripEnabled) {
+      shares += annualDiv / price           // reinvest dividends
+    }
+    if (extraMonthly > 0) {
+      shares += (extraMonthly * 12) / price // additional investment
+    }
+    price *= (1 + priceGrowthRate)
+  }
+  return { totalShares: shares, totalValue: shares * price, annualIncome: shares * price * yld }
+}
+
+function DRIPChart({ withDRIP, withoutDRIP }: { withDRIP: number[]; withoutDRIP: number[] }) {
+  const W = 700, H = 210, padL = 68, padR = 20, padT = 22, padB = 32
+  const chartW = W - padL - padR
+  const chartH = H - padT - padB
+  const maxVal = Math.max(...withDRIP, ...withoutDRIP, 1)
+  const years = withDRIP.length - 1
+
+  const toX = (yr: number) => padL + (yr / years) * chartW
+  const toY = (val: number) => padT + (1 - val / maxVal) * chartH
+
+  const dripPts = withDRIP.map((v, i) => `${toX(i)},${toY(v)}`).join(' ')
+  const noPts  = withoutDRIP.map((v, i) => `${toX(i)},${toY(v)}`).join(' ')
+
+  const dripArea = `M ${padL} ${padT + chartH} ` + withDRIP.map((v, i) => `L ${toX(i)} ${toY(v)}`).join(' ') + ` L ${toX(years)} ${padT + chartH} Z`
+  const noArea   = `M ${padL} ${padT + chartH} ` + withoutDRIP.map((v, i) => `L ${toX(i)} ${toY(v)}`).join(' ') + ` L ${toX(years)} ${padT + chartH} Z`
+
+  const gridVals = [0, 0.25, 0.5, 0.75, 1].map(t => maxVal * t)
+
+  return (
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 8 }}>DIVIDEND INCOME GROWTH OVER 20 YEARS</div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+        <defs>
+          <linearGradient id="dripFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--green)" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="var(--green)" stopOpacity="0.04" />
+          </linearGradient>
+          <linearGradient id="noDripFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#4a9eff" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="#4a9eff" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        {gridVals.map((v, i) => {
+          const y = toY(v)
+          return (
+            <g key={i}>
+              <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="var(--border)" strokeWidth="0.5" />
+              <text x={padL - 4} y={y + 4} textAnchor="end" fontSize="8" fill="var(--text-3)">
+                {v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v.toFixed(0)}`}
+              </text>
+            </g>
+          )
+        })}
+        <path d={noArea}   fill="url(#noDripFill)" />
+        <path d={dripArea} fill="url(#dripFill)" />
+        <polyline points={noPts}  fill="none" stroke="#4a9eff"        strokeWidth="1.5" />
+        <polyline points={dripPts} fill="none" stroke="var(--green)" strokeWidth="2"   />
+        {[0, 5, 10, 15, 20].map(yr => (
+          <text key={yr} x={toX(yr)} y={H - 10} textAnchor="middle" fontSize="9" fill="var(--text-3)">yr {yr}</text>
+        ))}
+        {/* Legend */}
+        <rect x={padL + 10} y={padT + 4} width="10" height="10" rx="2" fill="var(--green)" opacity="0.8" />
+        <text x={padL + 24} y={padT + 13} fontSize="9" fill="var(--text-2)">With DRIP</text>
+        <rect x={padL + 90} y={padT + 4} width="10" height="10" rx="2" fill="#4a9eff" opacity="0.8" />
+        <text x={padL + 104} y={padT + 13} fontSize="9" fill="var(--text-2)">Without DRIP</text>
+      </svg>
+    </div>
+  )
+}
+
+function DRIPTab({
+  holdingsEnriched,
+  portfolioSettings,
+  toggleDRIP,
+}: {
+  holdingsEnriched: HoldingEnrichedWithDiv[]
+  portfolioSettings: PortfolioSettings
+  toggleDRIP: (ticker: string, enabled: boolean) => Promise<void>
+}) {
+  const [explainerOpen,     setExplainerOpen]     = useState(false)
+  const [monthlyInvestment, setMonthlyInvestment] = useState(0)
+  const [priceGrowthPct,    setPriceGrowthPct]    = useState(7)
+  const [manualYields,      setManualYields]      = useState<Record<string, string>>({})
+
+  const totalMV = holdingsEnriched.reduce((s, h) => s + h.marketValue, 0)
+
+  const PROJ_YEARS = [1, 5, 10, 20] as const
+
+  // Per-holding projection helper (closure captures current slider state)
+  const projectHolding = useCallback((
+    h: HoldingEnrichedWithDiv,
+    years: number,
+    dripOn: boolean,
+    yld: number,
+  ) => {
+    const weight = totalMV > 0 ? h.marketValue / totalMV : 0
+    const extra  = monthlyInvestment * weight
+    return dripProjectYears(h.shares, h.currentPrice, yld, years, dripOn, extra, priceGrowthPct / 100)
+  }, [totalMV, monthlyInvestment, priceGrowthPct])
+
+  // Build 0-20 year chart data for the whole portfolio
+  const chartData = useMemo(() => {
+    const withDRIP: number[]    = []
+    const withoutDRIP: number[] = []
+    const totalMV_ = holdingsEnriched.reduce((s, h) => s + h.marketValue, 0)
+    const g = priceGrowthPct / 100
+
+    for (let year = 0; year <= 20; year++) {
+      let incomeWith = 0, incomeWithout = 0
+      holdingsEnriched.forEach(h => {
+        const yld = resolveYield(h.ticker, h.divYield, manualYields)
+        if (yld <= 0) return
+        const weight = totalMV_ > 0 ? h.marketValue / totalMV_ : 0
+        const extra  = monthlyInvestment * weight
+
+        // Without DRIP
+        const noProj = dripProjectYears(h.shares, h.currentPrice, yld, year, false, extra, g)
+        incomeWithout += noProj.annualIncome
+
+        // With DRIP
+        const yesProj = dripProjectYears(h.shares, h.currentPrice, yld, year, true,  extra, g)
+        incomeWith += yesProj.annualIncome
+      })
+      withDRIP.push(incomeWith)
+      withoutDRIP.push(incomeWithout)
+    }
+    return { withDRIP, withoutDRIP }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdingsEnriched, priceGrowthPct, monthlyInvestment, manualYields])
+
+  // Current annual dividend income (based on yield, not on held history)
+  const currentAnnualIncome = holdingsEnriched.reduce((s, h) => {
+    const yld = resolveYield(h.ticker, h.divYield, manualYields)
+    return s + h.shares * h.currentPrice * yld
+  }, 0)
+
+  const income10With    = chartData.withDRIP[10]    || 0
+  const income20With    = chartData.withDRIP[20]    || 0
+  const income10Without = chartData.withoutDRIP[10] || 0
+  const dripAdv10       = income10With - income10Without
+
+  if (holdingsEnriched.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-3)' }}>
+        <div style={{ fontSize: 28, marginBottom: 10 }}>♻</div>
+        <div style={{ fontSize: 14, color: 'var(--text-2)' }}>Add holdings in the Holdings tab to see DRIP projections.</div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ── What is DRIP? ─────────────────────────────────────────────────── */}
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+        <button
+          onClick={() => setExplainerOpen(o => !o)}
+          style={{ width: '100%', textAlign: 'left', padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16, color: 'var(--accent)' }}>♻</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>What is DRIP?</span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)', background: 'var(--bg-3)', padding: '1px 7px', borderRadius: 10 }}>Dividend Reinvestment Plan</span>
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{explainerOpen ? '▲ Hide' : '▼ Learn more'}</span>
+        </button>
+        {explainerOpen && (
+          <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)' }}>
+            <p style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.75, margin: '12px 0' }}>
+              <strong style={{ color: 'var(--text-0)' }}>DRIP</strong> automatically uses your dividend payments to buy <em>additional shares</em> of the same stock — instead of paying you cash. Those new shares generate their own dividends, which buy even more shares. Over time, this snowball effect dramatically accelerates income growth.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 10 }}>
+              {[
+                { icon: '📈', title: 'Compound growth', desc: 'More shares → more dividends → more shares. The gap widens every single year.' },
+                { icon: '🔄', title: 'Fully automatic', desc: 'Set it once in your brokerage. Dividends buy fractional shares without any action needed.' },
+                { icon: '💸', title: 'No cash drag', desc: 'Every dividend dollar goes straight back to work — no idle cash sitting uninvested.' },
+                { icon: '⏳', title: 'Time is the engine', desc: 'The longer you hold, the more compounding dominates. Starting early matters enormously.' },
+              ].map(c => (
+                <div key={c.title} style={{ background: 'var(--bg-3)', borderRadius: 6, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 13, marginBottom: 4 }}>{c.icon} <strong style={{ fontSize: 12, color: 'var(--text-0)' }}>{c.title}</strong></div>
+                  <div style={{ fontSize: 11, color: 'var(--text-2)', lineHeight: 1.5 }}>{c.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Projection Controls ────────────────────────────────────────────── */}
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 14 }}>PROJECTION SETTINGS</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+          {/* Monthly investment slider */}
+          <div>
+            <label style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                Additional Monthly Investment
+                <Tooltip text="Extra money you invest each month on top of DRIP. Allocated proportionally across dividend holdings by value. Shows how savings amplify compounding." position="bottom" />
+              </span>
+              <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)', fontWeight: 700 }}>${monthlyInvestment}</span>
+            </label>
+            <input
+              type="range" min="0" max="1000" step="25"
+              value={monthlyInvestment}
+              onChange={e => setMonthlyInvestment(Number(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'var(--text-3)', marginTop: 2 }}>
+              <span>$0</span><span>$250</span><span>$500</span><span>$750</span><span>$1,000</span>
+            </div>
+          </div>
+          {/* Price appreciation slider */}
+          <div>
+            <label style={{ ...labelStyle, display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                Expected Annual Price Appreciation
+                <Tooltip text="How much you expect stock prices to grow per year on average. S&P 500 has averaged ~7% historically. Affects how many shares DRIP buys and the future value of your portfolio." position="bottom" />
+              </span>
+              <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)', fontWeight: 700 }}>{priceGrowthPct}%</span>
+            </label>
+            <input
+              type="range" min="0" max="15" step="0.5"
+              value={priceGrowthPct}
+              onChange={e => setPriceGrowthPct(Number(e.target.value))}
+              style={{ width: '100%', accentColor: 'var(--accent)', cursor: 'pointer' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: 'var(--text-3)', marginTop: 2 }}>
+              <span>0%</span><span>3.75%</span><span>7.5%</span><span>11.25%</span><span>15%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Portfolio-wide DRIP Summary ────────────────────────────────────── */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 12 }}>PORTFOLIO DRIP SUMMARY</div>
+        {currentAnnualIncome > 0 ? (
+          <>
+            {/* Hero message */}
+            <div style={{ background: 'rgba(0,192,106,0.08)', border: '1px solid rgba(0,192,106,0.2)', borderRadius: 8, padding: '14px 18px', marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 6 }}>
+                💰 Your portfolio currently generates{' '}
+                <strong style={{ color: 'var(--green)', fontSize: 15, fontFamily: 'var(--mono)' }}>{fmtDollar(currentAnnualIncome / 12)}/month</strong>
+                {' '}in passive dividend income.
+              </div>
+              {income10With > 0 && (
+                <div style={{ fontSize: 12, color: 'var(--text-2)' }}>
+                  🚀 With DRIP reinvestment, this grows to{' '}
+                  <strong style={{ color: 'var(--accent)', fontSize: 15, fontFamily: 'var(--mono)' }}>{fmtDollar(income10With / 12)}/month</strong>
+                  {' '}in 10 years
+                  {dripAdv10 > 0 && (
+                    <span style={{ color: 'var(--text-3)', fontSize: 11 }}>
+                      {' '}· DRIP advantage: <span style={{ color: 'var(--green)' }}>+{fmtDollar(dripAdv10)}/yr</span> vs no reinvestment
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* KPI cards */}
+            <div className="kpi-grid">
+              <KpiCard
+                label="CURRENT MONTHLY INCOME"
+                value={fmtDollar(currentAnnualIncome / 12)}
+                sub={`${fmtDollar(currentAnnualIncome)}/yr`}
+                color="var(--green)"
+                tooltip="Estimated monthly dividend income from your current holdings based on their dividend yields."
+              />
+              <KpiCard
+                label="5-YR WITH DRIP"
+                value={fmtDollar((chartData.withDRIP[5] || 0) / 12)}
+                sub={`${fmtDollar(chartData.withDRIP[5] || 0)}/yr`}
+                color="var(--accent)"
+                tooltip="Projected monthly dividend income in 5 years with all dividends reinvested (DRIP)."
+              />
+              <KpiCard
+                label="10-YR WITH DRIP"
+                value={fmtDollar(income10With / 12)}
+                sub={income10With && currentAnnualIncome > 0
+                  ? `${fmtDollar(income10With)}/yr · ${((income10With / currentAnnualIncome - 1) * 100).toFixed(0)}% growth`
+                  : `${fmtDollar(income10With)}/yr`}
+                color="var(--yellow)"
+                tooltip="Projected monthly dividend income in 10 years with DRIP. Shares compound year over year."
+              />
+              <KpiCard
+                label="20-YR WITH DRIP"
+                value={fmtDollar(income20With / 12)}
+                sub={income20With && currentAnnualIncome > 0
+                  ? `${fmtDollar(income20With)}/yr · ${((income20With / currentAnnualIncome - 1) * 100).toFixed(0)}% growth`
+                  : `${fmtDollar(income20With)}/yr`}
+                color="#f97316"
+                tooltip="Projected monthly dividend income in 20 years with DRIP. Long horizons dramatically amplify the compounding effect."
+              />
+            </div>
+          </>
+        ) : (
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 24, textAlign: 'center' }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>📊</div>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 6 }}>No dividend data available for your holdings yet.</div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)' }}>Enter yields manually below for unknown tickers, or add dividend-paying stocks in the Holdings tab.</div>
+          </div>
+        )}
+      </div>
+
+      {/* ── SVG Area Chart ─────────────────────────────────────────────────── */}
+      {currentAnnualIncome > 0 && (
+        <DRIPChart withDRIP={chartData.withDRIP} withoutDRIP={chartData.withoutDRIP} />
+      )}
+
+      {/* ── Per-Holding DRIP Projections ───────────────────────────────────── */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)', marginBottom: 12 }}>PER-HOLDING DRIP PROJECTIONS</div>
+
+        {holdingsEnriched.map(h => {
+          const yld         = resolveYield(h.ticker, h.divYield, manualYields)
+          const inMap       = DRIP_YIELD_MAP[h.ticker] !== undefined
+          const mapYield    = DRIP_YIELD_MAP[h.ticker]
+          const hasData     = yld > 0
+          const isNoDiv     = inMap && (mapYield === 0) && h.divYield === 0
+          const isUnknown   = !inMap && h.divYield === 0
+          const dripOn      = !!portfolioSettings.dripEnabled[h.ticker]
+          const yieldSource = h.divYield > 0 ? 'live' : inMap && mapYield !== undefined && mapYield > 0 ? 'estimate' : 'manual'
+
+          return (
+            <div key={h.ticker} style={{ background: 'var(--bg-2)', border: `1px solid ${dripOn && hasData ? 'rgba(0,192,106,0.3)' : 'var(--border)'}`, borderRadius: 8, padding: 16, marginBottom: 12 }}>
+              {/* Header row */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-0)' }}>{h.ticker}</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{h.company}</span>
+                    {yieldSource === 'live' && (
+                      <span style={{ fontSize: 9, color: 'var(--green)', background: 'rgba(0,192,106,0.1)', padding: '1px 5px', borderRadius: 10 }}>live data</span>
+                    )}
+                    {yieldSource === 'estimate' && (
+                      <span style={{ fontSize: 9, color: 'var(--yellow)', background: 'rgba(240,165,0,0.1)', padding: '1px 5px', borderRadius: 10 }}>estimated yield</span>
+                    )}
+                    {yieldSource === 'manual' && hasData && (
+                      <span style={{ fontSize: 9, color: 'var(--accent)', background: 'rgba(99,102,241,0.1)', padding: '1px 5px', borderRadius: 10 }}>manual yield</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>
+                    {h.shares} shares @ ${fmt(h.currentPrice)} · yield:{' '}
+                    {hasData
+                      ? <span style={{ color: 'var(--green)' }}>{(yld * 100).toFixed(2)}% · div/yr: {fmtDollar(h.shares * h.currentPrice * yld)}</span>
+                      : <span>—</span>
+                    }
+                  </div>
+                </div>
+                {/* DRIP toggle per holding */}
+                {hasData && (
+                  <button
+                    onClick={() => toggleDRIP(h.ticker, !dripOn)}
+                    style={{
+                      fontSize: 11, padding: '5px 14px', borderRadius: 5, cursor: 'pointer',
+                      background: dripOn ? 'rgba(0,192,106,0.15)' : 'var(--bg-3)',
+                      color: dripOn ? 'var(--green)' : 'var(--text-2)',
+                      border: `1px solid ${dripOn ? 'var(--green)' : 'var(--border)'}`,
+                      fontWeight: dripOn ? 700 : 400, transition: 'all 0.15s',
+                    }}
+                  >
+                    {dripOn ? '♻ DRIP ON' : '○ DRIP OFF'}
+                  </button>
+                )}
+              </div>
+
+              {/* Manual yield input for unknown tickers */}
+              {isUnknown && !hasData && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, padding: '8px 12px', background: 'var(--bg-3)', borderRadius: 6 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>No dividend data found. Enter annual yield:</span>
+                  <input
+                    type="number"
+                    value={manualYields[h.ticker] || ''}
+                    onChange={e => setManualYields(prev => ({ ...prev, [h.ticker]: e.target.value }))}
+                    placeholder="e.g. 3.5"
+                    style={{ ...inputStyle, width: 80, padding: '3px 8px', fontSize: 11 }}
+                  />
+                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>%</span>
+                </div>
+              )}
+
+              {/* Known non-dividend stock */}
+              {isNoDiv && !hasData && (
+                <div style={{ fontSize: 11, color: 'var(--text-3)', fontStyle: 'italic', padding: '6px 0' }}>
+                  This stock does not pay dividends — DRIP not applicable.
+                </div>
+              )}
+
+              {/* Projection table */}
+              {hasData && (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                    <thead>
+                      <tr style={{ background: 'var(--bg-3)', borderBottom: '1px solid var(--border)' }}>
+                        <th style={{ padding: '7px 10px', textAlign: 'left',  fontSize: 9, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.06em', minWidth: 120 }}>SCENARIO</th>
+                        {PROJ_YEARS.map(yr => (
+                          <th key={yr} style={{ padding: '7px 10px', textAlign: 'right', fontSize: 9, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.06em' }}>{yr} Year{yr > 1 ? 's' : ''}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Without DRIP */}
+                      <tr style={{ background: 'var(--bg-1)', borderBottom: '1px solid var(--border-b)' }}>
+                        <td style={{ padding: '9px 10px', fontSize: 11, color: 'var(--text-2)' }}>Without DRIP</td>
+                        {PROJ_YEARS.map(yr => {
+                          const p = projectHolding(h, yr, false, yld)
+                          return (
+                            <td key={yr} style={{ padding: '9px 10px', textAlign: 'right' }}>
+                              <div style={{ fontFamily: 'var(--mono)', color: 'var(--text-0)', fontWeight: 600 }}>{fmtDollar(p.totalValue)}</div>
+                              <div style={{ fontSize: 9.5, color: 'var(--text-3)' }}>{p.totalShares.toFixed(3)} shares</div>
+                              <div style={{ fontSize: 9.5, color: 'var(--text-2)' }}>{fmtDollar(p.annualIncome)}/yr</div>
+                            </td>
+                          )
+                        })}
+                      </tr>
+                      {/* With DRIP */}
+                      <tr style={{ background: dripOn ? 'rgba(0,192,106,0.04)' : 'var(--bg-1)' }}>
+                        <td style={{ padding: '9px 10px', fontSize: 11, color: 'var(--green)', fontWeight: 600 }}>
+                          ♻ With DRIP{dripOn && <span style={{ fontSize: 9, marginLeft: 5, color: 'var(--green)', opacity: 0.8 }}>active</span>}
+                        </td>
+                        {PROJ_YEARS.map(yr => {
+                          const pDrip  = projectHolding(h, yr, true,  yld)
+                          const pNoDrip = projectHolding(h, yr, false, yld)
+                          const gain   = pDrip.annualIncome - pNoDrip.annualIncome
+                          return (
+                            <td key={yr} style={{ padding: '9px 10px', textAlign: 'right' }}>
+                              <div style={{ fontFamily: 'var(--mono)', color: 'var(--green)', fontWeight: 700 }}>{fmtDollar(pDrip.totalValue)}</div>
+                              <div style={{ fontSize: 9.5, color: 'var(--green)' }}>{pDrip.totalShares.toFixed(3)} shares</div>
+                              <div style={{ fontSize: 9.5, color: 'var(--green)' }}>{fmtDollar(pDrip.annualIncome)}/yr</div>
+                              {gain > 0.01 && (
+                                <div style={{ fontSize: 9, color: 'var(--text-3)' }}>+{fmtDollar(gain)} vs no DRIP</div>
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Disclaimer */}
+      <div style={{ fontSize: 10, color: 'var(--text-3)', padding: '12px 0', borderTop: '1px solid var(--border)', fontStyle: 'italic' }}>
+        ⚠ DRIP projections are estimates for illustrative purposes only. Actual results depend on price fluctuations, dividend changes, taxes, and transaction costs. Assumes constant dividend yield over time. Not financial or investment advice. Consult a qualified financial professional.
+      </div>
     </div>
   )
 }
