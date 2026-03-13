@@ -118,9 +118,14 @@ function PositionSizeCalc() {
   const entryN = parseFloat(entry) || 0
   const stopN = parseFloat(stop) || 0
 
+  // Validation
+  const balanceError = balanceN <= 0 && balance !== '' ? 'Account balance must be greater than 0.' : null
+  const entryError   = entryN < 0 && entry !== ''   ? 'Entry price cannot be negative.' : null
+  const stopError    = stopN < 0  && stop !== ''    ? 'Stop loss price cannot be negative.' : null
+
   const dollarRisk = balanceN * (riskPctN / 100)
   const riskPerShare = Math.abs(entryN - stopN)
-  const shares = riskPerShare > 0 ? Math.floor(dollarRisk / riskPerShare) : 0
+  const shares = riskPerShare > 0 && !balanceError ? Math.floor(dollarRisk / riskPerShare) : 0
   const positionSize = shares * entryN
 
   return (
@@ -133,9 +138,12 @@ function PositionSizeCalc() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
         <div>
           <InputField label="Account Balance" tooltip="Total value of your trading account. This is the base for calculating how much to risk." value={balance} onChange={setBalance} placeholder="e.g. 25000" />
+          {balanceError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{balanceError}</div>}
           <InputField label="Risk % Per Trade" tooltip="What % of your account you're willing to lose if this trade goes wrong. Most professional traders risk 1–2% max per trade." value={riskPct} onChange={setRiskPct} placeholder="e.g. 2" min="0" step="0.1" />
           <InputField label="Entry Price" tooltip="The price at which you plan to buy the stock." value={entry} onChange={setEntry} placeholder="e.g. 150.00" />
+          {entryError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{entryError}</div>}
           <InputField label="Stop Loss Price" tooltip="The price at which you'll exit the trade if it moves against you. This limits your maximum loss on this trade." value={stop} onChange={setStop} placeholder="e.g. 145.00" />
+          {stopError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{stopError}</div>}
         </div>
         <div>
           <div style={{ background: 'var(--bg-3)', borderRadius: 8, padding: 16, height: '100%', boxSizing: 'border-box' }}>
@@ -166,9 +174,15 @@ function RiskRewardCalc() {
   const stopN = parseFloat(stop) || 0
   const targetN = parseFloat(target) || 0
 
+  // Validation
+  const entrySameAsStop = entry !== '' && stop !== '' && entryN !== 0 && entryN === stopN
+  const rrEntryError  = entryN < 0 && entry !== '' ? 'Entry price cannot be negative.' : null
+  const rrStopError   = stopN  < 0 && stop  !== '' ? 'Stop loss price cannot be negative.' : null
+  const rrTargetError = targetN < 0 && target !== '' ? 'Take profit price cannot be negative.' : null
+
   const risk = Math.abs(entryN - stopN)
   const reward = Math.abs(targetN - entryN)
-  const ratio = risk > 0 ? reward / risk : 0
+  const ratio = risk > 0 && !entrySameAsStop ? reward / risk : 0
   const winRateNeeded = ratio > 0 ? 1 / (1 + ratio) * 100 : 0
 
   const riskWidth = ratio > 0 ? Math.min(50, (1 / (1 + ratio)) * 100) : 50
@@ -184,8 +198,12 @@ function RiskRewardCalc() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
         <div>
           <InputField label="Entry Price" tooltip="Price you buy the asset." value={entry} onChange={setEntry} placeholder="e.g. 100.00" />
+          {rrEntryError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{rrEntryError}</div>}
           <InputField label="Stop Loss Price" tooltip="Price at which you exit to limit losses. Set this BEFORE entering a trade." value={stop} onChange={setStop} placeholder="e.g. 95.00" />
+          {rrStopError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{rrStopError}</div>}
+          {entrySameAsStop && <div style={{ color: 'var(--red)', fontSize: 11, marginBottom: 6 }}>Entry and Stop Loss cannot be the same.</div>}
           <InputField label="Take Profit Price" tooltip="Price at which you exit to lock in gains. Your reward target." value={target} onChange={setTarget} placeholder="e.g. 115.00" />
+          {rrTargetError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{rrTargetError}</div>}
         </div>
         <div>
           <div style={{ background: 'var(--bg-3)', borderRadius: 8, padding: 16 }}>
@@ -242,6 +260,11 @@ function OptionsPLCalc() {
   const contractsN = parseInt(contracts) || 0
   const multiplier = contractsN * 100
 
+  // Validation
+  const optStrikeError   = strikeN   < 0 && strike       !== '' ? 'Strike price cannot be negative.' : null
+  const optPremiumError  = premiumN  < 0 && premium      !== '' ? 'Premium cannot be negative.' : null
+  const optCurrentError  = currentN  < 0 && currentPrice !== '' ? 'Current price cannot be negative.' : null
+
   const breakEven = optionType === 'call' ? strikeN + premiumN : strikeN - premiumN
   const maxLoss = premiumN * multiplier
   const intrinsicValue = optionType === 'call'
@@ -275,8 +298,11 @@ function OptionsPLCalc() {
         <div>
           <SelectField label="Option Type" tooltip="A CALL option profits when stock price goes UP. A PUT option profits when stock price goes DOWN." value={optionType} onChange={setOptionType} options={[{ value: 'call', label: 'Call (Bullish — bet price rises)' }, { value: 'put', label: 'Put (Bearish — bet price falls)' }]} />
           <InputField label="Strike Price" tooltip="The price at which you have the right to buy (call) or sell (put) the stock. The key price level the option is based on." value={strike} onChange={setStrike} placeholder="e.g. 150.00" />
+          {optStrikeError  && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{optStrikeError}</div>}
           <InputField label="Premium Paid (per share)" tooltip="The cost of the option per share. Since each contract is 100 shares, multiply by 100 for total cost. This is your maximum loss on a long option." value={premium} onChange={setPremium} placeholder="e.g. 3.50" step="0.01" />
+          {optPremiumError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{optPremiumError}</div>}
           <InputField label="Current Stock Price" tooltip="What the stock is trading at right now (or your target price at expiration)." value={currentPrice} onChange={setCurrentPrice} placeholder="e.g. 155.00" />
+          {optCurrentError && <div style={{ color: 'var(--red)', fontSize: 11, marginTop: -8, marginBottom: 6 }}>{optCurrentError}</div>}
           <InputField label="Number of Contracts" tooltip="Each contract controls 100 shares. 1 contract = 100 shares, 5 contracts = 500 shares." value={contracts} onChange={setContracts} placeholder="e.g. 1" min="1" step="1" />
         </div>
         <div>

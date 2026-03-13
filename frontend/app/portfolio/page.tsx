@@ -285,24 +285,53 @@ function authHeaders(): Record<string, string> {
 
 // ─── API helpers (portfolio persistence) ──────────────────────────────────
 
+/** Sleep for `ms` milliseconds. */
+function sleep(ms: number) { return new Promise(resolve => setTimeout(resolve, ms)) }
+
 async function apiGet<T>(path: string): Promise<T | null> {
-  try {
-    const r = await fetch(`${API_BASE}${path}`, { headers: authHeaders() })
-    if (!r.ok) return null
-    return await r.json()
-  } catch { return null }
+  let attempt = 0
+  const maxRetries = 3
+  while (attempt <= maxRetries) {
+    try {
+      const r = await fetch(`${API_BASE}${path}`, { headers: authHeaders() })
+      if (r.status === 429) {
+        if (attempt < maxRetries) {
+          await sleep(1000 * Math.pow(2, attempt)) // exponential backoff: 1s, 2s, 4s
+          attempt++
+          continue
+        }
+        return null
+      }
+      if (!r.ok) return null
+      return await r.json()
+    } catch { return null }
+  }
+  return null
 }
 
 async function apiPost<T>(path: string, body: unknown): Promise<T | null> {
-  try {
-    const r = await fetch(`${API_BASE}${path}`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(body),
-    })
-    if (!r.ok) return null
-    return await r.json()
-  } catch { return null }
+  let attempt = 0
+  const maxRetries = 3
+  while (attempt <= maxRetries) {
+    try {
+      const r = await fetch(`${API_BASE}${path}`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+      })
+      if (r.status === 429) {
+        if (attempt < maxRetries) {
+          await sleep(1000 * Math.pow(2, attempt)) // exponential backoff: 1s, 2s, 4s
+          attempt++
+          continue
+        }
+        return null
+      }
+      if (!r.ok) return null
+      return await r.json()
+    } catch { return null }
+  }
+  return null
 }
 
 async function apiDelete(path: string): Promise<boolean> {
