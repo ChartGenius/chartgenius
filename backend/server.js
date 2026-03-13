@@ -118,6 +118,7 @@ app.use('/api/journal',       cachePrivate,   require('./routes/journal'));     
 app.use('/api/backup',        cachePrivate,   require('./routes/backup'));          // Data export/backup/restore
 app.use('/api/feedback',                      require('./routes/feedback'));        // User feedback & bug reports
 app.use('/api/admin',         cachePrivate,   require('./routes/admin'));            // Admin dashboard (allowlisted only)
+app.use('/api/announcements', cachePublic30s, require('./routes/announcements'));   // Public announcement banner
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

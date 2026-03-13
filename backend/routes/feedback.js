@@ -13,6 +13,7 @@ const router = express.Router();
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 const { requireAuth } = require('../middleware/auth');
+const { logActivity, getIP } = require('../services/activityLogger');
 
 // Rate limit: 5 submissions per 15 minutes per IP
 const feedbackLimiter = rateLimit({
@@ -78,6 +79,7 @@ router.post('/', feedbackLimiter, async (req, res) => {
       return res.status(500).json({ error: 'Failed to save feedback' });
     }
 
+    logActivity(null, email || null, 'feedback_submit', { type, page_url: page_url || null }, getIP(req), req.headers['user-agent']);
     return res.status(201).json({ success: true, message: 'Feedback received' });
   } catch (err) {
     console.error('[feedback] Unexpected error:', err.message);

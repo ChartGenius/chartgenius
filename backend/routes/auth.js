@@ -24,6 +24,7 @@ const router = express.Router();
 
 const authService = require('../services/authService');
 const { requireAuth } = require('../middleware/auth');
+const { logActivity, getIP } = require('../services/activityLogger');
 
 // ── Auth-specific rate limiter ─────────────────────────────────────────────
 // 5 attempts per 15 minutes per IP — tight enough to stop brute force
@@ -115,6 +116,7 @@ router.post('/signup', authLimiter, async (req, res) => {
       });
     }
 
+    logActivity(data.user?.id, email, 'signup', { needs_confirmation: needsConfirmation }, getIP(req), req.headers['user-agent']);
     res.status(201).json({
       message: needsConfirmation
         ? 'Account created. Please check your email to confirm your account.'
@@ -160,6 +162,7 @@ router.post('/login', authLimiter, async (req, res) => {
           error.message?.toLowerCase().includes('credentials')) {
         const maskedEmail = email.charAt(0) + '***@' + email.split('@')[1];
         console.warn(`[Auth] Failed login for ${maskedEmail} from ${req.ip}`);
+        logActivity(null, email, 'login_failed', { reason: 'invalid_credentials' }, getIP(req), req.headers['user-agent']);
         return res.status(401).json({ error: 'Invalid email or password' });
       }
       if (error.message?.toLowerCase().includes('confirm')) {
@@ -169,6 +172,7 @@ router.post('/login', authLimiter, async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
+    logActivity(data.user?.id, email, 'login', {}, getIP(req), req.headers['user-agent']);
     res.json({
       message: 'Login successful',
       session: sanitizeSession(data.session),

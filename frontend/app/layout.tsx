@@ -10,6 +10,7 @@ import ToastContainer from './components/Toast'
 import GoogleAnalytics from './components/GoogleAnalytics'
 import AppFooter from './components/AppFooter'
 import FeedbackWidget from './components/FeedbackWidget'
+import AnnouncementBanner from './components/AnnouncementBanner'
 
 // ─── Default Metadata ─────────────────────────────────────────────────────────
 
@@ -146,6 +147,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `try{var _fs=localStorage.getItem('cg_font_size');if(_fs==='medium')document.documentElement.classList.add('font-medium');else if(_fs==='large')document.documentElement.classList.add('font-large');}catch(e){}` }} />
       </head>
       <body>
+        {/* Announcement Banner */}
+        <AnnouncementBanner />
         {/* Google Analytics 4 — consent-gated, production only */}
         <GoogleAnalytics />
 
