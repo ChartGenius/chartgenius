@@ -20,6 +20,8 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
 
   // Focus email on mount
@@ -140,6 +142,48 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
               lineHeight: 1.4,
             }}>
               ✓ {successMessage}
+              <button
+                type="button"
+                disabled={resending || resendSuccess}
+                onClick={async () => {
+                  setResending(true)
+                  setResendSuccess(false)
+                  try {
+                    const API = process.env.NEXT_PUBLIC_API_URL || 'https://tradvue-api.onrender.com'
+                    const res = await fetch(`${API}/api/auth/resend-verification`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+                    })
+                    if (res.ok) {
+                      setResendSuccess(true)
+                    } else {
+                      const d = await res.json().catch(() => ({}))
+                      setError(d.error || 'Failed to resend. Try again in a moment.')
+                    }
+                  } catch {
+                    setError('Network error — please try again.')
+                  } finally {
+                    setResending(false)
+                  }
+                }}
+                style={{
+                  display: 'block',
+                  marginTop: 8,
+                  background: resendSuccess ? 'rgba(0,192,106,0.25)' : 'rgba(74,158,255,0.15)',
+                  border: `1px solid ${resendSuccess ? 'rgba(0,192,106,0.4)' : 'rgba(74,158,255,0.35)'}`,
+                  borderRadius: 4,
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  color: resendSuccess ? '#00c06a' : '#4a9eff',
+                  cursor: resending || resendSuccess ? 'default' : 'pointer',
+                  opacity: resending ? 0.6 : 1,
+                  width: '100%',
+                  textAlign: 'center',
+                }}
+              >
+                {resendSuccess ? '✓ Verification email resent!' : resending ? 'Resending...' : '📧 Resend Verification Email'}
+              </button>
             </div>
           )}
           {error && (

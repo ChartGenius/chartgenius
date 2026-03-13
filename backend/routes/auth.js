@@ -131,6 +131,31 @@ router.post('/signup', authLimiter, async (req, res) => {
   }
 });
 
+// ── POST /api/auth/resend-verification ─────────────────────────────────────────
+router.post('/resend-verification', authLimiter, async (req, res) => {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    return res.status(503).json({ error: 'Authentication service is not configured.' });
+  }
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() });
+    if (error) {
+      console.error('[Auth] Resend verification error:', error.message);
+      return res.status(400).json({ error: error.message });
+    }
+    res.json({ message: 'Verification email resent. Check your inbox and spam folder.' });
+  } catch (err) {
+    console.error('[Auth] Resend verification error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
 router.post('/login', authLimiter, async (req, res) => {
   // Guard: Supabase not configured (env vars missing on this deployment)
