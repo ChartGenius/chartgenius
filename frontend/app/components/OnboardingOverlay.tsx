@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { usePathname } from 'next/navigation'
 
 // Lazy-load to keep initial bundle lean
 const WelcomeModal = dynamic(() => import('./WelcomeModal'), { ssr: false })
@@ -8,13 +9,16 @@ const OnboardingChecklist = dynamic(() => import('./OnboardingChecklist'), { ssr
 
 /**
  * Renders all onboarding UI that lives outside the main page layout.
- * Dropped directly into the root layout.
+ * Only shows on the dashboard (/) — not on other pages.
  */
 export default function OnboardingOverlay() {
+  const pathname = usePathname()
+  const isDashboard = pathname === '/'
+
   return (
     <>
-      <WelcomeModal />
-      <OnboardingChecklist />
+      {isDashboard && <WelcomeModal />}
+      {isDashboard && <OnboardingChecklist />}
     </>
   )
 }
