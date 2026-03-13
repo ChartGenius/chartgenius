@@ -6,8 +6,13 @@
  * This wrapper gives Next.js a proper server-rendered entry point for SEO
  * and metadata, while delegating all rendering to the client component.
  */
+import { Suspense } from 'react'
 import HomeClient from './HomeClient'
 
 export default function Home() {
-  return <HomeClient />
+  return (
+    <Suspense fallback={null}>
+      <HomeClient />
+    </Suspense>
+  )
 }

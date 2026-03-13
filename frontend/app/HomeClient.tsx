@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import dynamic from 'next/dynamic'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from './context/AuthContext'
 import { useSettings } from './context/SettingsContext'
 import { useOnboarding } from './context/OnboardingContext'
@@ -27,6 +28,7 @@ import TickerSettingsDropdown from './components/TickerSettingsDropdown'
 import StockDetailModal from './components/StockDetailModal'
 import WatchlistPanel from './components/WatchlistPanel'
 import NewsFeed from './components/NewsFeed'
+import AnalysisPanel from './components/AnalysisPanel'
 import EconomicCalendarWidget from './components/EconomicCalendarWidget'
 import PortfolioPanel from './components/PortfolioPanel'
 import MarketAlertBar, { SmartAlertsBar, UpcomingEventsWidget } from './components/MarketAlertBar'
@@ -71,6 +73,7 @@ function saveWlCache(data: Record<string, Quote>): void {
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function HomeClient() {
+  const searchParams = useSearchParams()
   const { user, token, loadWatchlistFromBackend, syncAddToWatchlist, syncRemoveFromWatchlist } = useAuth()
   const { settings, openSettings, settingsOpen, closeSettings } = useSettings()
   const { markChecklistItem } = useOnboarding()
@@ -155,12 +158,24 @@ export default function HomeClient() {
   // Alerts/Calendar tab
   const [showAlerts, setShowAlerts] = useState(false)
 
-  // Active nav tab
-  const [activeNav, setActiveNav] = useState('Markets')
+  // Active nav tab — initialise from ?view= query param if present
+  const [activeNav, setActiveNav] = useState(() => {
+    // useState initialiser runs client-side; searchParams is available via closure
+    return 'Markets'
+  })
 
   // Mobile nav
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [mobileNavOpen, setMobileNavOpen]         = useState(false)
+
+  // ── Read ?view= query param on initial load ──────────────────────────────────
+  useEffect(() => {
+    const view = searchParams?.get('view')
+    if (view === 'analysis') {
+      setActiveNav('Analysis')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Clock ────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -795,26 +810,36 @@ export default function HomeClient() {
           />
 
           {/* ── Col 2 (CENTER): News / Analysis ─────────────────────────────── */}
-          <ErrorBoundary label="News Feed">
-            <NewsFeed
-              newsArticles={newsArticles}
-              loadingNews={loadingNews}
-              newsError={newsError}
-              newsCategory={newsCategory}
-              newsArticleCount={newsArticleCount}
-              newsSymbolFilter={newsSymbolFilter}
-              showAlerts={showAlerts}
-              activeNav={activeNav}
-              hasRealTickerData={hasRealTickerData}
-              gainers={gainers}
-              losers={losers}
-              onNewsCategory={handleNewsCategory}
-              onArticleCount={setNewsArticleCount}
-              onFetchNews={fetchNews}
-              onSymbolFilter={setNewsSymbolFilter}
-              onOpenStock={sym => openStockDetail(sym)}
-            />
-          </ErrorBoundary>
+          {activeNav === 'Analysis' ? (
+            <ErrorBoundary label="Analysis Panel">
+              <AnalysisPanel
+                wlQuotes={quotes}
+                tickerQuotes={tickerQuotes}
+                calendarEvents={calendarEvents}
+              />
+            </ErrorBoundary>
+          ) : (
+            <ErrorBoundary label="News Feed">
+              <NewsFeed
+                newsArticles={newsArticles}
+                loadingNews={loadingNews}
+                newsError={newsError}
+                newsCategory={newsCategory}
+                newsArticleCount={newsArticleCount}
+                newsSymbolFilter={newsSymbolFilter}
+                showAlerts={showAlerts}
+                activeNav={activeNav}
+                hasRealTickerData={hasRealTickerData}
+                gainers={gainers}
+                losers={losers}
+                onNewsCategory={handleNewsCategory}
+                onArticleCount={setNewsArticleCount}
+                onFetchNews={fetchNews}
+                onSymbolFilter={setNewsSymbolFilter}
+                onOpenStock={sym => openStockDetail(sym)}
+              />
+            </ErrorBoundary>
+          )}
 
           {/* ── Col 3 (RIGHT): Portfolio / Calendar / Alerts ─────────────────── */}
           <div className="col-calendar">
