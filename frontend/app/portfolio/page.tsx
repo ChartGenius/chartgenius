@@ -12,8 +12,55 @@ import PersistentNav from '../components/PersistentNav'
 import Tooltip from '../components/Tooltip'
 import { useAuth } from '../context/AuthContext'
 import { initPortfolioSync, debouncedSyncPortfolio } from '../utils/cloudSync'
+import { getUserTier, canAccessFeature } from '../utils/tierAccess'
 
 const AuthModal = dynamic(() => import('../components/AuthModal'), { ssr: false })
+const UpgradePromptDynamic = dynamic(() => import('../components/UpgradePrompt'), { ssr: false })
+
+// ── PortfolioSyncBadge — cloud sync indicator with paywall for free post-trial ──
+function PortfolioSyncBadge() {
+  const { user } = useAuth()
+  const [showUpgrade, setShowUpgrade] = useState(false)
+  const tier = getUserTier(user)
+  const canSync = canAccessFeature(user, 'auto-sync')
+
+  if (canSync || tier === 'paid') {
+    return (
+      <span style={{ fontSize: 10, color: 'var(--green)', background: 'var(--green-dim)', padding: '2px 8px', borderRadius: 10 }}>
+        ☁ Cloud Sync
+      </span>
+    )
+  }
+
+  // Free post-trial: show "Upgrade to sync" badge
+  return (
+    <>
+      <button
+        onClick={() => setShowUpgrade(true)}
+        style={{
+          fontSize: 10,
+          color: 'var(--text-2)',
+          background: 'var(--bg-3)',
+          padding: '2px 8px',
+          borderRadius: 10,
+          border: '1px solid rgba(255,255,255,0.1)',
+          cursor: 'pointer',
+        }}
+      >
+        ☁ Upgrade to sync
+      </button>
+      {showUpgrade && (
+        <UpgradePromptDynamic
+          open={showUpgrade}
+          onClose={() => setShowUpgrade(false)}
+          featureName="Cloud Auto-Sync"
+          featureDesc="Keep your portfolio synced across all devices automatically. Available on TradVue Pro."
+          variant="upgrade"
+        />
+      )}
+    </>
+  )
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1102,7 +1149,7 @@ export default function PortfolioPage() {
           <span style={{ color: 'var(--accent)' }}><IconBriefcase size={18} /></span>
           Portfolio
         </div>
-        {isLoggedIn && <span style={{ fontSize: 10, color: 'var(--green)', background: 'var(--green-dim)', padding: '2px 8px', borderRadius: 10 }}>☁ Cloud Sync</span>}
+        {isLoggedIn && <PortfolioSyncBadge />}
         {!isLoggedIn && <span style={{ fontSize: 10, color: 'var(--text-3)', background: 'var(--bg-3)', padding: '2px 8px', borderRadius: 10 }}>Guest mode · <button onClick={() => setAuthModalOpen(true)} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 10 }}>Sign in to save</button></span>}
         <div style={{ flex: 1 }} />
         {loadingPrices && <span style={{ fontSize: 10, color: 'var(--text-3)' }}>↻ Updating prices…</span>}

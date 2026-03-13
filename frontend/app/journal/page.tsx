@@ -14,6 +14,8 @@ import {
 import PersistentNav from '../components/PersistentNav'
 import { useAuth } from '../context/AuthContext'
 import { debouncedSyncJournal, initJournalSync } from '../utils/cloudSync'
+import { getUserTier, isDataLocked, canAccessFeature, getLockedEntryCount, getCsvDateLimit } from '../utils/tierAccess'
+import UpgradePrompt from '../components/UpgradePrompt'
 import ImportModal from './ImportModal'
 import AdvancedReports from './AdvancedReports'
 import { TagPicker, TagFilterBar, TagChip, loadCustomTags, saveCustomTags, type TagDefinition } from './TagManager'
@@ -826,10 +828,12 @@ function StreakTracker({ trades }: { trades: Trade[] }) {
   )
 }
 
-function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill }: {
+function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, currentUser, onUpgrade }: {
   trades: Trade[]; setTrades: (t: Trade[]) => void
   customTags: TagDefinition[]; onAddCustomTag: (tag: TagDefinition) => void
   prefill?: { symbol?: string; price?: string; asset?: string } | null
+  currentUser?: import('../lib/api').AuthUser | null
+  onUpgrade?: (name: string, desc?: string) => void
 }) {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ ...EMPTY_FORM })
@@ -1412,51 +1416,80 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill }:
               </tr>
             </thead>
             <tbody>
-              {filtered.map(t => (
+              {filtered.map(t => {
+                const locked = isDataLocked(currentUser ?? null, t.date)
+                return (
                 <>
                   <tr
                     key={t.id}
-                    onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
-                    style={{
-                      background: expandedId === t.id ? 'rgba(99,102,241,0.08)' : t.pnl > 0 ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)',
-                      borderBottom: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      transition: 'background 0.15s',
+                    onClick={() => {
+                      if (locked) {
+                        onUpgrade?.('Full Trade History', 'Upgrade to Pro to view all your trades — your data is safely saved and waiting.')
+                        return
+                      }
+                      setExpandedId(expandedId === t.id ? null : t.id)
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.12)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = expandedId === t.id ? 'rgba(99,102,241,0.08)' : t.pnl > 0 ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)')}
+                    style={{
+                      background: locked
+                        ? 'rgba(0,0,0,0.2)'
+                        : expandedId === t.id ? 'rgba(99,102,241,0.08)' : t.pnl > 0 ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)',
+                      borderBottom: '1px solid var(--border)',
+                      cursor: locked ? 'pointer' : 'pointer',
+                      transition: 'background 0.15s',
+                      opacity: locked ? 0.55 : 1,
+                      filter: locked ? 'blur(1.5px)' : 'none',
+                    }}
+                    onMouseEnter={e => {
+                      if (!locked) e.currentTarget.style.background = 'rgba(99,102,241,0.12)'
+                    }}
+                    onMouseLeave={e => {
+                      if (!locked) e.currentTarget.style.background = expandedId === t.id ? 'rgba(99,102,241,0.08)' : t.pnl > 0 ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)'
+                    }}
+                    title={locked ? '🔒 Upgrade to Pro to view this trade' : undefined}
                   >
                     <td style={{ padding: '10px 12px' }}>{t.date}</td>
-                    <td style={{ padding: '10px 12px', fontWeight: 700, fontFamily: 'var(--mono)', color: BLUE }}>{t.symbol}</td>
-                    <td style={{ padding: '10px 12px', color: t.direction === 'Long' ? GREEN : RED }}>{t.direction}</td>
-                    <td style={{ padding: '10px 12px', color: 'var(--text-2)' }}>{t.assetClass}</td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>${fmt2(t.entryPrice)}</td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>${fmt2(t.exitPrice)}</td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>{t.positionSize}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, fontFamily: 'var(--mono)', color: BLUE }}>{locked ? '••••' : t.symbol}</td>
+                    <td style={{ padding: '10px 12px', color: t.direction === 'Long' ? GREEN : RED }}>{locked ? '—' : t.direction}</td>
+                    <td style={{ padding: '10px 12px', color: 'var(--text-2)' }}>{locked ? '—' : t.assetClass}</td>
+                    <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>{locked ? '••••' : `$${fmt2(t.entryPrice)}`}</td>
+                    <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>{locked ? '••••' : `$${fmt2(t.exitPrice)}`}</td>
+                    <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>{locked ? '—' : t.positionSize}</td>
                     <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)', fontWeight: 700, color: t.pnl >= 0 ? GREEN : RED }}>
-                      {fmtDollar(t.pnl)}
+                      {locked ? '••••' : fmtDollar(t.pnl)}
                     </td>
                     <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)', color: t.rMultiple >= 0 ? GREEN : RED }}>
-                      {fmtR(t.rMultiple)}
+                      {locked ? '—' : fmtR(t.rMultiple)}
                     </td>
                     <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                        {(t.tags_setup_types || (t.setupTag ? [t.setupTag] : [])).map(tag => (
-                          <TagChip key={tag} tag={{ name: tag, color: '#6366f1', category: 'setup_type', id: '', isPreset: true }} size="small" />
-                        ))}
-                        {(t.tags_strategies || []).map(tag => (
-                          <TagChip key={tag} tag={{ name: tag, color: '#10b981', category: 'strategy', id: '', isPreset: true }} size="small" />
-                        ))}
-                      </div>
+                      {!locked && (
+                        <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                          {(t.tags_setup_types || (t.setupTag ? [t.setupTag] : [])).map(tag => (
+                            <TagChip key={tag} tag={{ name: tag, color: '#6366f1', category: 'setup_type', id: '', isPreset: true }} size="small" />
+                          ))}
+                          {(t.tags_strategies || []).map(tag => (
+                            <TagChip key={tag} tag={{ name: tag, color: '#10b981', category: 'strategy', id: '', isPreset: true }} size="small" />
+                          ))}
+                        </div>
+                      )}
+                      {locked && (
+                        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                          🔒 <span style={{ textDecoration: 'underline', cursor: 'pointer' }}
+                            onClick={e => { e.stopPropagation(); onUpgrade?.('Full Trade History', 'Upgrade to Pro to view all your trades — your data is safely saved and waiting.') }}>
+                            Upgrade
+                          </span>
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '10px 12px' }}>
-                      {'★'.repeat(t.rating)}{'☆'.repeat(5 - t.rating)}
+                      {locked ? '' : ('★'.repeat(t.rating) + '☆'.repeat(5 - t.rating))}
                     </td>
                     <td style={{ padding: '10px 12px' }}>
-                      <button
-                        onClick={e => { e.stopPropagation(); deleteTrade(t.id) }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, fontSize: 14, padding: 2 }}
-                      >✕</button>
+                      {!locked && (
+                        <button
+                          onClick={e => { e.stopPropagation(); deleteTrade(t.id) }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: RED, fontSize: 14, padding: 2 }}
+                        >✕</button>
+                      )}
                     </td>
                   </tr>
                   {expandedId === t.id && (
@@ -1518,7 +1551,8 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill }:
                     </tr>
                   )}
                 </>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -2678,9 +2712,18 @@ function JournalPageInner() {
   // Pre-fill from URL params (from watchlist +LOG button)
   const [prefillParams, setPrefillParams] = useState<{ symbol?: string; price?: string; asset?: string } | null>(null)
 
-  const { token } = useAuth()
+  const { token, user } = useAuth()
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
+  const [upgradeFeatureName, setUpgradeFeatureName] = useState('')
+  const [upgradeFeatureDesc, setUpgradeFeatureDesc] = useState('')
   const initialSyncDone = useRef(false)
   const initialLoadDone = useRef(false)
+
+  const openUpgrade = (name: string, desc?: string) => {
+    setUpgradeFeatureName(name)
+    setUpgradeFeatureDesc(desc || '')
+    setShowUpgradePrompt(true)
+  }
 
   useEffect(() => {
     setTrades(loadTrades())
@@ -2729,7 +2772,23 @@ function JournalPageInner() {
   }, [trades, notes, token])
 
   const handleImportTrades = (importedTrades: Record<string, unknown>[]) => {
-    const newTrades: Trade[] = importedTrades.map(t => ({
+    // Apply date filter for free-tier post-trial users
+    const dateLimit = getCsvDateLimit(user)
+    const filteredImports = dateLimit
+      ? importedTrades.filter(t => {
+          const d = String(t.date || '')
+          if (!d) return true
+          return new Date(d + 'T12:00:00') >= dateLimit
+        })
+      : importedTrades
+
+    if (dateLimit && filteredImports.length < importedTrades.length) {
+      const skipped = importedTrades.length - filteredImports.length
+      // Non-blocking notice
+      console.info(`[TierAccess] Free tier: filtered ${skipped} trade(s) older than 30 days from CSV import.`)
+    }
+
+    const newTrades: Trade[] = filteredImports.map(t => ({
       date: String(t.date || ''),
       time: String(t.time || ''),
       symbol: String(t.symbol || ''),
@@ -2792,7 +2851,16 @@ function JournalPageInner() {
         <div className="page-header-desc">Track, analyze, and improve your trading</div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{trades.length} trades</span>
-          <button onClick={() => setShowImportModal(true)} className="btn btn-secondary btn-sm">
+          <button
+            onClick={() => {
+              if (getUserTier(user) === 'demo') {
+                openUpgrade('CSV Import', 'Sign in free to import your trade history.')
+                return
+              }
+              setShowImportModal(true)
+            }}
+            className="btn btn-secondary btn-sm"
+          >
             <IconUpload size={13} /> Import CSV
           </button>
           <ExportButton trades={trades} notes={notes} variant="journal" />
@@ -2876,7 +2944,7 @@ function JournalPageInner() {
       {/* Content */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
         {activeTab === 'dashboard' && <TabDashboard trades={trades} />}
-        {activeTab === 'log'       && <TabTradeLog  trades={trades} setTrades={setTrades} customTags={customTags} onAddCustomTag={handleAddCustomTag} prefill={prefillParams} />}
+        {activeTab === 'log'       && <TabTradeLog  trades={trades} setTrades={setTrades} customTags={customTags} onAddCustomTag={handleAddCustomTag} prefill={prefillParams} currentUser={user} onUpgrade={openUpgrade} />}
         {activeTab === 'calendar'  && <TabCalendar  trades={trades} />}
         {activeTab === 'analytics' && <TabAnalytics trades={trades} />}
         {activeTab === 'notebook'  && <TabNotebook  notes={notes}   setNotes={setNotes} />}
@@ -2896,6 +2964,14 @@ function JournalPageInner() {
       {showBackupImport && (
         <ImportBackupModal onClose={() => setShowBackupImport(false)} onRestore={handleBackupRestore} />
       )}
+      <UpgradePrompt
+        open={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        featureName={upgradeFeatureName}
+        featureDesc={upgradeFeatureDesc}
+        lockedCount={getLockedEntryCount(user, trades.map(t => t.date))}
+        variant="upgrade"
+      />
     </div>
   )
 }

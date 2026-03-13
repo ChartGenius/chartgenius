@@ -11,6 +11,8 @@ import GoogleAnalytics from './components/GoogleAnalytics'
 import AppFooter from './components/AppFooter'
 import FeedbackWidget from './components/FeedbackWidget'
 import AnnouncementBanner from './components/AnnouncementBanner'
+import TrialBanner from './components/TrialBanner'
+import SupportChat from './components/SupportChat'
 
 // ─── Default Metadata ─────────────────────────────────────────────────────────
 
@@ -169,12 +171,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ToastProvider>
           <SettingsProvider>
             <AuthProvider>
+              {/* Trial countdown banner — shown for free-tier users (must be inside AuthProvider) */}
+              <TrialBanner />
               <OnboardingProvider>
                 {children}
                 <OnboardingOverlay />
                 <CookieConsent />
                 <AppFooter />
                 <FeedbackWidget />
+                <SupportChat />
               </OnboardingProvider>
             </AuthProvider>
           </SettingsProvider>
