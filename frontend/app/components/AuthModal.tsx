@@ -79,7 +79,7 @@ export default function AuthModal({ onClose, onSuccess }: AuthModalProps) {
       // Signup successful but needs email verification
       trackSignup('free')
       setSuccessMessage(
-        'Account created! Check your email for a verification link. You\'ll be able to log in after confirming.'
+        'Account created! Check your email for a verification link. ⚠️ CHECK YOUR SPAM/JUNK FOLDER — new domain emails often land there. Mark it "Not Spam" to receive future emails in your inbox.'
       )
       return
     }

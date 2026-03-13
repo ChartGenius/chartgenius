@@ -13,7 +13,7 @@ const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const { requireAuth } = require('../middleware/auth');
 
-const ADMIN_ALLOWLIST = ['firemanems06@gmail.com', 'axle-test@tradvue.com'];
+const ADMIN_ALLOWLIST = ['firemanems06@gmail.com', 'axle-test@tradvue.com', 'apexlogicsfl@gmail.com'];
 
 // ── Admin Supabase client (service role) ──────────────────────────────────────
 function getAdminClient() {
