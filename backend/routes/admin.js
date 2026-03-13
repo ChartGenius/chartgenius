@@ -13,7 +13,7 @@ const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const { requireAuth } = require('../middleware/auth');
 
-const ADMIN_ALLOWLIST = ['firemanems06@gmail.com', 'axle-test@tradvue.com', 'apexlogicsfl@gmail.com'];
+const ADMIN_ALLOWLIST = ['axle-test@tradvue.com', 'apexlogicsfl@gmail.com'];
 
 // ── Admin Supabase client (service role) ──────────────────────────────────────
 function getAdminClient() {
@@ -426,31 +426,33 @@ router.post('/email/send', async (req, res) => {
     let status = 'queued';
     let sentCount = 0;
 
-    // Try Resend if API key is configured
+    // Try Resend if API key is configured — send individually so recipients can't see each other
     if (process.env.RESEND_API_KEY && toAddresses.length > 0) {
       try {
-        const batchSize = 50;
-        for (let i = 0; i < toAddresses.length; i += batchSize) {
-          const batch = toAddresses.slice(i, i + batchSize);
-          const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              from: 'TradVue <noreply@tradvue.com>',
-              to: batch,
-              subject,
-              html: body.replace(/\n/g, '<br>'),
-              text: body,
-            }),
-          });
-          if (response.ok) sentCount += batch.length;
+        for (const addr of toAddresses) {
+          try {
+            const response = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                from: 'TradVue <noreply@tradvue.com>',
+                to: [addr],
+                subject,
+                html: body.replace(/\n/g, '<br>'),
+                text: body,
+              }),
+            });
+            if (response.ok) sentCount++;
+          } catch (e) {
+            console.warn(`[Admin] Resend error for ${addr}:`, e.message);
+          }
         }
-        status = 'sent';
+        status = sentCount > 0 ? 'sent' : 'failed';
       } catch (e) {
-        console.warn('[Admin] Resend error:', e.message);
+        console.warn('[Admin] Resend batch error:', e.message);
         status = 'failed';
       }
     } else {
