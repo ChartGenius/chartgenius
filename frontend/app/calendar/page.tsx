@@ -10,6 +10,19 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 import { apiFetchSafe } from '../lib/apiFetch'
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Market Status Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MarketStatus {
+  isOpen: boolean
+  session: 'Regular' | 'Pre-Market' | 'After-Hours' | 'Closed' | 'Holiday'
+  nextOpen: string | null
+  nextClose: string | null
+  holidayName?: string | null
+  holidays: Array<{ date: string; title: string }>
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -110,6 +123,60 @@ function beatsMiss(actual: string | null, forecast: string | null): 'beat' | 'mi
   const f = parseFloat(forecast.replace(/[^0-9.-]/g, ''))
   if (isNaN(a) || isNaN(f)) return null
   return a >= f ? 'beat' : 'miss'
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Market Status Banner Component
+// ─────────────────────────────────────────────────────────────────────────────
+
+function MarketStatusBanner({ status }: { status: MarketStatus | null }) {
+  if (!status) return null
+
+  const SESSION_CONFIG: Record<string, { icon: string; color: string; bg: string; border: string }> = {
+    'Regular':     { icon: '🟢', color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)' },
+    'Pre-Market':  { icon: '🟡', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
+    'After-Hours': { icon: '🟡', color: '#6366f1', bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.25)' },
+    'Holiday':     { icon: '🏛️', color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.25)' },
+    'Closed':      { icon: '🔴', color: '#ef4444', bg: 'rgba(239,68,68,0.07)',  border: 'rgba(239,68,68,0.2)'  },
+  }
+  const cfg = SESSION_CONFIG[status.session] ?? SESSION_CONFIG['Closed']
+
+  const label = status.session === 'Regular'
+    ? 'Market Open'
+    : status.session === 'Pre-Market'
+      ? 'Pre-Market'
+      : status.session === 'After-Hours'
+        ? 'After-Hours'
+        : status.session === 'Holiday'
+          ? `Market Closed — ${status.holidayName || 'Holiday'}`
+          : 'Market Closed'
+
+  const subtext = status.isOpen
+    ? status.nextClose
+    : status.nextOpen
+
+  return (
+    <div style={{
+      padding: '7px 16px',
+      background: cfg.bg,
+      borderBottom: `1px solid ${cfg.border}`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      fontSize: 11,
+    }}>
+      <span style={{ fontSize: 14 }}>{cfg.icon}</span>
+      <span style={{ fontWeight: 700, color: cfg.color }}>{label}</span>
+      {subtext && (
+        <span style={{ color: 'var(--text-3)', fontSize: 10 }}>{subtext}</span>
+      )}
+      {status.holidays.length > 0 && (
+        <span style={{ marginLeft: 'auto', color: 'var(--text-3)', fontSize: 10 }}>
+          Next holiday: {status.holidays[0]?.title?.replace('🏛️ Market Closed — ', '') || ''} ({status.holidays[0]?.date})
+        </span>
+      )}
+    </div>
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -620,6 +687,7 @@ export default function CalendarPage() {
     new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
   )
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+  const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null)
 
   // Compute date range for current view
   const dateRange = useMemo(() => {
@@ -695,11 +763,22 @@ export default function CalendarPage() {
     fetchEvents()
   }, [fetchEvents])
 
-  // Auto-refresh every 5 minutes
+  // Auto-refresh events every 5 minutes
   useEffect(() => {
     const t = setInterval(fetchEvents, 5 * 60 * 1000)
     return () => clearInterval(t)
   }, [fetchEvents])
+
+  // Fetch market status on mount + every 5 minutes
+  useEffect(() => {
+    async function fetchMarketStatus() {
+      const data = await apiFetchSafe<MarketStatus>(`${API_BASE}/api/calendar/market-status`)
+      if (data?.session) setMarketStatus(data)
+    }
+    fetchMarketStatus()
+    const t = setInterval(fetchMarketStatus, 5 * 60 * 1000)
+    return () => clearInterval(t)
+  }, [])
 
   // Filter events
   const filteredEvents = useMemo(() => {
@@ -771,10 +850,15 @@ export default function CalendarPage() {
   // Today's key (stable reference used as fallback)
   const todayKey = useMemo(() => toDateKey(new Date()), [])
 
-  // Selected day events — always falls back to today
+  // Selected day events — always falls back to today, holidays shown first
   const selectedDayEvents = useMemo(() => {
     const key = selectedDay ?? todayKey
-    return (eventsByDay.get(key) || []).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    return (eventsByDay.get(key) || []).sort((a, b) => {
+      // Holidays always sort to top
+      if (a.type === 'holiday' && b.type !== 'holiday') return -1
+      if (a.type !== 'holiday' && b.type === 'holiday') return 1
+      return new Date(a.date).getTime() - new Date(b.date).getTime()
+    })
   }, [selectedDay, todayKey, eventsByDay])
 
   return (
@@ -819,6 +903,9 @@ export default function CalendarPage() {
           </button>
         </div>
       </header>
+
+      {/* ── Market Status Banner ── */}
+      <MarketStatusBanner status={marketStatus} />
 
       {/* ── Calendar Data Disclaimer ── */}
       <div style={{
@@ -1042,8 +1129,8 @@ export default function CalendarPage() {
                         <div style={{ textAlign: 'right' }}>ACTUAL</div>
                       </div>
 
-                      {/* Grouped by type */}
-                      {(['economic', 'speech', 'earnings', 'holiday'] as EventType[]).map(type => {
+                      {/* Grouped by type — holidays always shown first */}
+                      {(['holiday', 'economic', 'speech', 'earnings'] as EventType[]).map(type => {
                         const typeEvents = selectedDayEvents.filter(e => e.type === type)
                         if (typeEvents.length === 0) return null
                         const typeLabel = type === 'economic' ? 'Economic' : type === 'speech' ? 'Speeches' : type === 'earnings' ? 'Earnings' : 'Holidays'
@@ -1072,6 +1159,37 @@ export default function CalendarPage() {
                               const impactColor = IMPACT_COLORS[event.impact] || 'var(--text-3)'
                               const isSpeech = event.type === 'speech'
                               const isWatchlistEarning = event.type === 'earnings' && event.symbol && watchlistSymbols.includes(event.symbol.toUpperCase())
+                              const isHolidayEvent = event.type === 'holiday'
+                              if (isHolidayEvent) {
+                                return (
+                                  <div key={event.id} style={{
+                                    padding: '10px 12px',
+                                    borderBottom: '1px solid var(--border)',
+                                    borderLeft: '3px solid #8b5cf6',
+                                    background: 'rgba(139,92,246,0.08)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                  }}>
+                                    <span style={{ fontSize: 16 }}>🏛️</span>
+                                    <div>
+                                      <div style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6' }}>
+                                        {event.title.replace('🏛️ ', '')}
+                                      </div>
+                                      <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2 }}>
+                                        NYSE Market Closed · All Day · {event.source}
+                                      </div>
+                                    </div>
+                                    <span style={{
+                                      marginLeft: 'auto',
+                                      fontSize: 9, fontWeight: 700,
+                                      padding: '2px 8px', borderRadius: 3,
+                                      background: 'rgba(139,92,246,0.2)',
+                                      color: '#8b5cf6',
+                                    }}>Holiday</span>
+                                  </div>
+                                )
+                              }
                               return (
                                 <div key={event.id} style={{
                                   display: 'grid',
@@ -1214,6 +1332,29 @@ export default function CalendarPage() {
                     const bm = beatsMiss(event.actual, event.forecast)
                     const impactColor = IMPACT_COLORS[event.impact] || 'var(--text-3)'
                     const isSpeech = event.type === 'speech'
+                    const isHolidayEvent = event.type === 'holiday'
+
+                    if (isHolidayEvent) {
+                      return (
+                        <div key={event.id} style={{
+                          padding: '8px 10px',
+                          borderBottom: '1px solid var(--border)',
+                          borderLeft: '3px solid #8b5cf6',
+                          background: 'rgba(139,92,246,0.08)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}>
+                          <span style={{ fontSize: 13 }}>🏛️</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {event.title.replace('🏛️ ', '')}
+                            </div>
+                            <div style={{ fontSize: 8, color: 'var(--text-3)', marginTop: 1 }}>NYSE Closed · All Day</div>
+                          </div>
+                        </div>
+                      )
+                    }
                     return (
                       <div key={event.id} style={{
                         display: 'grid', gridTemplateColumns: '42px 18px 1fr 52px 52px 52px',

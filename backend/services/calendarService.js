@@ -15,6 +15,8 @@
 const axios = require('axios');
 const RSSParser = require('rss-parser');
 const cache = require('./cache');
+const fxstreet = require('./fxstreet');
+const fmp = require('./fmp');
 
 const rssParser = new RSSParser({
   timeout: 10000,
@@ -495,15 +497,23 @@ async function getEvents({ from, to, type = 'all' } = {}) {
   const toStr = toDateStr(toDate);
 
   // Fetch all sources in parallel
-  const [ffEvents, finnhubEarnings, finnhubEcon, fedEvents] = await Promise.all([
+  const [ffEvents, finnhubEarnings, finnhubEcon, fedEvents, fxsEvents, fmpHolidays] = await Promise.all([
     fetchForexFactory(),
     fetchFinnhubEarnings(fromStr, toStr),
     fetchFinnhubEconomic(fromStr, toStr),
-    fetchFedRSS()
+    fetchFedRSS(),
+    fxstreet.getEvents({ from: fromStr, to: toStr }).catch(err => {
+      console.error('[CalendarService] FXStreet fetch failed:', err.message);
+      return [];
+    }),
+    fmp.getMarketHolidays({ from: fromStr, to: toStr }).catch(err => {
+      console.error('[CalendarService] FMP holidays fetch failed:', err.message);
+      return [];
+    }),
   ]);
 
   // Merge + filter by date range (compare date strings in ET to avoid timezone drift)
-  const all = [...ffEvents, ...finnhubEarnings, ...finnhubEcon, ...fedEvents].filter(e => {
+  const all = [...ffEvents, ...finnhubEarnings, ...finnhubEcon, ...fedEvents, ...fxsEvents, ...fmpHolidays].filter(e => {
     try {
       const d = parseDate(e.date);
       if (isNaN(d.getTime())) return false;
@@ -571,8 +581,9 @@ async function getUpcomingEvents({ days = 7, currencies = null, minImpact = 1 } 
     to: toDateStr(to)
   });
 
-  // Apply impact filter
+  // Apply impact filter — always include holidays regardless of minImpact
   events = events.filter(e => {
+    if (e.type === 'holiday') return true; // Market holidays always included
     const rank = IMPACT_RANK[e.impact] ?? 1;
     return rank >= minRank;
   });

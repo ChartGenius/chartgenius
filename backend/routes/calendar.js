@@ -20,6 +20,7 @@ const express = require('express');
 const router = express.Router();
 const calendarService = require('../services/calendarService');
 const economicCalendar = require('../services/economicCalendar');
+const fmp = require('../services/fmp');
 
 // ─── In-memory cache ──────────────────────────────────────────────────────────
 
@@ -220,6 +221,47 @@ router.get('/high-impact', async (req, res) => {
   } catch (error) {
     console.error('[Calendar] /high-impact error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch high-impact events' });
+  }
+});
+
+// GET /api/calendar/market-status — Current market session + upcoming holidays
+// Cache: 5 minutes (baked into fmp.getMarketStatus)
+router.get('/market-status', async (req, res) => {
+  try {
+    const CACHE_KEY = 'route:market-status';
+    let result = eventsCache.get(CACHE_KEY);
+    const FIVE_MIN = 5 * 60 * 1000;
+    if (result && Date.now() - result.timestamp < FIVE_MIN) {
+      return res.json(result.data);
+    }
+
+    const [status, holidays] = await Promise.all([
+      fmp.getMarketStatus(),
+      fmp.getMarketHolidays({
+        from: new Date().toISOString().slice(0, 10),
+        to:   new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString().slice(0, 10),
+      }),
+    ]);
+
+    const payload = {
+      success:   true,
+      isOpen:    status.isOpen,
+      session:   status.session,
+      nextOpen:  status.nextOpen  || null,
+      nextClose: status.nextClose || null,
+      holidayName: status.holidayName || null,
+      holidays:  holidays.map(h => ({
+        date:  h.date.slice(0, 10),
+        title: h.title,
+      })),
+      timestamp: new Date().toISOString(),
+    };
+
+    eventsCache.set(CACHE_KEY, { data: payload, timestamp: Date.now() });
+    res.json(payload);
+  } catch (error) {
+    console.error('[Calendar] /market-status error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch market status' });
   }
 });
 
