@@ -429,7 +429,9 @@ router.post('/email/send', async (req, res) => {
     // Try Resend if API key is configured — send individually so recipients can't see each other
     if (process.env.RESEND_API_KEY && toAddresses.length > 0) {
       try {
-        for (const addr of toAddresses) {
+        for (let idx = 0; idx < toAddresses.length; idx++) {
+          if (idx > 0) await new Promise(r => setTimeout(r, 600)); // Resend rate limit: 2/sec
+          const addr = toAddresses[idx];
           try {
             const response = await fetch('https://api.resend.com/emails', {
               method: 'POST',
