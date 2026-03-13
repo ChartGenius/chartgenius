@@ -445,9 +445,15 @@ router.post('/email/send', async (req, res) => {
                 text: body,
               }),
             });
-            if (response.ok) sentCount++;
+            if (response.ok) {
+              sentCount++;
+              console.log(`[Admin] Email sent to ${addr}: OK`);
+            } else {
+              const errBody = await response.text();
+              console.error(`[Admin] Resend FAILED for ${addr}: ${response.status} — ${errBody}`);
+            }
           } catch (e) {
-            console.warn(`[Admin] Resend error for ${addr}:`, e.message);
+            console.error(`[Admin] Resend exception for ${addr}:`, e.message);
           }
         }
         status = sentCount > 0 ? 'sent' : 'failed';
