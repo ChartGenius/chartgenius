@@ -7,9 +7,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://tradvue-api.onrende
 type FeedbackType = 'bug' | 'feature' | 'general';
 
 const TYPES: { value: FeedbackType; label: string; placeholder: string }[] = [
-  { value: 'bug',     label: '🐛 Bug Report',       placeholder: 'Describe the bug...' },
-  { value: 'feature', label: '💡 Feature Request',  placeholder: 'What feature would you like?' },
-  { value: 'general', label: '💬 General',           placeholder: 'Tell us anything...' },
+  { value: 'bug',     label: 'Bug Report',       placeholder: 'Describe the bug...' },
+  { value: 'feature', label: 'Feature Request',  placeholder: 'What feature would you like?' },
+  { value: 'general', label: 'General',           placeholder: 'Tell us anything...' },
 ];
 
 export default function FeedbackWidget() {
