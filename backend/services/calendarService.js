@@ -21,6 +21,28 @@ const rssParser = new RSSParser({
   headers: { 'User-Agent': 'TradVue/1.0 (tradvue.com; calendar-bot)' }
 });
 
+// ─── Circuit Breaker — ForexFactory ─────────────────────────────────────────
+// Stop hammering FF when it's rate-limiting us. Opens on 429, auto-resets after 1h.
+
+let ffCircuitOpen = false;
+let ffCircuitOpenUntil = 0;
+
+function isFFCircuitOpen() {
+  if (!ffCircuitOpen) return false;
+  if (Date.now() > ffCircuitOpenUntil) {
+    ffCircuitOpen = false;
+    console.log('[CalendarService] ForexFactory circuit breaker reset — retrying');
+    return false;
+  }
+  return true;
+}
+
+function openFFCircuit(durationMs = 3600000) { // 1 hour default
+  ffCircuitOpen = true;
+  ffCircuitOpenUntil = Date.now() + durationMs;
+  console.warn(`[CalendarService] ForexFactory circuit breaker OPEN — will retry in ${durationMs / 60000} min`);
+}
+
 // ─── Type Classification ────────────────────────────────────────────────────
 
 const SPEECH_KEYWORDS = [
@@ -125,6 +147,14 @@ async function fetchForexFactoryWeek(week = 'thisweek') {
   // Include today's ET date in cache key so cache auto-busts at midnight ET
   const todayET = toDateStr(new Date());
   const CACHE_KEY = `calendar:ff:${week}:${todayET}`;
+
+  // Circuit breaker — if FF has been rate-limiting us, serve stale and bail early
+  if (isFFCircuitOpen()) {
+    const stale = await cache.get(CACHE_KEY + ':stale').catch(() => null);
+    if (stale) return stale;
+    return [];
+  }
+
   const cached = await cache.get(CACHE_KEY).catch(() => null);
   if (cached) return cached;
 
@@ -163,7 +193,7 @@ async function fetchForexFactoryWeek(week = 'thisweek') {
     });
 
     // Cache aggressively — FF data rarely changes intraday
-    const ttl = week === 'thisweek' ? 7200 : 14400; // 2h this week, 4h next week
+    const ttl = week === 'thisweek' ? 21600 : 43200; // 6h this week, 12h next week
     await cache.set(CACHE_KEY, events, ttl).catch(() => {});
     // Keep a long-lived stale copy for 429 fallback (24h)
     await cache.set(CACHE_KEY + ':stale', events, 86400).catch(() => {});
@@ -175,6 +205,7 @@ async function fetchForexFactoryWeek(week = 'thisweek') {
       await cache.set(CACHE_KEY, [], 600).catch(() => {});
     } else if (status === 429) {
       console.warn(`[CalendarService] ForexFactory ${week} rate limited (429) — keeping stale cache`);
+      openFFCircuit(3600000); // Stop trying for 1 hour
       // Don't overwrite cache with empty — return stale data if we had any
       const stale = await cache.get(CACHE_KEY + ':stale').catch(() => null);
       if (stale) return stale;
@@ -252,7 +283,7 @@ async function fetchFinnhubEarnings(from, to) {
       };
     });
 
-    await cache.set(CACHE_KEY, events, 3600).catch(() => {});
+    await cache.set(CACHE_KEY, events, 43200).catch(() => {}); // 12h — earnings schedules don't change often
     return events;
   } catch (err) {
     console.error('[CalendarService] Finnhub earnings fetch failed:', err.message);
@@ -379,6 +410,71 @@ async function fetchFedRSS() {
   }
 }
 
+// ─── Smart Cross-Source Deduplication ────────────────────────────────────────
+//
+// Events from different sources (FF + Finnhub) can describe the same real-world
+// event with different IDs (e.g. "ADBE Earnings" from both FF and Finnhub).
+// We deduplicate by a normalized content key, keeping the richer record.
+
+/**
+ * Build a stable content key for deduplication across sources.
+ *   earnings  → "earnings-{symbol}-{YYYY-MM-DD}"
+ *   others    → "{type}-{title-slug(40)}-{YYYY-MM-DD}"
+ */
+function normalizeEventKey(e) {
+  let dateStr;
+  try {
+    dateStr = toDateStr(parseDate(e.date));
+  } catch {
+    dateStr = (e.date || '').slice(0, 10);
+  }
+
+  if (e.type === 'earnings' && e.symbol) {
+    return `earnings-${e.symbol.toLowerCase()}-${dateStr}`;
+  }
+
+  const slug = (e.title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+  return `${e.type || 'event'}-${slug}-${dateStr}`;
+}
+
+/**
+ * Score how many meaningful data fields are populated.
+ * Higher = richer record; prefer this one when deduplicating.
+ */
+function eventDataScore(e) {
+  return [
+    e.forecast, e.previous, e.actual,
+    e.symbol, e.url,
+    e.epsEstimate, e.epsActual,
+    e.revenueEstimate, e.revenueActual
+  ].filter(v => v != null && v !== '').length;
+}
+
+/**
+ * Deduplicate events across sources.
+ * - Primary key: normalizeEventKey (content-based, cross-source)
+ * - Tiebreak:    keep the record with more data fields populated
+ */
+function smartDeduplicate(events) {
+  // Map: normalKey → best event so far
+  const best = new Map();
+
+  for (const e of events) {
+    const key = normalizeEventKey(e);
+    if (!best.has(key)) {
+      best.set(key, e);
+    } else if (eventDataScore(e) > eventDataScore(best.get(key))) {
+      best.set(key, e); // richer record wins
+    }
+  }
+
+  return Array.from(best.values());
+}
+
 // ─── Unified getEvents ───────────────────────────────────────────────────────
 
 /**
@@ -419,13 +515,11 @@ async function getEvents({ from, to, type = 'all' } = {}) {
     }
   });
 
-  // Deduplicate by id
-  const seen = new Set();
-  const deduped = all.filter(e => {
-    if (seen.has(e.id)) return false;
-    seen.add(e.id);
-    return true;
-  });
+  // Smart cross-source deduplication:
+  //   earnings  → keyed by symbol + date (FF and Finnhub both report "ADBE Earnings")
+  //   economic  → keyed by title-slug + date (same release from multiple feeds)
+  // When duplicates exist, the record with more populated data fields wins.
+  const deduped = smartDeduplicate(all);
 
   // Filter by type
   const filtered = type === 'all'

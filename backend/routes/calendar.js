@@ -24,7 +24,7 @@ const economicCalendar = require('../services/economicCalendar');
 // ─── In-memory cache ──────────────────────────────────────────────────────────
 
 const eventsCache = new Map();
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours — calendar events don't change frequently
 
 /**
  * Get current ET date as YYYY-MM-DD string.
