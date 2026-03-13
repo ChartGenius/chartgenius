@@ -477,6 +477,193 @@ function smartDeduplicate(events) {
   return Array.from(best.values());
 }
 
+// ─── Static Recurring US Economic Events ─────────────────────────────────────
+//
+// Fallback when ForexFactory is rate-limited (429). Generates approximate dates
+// for well-known recurring US economic events based on typical BLS/Census/Fed
+// schedules. These ONLY fill gaps — they never override real data from primary
+// sources. Events carry source='TradVue' and id='static-*' so they're easy to
+// identify.
+
+/** FOMC meeting decision dates (2nd day of each meeting = decision day) */
+const FOMC_DECISION_DATES = new Set([
+  // 2025
+  '2025-01-29', '2025-03-19', '2025-05-07', '2025-06-18',
+  '2025-07-30', '2025-09-17', '2025-10-29', '2025-12-10',
+  // 2026
+  '2026-01-29', '2026-03-19', '2026-05-07', '2026-06-18',
+  '2026-07-30', '2026-09-17', '2026-11-05', '2026-12-17',
+  // 2027 (approximate, update when Fed publishes official schedule)
+  '2027-02-03', '2027-03-17', '2027-05-05', '2027-06-16',
+  '2027-07-28', '2027-09-15', '2027-11-03', '2027-12-15',
+]);
+
+/**
+ * Determine whether US DST is active for a given calendar date.
+ * DST starts 2nd Sunday in March, ends 1st Sunday in November.
+ * @returns {string} '-04:00' (EDT) or '-05:00' (EST)
+ */
+function getETOffset(year, month, day) {
+  // 2nd Sunday in March
+  const marchFirst = new Date(year, 2, 1);
+  const marchFirstDow = marchFirst.getDay(); // 0=Sun
+  const dstStart = new Date(year, 2, marchFirstDow === 0 ? 8 : 8 + (7 - marchFirstDow));
+  // 1st Sunday in November
+  const novFirst = new Date(year, 10, 1);
+  const novFirstDow = novFirst.getDay();
+  const dstEnd = new Date(year, 10, novFirstDow === 0 ? 1 : 1 + (7 - novFirstDow));
+
+  const check = new Date(year, month - 1, day);
+  return (check >= dstStart && check < dstEnd) ? '-04:00' : '-05:00';
+}
+
+/**
+ * Return the date of the first Friday in a given month.
+ */
+function getFirstFridayOfMonth(year, month) {
+  const first = new Date(year, month - 1, 1);
+  const dow = first.getDay(); // 0=Sun … 5=Fri
+  return 1 + ((5 - dow + 7) % 7); // day-of-month (1–7)
+}
+
+/**
+ * Fuzzy title match — returns true when titles share ≥70% significant words.
+ * Used to avoid adding static duplicates of real events with slightly different
+ * phrasing (e.g. "CPI m/m" vs "Consumer Price Index MoM").
+ */
+function fuzzyTitleMatch(a, b) {
+  const tokenize = s => s.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2);
+  const wordsA = new Set(tokenize(a));
+  const wordsB = new Set(tokenize(b));
+  if (wordsA.size === 0 || wordsB.size === 0) {
+    return a.toLowerCase().trim() === b.toLowerCase().trim();
+  }
+  let overlap = 0;
+  for (const w of wordsA) {
+    if (wordsB.has(w)) overlap++;
+  }
+  return (overlap / Math.max(wordsA.size, wordsB.size)) >= 0.7;
+}
+
+/**
+ * Generate static recurring US economic events for a date range.
+ *
+ * @param {string} fromStr - YYYY-MM-DD
+ * @param {string} toStr   - YYYY-MM-DD
+ * @returns {Array} Calendar events with source='TradVue'
+ */
+function getStaticRecurringEvents(fromStr, toStr) {
+  const fromDate = new Date(fromStr + 'T00:00:00');
+  const toDate   = new Date(toStr   + 'T23:59:59');
+  const events = [];
+
+  /** Build an ISO date-time string in ET for the given components. */
+  function makeISODate(year, month, day, hhmm) {
+    const offset = getETOffset(year, month, day);
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${hhmm}:00${offset}`;
+  }
+
+  function makeId(title, dateStr) {
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return `static-${slug}-${dateStr}`;
+  }
+
+  /**
+   * Conditionally add one event — skips if outside range or falls on a weekend
+   * (economic releases are never on Sat/Sun; we skip rather than roll-forward to
+   * keep the data honest — approximate but not misleading).
+   */
+  function addEvent(title, year, month, day, hhmm, impact, eventType = 'economic') {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const d = new Date(dateStr + 'T12:00:00'); // noon local to avoid TZ edge cases
+    if (d < fromDate || d > toDate) return;
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) return; // skip weekends
+
+    events.push({
+      id:       makeId(title, dateStr),
+      title,
+      date:     makeISODate(year, month, day, hhmm),
+      type:     eventType,
+      impact,
+      country:  'USD',
+      forecast: null,
+      previous: null,
+      actual:   null,
+      source:   'TradVue',
+    });
+  }
+
+  // ── Monthly events ──────────────────────────────────────────────────────────
+  // Walk month-by-month across the requested range
+  let cur = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+  const lastMonth = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+
+  while (cur <= lastMonth) {
+    const year  = cur.getFullYear();
+    const month = cur.getMonth() + 1; // 1-indexed
+
+    // 1st Friday — Non-Farm Payrolls + Unemployment Rate
+    const nfpDay = getFirstFridayOfMonth(year, month);
+    addEvent('Non-Farm Payrolls',   year, month, nfpDay, '08:30', 'High');
+    addEvent('Unemployment Rate',   year, month, nfpDay, '08:30', 'High');
+
+    // ~10th — CPI
+    addEvent('CPI m/m',             year, month, 10, '08:30', 'High');
+    addEvent('Core CPI m/m',        year, month, 10, '08:30', 'High');
+
+    // ~13th — PPI
+    addEvent('PPI m/m',             year, month, 13, '08:30', 'Medium');
+
+    // ~15th — Retail Sales
+    addEvent('Retail Sales m/m',    year, month, 15, '08:30', 'High');
+    addEvent('Core Retail Sales m/m', year, month, 15, '08:30', 'High');
+
+    // ~16th — Industrial Production
+    addEvent('Industrial Production m/m', year, month, 16, '09:15', 'Medium');
+
+    // ~20th — Housing
+    addEvent('Housing Starts',      year, month, 20, '08:30', 'Medium');
+    addEvent('Building Permits',    year, month, 20, '08:30', 'Medium');
+
+    // ~25th — Durable Goods
+    addEvent('Durable Goods Orders m/m', year, month, 25, '08:30', 'Medium');
+
+    // ~28th — GDP + Consumer Confidence
+    addEvent('GDP q/q',             year, month, 28, '08:30', 'High');
+    addEvent('Consumer Confidence', year, month, 28, '10:00', 'High');
+
+    cur = new Date(year, month, 1); // advance to next month
+  }
+
+  // ── Weekly: Initial Jobless Claims (every Thursday) ─────────────────────────
+  {
+    const d = new Date(fromDate);
+    // Advance to the first Thursday in range
+    while (d.getDay() !== 4) d.setDate(d.getDate() + 1);
+    while (d <= toDate) {
+      addEvent('Initial Jobless Claims', d.getFullYear(), d.getMonth() + 1, d.getDate(), '08:30', 'High');
+      d.setDate(d.getDate() + 7);
+    }
+  }
+
+  // ── FOMC decision days (hardcoded dates, 8× per year) ───────────────────────
+  for (const fomcDateStr of FOMC_DECISION_DATES) {
+    const d = new Date(fomcDateStr + 'T12:00:00');
+    if (d < fromDate || d > toDate) continue;
+    const year  = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const day   = d.getDate();
+    addEvent('FOMC Statement & Rate Decision', year, month, day, '14:00', 'High', 'speech');
+    addEvent('FOMC Press Conference',          year, month, day, '14:30', 'High', 'speech');
+  }
+
+  return events;
+}
+
 // ─── Unified getEvents ───────────────────────────────────────────────────────
 
 /**
@@ -534,6 +721,37 @@ async function getEvents({ from, to, type = 'all' } = {}) {
   //   economic  → keyed by title-slug + date (same release from multiple feeds)
   // When duplicates exist, the record with more populated data fields wins.
   const deduped = smartDeduplicate(all);
+
+  // ── Static recurring events — gap fill only ──────────────────────────────
+  // Generate TradVue-sourced static events for the range, then add only those
+  // that don't already exist in the real data (exact or fuzzy title + same date).
+  // This ensures economic events always appear even when ForexFactory is down.
+  const staticEvents = getStaticRecurringEvents(fromStr, toStr);
+  if (staticEvents.length > 0) {
+    // Build date→titles lookup from real events for O(1) per-day lookups
+    const realTitlesByDate = new Map();
+    for (const e of deduped) {
+      let ds;
+      try { ds = toDateStr(parseDate(e.date)); } catch { ds = (e.date || '').slice(0, 10); }
+      if (!realTitlesByDate.has(ds)) realTitlesByDate.set(ds, []);
+      realTitlesByDate.get(ds).push(e.title || '');
+    }
+
+    for (const se of staticEvents) {
+      let ds;
+      try { ds = toDateStr(parseDate(se.date)); } catch { ds = (se.date || '').slice(0, 10); }
+      const titlesOnDay = realTitlesByDate.get(ds) || [];
+      const isDuplicate = titlesOnDay.some(t =>
+        t.toLowerCase() === se.title.toLowerCase() || fuzzyTitleMatch(t, se.title)
+      );
+      if (!isDuplicate) {
+        deduped.push(se);
+        // Update lookup so later static events also dedup against newly added ones
+        if (!realTitlesByDate.has(ds)) realTitlesByDate.set(ds, []);
+        realTitlesByDate.get(ds).push(se.title);
+      }
+    }
+  }
 
   // Filter by type
   const filtered = type === 'all'
