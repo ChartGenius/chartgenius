@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://tradvue-api.onrender.com'
-const ADMIN_EMAILS = ['firemanems06@gmail.com', 'axle-test@tradvue.com']
+const ADMIN_EMAILS = ['apexlogicsfl@gmail.com', 'axle-test@tradvue.com']
 
 type TabId = 'overview' | 'users' | 'feedback' | 'activity' | 'analytics' | 'revenue' | 'email' | 'security' | 'health'
 
