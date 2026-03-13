@@ -676,7 +676,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [view, setView] = useState<ViewMode>('month')
-  const [typeFilters, setTypeFilters] = useState<Set<string>>(() => new Set(['economic', 'earnings', 'speech', 'holiday']))
+  const [typeFilters, setTypeFilters] = useState<Set<string>>(() => new Set(['economic', 'speech', 'holiday']))
   const [impactFilter, setImpactFilter] = useState('All')
   const [countryFilter, setCountryFilter] = useState('USD')
   const [search, setSearch] = useState('')
