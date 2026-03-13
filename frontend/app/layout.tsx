@@ -147,6 +147,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `try{var _fs=localStorage.getItem('cg_font_size');if(_fs==='medium')document.documentElement.classList.add('font-medium');else if(_fs==='large')document.documentElement.classList.add('font-large');}catch(e){}` }} />
       </head>
       <body>
+        {/* No-JavaScript fallback — shown only when JS is disabled */}
+        <noscript>
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 99999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#0f0f12', color: '#e0e0e8',
+            fontFamily: 'system-ui, sans-serif', textAlign: 'center', padding: '24px',
+          }}>
+            <p style={{ fontSize: '18px', maxWidth: '480px', lineHeight: 1.6 }}>
+              <strong>TradVue requires JavaScript to run.</strong><br />
+              Please enable JavaScript in your browser settings and reload the page.
+            </p>
+          </div>
+        </noscript>
         {/* Announcement Banner */}
         <AnnouncementBanner />
         {/* Google Analytics 4 — consent-gated, production only */}

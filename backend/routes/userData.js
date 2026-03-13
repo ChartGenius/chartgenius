@@ -181,19 +181,4 @@ router.put('/data/:type', requireAuth, async (req, res) => {
   }
 });
 
-// Debug endpoint — remove after testing
-router.get('/debug', async (req, res) => {
-  try {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_ANON_KEY;
-    const supabase = createClient(url, key, {
-      auth: { autoRefreshToken: false, persistSession: false }
-    });
-    const { count, error } = await supabase.from('user_data').select('*', { count: 'exact', head: true });
-    res.json({ version: 'supabase-rest-v2', count, error: error?.message || null });
-  } catch (err) {
-    res.json({ version: 'supabase-rest-v2', error: err.message });
-  }
-});
-
 module.exports = router;

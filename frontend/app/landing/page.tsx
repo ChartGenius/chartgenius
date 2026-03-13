@@ -279,7 +279,7 @@ const features = [
   },
   {
     icon: <IconTools />,
-    title: '11 Trading Calculators',
+    title: '30+ Trading Calculators',
     desc: 'Options Profit, Futures Risk/Reward, Position Sizing, Risk of Ruin, Compound Growth, Forex Pip, Trade Expectancy, Correlation Matrix, and more — all free, no sign-up.',
     color: 'var(--blue)',
   },
@@ -396,7 +396,7 @@ export default function LandingPage() {
             '@type': 'SoftwareApplication',
             name: 'TradVue',
             applicationCategory: 'FinanceApplication',
-            description: 'Free trading journal, portfolio tracker, and market analysis tools. 11 calculators, smart alerts, DRIP simulator, and more.',
+            description: 'Free trading journal, portfolio tracker, and market analysis tools. 30+ calculators, smart alerts, DRIP simulator, and more.',
             offers: {
               '@type': 'Offer',
               priceCurrency: 'USD',

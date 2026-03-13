@@ -13,7 +13,10 @@ const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const { requireAuth } = require('../middleware/auth');
 
-const ADMIN_ALLOWLIST = ['axle-test@tradvue.com', 'apexlogicsfl@gmail.com'];
+// ADMIN_EMAILS env var: comma-separated list of admin email addresses.
+// Format: ADMIN_EMAILS=admin@example.com,admin2@example.com
+// If the env var is missing or empty, no admins are allowed (safe default).
+const ADMIN_ALLOWLIST = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
 
 // ── Admin Supabase client (service role) ──────────────────────────────────────
 function getAdminClient() {
