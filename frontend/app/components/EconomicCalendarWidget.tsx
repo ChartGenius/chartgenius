@@ -146,7 +146,7 @@ function renderEventRow(ev: CalendarEvent, past: boolean): React.ReactNode {
  */
 export default function EconomicCalendarWidget({ events, loading, watchlistSymbols }: Props) {
   const [impactFilter, setImpactFilter]     = useState('All')
-  const [currencyFilter, setCurrencyFilter] = useState('All')
+  const [currencyFilter, setCurrencyFilter] = useState('USD')
 
   const watchlist = useMemo(
     () => (watchlistSymbols && watchlistSymbols.length > 0 ? watchlistSymbols : DEFAULT_WATCHLIST_SYMBOLS),
