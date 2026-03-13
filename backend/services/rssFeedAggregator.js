@@ -18,6 +18,7 @@
 const RSSParser = require('rss-parser');
 const cache = require('./cache');
 const finnhub = require('./finnhub');
+const marketaux = require('./marketaux');
 
 const parser = new RSSParser({
   timeout: 12000,
@@ -346,6 +347,14 @@ class RSSFeedAggregator {
           console.warn(`[RSS] Feed "${feedsToFetch[i].name}" failed: ${result.reason?.message}`);
         }
       });
+
+      // Always supplement with Marketaux (has sentiment data)
+      try {
+        const mxNews = await marketaux.getNews({ limit: 15 });
+        allArticles.push(...mxNews);
+      } catch (e) {
+        console.warn('[RSS] Marketaux supplement failed:', e.message);
+      }
 
       // If too few articles, supplement with Finnhub news
       const finnhubCategoryMap = {
