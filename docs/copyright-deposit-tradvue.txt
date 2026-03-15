@@ -6,7 +6,7 @@
   Copyright © 2026 Apex Logics LLC
   All Rights Reserved
 
-  Author: Erick Urbina / Apex Logics LLC
+  Author: Erick M. Ramdeholl / Apex Logics LLC
   Date of First Publication: March 2026
   Nation of First Publication: United States
 
