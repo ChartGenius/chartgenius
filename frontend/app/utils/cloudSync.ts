@@ -104,7 +104,7 @@ async function cloudPut(token: string, type: string, data: unknown): Promise<boo
 /**
  * Merge two arrays using entry count as the "more complete" heuristic.
  * If both non-empty, pick the larger one.
- * Cloud sync is ADDITIVE — never lose local data.
+ * Cloud sync is ADDITIVE — designed to preserve local data.
  */
 function mergeArrays<T>(local: T[], cloud: T[]): T[] {
   if (!local.length && !cloud.length) return []

@@ -260,7 +260,7 @@ export default function UpgradePrompt({
                 Your {lockedCount.toLocaleString()} {lockedCount === 1 ? 'entry is' : 'entries are'} waiting
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
-                All your data is safely saved — upgrade to view it all.
+                Your data is saved — upgrade to view it all.
               </div>
             </div>
           </div>

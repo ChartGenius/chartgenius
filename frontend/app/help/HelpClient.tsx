@@ -103,11 +103,11 @@ const FAQ_DATA: {
     questions: [
       {
         q: 'What is TradVue?',
-        a: 'TradVue is a free, browser-based trading platform and research toolkit. It combines a real-time market dashboard, trading journal with analytics, portfolio tracker, financial tools (calculators, screener), news feed, and economic calendar — all in one place. No download required.',
+        a: 'TradVue is a browser-based trading platform and research toolkit. It combines a real-time market dashboard, trading journal with analytics, portfolio tracker, financial tools (calculators, screener), news feed, and economic calendar — all in one place. No download required.',
       },
       {
         q: 'Is TradVue free?',
-        a: 'Yes — TradVue is free to use. Core features including the dashboard, journal, portfolio tracker, tools, news, and calendar are available at no cost. Some data sources have a 15-minute delay on free API tiers. Premium features (real-time data across all sources, cloud sync, advanced analytics) may require an account in a future update.',
+        a: 'TradVue offers a generous free tier with core features. Premium features require a Pro subscription ($24/month or $16.80/month annual). Core features including the dashboard, journal, portfolio tracker, tools, news, and calendar are available on the free tier. Some data sources have a 15-minute delay on free API tiers.',
       },
       {
         q: 'Do I need an account?',
@@ -131,7 +131,7 @@ const FAQ_DATA: {
       },
       {
         q: "What's the difference between mobile and desktop?",
-        a: 'Desktop gives you full charting tools, sentiment data, and advanced filters. Mobile focuses on watchlist monitoring and quick alerts. Both sync in real-time, so your data is always current.',
+        a: 'Desktop gives you full charting tools, sentiment data, and advanced filters. Mobile focuses on watchlist monitoring and quick alerts. Both sync regularly, so your data stays current across devices.',
       },
     ],
   },
@@ -146,7 +146,7 @@ const FAQ_DATA: {
       },
       {
         q: 'What data sources do you use?',
-        a: 'We pull real-time data from major exchanges (NYSE, NASDAQ, AMEX) and secondary sources. Sentiment comes from news aggregators and social signals. All sources are licensed and verified.',
+        a: 'We pull market data from licensed sources including Alpaca, Finnhub, and others. Data may be delayed up to 15 minutes depending on the source and your plan. Sentiment comes from news aggregators and social signals.',
       },
       {
         q: 'How often is data refreshed?',
@@ -168,8 +168,8 @@ const FAQ_DATA: {
     Icon: IconCreditCard,
     questions: [
       {
-        q: 'What are the differences between Free and Pro?',
-        a: 'Free includes unlimited watchlists, real-time quotes, and email alerts. Pro adds unlimited data, cloud sync, ad-free experience, SMS/Webhook alerts, custom indicators, sentiment archives, 2-year historical data, and priority support ($24/month, or $16.80/month billed annually).',
+        q: 'What are the differences between Free, Pro, and Beta?',
+        a: 'Free includes unlimited watchlists, delayed market data, and email alerts. Pro ($24/month, or $16.80/month billed annually) adds cloud sync, ad-free experience, SMS/Webhook alerts, custom indicators, sentiment archives, 2-year historical data, and priority support. During the beta period, all users receive free Pro access with no credit card required.',
       },
       {
         q: 'How do I upgrade to Pro?',

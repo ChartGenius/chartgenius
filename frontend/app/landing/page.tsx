@@ -507,7 +507,7 @@ export default function LandingPage() {
               fontSize: '12px', color: 'var(--blue)', fontWeight: 600, letterSpacing: '0.02em',
             }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--blue)', display: 'inline-block', animation: 'lp-pulse 2s ease-in-out infinite' }} />
-              Beta now open — free Pro access for early users
+              Beta now open — free Pro access during beta
             </div>
 
             {/* Hero logo with tagline */}
@@ -597,7 +597,7 @@ export default function LandingPage() {
               {[
                 'No credit card required',
                 '0-second data delay (Pro)',
-                '99.2% uptime',
+                'Built for reliability',
               ].map(t => (
                 <span key={t} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -696,7 +696,7 @@ export default function LandingPage() {
                 Everything You Need to Trade with Edge
               </h2>
               <p style={{ fontSize: '16px', color: 'var(--text-2)', maxWidth: '540px', margin: '0 auto', lineHeight: 1.6 }}>
-                Real-time intelligence, a professional trading journal, portfolio analytics, and 11 built-in calculators — all in one platform. 100% free.
+                Real-time intelligence, a professional trading journal, portfolio analytics, and 30+ built-in calculators — all in one platform. Free to start.
               </p>
             </div>
 
@@ -772,7 +772,7 @@ export default function LandingPage() {
             }}>
               <StatCounter value={1200} label="traders in beta" suffix="+" />
               <StatCounter value={15000} label="hours of data analyzed daily" suffix="+" />
-              <StatCounter value={99} label="% data uptime" suffix=".2" />
+              <StatCounter value={30} label="built-in calculators" suffix="+" />
               <StatCounter value={10} label="years of AI training data" suffix="+" />
             </div>
 
@@ -856,7 +856,7 @@ export default function LandingPage() {
                 Start Free. Scale When You're Ready.
               </h2>
               <p style={{ fontSize: '16px', color: 'var(--text-2)', maxWidth: '500px', margin: '0 auto', lineHeight: 1.6 }}>
-                No credit card. No expiration. All early access users get free Pro through beta.
+                No credit card. During beta period. All early access users get free Pro through beta.
               </p>
             </div>
 
@@ -868,7 +868,7 @@ export default function LandingPage() {
               textAlign: 'center', marginBottom: '40px',
               fontSize: '15px', color: 'var(--text-0)', fontWeight: 600,
             }}>
-              Free Pro access for all early beta users. No credit card, no expiration date.
+              Free Pro access for all early beta users. No credit card required. Valid during beta period.
             </div>
 
             {/* Pricing cards */}

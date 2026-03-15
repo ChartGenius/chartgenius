@@ -1424,7 +1424,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                     key={t.id}
                     onClick={() => {
                       if (locked) {
-                        onUpgrade?.('Full Trade History', 'Upgrade to Pro to view all your trades — your data is safely saved and waiting.')
+                        onUpgrade?.('Full Trade History', 'Upgrade to Pro to view all your trades — your data is saved and waiting.')
                         return
                       }
                       setExpandedId(expandedId === t.id ? null : t.id)
@@ -1474,7 +1474,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                       {locked && (
                         <span style={{ fontSize: 12, color: 'var(--text-3)' }}>
                           🔒 <span style={{ textDecoration: 'underline', cursor: 'pointer' }}
-                            onClick={e => { e.stopPropagation(); onUpgrade?.('Full Trade History', 'Upgrade to Pro to view all your trades — your data is safely saved and waiting.') }}>
+                            onClick={e => { e.stopPropagation(); onUpgrade?.('Full Trade History', 'Upgrade to Pro to view all your trades — your data is saved and waiting.') }}>
                             Upgrade
                           </span>
                         </span>
