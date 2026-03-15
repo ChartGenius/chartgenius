@@ -24,6 +24,10 @@ interface Props {
   setAuthModalOpen: (open: boolean) => void
   toggleWatch: (sym: string) => void
   openStockDetail: (sym: string, name?: string) => void
+  /** Called instead of openStockDetail when not on the dashboard — only updates the selected ticker, no chart modal */
+  onSelectTicker: (sym: string) => void
+  /** The current nav tab from HomeClient — determines contextual click behavior */
+  activeNav: string
   customTickerSymbols: string[]
   removeFromTicker: (sym: string) => void
 }
@@ -48,9 +52,20 @@ export default function WatchlistPanel({
   setAuthModalOpen,
   toggleWatch,
   openStockDetail,
+  onSelectTicker,
+  activeNav,
   customTickerSymbols,
   removeFromTicker,
 }: Props) {
+  // On the dashboard (Markets tab) clicking a ticker opens the chart modal.
+  // On any other tab (Analysis, etc.) it only selects the ticker.
+  const handleTickerClick = useCallback((sym: string, name?: string) => {
+    if (activeNav === 'Markets') {
+      openStockDetail(sym, name)
+    } else {
+      onSelectTicker(sym)
+    }
+  }, [activeNav, openStockDetail, onSelectTicker])
   // Internal state — does not need to live in HomeClient
   const [watchlistSize, setWatchlistSize] = useState<'compact' | 'normal' | 'large'>(() => {
     if (typeof window !== 'undefined') {
@@ -215,7 +230,7 @@ export default function WatchlistPanel({
             >
               <StockSearch onSelect={(sym, name) => {
                 if (!watchlist.includes(sym)) toggleWatch(sym)
-                openStockDetail(sym, name)
+                handleTickerClick(sym, name)
               }} />
             </OnboardingTooltip>
           </div>
@@ -279,7 +294,7 @@ export default function WatchlistPanel({
                 key={sym}
                 role="listitem"
                 className={`watchlist-row${isDragging ? ' dragging' : ''}${isDragOver ? ' drag-over' : ''}`}
-                onClick={() => !watchlistEditMode && openStockDetail(sym)}
+                onClick={() => !watchlistEditMode && handleTickerClick(sym)}
                 style={{ position: 'relative', cursor: watchlistEditMode ? 'default' : 'pointer' }}
                 aria-label={`${sym} watchlist item`}
                 draggable={watchlistEditMode}
@@ -421,11 +436,11 @@ export default function WatchlistPanel({
               <span key={sym} className="ticker-tag">
                 <span
                   style={{ cursor: 'pointer' }}
-                  onClick={() => openStockDetail(sym)}
+                  onClick={() => handleTickerClick(sym)}
                   role="button"
                   tabIndex={0}
                   aria-label={`View ${sym} details`}
-                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') openStockDetail(sym) }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleTickerClick(sym) }}
                 >
                   {sym}
                 </span>

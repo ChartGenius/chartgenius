@@ -150,6 +150,7 @@ export default function HomeClient() {
 
   // Stock detail modal
   const [selectedStock, setSelectedStock]           = useState<{ symbol: string; name: string } | null>(null)
+  const [showStockModal, setShowStockModal]         = useState(false)
   const [stockQuote, setStockQuote]                 = useState<Quote | null>(null)
   const [stockProfile, setStockProfile]             = useState<CompanyProfile | null>(null)
   const [loadingStockQuote, setLoadingStockQuote]   = useState(false)
@@ -483,6 +484,7 @@ export default function HomeClient() {
   const openStockDetail = useCallback(async (symbol: string, name?: string) => {
     const resolvedName = name || symbolName(symbol)
     setSelectedStock({ symbol, name: resolvedName })
+    setShowStockModal(true)
     setStockQuote(null)
     setStockProfile(null)
     setLoadingStockQuote(true)
@@ -517,10 +519,17 @@ export default function HomeClient() {
   }, [tickerQuotes, quotes])
 
   const closeStockDetail = () => {
+    setShowStockModal(false)
     setSelectedStock(null)
     setStockQuote(null)
     setStockProfile(null)
   }
+
+  // ── Select a ticker without opening the chart modal (used on non-dashboard tabs) ──
+  const selectTickerOnly = useCallback((symbol: string) => {
+    const resolvedName = symbolName(symbol)
+    setSelectedStock({ symbol, name: resolvedName })
+  }, [])
 
   // ── Keyboard shortcuts ───────────────────────────────────────────────────────
   const handleKbFocusSearch = useCallback(() => {
@@ -529,10 +538,10 @@ export default function HomeClient() {
   }, [])
 
   const handleKbEscape = useCallback(() => {
-    if (selectedStock) { closeStockDetail(); return }
+    if (showStockModal) { closeStockDetail(); return }
     if (authModalOpen)  { setAuthModalOpen(false); return }
     if (settingsOpen)   { closeSettings(); return }
-  }, [selectedStock, authModalOpen, settingsOpen, closeSettings])
+  }, [showStockModal, authModalOpen, settingsOpen, closeSettings])
 
   const handleKbGoToHome = useCallback(() => {
     setNewsCategory('All')
@@ -794,6 +803,8 @@ export default function HomeClient() {
             setAuthModalOpen={setAuthModalOpen}
             toggleWatch={toggleWatch}
             openStockDetail={openStockDetail}
+            onSelectTicker={selectTickerOnly}
+            activeNav={activeNav}
             customTickerSymbols={customTickerSymbols}
             removeFromTicker={removeFromTicker}
           />
@@ -949,7 +960,7 @@ export default function HomeClient() {
       </footer>
 
       {/* ── Stock Detail Modal ────────────────────────────────────────────────── */}
-      {selectedStock && (
+      {showStockModal && selectedStock && (
         <StockDetailModal
           symbol={selectedStock.symbol}
           name={selectedStock.name}
