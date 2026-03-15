@@ -23,6 +23,8 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
+const rateLimit = require('express-rate-limit');
+const { requireAuth } = require('../middleware/auth');
 
 // ── Stripe client (lazy-init so missing key only breaks stripe routes) ─────────
 let _stripe = null;
@@ -190,22 +192,62 @@ async function getUserByStripeCustomer(stripeCustomerId) {
   return data;
 }
 
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+
+/** Webhook: 100 req/min per IP — guard against DoS */
+const webhookRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests' },
+});
+
+// ── Input validation helpers ──────────────────────────────────────────────────
+
+/** Allowed Stripe price ID format: price_<alphanumeric> */
+const PRICE_ID_RE = /^price_[A-Za-z0-9]+$/;
+
+function isValidPriceId(id) {
+  return typeof id === 'string' && PRICE_ID_RE.test(id);
+}
+
+/** Return only the listed keys from an object (strip unexpected fields) */
+function pick(obj, keys) {
+  const out = {};
+  for (const k of keys) {
+    if (Object.prototype.hasOwnProperty.call(obj, k)) out[k] = obj[k];
+  }
+  return out;
+}
+
 // ── POST /api/stripe/create-checkout-session ──────────────────────────────────
-router.post('/create-checkout-session', async (req, res) => {
+// FIX 1: requireAuth — user must be authenticated; userId/email taken from token
+// FIX 6: validate priceId format and strip unexpected body fields
+router.post('/create-checkout-session', requireAuth, async (req, res) => {
   try {
     const stripe = getStripe();
     const prices = await getOrCreatePrices();
 
-    const { priceId, userId, email } = req.body;
+    // Only accept known fields from body
+    const { priceId } = pick(req.body, ['priceId']);
 
-    if (!priceId || !userId || !email) {
-      return res.status(400).json({ error: 'priceId, userId, and email are required' });
+    // Validate priceId format
+    if (!priceId) {
+      return res.status(400).json({ error: 'priceId is required' });
+    }
+    if (!isValidPriceId(priceId)) {
+      return res.status(400).json({ error: 'Invalid priceId format' });
     }
 
     // Validate priceId is one of our known prices
     if (priceId !== prices.monthly && priceId !== prices.annual) {
       return res.status(400).json({ error: 'Invalid priceId' });
     }
+
+    // Get userId and email from the authenticated user — never from the request body
+    const userId = req.user.id;
+    const email = req.user.email;
 
     // Lazy Stripe customer creation: check if user already has a customer ID
     let stripeCustomerId = null;
@@ -249,7 +291,8 @@ router.post('/create-checkout-session', async (req, res) => {
 // ── POST /api/stripe/webhook ──────────────────────────────────────────────────
 // NOTE: This handler expects express.raw() body, registered in server.js BEFORE
 // the JSON body parser. The router-level handler here just processes the event.
-router.post('/webhook', async (req, res) => {
+// FIX 4: rate limiter applied to guard against DoS
+router.post('/webhook', webhookRateLimiter, async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -347,17 +390,26 @@ router.post('/webhook', async (req, res) => {
 });
 
 // ── POST /api/stripe/create-portal-session ────────────────────────────────────
-router.post('/create-portal-session', async (req, res) => {
+// FIX 2: requireAuth — look up stripe_customer_id from the authenticated user's
+//         profile; never accept customerId from the request body.
+// FIX 6: strip unexpected body fields
+router.post('/create-portal-session', requireAuth, async (req, res) => {
   try {
     const stripe = getStripe();
-    const { customerId, returnUrl } = req.body;
 
-    if (!customerId) {
-      return res.status(400).json({ error: 'customerId is required' });
+    // Only accept returnUrl from body; customerId comes from authenticated user
+    const { returnUrl } = pick(req.body, ['returnUrl']);
+
+    const profile = await getUserProfile(req.user.id);
+    if (!profile) {
+      return res.status(404).json({ error: 'User profile not found' });
+    }
+    if (!profile.stripe_customer_id) {
+      return res.status(400).json({ error: 'No billing account found for this user' });
     }
 
     const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
+      customer: profile.stripe_customer_id,
       return_url: returnUrl || 'https://www.tradvue.com/account',
     });
 
@@ -369,14 +421,14 @@ router.post('/create-portal-session', async (req, res) => {
 });
 
 // ── GET /api/stripe/subscription-status ───────────────────────────────────────
-router.get('/subscription-status', async (req, res) => {
+// FIX 3: requireAuth — always return authenticated user's own subscription only.
+//         The userId query param is ignored; identity comes from the JWT.
+router.get('/subscription-status', requireAuth, async (req, res) => {
   try {
     const stripe = getStripe();
-    const { userId } = req.query;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'userId query param is required' });
-    }
+    // Identity from token — never from query params
+    const userId = req.user.id;
 
     const profile = await getUserProfile(userId);
     if (!profile) {
@@ -439,7 +491,7 @@ router.get('/subscription-status', async (req, res) => {
       amount,
       currency: price?.currency || 'usd',
       interval,
-      customerId: profile.stripe_customer_id,
+      // NOTE: customerId intentionally omitted — do not expose to client
     });
   } catch (err) {
     console.error('[Stripe] subscription-status error:', err.message);

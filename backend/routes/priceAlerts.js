@@ -12,6 +12,24 @@ const router = express.Router();
 const db = require('../services/db');
 const { requireAuth } = require('../middleware/auth');
 
+// ── Admin/service-role guard ──────────────────────────────────────────────────
+// Used to protect internal-only endpoints from regular authenticated users.
+// Accepts either:
+//   (a) A valid JWT whose app_metadata.role === 'admin'
+//   (b) An internal service secret via X-Internal-Secret header
+function requireAdmin(req, res, next) {
+  // Option (b): internal service key
+  const internalSecret = process.env.INTERNAL_SERVICE_SECRET;
+  if (internalSecret && req.headers['x-internal-secret'] === internalSecret) {
+    return next();
+  }
+  // Option (a): admin role via JWT (req.user populated by requireAuth above)
+  if (req.user && req.user.appRole === 'admin') {
+    return next();
+  }
+  return res.status(403).json({ error: 'Admin access required' });
+}
+
 // All price alert routes require auth
 router.use(requireAuth);
 
@@ -81,9 +99,10 @@ router.delete('/:id', async (req, res) => {
 });
 
 // ─── POST /api/alerts/price/check ────────────────────────────────────────────
-// Called internally by the polling loop to check prices and mark triggered alerts
+// Internal endpoint — restricted to admin/service role only.
+// Regular authenticated users are rejected with 403.
 
-router.post('/check', async (req, res) => {
+router.post('/check', requireAdmin, async (req, res) => {
   try {
     const triggered = await checkAndTriggerAlerts();
     res.json({ triggered });

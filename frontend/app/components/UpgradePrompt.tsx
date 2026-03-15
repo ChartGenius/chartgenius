@@ -36,7 +36,7 @@ export interface UpgradePromptProps {
 // ── Feature metadata ──────────────────────────────────────────────────────────
 
 const FEATURE_BENEFITS = [
-  { icon: '🔓', text: 'Unlimited trade history — every entry, forever visible' },
+  { icon: '🔓', text: 'Unlimited trade history — every entry visible while your account is active' },
   { icon: '☁️', text: 'Cloud auto-sync across all your devices' },
   { icon: '📥', text: 'Full CSV import/export with no date restrictions' },
   { icon: '🧠', text: 'Advanced reports & AI pattern detection' },

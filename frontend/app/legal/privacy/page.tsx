@@ -180,9 +180,11 @@ export default function PrivacyPage() {
           <strong>You are in control of your data.</strong>
         </p>
         <p>
-          We retain your trading data, journal entries, and portfolio information indefinitely to
-          provide you with historical analysis. Account profile data is retained for as long as your
-          account is active. You may request deletion of your data at any time by contacting{' '}
+          We retain your trading data, journal entries, and portfolio information for as long as
+          your account is active to provide you with historical analysis. Account profile data is
+          also retained for as long as your account is active. We make commercially reasonable
+          efforts to maintain data availability but do not guarantee indefinite retention. You may
+          request deletion of your data at any time by contacting{' '}
           <a href="mailto:privacy@tradvue.com" style={{ color: '#4a9eff' }}>privacy@tradvue.com</a>.
         </p>
         <p>

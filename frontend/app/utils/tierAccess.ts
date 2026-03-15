@@ -7,7 +7,7 @@
  *           Post-trial: 30-day view window, limited CSV, no auto-sync.
  *   paid  — $24/mo. Everything unlimited.
  *
- * Data is NEVER deleted. Free tier restricts VIEW, not storage.
+ * Data is retained while your account is active. Free tier restricts VIEW, not storage.
  */
 
 import { AuthUser } from '../lib/api'
@@ -119,7 +119,7 @@ export function canAccessFeature(user: AuthUser | null, feature: GatedFeature): 
  * Returns true if a given entry date is beyond the 30-day view window
  * for a free-tier post-trial user.
  *
- * IMPORTANT: Data is NEVER deleted. Only the view is restricted.
+ * IMPORTANT: Data is retained while the account is active. Only the view is restricted.
  */
 export function isDataLocked(user: AuthUser | null, entryDate: string | Date): boolean {
   const tier = getUserTier(user)
