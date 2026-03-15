@@ -137,17 +137,28 @@ export default function DisclaimerPage() {
 
         <SubSection title="4.3 Past Performance & Future Results">
           <p>
-            <strong>Past performance does not guarantee future results.</strong>
+            <strong>Past performance is not indicative of future results.</strong>
           </p>
           <UL items={[
             'Historical returns are not predictive of future performance',
             'Market conditions change; past winners may underperform',
             'Volatility and risk may increase or decrease unexpectedly',
+            'No strategy, tool, or indicator guarantees profitable outcomes',
           ]} />
+          <WarningBox>
+            <strong>PAST PERFORMANCE IS NOT INDICATIVE OF FUTURE RESULTS.</strong> Any historical
+            performance data shown on TradVue is provided for informational purposes only and should
+            not be interpreted as a guarantee or projection of future performance.
+          </WarningBox>
         </SubSection>
       </Section>
 
-      <Section id="ai-analysis" title="5. AI-GENERATED ANALYSIS">
+      <Section id="ai-analysis" title="5. AI-GENERATED CONTENT DISCLAIMER">
+        <p>
+          TradVue may provide AI-generated insights, analysis, and support responses. These are for
+          <strong> informational purposes only</strong> and do not constitute financial advice.
+          AI outputs may contain errors. Always verify information independently.
+        </p>
         <p>
           <strong>AI-generated analysis, summaries, and recommendations are informational only and do NOT constitute personalized investment recommendations.</strong>
         </p>
@@ -157,7 +168,11 @@ export default function DisclaimerPage() {
           'Always conduct your own independent research and due diligence',
           'Consult with professional advisors before acting on AI recommendations',
           'AI analysis may not account for your individual financial situation, goals, or risk tolerance',
+          'AI support responses are automated and may not address your specific circumstances',
         ]} />
+        <WarningBox>
+          <strong>AI-generated content is NOT financial advice. Always consult a qualified financial professional before making investment decisions.</strong>
+        </WarningBox>
       </Section>
 
       <Section id="responsibility" title="6. TRADVUE RESPONSIBILITY LIMITATIONS">

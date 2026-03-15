@@ -427,6 +427,9 @@ export default function SupportChat() {
                 support@tradvue.com
               </a>
             </p>
+            <p style={{ fontSize: 10, color: 'var(--text-3, rgba(255,255,255,0.25))', textAlign: 'center', marginTop: 3 }}>
+              AI-generated responses. Not financial advice.
+            </p>
           </div>
         </div>
       )}

@@ -112,11 +112,14 @@ export default function TermsPage() {
             their active subscription period.
           </p>
         </SubSection>
-        <SubSection title="4.3 Billing">
-          <p>
-            Pro subscription fees are billed in advance. Refunds are provided at our discretion.
-            We reserve the right to change subscription pricing with 30 days notice.
-          </p>
+        <SubSection title="4.3 Billing & Subscription Terms">
+          <UL items={[
+            'Subscriptions automatically renew unless cancelled before the renewal date',
+            'No refunds are provided for partial billing periods',
+            'We may change pricing with 30 days advance notice to your registered email',
+            'Free trials automatically convert to paid subscriptions unless cancelled before expiration',
+            'You are responsible for cancelling your subscription before the trial or renewal date',
+          ]} />
         </SubSection>
       </Section>
 
@@ -166,10 +169,21 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section id="data-accuracy" title="8. Data Accuracy & Third-Party Sources">
+      <Section id="ai-content" title="8. AI-Generated Content Disclaimer">
+        <p>
+          TradVue may provide AI-generated insights, analysis, and support responses. These are for
+          <strong> informational purposes only</strong> and do not constitute financial advice.
+          AI outputs may contain errors. Always verify information independently.
+        </p>
+      </Section>
+
+      <Section id="data-accuracy" title="9. Data Accuracy & Third-Party Sources">
         <p>
           TradVue sources market data from third-party providers. <strong>We make no warranties about
-          the completeness, accuracy, or timeliness of any financial data displayed.</strong>
+          the completeness, accuracy, or timeliness of any financial data displayed.</strong> Market
+          data is provided by Alpaca Markets, Finnhub, Marketaux, Alpha Vantage, and FRED, and
+          may be delayed up to 15 minutes. TradVue does not guarantee the accuracy, completeness,
+          or timeliness of any data.
         </p>
         <UL items={[
           'Market data may be real-time, delayed, or inaccurate',
@@ -184,12 +198,18 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section id="liability" title="9. Limitation of Liability">
+      <Section id="liability" title="10. Limitation of Liability">
         <p><strong>TO THE MAXIMUM EXTENT PERMITTED BY LAW:</strong></p>
         <p>
           <strong>TradVue and Apex Logics LLC shall not be liable for any losses, damages, or claims
           arising from reliance on data, calculations, or analysis provided by the platform —
           including any trading losses.</strong>
+        </p>
+        <p>
+          TO THE MAXIMUM EXTENT PERMITTED BY LAW, APEX LOGICS LLC SHALL NOT BE LIABLE FOR ANY
+          INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS
+          OR REVENUES, WHETHER INCURRED DIRECTLY OR INDIRECTLY. OUR TOTAL LIABILITY SHALL NOT EXCEED
+          THE AMOUNT YOU PAID US IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
         </p>
         <p>Apex Logics LLC, its owners, officers, employees, and contractors shall <strong>NOT</strong> be liable for:</p>
         <UL items={[
@@ -204,12 +224,39 @@ export default function TermsPage() {
         ]} />
         <p style={{ marginTop: '16px' }}>
           This limitation applies even if TradVue has been advised of the possibility of such damages.
-          Our aggregate liability in any event shall not exceed the amount you paid us in the prior
-          three months, or $50 USD, whichever is greater.
         </p>
       </Section>
 
-      <Section id="risk" title="10. Assumption of Risk">
+      <Section id="indemnification" title="11. Indemnification">
+        <p>
+          You agree to indemnify and hold harmless Apex Logics LLC, its officers, directors,
+          employees, and agents from any claims, damages, losses, or expenses (including reasonable
+          attorneys&apos; fees) arising from your use of the Service or violation of these Terms.
+        </p>
+      </Section>
+
+      <Section id="arbitration" title="12. Arbitration & Dispute Resolution">
+        <p>
+          Any dispute arising from these Terms shall be resolved through binding arbitration in
+          Palm Beach County, Florida, under the rules of the American Arbitration Association.
+          YOU AGREE THAT ANY CLAIMS WILL BE RESOLVED ON AN INDIVIDUAL BASIS AND NOT AS PART OF A
+          CLASS ACTION.
+        </p>
+        <p>
+          YOU WAIVE ANY RIGHT TO PARTICIPATE IN A CLASS ACTION LAWSUIT OR CLASS-WIDE ARBITRATION
+          AGAINST APEX LOGICS LLC OR TRADVUE.
+        </p>
+      </Section>
+
+      <Section id="termination" title="13. Account Termination">
+        <p>
+          We reserve the right to suspend or terminate accounts that violate these Terms, engage
+          in fraudulent activity, or abuse the Service. Termination may occur without prior notice
+          in cases of serious violations.
+        </p>
+      </Section>
+
+      <Section id="risk" title="14. Assumption of Risk">
         <p>
           <strong>Using TradVue for any financial decision is entirely at your own risk.</strong> You acknowledge that:
         </p>
@@ -225,7 +272,7 @@ export default function TermsPage() {
         ]} />
       </Section>
 
-      <Section id="user-responsibility" title="11. User Responsibility">
+      <Section id="user-responsibility" title="15. User Responsibility">
         <p>
           <strong>Users are responsible for verifying all financial data and calculations independently.</strong>
         </p>
@@ -239,7 +286,7 @@ export default function TermsPage() {
         ]} />
       </Section>
 
-      <Section id="modifications" title="12. Modifications to Terms">
+      <Section id="modifications" title="16. Modifications to Terms">
         <p>
           Apex Logics LLC reserves the right to modify these Terms at any time. We will notify users
           of material changes via email or an in-app notice. Continued use of the Service after changes
@@ -247,16 +294,17 @@ export default function TermsPage() {
         </p>
       </Section>
 
-      <Section id="law" title="13. Governing Law">
+      <Section id="law" title="17. Governing Law">
         <p>
           These Terms of Service are governed by and construed in accordance with the laws of the
           <strong> State of Florida</strong>, without regard to its conflict of law provisions.
-          Any disputes arising under these Terms shall be resolved in the courts of Florida, and
-          you consent to personal jurisdiction in such courts.
+          Subject to the arbitration clause in Section 12, any disputes not subject to arbitration
+          shall be resolved in the courts of Palm Beach County, Florida, and you consent to personal
+          jurisdiction in such courts.
         </p>
       </Section>
 
-      <Section id="contact" title="14. Contact">
+      <Section id="contact" title="18. Contact">
         <p>
           For questions about these Terms of Service, please contact us at:{' '}
           <a href="mailto:legal@tradvue.com" style={{ color: '#4a9eff' }}>legal@tradvue.com</a>

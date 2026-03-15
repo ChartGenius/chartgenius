@@ -120,18 +120,28 @@ export default function PrivacyPage() {
       <Section id="third-party-services" title="4. Third-Party Services We Use">
         <p>
           TradVue uses the following third-party services to operate the platform. Each provider
-          has its own privacy policy governing their use of data.
+          has its own privacy policy governing their use of data.{' '}
+          <strong>We do NOT sell your personal data to any third party.</strong>
         </p>
-        <SubSection title="Infrastructure & Authentication">
+        <SubSection title="Payments">
+          <UL items={[
+            'Stripe — Payment processing for Pro subscriptions. We do not store your credit card details; they are handled directly by Stripe. stripe.com/privacy',
+          ]} />
+        </SubSection>
+        <SubSection title="Infrastructure & Hosting">
           <UL items={[
             'Supabase — Authentication, database storage, and real-time features. Stores your account credentials and app data. supabase.com/privacy',
-            'Render — Cloud hosting and deployment infrastructure. render.com/privacy',
+            'Render — Backend API cloud hosting and deployment infrastructure. render.com/privacy',
+            'Vercel — Frontend hosting and edge delivery. vercel.com/legal/privacy-policy',
           ]} />
         </SubSection>
         <SubSection title="Market Data">
           <UL items={[
+            'Alpaca Markets — Real-time and historical market data feeds. alpaca.markets/privacy',
             'Finnhub — Stock quotes, financials, and market data. finnhub.io/privacy',
-            'NewsAPI — Financial news headlines. newsapi.org/privacy',
+            'Marketaux — Financial news and market sentiment data. marketaux.com/privacy',
+            'Alpha Vantage — Additional market and economic data. alphavantage.co/privacy',
+            'FRED (Federal Reserve Economic Data) — Macroeconomic data. stlouisfed.org/legal',
             'These providers supply market data only; we do not share your personal data with them.',
           ]} />
         </SubSection>
@@ -169,6 +179,16 @@ export default function PrivacyPage() {
         <p>
           <strong>You are in control of your data.</strong>
         </p>
+        <p>
+          We retain your trading data, journal entries, and portfolio information indefinitely to
+          provide you with historical analysis. Account profile data is retained for as long as your
+          account is active. You may request deletion of your data at any time by contacting{' '}
+          <a href="mailto:privacy@tradvue.com" style={{ color: '#4a9eff' }}>privacy@tradvue.com</a>.
+        </p>
+        <p>
+          Accounts inactive for more than 24 months may be subject to data archival. We will notify
+          you via email before any archival action.
+        </p>
         <UL items={[
           'You can delete your account and all associated data at any time via Account Settings',
           'Upon deletion, your data is removed from our systems within 30 days',
@@ -192,6 +212,10 @@ export default function PrivacyPage() {
           security. If you suspect a breach, contact{' '}
           <a href="mailto:privacy@tradvue.com" style={{ color: '#4a9eff' }}>privacy@tradvue.com</a>{' '}
           immediately.
+        </p>
+        <p>
+          <strong>Data Breach Notification:</strong> In the event of a data breach affecting your
+          personal information, we will notify you within 72 hours via email and through our platform.
         </p>
       </Section>
 
