@@ -4,6 +4,13 @@ import { useState, useEffect, useMemo, useRef, useCallback, Suspense } from 'rea
 import Link from 'next/link'
 import Tooltip from '../components/Tooltip'
 import {
+  getContractSpec,
+  calculateTicksFromPrices,
+  calculatePnlFromTicks,
+  FUTURES_SYMBOLS_LIST,
+  type FuturesContractSpec,
+} from '../utils/futuresContracts'
+import {
   IconChart, IconArrowLeft, IconUpload, IconDownload, IconBook,
   IconClipboard, IconTarget, IconDollar, IconTrendingUp, IconTrendingDown,
   IconZap, IconHash, IconCalculator, IconStar, IconHeartCrack, IconFlame,
@@ -39,6 +46,24 @@ interface ForexData {
   pips: string
 }
 
+// Options leg for multi-leg strategies
+interface OptionLeg {
+  optionType: 'call' | 'put'
+  strikePrice: number
+  expirationDate: string
+  premium: number
+  side: 'buy' | 'sell'
+  quantity: number
+}
+
+// Greeks snapshot at entry or exit
+interface OptionGreeks {
+  delta?: number
+  theta?: number
+  gamma?: number
+  vega?: number
+}
+
 interface Trade {
   id: string
   date: string
@@ -69,6 +94,24 @@ interface Trade {
   tags_strategies?: string[]
   // Emotional tags
   emotionTag?: string
+
+  // ── Futures fields (assetClass === 'Futures') ─────────────────────────────
+  // assetClass 'Futures' already exists; these are additional detail fields.
+  contractType?: string        // 'ES' | 'NQ' | 'MES' | 'MNQ' | ...
+  tickValue?: number           // auto-populated from contract specs
+  tickSize?: number            // e.g., 0.25 for ES
+  futuresContracts?: number    // number of contracts traded (renamed to avoid clash with OptionData.contracts)
+  pnlTicks?: number            // P&L in ticks (auto-calculated)
+
+  // ── Options fields (assetClass === 'Option') ──────────────────────────────
+  // Legacy optionData kept for backward compat; new fields extend it.
+  optionType?: 'call' | 'put'
+  strikePrice?: number
+  expirationDate?: string
+  premium?: number             // price paid/received per contract
+  strategyType?: 'single' | 'vertical_spread' | 'iron_condor' | 'strangle' | 'straddle' | 'butterfly' | 'covered_call' | 'cash_secured_put' | 'calendar_spread' | 'custom'
+  greeks?: OptionGreeks
+  legs?: OptionLeg[]           // for multi-leg strategies
 }
 
 interface Note {
@@ -745,6 +788,28 @@ const EMOTION_TAGS = [
   { label: 'Neutral', color: 'var(--text-3)', desc: 'No strong emotion' },
 ]
 
+const OPTION_STRATEGY_LABELS: Record<string, string> = {
+  single: 'Single Leg',
+  vertical_spread: 'Vertical Spread',
+  iron_condor: 'Iron Condor',
+  strangle: 'Strangle',
+  straddle: 'Straddle',
+  butterfly: 'Butterfly',
+  covered_call: 'Covered Call',
+  cash_secured_put: 'Cash-Secured Put',
+  calendar_spread: 'Calendar Spread',
+  custom: 'Custom / Other',
+}
+
+const EMPTY_OPTION_LEG: OptionLeg = {
+  optionType: 'call',
+  strikePrice: 0,
+  expirationDate: '',
+  premium: 0,
+  side: 'buy',
+  quantity: 1,
+}
+
 const EMPTY_FORM = {
   date: new Date().toISOString().slice(0, 10),
   time: new Date().toTimeString().slice(0, 5),
@@ -763,10 +828,20 @@ const EMPTY_FORM = {
   notes: '',
   screenshot: '',
   emotionTag: '',
-  // Option fields
+  // Option fields (legacy)
   strike: '', expiry: '', premium: '', contracts: '',
   // Forex fields
   lotSize: '', pips: '',
+  // Futures fields
+  contractType: '',
+  futuresContracts: '1',
+  // Enhanced option fields
+  optionType: 'call' as 'call' | 'put',
+  strikePrice: '',
+  expirationDate: '',
+  optionPremium: '',
+  strategyType: 'single' as Trade['strategyType'],
+  greekDelta: '', greekTheta: '', greekGamma: '', greekVega: '',
 }
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -855,6 +930,10 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
 
   const [livePriceFetching, setLivePriceFetching] = useState(false)
   const [livePriceHint, setLivePriceHint] = useState<{ symbol: string; price: number } | null>(null)
+  // Futures contract spec (auto-populated when contractType changes)
+  const [futuresSpec, setFuturesSpec] = useState<FuturesContractSpec | null>(null)
+  // Options legs for multi-leg strategies
+  const [optionLegs, setOptionLegs] = useState<OptionLeg[]>([])
   const set = (k: string) => (v: string | number) => setForm(f => ({ ...f, [k]: v }))
 
   // Pre-fill from URL params (watchlist +LOG button)
@@ -872,20 +951,32 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
 
   // Auto-calc preview
   const preview = useMemo(() => {
+    const entry = parseFloat(form.entryPrice) || 0
+    const exit = parseFloat(form.exitPrice) || 0
+    const size = parseFloat(form.positionSize) || 0
     const partial: Partial<Trade> = {
       direction: form.direction,
-      entryPrice: parseFloat(form.entryPrice) || 0,
-      exitPrice: parseFloat(form.exitPrice) || 0,
-      positionSize: parseFloat(form.positionSize) || 0,
+      entryPrice: entry,
+      exitPrice: exit,
+      positionSize: size,
       stopLoss: parseFloat(form.stopLoss) || 0,
       commissions: parseFloat(form.commissions) || 0,
     }
+    let pnl = calcPnl(partial)
+    let ticks: number | null = null
+    if (form.assetClass === 'Futures' && form.contractType && futuresSpec && entry && exit) {
+      const numC = parseFloat(form.futuresContracts) || 1
+      const rawTicks = calculateTicksFromPrices(form.contractType, entry, exit, form.direction)
+      ticks = rawTicks * numC
+      pnl = calculatePnlFromTicks(form.contractType, rawTicks, numC) - (parseFloat(form.commissions) || 0)
+    }
     return {
-      pnl: calcPnl(partial),
+      pnl,
       rMultiple: calcRMultiple(partial),
       pct: calcPct(partial),
+      ticks,
     }
-  }, [form])
+  }, [form, futuresSpec])
 
   const handleScreenshot = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -909,6 +1000,16 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
       stopLoss: parseFloat(form.stopLoss) || 0,
       commissions: parseFloat(form.commissions) || 0,
     }
+    // ── Calculate futures P&L using tick math if applicable ──
+    let finalPnl = calcPnl(partial)
+    let finalPnlTicks: number | undefined
+    if (form.assetClass === 'Futures' && form.contractType && futuresSpec) {
+      const numC = parseFloat(form.futuresContracts) || 1
+      const ticks = calculateTicksFromPrices(form.contractType, entry, exit, form.direction)
+      finalPnlTicks = ticks * numC
+      finalPnl = calculatePnlFromTicks(form.contractType, ticks, numC) - (parseFloat(form.commissions) || 0)
+    }
+
     const trade: Trade = {
       id: uid(),
       date: form.date,
@@ -922,7 +1023,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
       stopLoss: parseFloat(form.stopLoss) || 0,
       takeProfit: parseFloat(form.takeProfit) || 0,
       commissions: parseFloat(form.commissions) || 0,
-      pnl: calcPnl(partial),
+      pnl: finalPnl,
       rMultiple: calcRMultiple(partial),
       pctGainLoss: calcPct(partial),
       holdMinutes: 0,
@@ -936,6 +1037,29 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
       } : {}),
       ...(form.assetClass === 'Forex' ? {
         forexData: { lotSize: form.lotSize, pips: form.pips }
+      } : {}),
+      // ── Futures extended fields ──
+      ...(form.assetClass === 'Futures' && form.contractType ? {
+        contractType: form.contractType,
+        tickSize: futuresSpec?.tickSize,
+        tickValue: futuresSpec?.tickValue,
+        futuresContracts: parseFloat(form.futuresContracts) || 1,
+        pnlTicks: finalPnlTicks,
+      } : {}),
+      // ── Options extended fields ──
+      ...(form.assetClass === 'Option' ? {
+        optionType: form.optionType,
+        strikePrice: parseFloat(form.strikePrice) || undefined,
+        expirationDate: form.expirationDate || undefined,
+        premium: parseFloat(form.optionPremium) || undefined,
+        strategyType: form.strategyType,
+        greeks: {
+          delta: form.greekDelta ? parseFloat(form.greekDelta) : undefined,
+          theta: form.greekTheta ? parseFloat(form.greekTheta) : undefined,
+          gamma: form.greekGamma ? parseFloat(form.greekGamma) : undefined,
+          vega: form.greekVega ? parseFloat(form.greekVega) : undefined,
+        },
+        legs: optionLegs.length > 0 ? optionLegs : undefined,
       } : {}),
       tags_setup_types: formSetupTypes,
       tags_mistakes: formMistakes,
@@ -957,6 +1081,8 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
     setFormSetupTypes([])
     setFormMistakes([])
     setFormStrategies([])
+    setOptionLegs([])
+    setFuturesSpec(null)
     setShowForm(false)
   }
 
@@ -1162,26 +1288,197 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
             </div>
           </div>
 
-          {/* Asset-specific fields */}
+          {/* ── Futures-specific fields ────────────────────────────────────── */}
+          {form.assetClass === 'Futures' && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
+                <IconChart size={11} />Futures Contract Details
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+                <div>
+                  <FieldLabel label="Contract" tooltip="Select the futures contract. Tick size and tick value auto-populate." />
+                  <select
+                    value={form.contractType}
+                    onChange={e => {
+                      const sym = e.target.value
+                      set('contractType')(sym)
+                      const spec = getContractSpec(sym)
+                      setFuturesSpec(spec)
+                      if (!form.symbol && sym) set('symbol')(sym)
+                    }}
+                    style={inputSx}
+                  >
+                    <option value="">— Select Contract —</option>
+                    {FUTURES_SYMBOLS_LIST.map(s => (
+                      <option key={s} value={s}>{s} — {getContractSpec(s)?.name}</option>
+                    ))}
+                  </select>
+                  {futuresSpec && (
+                    <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 3 }}>
+                      Tick: {futuresSpec.tickSize} · Value: ${futuresSpec.tickValue}/tick
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <FieldLabel label="Contracts" tooltip="Number of futures contracts traded." />
+                  <input
+                    type="number"
+                    value={form.futuresContracts}
+                    onChange={e => set('futuresContracts')(e.target.value)}
+                    placeholder="e.g. 1"
+                    min="1"
+                    step="1"
+                    style={inputSx}
+                  />
+                </div>
+                {futuresSpec && (
+                  <div>
+                    <FieldLabel label="Tick Size" tooltip="Minimum price movement. Auto-populated." />
+                    <input type="number" value={futuresSpec.tickSize} readOnly style={{ ...inputSx, color: 'var(--text-3)', cursor: 'default' }} />
+                  </div>
+                )}
+                {futuresSpec && (
+                  <div>
+                    <FieldLabel label="Tick Value ($)" tooltip="Dollar value per tick per contract. Auto-populated." />
+                    <input type="number" value={futuresSpec.tickValue} readOnly style={{ ...inputSx, color: 'var(--text-3)', cursor: 'default' }} />
+                  </div>
+                )}
+              </div>
+              {/* Tick P&L live preview */}
+              {futuresSpec && parseFloat(form.entryPrice) > 0 && parseFloat(form.exitPrice) > 0 && (
+                <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--bg-1)', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontSize: 10, color: 'var(--text-2)' }}>P&amp;L (Ticks)</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--mono)', color: (preview.ticks ?? 0) >= 0 ? GREEN : RED }}>
+                      {preview.ticks !== null ? `${(preview.ticks ?? 0) >= 0 ? '+' : ''}${preview.ticks}` : '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, color: 'var(--text-2)' }}>P&amp;L (USD)</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--mono)', color: preview.pnl >= 0 ? GREEN : RED }}>
+                      {fmtDollar(preview.pnl)}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', alignSelf: 'center' }}>
+                    {futuresSpec.symbol} · {form.futuresContracts || 1} contract(s) · ${futuresSpec.tickValue}/tick
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Options-specific fields ────────────────────────────────────── */}
           {form.assetClass === 'Option' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
-              <div style={{ gridColumn: '1 / -1', fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}><IconClipboard size={11} />Option Details</div>
-              <div>
-                <FieldLabel label="Strike Price" tooltip="The price at which you have the right to buy (call) or sell (put). This is the key price level your option is based on." />
-                <input type="number" value={form.strike} onChange={e => set('strike')(e.target.value)} placeholder="e.g. 150.00" step="any" style={inputSx} />
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: BLUE, fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
+                <IconClipboard size={11} />Option Details
               </div>
-              <div>
-                <FieldLabel label="Expiry Date" tooltip="The date the option contract expires. After this date, the option is worthless if out of the money." />
-                <input type="date" value={form.expiry} onChange={e => set('expiry')(e.target.value)} style={inputSx} />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
+                <div>
+                  <FieldLabel label="Strategy Type" tooltip="Type of options strategy." />
+                  <select value={form.strategyType} onChange={e => set('strategyType')(e.target.value)} style={inputSx}>
+                    {Object.entries(OPTION_STRATEGY_LABELS).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <FieldLabel label="Option Type" tooltip="Call = bullish (right to buy). Put = bearish (right to sell)." />
+                  <select value={form.optionType} onChange={e => set('optionType')(e.target.value)} style={inputSx}>
+                    <option value="call">Call (Bullish)</option>
+                    <option value="put">Put (Bearish)</option>
+                  </select>
+                </div>
+                <div>
+                  <FieldLabel label="Strike Price" tooltip="The price at which you have the right to buy (call) or sell (put)." />
+                  <input type="number" value={form.strikePrice} onChange={e => set('strikePrice')(e.target.value)} placeholder="e.g. 150.00" step="any" style={inputSx} />
+                </div>
+                <div>
+                  <FieldLabel label="Expiration Date" tooltip="The date the option expires." />
+                  <input type="date" value={form.expirationDate} onChange={e => set('expirationDate')(e.target.value)} style={inputSx} />
+                </div>
+                <div>
+                  <FieldLabel label="Premium" tooltip="Price paid/received per share. Each contract = 100 shares." />
+                  <input type="number" value={form.optionPremium} onChange={e => set('optionPremium')(e.target.value)} placeholder="e.g. 3.50" step="0.01" style={inputSx} />
+                </div>
+                <div>
+                  <FieldLabel label="Contracts" tooltip="Number of option contracts. 1 contract = 100 shares." />
+                  <input type="number" value={form.contracts} onChange={e => set('contracts')(e.target.value)} placeholder="e.g. 2" step="1" style={inputSx} />
+                </div>
+                {/* Legacy hidden fields for backward compat */}
+                <input type="hidden" value={form.strike} onChange={e => set('strike')(e.target.value)} />
+                <input type="hidden" value={form.expiry} onChange={e => set('expiry')(e.target.value)} />
+                <input type="hidden" value={form.premium} onChange={e => set('premium')(e.target.value)} />
               </div>
-              <div>
-                <FieldLabel label="Premium Paid" tooltip="Cost per share of the option. Since each contract = 100 shares, multiply premium × 100 × contracts for total cost." />
-                <input type="number" value={form.premium} onChange={e => set('premium')(e.target.value)} placeholder="e.g. 3.50" step="0.01" style={inputSx} />
+              {/* Greeks (optional) */}
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  Greeks at Entry <span style={{ opacity: 0.7 }}>(optional)</span>
+                  <Tooltip text="Delta = directional exposure · Theta = daily time decay · Gamma = rate of delta change · Vega = volatility sensitivity" position="right" />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                  {[
+                    { key: 'greekDelta', label: 'Delta', placeholder: '0.45' },
+                    { key: 'greekTheta', label: 'Theta', placeholder: '-0.05' },
+                    { key: 'greekGamma', label: 'Gamma', placeholder: '0.02' },
+                    { key: 'greekVega', label: 'Vega', placeholder: '0.10' },
+                  ].map(g => (
+                    <div key={g.key}>
+                      <FieldLabel label={g.label} />
+                      <input
+                        type="number"
+                        value={(form as Record<string, unknown>)[g.key] as string}
+                        onChange={e => set(g.key)(e.target.value)}
+                        placeholder={g.placeholder}
+                        step="any"
+                        style={{ ...inputSx, fontSize: 12 }}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div>
-                <FieldLabel label="Contracts" tooltip="Number of option contracts. 1 contract controls 100 shares. Max risk = premium × 100 × contracts." />
-                <input type="number" value={form.contracts} onChange={e => set('contracts')(e.target.value)} placeholder="e.g. 2" step="1" style={inputSx} />
-              </div>
+              {/* Multi-leg builder for complex strategies */}
+              {form.strategyType !== 'single' && form.strategyType !== 'covered_call' && form.strategyType !== 'cash_secured_put' && (
+                <div>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 8 }}>
+                    Strategy Legs <span style={{ opacity: 0.7 }}>(optional)</span>
+                  </div>
+                  {optionLegs.map((leg, idx) => (
+                    <div key={idx} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 8, padding: 10, marginBottom: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: BLUE }}>Leg {idx + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => setOptionLegs(legs => legs.filter((_, i) => i !== idx))}
+                          style={{ background: 'none', border: 'none', color: RED, cursor: 'pointer', fontSize: 11, padding: 0 }}
+                        >✕ Remove</button>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 8 }}>
+                        {[
+                          { label: 'Type', el: <select value={leg.optionType} onChange={e => setOptionLegs(ls => ls.map((l, i) => i === idx ? { ...l, optionType: e.target.value as 'call' | 'put' } : l))} style={{ ...inputSx, fontSize: 12 }}><option value="call">Call</option><option value="put">Put</option></select> },
+                          { label: 'Side', el: <select value={leg.side} onChange={e => setOptionLegs(ls => ls.map((l, i) => i === idx ? { ...l, side: e.target.value as 'buy' | 'sell' } : l))} style={{ ...inputSx, fontSize: 12 }}><option value="buy">Buy</option><option value="sell">Sell</option></select> },
+                          { label: 'Strike', el: <input type="number" value={leg.strikePrice || ''} onChange={e => setOptionLegs(ls => ls.map((l, i) => i === idx ? { ...l, strikePrice: parseFloat(e.target.value) || 0 } : l))} placeholder="150" step="any" style={{ ...inputSx, fontSize: 12 }} /> },
+                          { label: 'Expiry', el: <input type="date" value={leg.expirationDate} onChange={e => setOptionLegs(ls => ls.map((l, i) => i === idx ? { ...l, expirationDate: e.target.value } : l))} style={{ ...inputSx, fontSize: 12 }} /> },
+                          { label: 'Premium', el: <input type="number" value={leg.premium || ''} onChange={e => setOptionLegs(ls => ls.map((l, i) => i === idx ? { ...l, premium: parseFloat(e.target.value) || 0 } : l))} placeholder="2.50" step="0.01" style={{ ...inputSx, fontSize: 12 }} /> },
+                          { label: 'Qty', el: <input type="number" value={leg.quantity || ''} onChange={e => setOptionLegs(ls => ls.map((l, i) => i === idx ? { ...l, quantity: parseInt(e.target.value) || 1 } : l))} placeholder="1" min="1" step="1" style={{ ...inputSx, fontSize: 12 }} /> },
+                        ].map(({ label, el }) => (
+                          <div key={label}>
+                            <FieldLabel label={label} />
+                            {el}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setOptionLegs(legs => [...legs, { ...EMPTY_OPTION_LEG }])}
+                    style={{ background: 'var(--bg-1)', border: `1px dashed ${BLUE}44`, borderRadius: 8, padding: '6px 14px', color: BLUE, fontSize: 11, cursor: 'pointer', width: '100%' }}
+                  >
+                    + Add Leg
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1279,11 +1576,20 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, textTransform: 'uppercase' }}>Auto-Calculated Preview</div>
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontSize: 10, color: 'var(--text-2)' }}>P&L</div>
+                <div style={{ fontSize: 10, color: 'var(--text-2)' }}>P&amp;L</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: preview.pnl >= 0 ? GREEN : RED, fontFamily: 'var(--mono)' }}>
                   {fmtDollar(preview.pnl)}
                 </div>
               </div>
+              {/* Futures: show tick P&L */}
+              {form.assetClass === 'Futures' && preview.ticks !== null && (
+                <div>
+                  <div style={{ fontSize: 10, color: 'var(--text-2)' }}>P&amp;L (Ticks)</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: (preview.ticks ?? 0) >= 0 ? GREEN : RED, fontFamily: 'var(--mono)' }}>
+                    {(preview.ticks ?? 0) >= 0 ? '+' : ''}{preview.ticks}
+                  </div>
+                </div>
+              )}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-2)' }}>
                   R-Multiple
@@ -1534,14 +1840,58 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                                 <img src={t.screenshot} alt="trade screenshot" style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 6, border: '1px solid var(--border)' }} />
                               </>
                             )}
-                            {t.optionData && (
+                            {/* ── Futures details ── */}
+                            {t.assetClass === 'Futures' && t.contractType && (
+                              <>
+                                <div style={{ fontSize: 11, fontWeight: 600, color: BLUE, marginTop: t.screenshot ? 12 : 0, marginBottom: 6, textTransform: 'uppercase' }}>Futures Details</div>
+                                <div style={{ fontSize: 12, lineHeight: 2 }}>
+                                  <div>Contract: <span style={{ fontFamily: 'var(--mono)', color: BLUE }}>{t.contractType}</span></div>
+                                  {t.futuresContracts && <div>Contracts: <span style={{ fontFamily: 'var(--mono)' }}>{t.futuresContracts}</span></div>}
+                                  {t.tickSize !== undefined && <div>Tick Size: <span style={{ fontFamily: 'var(--mono)' }}>{t.tickSize}</span></div>}
+                                  {t.tickValue !== undefined && <div>Tick Value: <span style={{ fontFamily: 'var(--mono)' }}>${t.tickValue}</span></div>}
+                                  {t.pnlTicks !== undefined && (
+                                    <div>P&amp;L (Ticks): <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: t.pnlTicks >= 0 ? GREEN : RED }}>
+                                      {t.pnlTicks >= 0 ? '+' : ''}{t.pnlTicks}
+                                    </span></div>
+                                  )}
+                                </div>
+                              </>
+                            )}
+                            {/* ── Options details (legacy + new fields) ── */}
+                            {t.assetClass === 'Option' && (t.optionData || t.strikePrice || t.strategyType) && (
                               <>
                                 <div style={{ fontSize: 11, fontWeight: 600, color: BLUE, marginTop: t.screenshot ? 12 : 0, marginBottom: 6, textTransform: 'uppercase' }}>Option Details</div>
                                 <div style={{ fontSize: 12, lineHeight: 2 }}>
-                                  <div>Strike: ${t.optionData.strike}</div>
-                                  <div>Expiry: {t.optionData.expiry}</div>
-                                  <div>Premium: ${t.optionData.premium}</div>
-                                  <div>Contracts: {t.optionData.contracts}</div>
+                                  {t.strategyType && <div>Strategy: <span style={{ fontFamily: 'var(--mono)' }}>{t.strategyType.replace(/_/g, ' ')}</span></div>}
+                                  {t.optionType && <div>Type: <span style={{ fontFamily: 'var(--mono)' }}>{t.optionType}</span></div>}
+                                  {t.strikePrice != null && <div>Strike: <span style={{ fontFamily: 'var(--mono)' }}>${t.strikePrice}</span></div>}
+                                  {t.expirationDate && <div>Expiry: <span style={{ fontFamily: 'var(--mono)' }}>{t.expirationDate}</span></div>}
+                                  {t.premium != null && <div>Premium: <span style={{ fontFamily: 'var(--mono)' }}>${t.premium}</span></div>}
+                                  {/* Legacy fields fallback */}
+                                  {!t.strikePrice && t.optionData?.strike && <div>Strike: ${t.optionData.strike}</div>}
+                                  {!t.expirationDate && t.optionData?.expiry && <div>Expiry: {t.optionData.expiry}</div>}
+                                  {!t.premium && t.optionData?.premium && <div>Premium: ${t.optionData.premium}</div>}
+                                  {t.optionData?.contracts && <div>Contracts: {t.optionData.contracts}</div>}
+                                  {/* Greeks */}
+                                  {t.greeks && (t.greeks.delta != null || t.greeks.theta != null) && (
+                                    <div style={{ marginTop: 4, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                                      {t.greeks.delta != null && <span style={{ color: 'var(--text-3)', fontSize: 11 }}>Δ {t.greeks.delta}</span>}
+                                      {t.greeks.theta != null && <span style={{ color: 'var(--text-3)', fontSize: 11 }}>Θ {t.greeks.theta}</span>}
+                                      {t.greeks.gamma != null && <span style={{ color: 'var(--text-3)', fontSize: 11 }}>Γ {t.greeks.gamma}</span>}
+                                      {t.greeks.vega != null && <span style={{ color: 'var(--text-3)', fontSize: 11 }}>V {t.greeks.vega}</span>}
+                                    </div>
+                                  )}
+                                  {/* Legs */}
+                                  {t.legs && t.legs.length > 0 && (
+                                    <div style={{ marginTop: 6 }}>
+                                      <div style={{ fontSize: 10, color: 'var(--text-2)', textTransform: 'uppercase', fontWeight: 600, marginBottom: 4 }}>Legs</div>
+                                      {t.legs.map((leg, i) => (
+                                        <div key={i} style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 2 }}>
+                                          Leg {i + 1}: {leg.side.toUpperCase()} {leg.quantity}× {leg.optionType} ${leg.strikePrice} exp {leg.expirationDate} @ ${leg.premium}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </>
                             )}
@@ -1841,12 +2191,51 @@ function JournalExpectancy({ trades }: { trades: Trade[] }) {
 // ─── Tab 4: Analytics ─────────────────────────────────────────────────────────
 
 function TabAnalytics({ trades }: { trades: Trade[] }) {
-  const stats = useMemo(() => computeStats(trades), [trades])
+  // Asset Type filter for analytics
+  const [analyticsAssetFilter, setAnalyticsAssetFilter] = useState<'All' | AssetClass>('All')
+
+  const filteredTrades = useMemo(() =>
+    analyticsAssetFilter === 'All' ? trades : trades.filter(t => t.assetClass === analyticsAssetFilter),
+    [trades, analyticsAssetFilter]
+  )
+
+  // Futures-specific: P&L by contract type (ticks + dollars)
+  const futuresStats = useMemo(() => {
+    const futures = trades.filter(t => t.assetClass === 'Futures' && t.contractType)
+    if (futures.length === 0) return null
+    const byContract: Record<string, { pnlDollars: number; pnlTicks: number; count: number; wins: number }> = {}
+    futures.forEach(t => {
+      const k = t.contractType!
+      if (!byContract[k]) byContract[k] = { pnlDollars: 0, pnlTicks: 0, count: 0, wins: 0 }
+      byContract[k].pnlDollars += t.pnl
+      byContract[k].pnlTicks += t.pnlTicks ?? 0
+      byContract[k].count++
+      if (t.pnl > 0) byContract[k].wins++
+    })
+    return Object.entries(byContract).sort((a, b) => b[1].pnlDollars - a[1].pnlDollars)
+  }, [trades])
+
+  // Options-specific: P&L by strategy type
+  const optionsStrategyStats = useMemo(() => {
+    const opts = trades.filter(t => t.assetClass === 'Option')
+    if (opts.length === 0) return null
+    const byStrategy: Record<string, { pnl: number; count: number; wins: number }> = {}
+    opts.forEach(t => {
+      const k = t.strategyType || 'single'
+      if (!byStrategy[k]) byStrategy[k] = { pnl: 0, count: 0, wins: 0 }
+      byStrategy[k].pnl += t.pnl
+      byStrategy[k].count++
+      if (t.pnl > 0) byStrategy[k].wins++
+    })
+    return Object.entries(byStrategy).sort((a, b) => b[1].pnl - a[1].pnl)
+  }, [trades])
+
+  const stats = useMemo(() => computeStats(filteredTrades), [filteredTrades])
 
   const byDow = useMemo(() => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
     const map: Record<number, { sum: number; count: number }> = {}
-    trades.forEach(t => {
+    filteredTrades.forEach(t => {
       const dow = new Date(t.date + 'T12:00:00').getDay()
       if (!map[dow]) map[dow] = { sum: 0, count: 0 }
       map[dow].sum += t.pnl
@@ -1856,11 +2245,11 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
       label: days[dow].slice(0, 3),
       value: map[dow] ? map[dow].sum / map[dow].count : 0,
     }))
-  }, [trades])
+  }, [filteredTrades])
 
   const byHour = useMemo(() => {
     const map: Record<number, { sum: number; count: number }> = {}
-    trades.forEach(t => {
+    filteredTrades.forEach(t => {
       if (!t.time) return
       const hour = parseInt(t.time.slice(0, 2))
       if (!map[hour]) map[hour] = { sum: 0, count: 0 }
@@ -1871,11 +2260,11 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
       label: `${h}:00`,
       value: d.sum / d.count,
     }))
-  }, [trades])
+  }, [filteredTrades])
 
   const bySetup = useMemo(() => {
     const map: Record<string, { sum: number; count: number; wins: number }> = {}
-    trades.forEach(t => {
+    filteredTrades.forEach(t => {
       const key = t.setupTag || 'Untagged'
       if (!map[key]) map[key] = { sum: 0, count: 0, wins: 0 }
       map[key].sum += t.pnl
@@ -1887,23 +2276,23 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
       winRate: (d.wins / d.count * 100).toFixed(0) + '%',
       count: d.count,
     }))
-  }, [trades])
+  }, [filteredTrades])
 
   const byDirection = useMemo(() => {
     const map: Record<string, { sum: number; count: number; wins: number }> = {}
-    trades.forEach(t => {
+    filteredTrades.forEach(t => {
       if (!map[t.direction]) map[t.direction] = { sum: 0, count: 0, wins: 0 }
       map[t.direction].sum += t.pnl
       map[t.direction].count++
       if (t.pnl > 0) map[t.direction].wins++
     })
     return Object.entries(map).map(([label, d]) => ({ label, value: d.sum }))
-  }, [trades])
+  }, [filteredTrades])
 
   // Histogram
   const histogram = useMemo(() => {
-    if (trades.length === 0) return []
-    const vals = trades.map(t => t.pnl)
+    if (filteredTrades.length === 0) return []
+    const vals = filteredTrades.map(t => t.pnl)
     const min = Math.min(...vals), max = Math.max(...vals)
     const range = max - min || 1
     const bins = 8
@@ -1918,7 +2307,7 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
       value: count,
       isWin: min + (i + 0.5) * binSize >= 0,
     }))
-  }, [trades])
+  }, [filteredTrades])
 
   if (trades.length < 3) return (
     <div style={{ textAlign: 'center', padding: '60px 20px' }}>
@@ -1936,6 +2325,90 @@ function TabAnalytics({ trades }: { trades: Trade[] }) {
         title="Analytics"
         sub="Deep dive into your trading patterns. Find what works, eliminate what doesn't."
       />
+
+      {/* Asset Type Filter */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Asset Type:</span>
+        {(['All', ...ASSET_CLASSES] as const).map(ac => (
+          <button
+            key={ac}
+            onClick={() => setAnalyticsAssetFilter(ac as typeof analyticsAssetFilter)}
+            style={{
+              background: analyticsAssetFilter === ac ? 'var(--accent)' : 'var(--bg-2)',
+              border: `1px solid ${analyticsAssetFilter === ac ? 'var(--accent)' : 'var(--border)'}`,
+              borderRadius: 20,
+              padding: '5px 14px',
+              color: analyticsAssetFilter === ac ? '#0a0a0c' : 'var(--text-2)',
+              fontSize: 12,
+              fontWeight: analyticsAssetFilter === ac ? 700 : 400,
+              cursor: 'pointer',
+            }}
+          >
+            {ac} {ac !== 'All' ? `(${trades.filter(t => t.assetClass === ac).length})` : `(${trades.length})`}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Futures panel ── */}
+      {(analyticsAssetFilter === 'All' || analyticsAssetFilter === 'Futures') && futuresStats && futuresStats.length > 0 && (
+        <Card style={{ marginBottom: 16, borderColor: BLUE + '44' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: BLUE, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <IconChart size={13} />Futures Performance by Contract
+          </div>
+          <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['Contract', 'Trades', 'Win%', 'P&L (Ticks)', 'P&L (USD)'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', padding: '4px 8px', fontSize: 10, color: 'var(--text-2)', textTransform: 'uppercase', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {futuresStats.map(([contract, d]) => (
+                <tr key={contract} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '8px', fontWeight: 700, fontFamily: 'var(--mono)', color: BLUE }}>{contract}</td>
+                  <td style={{ padding: '8px', color: 'var(--text-2)' }}>{d.count}</td>
+                  <td style={{ padding: '8px', color: 'var(--text-2)' }}>{(d.wins / d.count * 100).toFixed(0)}%</td>
+                  <td style={{ padding: '8px', fontFamily: 'var(--mono)', fontWeight: 700, color: d.pnlTicks >= 0 ? GREEN : RED }}>
+                    {d.pnlTicks >= 0 ? '+' : ''}{d.pnlTicks.toFixed(1)} ticks
+                  </td>
+                  <td style={{ padding: '8px', fontFamily: 'var(--mono)', fontWeight: 700, color: d.pnlDollars >= 0 ? GREEN : RED }}>
+                    {fmtDollar(d.pnlDollars)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
+      {/* ── Options panel ── */}
+      {(analyticsAssetFilter === 'All' || analyticsAssetFilter === 'Option') && optionsStrategyStats && optionsStrategyStats.length > 0 && (
+        <Card style={{ marginBottom: 16, borderColor: YELLOW + '44' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: YELLOW, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <IconClipboard size={13} />Options Performance by Strategy
+          </div>
+          <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['Strategy', 'Trades', 'Win%', 'Net P&L'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', padding: '4px 8px', fontSize: 10, color: 'var(--text-2)', textTransform: 'uppercase', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {optionsStrategyStats.map(([strategy, d]) => (
+                <tr key={strategy} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '8px', color: 'var(--text-1)' }}>{(OPTION_STRATEGY_LABELS[strategy] || strategy).replace(/_/g, ' ')}</td>
+                  <td style={{ padding: '8px', color: 'var(--text-2)' }}>{d.count}</td>
+                  <td style={{ padding: '8px', color: 'var(--text-2)' }}>{(d.wins / d.count * 100).toFixed(0)}%</td>
+                  <td style={{ padding: '8px', fontFamily: 'var(--mono)', fontWeight: 700, color: d.pnl >= 0 ? GREEN : RED }}>{fmtDollar(d.pnl)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <Card>
