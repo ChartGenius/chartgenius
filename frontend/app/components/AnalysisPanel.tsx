@@ -774,6 +774,13 @@ export default function AnalysisPanel({ wlQuotes, tickerQuotes, calendarEvents, 
       <IndexBars       wlQuotes={wlQuotes}     tickerQuotes={tickerQuotes} />
       <TopMovers       wlQuotes={wlQuotes} />
       <MarketBreadth   wlQuotes={wlQuotes} />
+
+      {/* ── Disclaimer ────────────────────────────────────────────────────── */}
+      <div style={{ padding: '10px 4px', marginTop: 8, borderTop: '1px solid var(--border)' }}>
+        <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0, lineHeight: 1.5 }}>
+          ⚠️ Market data is provided for informational purposes only and may be delayed. TradVue does not guarantee the accuracy, completeness, or timeliness of any data. Do not rely solely on this information for trading decisions.
+        </p>
+      </div>
     </div>
   )
 }

@@ -949,7 +949,7 @@ export default function HomeClient() {
         <span>
           <a href="/help#data-sources" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 11 }}>Data Sources</a>
           <span style={{ margin: '0 6px', color: 'var(--text-3)' }}>·</span>
-          <span style={{ color: 'var(--text-3)', fontSize: 11 }}>Not financial advice</span>
+          <span style={{ color: 'var(--text-3)', fontSize: 11 }}>⚠️ Market data is provided for informational purposes only and may be delayed. TradVue does not guarantee the accuracy, completeness, or timeliness of any data. Do not rely solely on this information for trading decisions.</span>
         </span>
         <span>
           {isOffline

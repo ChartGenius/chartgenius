@@ -334,7 +334,7 @@ export default function NewsPage() {
         textAlign: 'center',
         background: 'var(--bg-1)',
       }}>
-        Data from multiple financial news sources. Not financial advice.{' '}
+        ⚠️ News and calendar data is aggregated from third-party sources. TradVue does not verify the accuracy of third-party content and is not responsible for investment decisions based on this information.{' '}
         <Link href="/legal/disclaimer" style={{ color: 'var(--accent)' }}>Disclaimer</Link>
       </footer>
     </div>

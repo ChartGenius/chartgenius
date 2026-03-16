@@ -1289,6 +1289,13 @@ export default function RitualPage() {
             <HistorySection entries={entries} currentDate={today} />
           </div>
         )}
+
+        {/* ── Disclaimer ──────────────────────────────────────────────────── */}
+        <div style={{ padding: '12px 0', marginTop: 24, borderTop: '1px solid var(--border)' }}>
+          <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0, lineHeight: 1.5 }}>
+            ⚠️ Performance analytics are based on user-entered data and may not reflect actual trading results. Past performance does not guarantee future results. This is not financial advice.
+          </p>
+        </div>
       </div>
     </div>
   )

@@ -3721,8 +3721,12 @@ function JournalPageInner() {
       </div>
 
       {/* Footer note */}
-      <div style={{ textAlign: 'center', padding: '20px 24px 40px', fontSize: 11, color: 'var(--text-2)', borderTop: '1px solid var(--border)' }}>
+      <div style={{ textAlign: 'center', padding: '20px 24px 12px', fontSize: 11, color: 'var(--text-2)', borderTop: '1px solid var(--border)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconSave size={11} />Data saved locally in your browser. Export anytime — your data is yours.</span>
+      </div>
+      {/* Disclaimer */}
+      <div style={{ textAlign: 'center', padding: '0 24px 40px', fontSize: 11, color: 'var(--text-3)' }}>
+        ⚠️ Performance analytics are based on user-entered data and may not reflect actual trading results. Past performance does not guarantee future results. This is not financial advice.
       </div>
 
       {/* Modals */}

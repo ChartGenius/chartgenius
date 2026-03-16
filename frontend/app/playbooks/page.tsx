@@ -934,6 +934,13 @@ export default function PlaybooksPage() {
           onClose={() => setEditing(null)}
         />
       )}
+
+      {/* ── Disclaimer ─────────────────────────────────────────────────────── */}
+      <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
+        <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0, lineHeight: 1.5 }}>
+          ⚠️ Strategy templates are for educational purposes only and do not constitute trading advice. Past performance of any strategy does not guarantee future results. Always do your own research before trading.
+        </p>
+      </div>
     </div>
   )
 }

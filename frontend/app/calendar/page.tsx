@@ -1492,6 +1492,13 @@ export default function CalendarPage() {
           <span key={item.label} style={{ color: item.color, fontWeight: 600 }}>{item.label}</span>
         ))}
       </div>
+
+      {/* ── Disclaimer ── */}
+      <div style={{ padding: '8px 16px', borderTop: '1px solid var(--border)', background: 'var(--bg-0)' }}>
+        <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0, lineHeight: 1.5 }}>
+          ⚠️ News and calendar data is aggregated from third-party sources. TradVue does not verify the accuracy of third-party content and is not responsible for investment decisions based on this information.
+        </p>
+      </div>
     </div>
   )
 }
