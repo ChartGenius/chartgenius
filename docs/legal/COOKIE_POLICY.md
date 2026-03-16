@@ -1,174 +1,162 @@
 # Cookie Policy
 
-**TradVue**
-
-Last Updated: March 6, 2026
-
-## 1. What Are Cookies?
-
-Cookies are small text files stored on your device (computer, phone, or tablet) when you visit a website. They allow websites to remember your preferences, keep you logged in, and track usage patterns.
-
-TradVue uses cookies to improve your experience and understand how the platform is used.
-
-## 2. Types of Cookies We Use
-
-### 2.1 Essential Cookies (Always Active)
-
-These cookies are necessary for the Service to function properly. They cannot be disabled without breaking core features.
-
-| Cookie Name | Purpose | Duration | Type |
-|---|---|---|---|
-| `session_id` | Keeps you logged in | Session (cleared on logout) | TradVue |
-| `csrf_token` | Prevents cross-site request forgery | Session | TradVue |
-| `auth_token` | Authentication and authorization | 30 days | TradVue |
-| `timezone` | Stores your timezone for data display | 1 year | TradVue |
-
-**What happens if you disable essential cookies?**
-- You won't be able to log in
-- Watchlists and preferences won't load
-- Charts may not display correctly
-- Form submissions will fail
-
-### 2.2 Preference Cookies (Optional)
-
-These cookies store your preferences and settings.
-
-| Cookie Name | Purpose | Duration | Type |
-|---|---|---|---|
-| `theme_preference` | Dark/light mode setting | 2 years | TradVue |
-| `language` | Your preferred language | 2 years | TradVue |
-| `chart_layout` | Default chart view (candlestick, line, etc.) | 2 years | TradVue |
-| `sidebar_collapsed` | Whether sidebar is collapsed | 2 years | TradVue |
-
-**You can opt out of these cookies.** Disabling them means you'll need to set your preferences each visit.
-
-### 2.3 Analytics Cookies (Optional)
-
-These cookies help us understand how users interact with TradVue, identify issues, and improve the platform.
-
-| Cookie/Tool | Purpose | Duration | Third-Party |
-|---|---|---|---|
-| `_ga` | Google Analytics (identifies users) | 2 years | Google |
-| `_gid` | Google Analytics (session tracking) | 24 hours | Google |
-| Segment analytics | Event tracking (feature usage, page views) | 1 year | Segment |
-
-**What data is collected?**
-- Pages visited and time spent
-- Features used and how often
-- Device type and browser
-- Geographic region (approximate)
-- Referral source
-
-**Data is anonymized and aggregated.** You are identified by a random ID, not your name.
-
-### 2.4 Marketing/Advertising Cookies (Opt-In Only)
-
-These cookies are only active if you explicitly consent. They allow us to show you relevant promotions.
-
-| Cookie Name | Purpose | Duration | Third-Party |
-|---|---|---|---|
-| `marketing_consent` | Tracks if you consented to marketing | 1 year | TradVue |
-| Facebook Pixel | Retargeting ads on Facebook/Instagram | Session | Meta |
-| LinkedIn Insight | Retargeting on LinkedIn | Session | LinkedIn |
-
-**We do not use these unless you consent in the cookie banner.**
-
-## 3. How to Manage Cookies
-
-### 3.1 Via TradVue Cookie Banner
-
-When you first visit TradVue, a cookie consent banner appears. You can:
-
-1. **Accept All Cookies** - Enable all non-essential cookies
-2. **Reject Non-Essential** - Only essential cookies are active
-3. **Customize** - Choose which types to enable
-
-You can change your preferences anytime in Settings → Privacy & Cookies.
-
-### 3.2 Via Your Browser
-
-All modern browsers allow you to control cookies:
-
-**Chrome:**
-1. Settings → Privacy and security → Cookies and other site data
-2. Manage all cookies and site data
-3. Search "tradvue.com" and delete or allow
-
-**Firefox:**
-1. Settings → Privacy & Security → Cookies and Site Data
-2. Manage Exceptions or Clear Data
-
-**Safari:**
-1. Preferences → Privacy
-2. Manage website data
-
-**Edge:**
-1. Settings → Privacy → Clear browsing data
-2. Choose "Cookies and other site data"
-
-### 3.3 Global Opt-Outs
-
-- **Google Analytics Opt-Out:** https://tools.google.com/dlpage/gaoptout
-- **Network Advertising Initiative:** http://optout.networkadvertising.org
-- **Digital Advertising Alliance:** http://optout.aboutads.info
-
-## 4. What Happens If You Disable Cookies?
-
-| Cookie Type | Disabled Impact |
-|---|---|
-| **Essential** | Service will NOT work properly |
-| **Preference** | Settings reset each visit; charts show defaults |
-| **Analytics** | We can't improve the platform based on usage data |
-| **Marketing** | You won't see relevant promotions |
-
-**We recommend keeping essential cookies enabled for a good experience.**
-
-## 5. Local Storage & Other Tracking
-
-In addition to cookies, TradVue may use:
-
-### Local Storage
-- Stores chart preferences, watchlist filters, and recent searches
-- Persists even after cookies are cleared
-- Managed via browser DevTools
-
-### Session Storage
-- Stores temporary data during your session
-- Cleared when you close the browser tab
-
-### Web Beacons
-- Small invisible images that track if you opened an email
-- Used only in email communications (with your consent)
-
-## 6. Do-Not-Track Signals
-
-Some browsers allow you to set a "Do Not Track" (DNT) signal. TradVue respects DNT preferences:
-
-- We do NOT enable tracking cookies if DNT is active
-- We still use essential cookies (necessary for the Service)
-- Third-party services (Google, Segment) may still track if their own policies allow
-
-## 7. Cookie Changes
-
-TradVue may:
-- Add new cookies to improve the Service
-- Remove cookies that are no longer needed
-- Update cookie names or purposes
-
-We will update this policy and notify users of significant changes.
-
-## 8. Contact & More Information
-
-**Questions about cookies?**
-Email: privacy@tradvue.com
-
-**Learn more about cookies:**
-- AboutCookies.org
-- Your browser's privacy documentation
-- GDPR Cookie Guidance (https://gdpr.eu/)
+**TradVue** — *TradVue is a product of Apex Logics LLC*
+**Last Updated: March 16, 2026**
 
 ---
 
-**Last Updated: March 6, 2026**
+## 1. Introduction
 
-By using TradVue, you accept our use of cookies as described in this policy.
+This Cookie Policy explains how Apex Logics LLC, doing business as TradVue ("TradVue," "we," "us," or "our"), uses cookies and similar tracking technologies on our website at tradvue.com and associated applications (collectively, the "Service").
+
+This Cookie Policy should be read alongside our [Privacy Policy](https://tradvue.com/legal/privacy) and [Terms of Service](https://tradvue.com/legal/terms).
+
+By using TradVue, you consent to the use of cookies as described in this Policy. You can manage cookie preferences as described in Section 6.
+
+---
+
+## 2. What Are Cookies?
+
+**Cookies** are small text files placed on your device (computer, tablet, smartphone) when you visit a website. They allow the website to recognize your device on subsequent visits and enable various functionality.
+
+**Similar technologies** include:
+
+- **Local Storage / Session Storage:** Browser-based key-value storage used to persist data within a session or across sessions.
+- **Pixels/Beacons:** Small image files embedded in web pages used to track page visits and user interactions.
+- **Fingerprinting:** Techniques that use device characteristics to identify users without cookies.
+
+TradVue primarily uses cookies and browser local/session storage.
+
+---
+
+## 3. Types of Cookies We Use
+
+### 3.1 Essential / Strictly Necessary Cookies
+
+These cookies are required for the Service to function. They cannot be disabled without breaking core functionality.
+
+| Cookie Name | Provider | Purpose | Duration |
+|---|---|---|---|
+| `sb-access-token` | Supabase | Authentication session token. Keeps you logged in to TradVue. | Session / up to 1 hour |
+| `sb-refresh-token` | Supabase | Used to refresh your authentication session without re-login. | Up to 7 days |
+| `__stripe_mid` | Stripe | Fraud prevention and payment processing integrity. Set when interacting with payment pages. | 1 year |
+| `__stripe_sid` | Stripe | Stripe session identifier for payment processing. | 30 minutes |
+
+**These cookies cannot be disabled via cookie preferences.** They are necessary for account security and to process payments.
+
+### 3.2 Security / Network Cookies (Cloudflare)
+
+These cookies are set by Cloudflare, our CDN and security provider, at the network layer. They are used for security, bot management, and network performance.
+
+| Cookie Name | Provider | Purpose | Duration |
+|---|---|---|---|
+| `cf_clearance` | Cloudflare | Stores proof that you passed a Cloudflare security challenge (e.g., CAPTCHA). Prevents repeated challenges. | 1 year |
+| `__cf_bm` | Cloudflare | Bot management cookie. Distinguishes legitimate users from automated bot traffic. | 30 minutes |
+| `_cfuvid` | Cloudflare | Used for rate limiting on Cloudflare's side to prevent abuse. | Session |
+
+**Note:** Cloudflare cookies operate at the network/infrastructure level. They are set for all visitors to protect the platform, regardless of cookie consent settings. They do not track personal behavior for marketing purposes.
+
+### 3.3 Analytics Cookies (Non-Essential)
+
+These cookies collect information about how users interact with the Service to help us understand usage patterns and improve TradVue. These cookies are set only with your consent (or unless you have opted out via Do Not Track or cookie preferences).
+
+| Cookie Name | Provider | Purpose | Duration |
+|---|---|---|---|
+| `_ga` | Google Analytics (GA4) | Distinguishes unique users. Used to calculate visit statistics. | 2 years |
+| `_ga_[ID]` | Google Analytics (GA4) | Used to maintain session state for Google Analytics 4. | 2 years |
+| `_gid` | Google Analytics (GA4) | Distinguishes users for a 24-hour period. | 24 hours |
+| `_gat` | Google Analytics (GA4) | Throttles request rate to Google Analytics. | 1 minute |
+
+**Google Analytics does not** receive or process your trade data, account details, or personal financial information. It receives only standard browsing analytics (pages visited, session duration, device/browser type).
+
+You can opt out of Google Analytics at any time using the [Google Analytics Opt-Out Browser Add-On](https://tools.google.com/dlpage/gaoptout).
+
+### 3.4 Functional / Preference Cookies
+
+These cookies enable personalized features and remember your preferences.
+
+| Cookie Name | Provider | Purpose | Duration |
+|---|---|---|---|
+| `tradvue_theme` | TradVue | Remembers your UI theme preference (light/dark mode). | 1 year |
+| `tradvue_prefs` | TradVue | Stores dashboard layout and display preferences. | 1 year |
+
+---
+
+## 4. Cookies We Do NOT Use
+
+To be explicit, TradVue currently does **NOT** use the following tracking technologies:
+
+- **Segment** — not implemented
+- **Facebook Pixel / Meta Pixel** — not installed
+- **LinkedIn Insight Tag** — not installed
+- **Google Ads / Remarketing tags** — not installed
+- **Twitter/X Pixel** — not installed
+- **TikTok Pixel** — not installed
+- **Any third-party behavioral advertising or retargeting cookies**
+
+We do not sell your personal information or use your data for cross-site advertising.
+
+---
+
+## 5. Do Not Track (DNT)
+
+TradVue respects Do Not Track (DNT) signals sent by your browser.
+
+When your browser sends a DNT=1 signal:
+
+- **Non-essential analytics cookies** (Google Analytics) will not be set.
+- **Essential cookies** (authentication, security) will continue to function as necessary to provide the Service.
+- **Cloudflare security cookies** operate at the infrastructure level and may still be set regardless of DNT signals.
+
+To enable DNT in your browser, refer to your browser's privacy settings.
+
+---
+
+## 6. Managing Your Cookie Preferences
+
+You have several options for managing cookies:
+
+**6.1 Browser Settings.** Most browsers allow you to refuse or delete cookies. Refer to your browser's help documentation:
+- [Chrome](https://support.google.com/chrome/answer/95647)
+- [Firefox](https://support.mozilla.org/en-US/kb/enable-and-disable-cookies-website-preferences)
+- [Safari](https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac)
+- [Edge](https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09)
+
+**Note:** Disabling essential cookies will prevent you from logging in and using TradVue.
+
+**6.2 Google Analytics Opt-Out.** Install the [Google Analytics Opt-Out Browser Add-On](https://tools.google.com/dlpage/gaoptout) to prevent Google Analytics data collection across all websites.
+
+**6.3 Do Not Track.** Enable Do Not Track in your browser settings.
+
+---
+
+## 7. Cookies and Third-Party Privacy Policies
+
+For cookies set by third parties, their privacy and cookie policies apply:
+
+- **Stripe:** https://stripe.com/privacy
+- **Cloudflare:** https://www.cloudflare.com/privacypolicy/
+- **Google Analytics:** https://policies.google.com/privacy
+
+---
+
+## 8. Changes to This Cookie Policy
+
+We may update this Cookie Policy from time to time to reflect changes in our technology stack or applicable law. Material changes will be communicated in accordance with our [Privacy Policy](https://tradvue.com/legal/privacy) (30-day notice). The "Last Updated" date above indicates when this Policy was last revised.
+
+---
+
+## 9. Contact
+
+For questions about our use of cookies:
+
+**Apex Logics LLC d/b/a TradVue**
+1935 Commerce Lane, Suite 9
+Jupiter, FL 33458
+
+- **Privacy:** privacy@tradvue.com
+- **Website:** https://tradvue.com
+
+---
+
+*TradVue is a product of Apex Logics LLC. Apex Logics LLC, FL Doc# L23000460971.*

@@ -8,6 +8,7 @@ const PAGE_NAMES: Record<string, string> = {
   '/legal/privacy':    'Privacy Policy',
   '/legal/cookies':    'Cookie Policy',
   '/legal/disclaimer': 'Disclaimer',
+  '/legal/aup':        'Acceptable Use Policy',
 }
 
 export default function LegalBreadcrumbs() {

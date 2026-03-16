@@ -7,10 +7,11 @@ export const metadata: Metadata = {
 }
 
 const legalLinks = [
-  { label: 'Terms of Service',  href: '/legal/terms' },
-  { label: 'Privacy Policy',    href: '/legal/privacy' },
-  { label: 'Cookie Policy',     href: '/legal/cookies' },
-  { label: 'Disclaimer',        href: '/legal/disclaimer' },
+  { label: 'Terms of Service',        href: '/legal/terms' },
+  { label: 'Privacy Policy',          href: '/legal/privacy' },
+  { label: 'Cookie Policy',           href: '/legal/cookies' },
+  { label: 'Disclaimer',              href: '/legal/disclaimer' },
+  { label: 'Acceptable Use Policy',   href: '/legal/aup' },
 ]
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { LegalPage, Section, SubSection, UL, OL, WarningBox, InfoBox, AcknowledgmentBox } from '../components'
+import { LegalPage, Section, SubSection, UL, WarningBox, InfoBox, AcknowledgmentBox } from '../components'
 
 export const metadata: Metadata = {
   title: 'Disclaimer — TradVue',
@@ -12,398 +12,322 @@ export const metadata: Metadata = {
 
 export default function DisclaimerPage() {
   return (
-    <LegalPage title="Disclaimer" lastUpdated="March 12, 2026">
+    <LegalPage title="Disclaimer" lastUpdated="March 16, 2026">
 
       <WarningBox>
-        <strong>⚠️ IMPORTANT LEGAL NOTICE</strong>
+        <strong>THIS DISCLAIMER IS PART OF TRADVUE'S LEGAL AGREEMENT WITH YOU. BY USING THE SERVICE, YOU
+        ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREED TO THIS DISCLAIMER.</strong>
         <br /><br />
-        Read this disclaimer carefully before using TradVue.
-        Your use of the platform constitutes acceptance of all terms outlined below.
+        See also:{' '}
+        <a href="/legal/terms" style={{ color: '#ef4444' }}>Terms of Service</a>
+        {' '} | {' '}
+        <a href="/legal/privacy" style={{ color: '#ef4444' }}>Privacy Policy</a>
       </WarningBox>
 
       <Section id="not-advice" title="1. NOT FINANCIAL ADVICE">
+        <WarningBox>
+          THE TRADVUE PLATFORM, INCLUDING ALL FEATURES, CONTENT, ANALYTICS, DATA, TOOLS, AI COACH OUTPUTS,
+          MARKET DATA, JOURNAL ANALYTICS, AND ANY OTHER INFORMATION PROVIDED THROUGH THE SERVICE, IS FOR
+          INFORMATIONAL, JOURNALING, AND ANALYTICAL PURPOSES ONLY. NOTHING ON TRADVUE CONSTITUTES FINANCIAL
+          ADVICE, INVESTMENT ADVICE, TRADING ADVICE, TAX ADVICE, LEGAL ADVICE, OR ANY OTHER TYPE OF REGULATED
+          PROFESSIONAL ADVICE.
+          <br /><br />
+          NO CONTENT ON TRADVUE SHOULD BE CONSTRUED AS A RECOMMENDATION, SOLICITATION, OR OFFER TO BUY, SELL,
+          HOLD, OR OTHERWISE TRANSACT IN ANY SECURITY, COMMODITY, CRYPTOCURRENCY, FUTURES CONTRACT, OPTIONS
+          CONTRACT, OR OTHER FINANCIAL INSTRUMENT.
+        </WarningBox>
         <p>
-          <strong>TradVue is NOT a financial advisor and does NOT provide investment, trading, or financial advice.</strong>
+          <strong>1.1 Informational Purpose.</strong> TradVue is a journaling and analytics tool. Its purpose
+          is to help you organize, review, and analyze your own historical trading data — not to guide future
+          investment decisions.
         </p>
         <p>
-          TradVue is a <strong>financial information and portfolio tracking tool</strong>. It is NOT a registered investment advisor,
-          broker-dealer, or tax preparer.
-        </p>
-        <p>Nothing on TradVue — including charts, analysis, indicators, alerts, or any other content — should be construed as:</p>
-        <UL items={[
-          'A recommendation to buy, sell, or hold any security',
-          'An offer to provide financial or investment advice',
-          'A solicitation to invest in any particular asset or strategy',
-          'Personalized financial guidance based on your situation',
-          'Professional investment management services',
-          'Tax, legal, or accounting advice',
-        ]} />
-        <p>
-          <strong>All data, calculations, and analysis provided are for informational purposes only</strong> and should not be considered
-          financial, investment, tax, or legal advice. TradVue is a <strong>research and visualization tool only</strong>. All decisions
-          to buy, sell, or trade securities must be made independently by you, preferably with guidance from a qualified financial advisor.
+          <strong>1.2 No Advisory Relationship.</strong> Your use of TradVue does not create a financial
+          advisory, broker-dealer, or fiduciary relationship between you and TradVue or Apex Logics LLC.
         </p>
         <InfoBox>
-          <strong>If you need financial, tax, or legal advice, consult with a licensed financial advisor, tax professional, attorney, broker, or investment professional.</strong>
+          <strong>If you need financial, tax, or legal advice, consult with a licensed financial advisor,
+          tax professional, attorney, broker, or investment professional.</strong>
         </InfoBox>
       </Section>
 
-      <Section id="warranties" title="2. NO WARRANTIES">
-        <p>TradVue is provided "AS-IS" without any warranties, express or implied. We make no guarantees regarding:</p>
-
-        <SubSection title="2.1 Data Accuracy">
-          <UL items={[
-            'Market data may contain errors, omissions, or delays',
-            'Historical data may be incomplete or inaccurate',
-            'Real-time prices may lag actual market conditions',
-            'Corporate actions (splits, dividends) may not be reflected immediately',
-            'Indicators and calculations may not be perfect',
-          ]} />
-        </SubSection>
-
-        <SubSection title="2.2 Service Availability">
-          <UL items={[
-            'The platform may be temporarily unavailable for maintenance',
-            'We do not guarantee 24/7 uptime or error-free operation',
-            'Service interruptions may occur without notice',
-            'Market data feeds may be delayed or disconnected',
-            'Features may malfunction due to technical issues',
-          ]} />
-        </SubSection>
-
-        <SubSection title="2.3 Indicator Reliability">
-          <UL items={[
-            'Technical indicators are mathematical tools, not guarantees',
-            'Past signals do not predict future performance',
-            'Indicators may fail or produce misleading results under certain conditions',
-            'No indicator is 100% accurate',
-          ]} />
-        </SubSection>
-
-        <SubSection title="2.4 Watchlist Accuracy">
-          <UL items={[
-            'Watchlists may not include all available securities',
-            'Securities may be added, delisted, or renamed without notice',
-            'Real-time alerts may be delayed or missed',
-            'Price data may be inaccurate',
-          ]} />
-        </SubSection>
+      <Section id="not-ria" title="2. Not a Registered Investment Adviser">
+        <WarningBox>
+          APEX LOGICS LLC (D/B/A TRADVUE) IS NOT REGISTERED AS AN INVESTMENT ADVISER WITH THE UNITED STATES
+          SECURITIES AND EXCHANGE COMMISSION ("SEC") UNDER THE INVESTMENT ADVISERS ACT OF 1940, AS AMENDED
+          (15 U.S.C. § 80B-1 ET SEQ.), NOR IS IT REGISTERED OR LICENSED AS AN INVESTMENT ADVISER UNDER ANY
+          APPLICABLE STATE SECURITIES LAW.
+        </WarningBox>
+        <p>
+          TradVue does not provide, and nothing on the TradVue platform should be construed as, "investment
+          advice" as defined under the Investment Advisers Act of 1940. TradVue is not a "financial planner,"
+          "financial consultant," "wealth manager," or any other type of regulated financial professional.
+        </p>
       </Section>
 
-      <Section id="tax-tools" title="3. TAX ESTIMATION TOOLS">
-        <p>
-          Tax estimation and tax planning tools on TradVue provide <strong>approximate calculations based on user-provided data</strong>.
-        </p>
-        <p><strong>IMPORTANT:</strong></p>
-        <UL items={[
-          'Tax estimations are NOT a substitute for professional tax preparation',
-          'TradVue is NOT a tax preparation service',
-          'Tax calculations may contain errors, omissions, or inaccuracies',
-          'Tax laws vary by jurisdiction, filing status, income level, and individual circumstances',
-          'Past tax treatment does not guarantee future tax results',
-          'You must verify all tax calculations with your tax professional before filing',
-          'TradVue makes NO guarantees about the accuracy of tax calculations',
-          'Always consult a qualified tax professional (CPA, tax attorney, or tax preparer) before making tax decisions',
-        ]} />
+      <Section id="not-broker" title="3. Not a Broker-Dealer">
         <WarningBox>
-          <strong>ALWAYS consult a qualified tax professional before making any tax decisions or filing your return.</strong>
+          APEX LOGICS LLC (D/B/A TRADVUE) IS NOT REGISTERED AS A BROKER-DEALER WITH THE SEC UNDER THE
+          SECURITIES EXCHANGE ACT OF 1934, AS AMENDED (15 U.S.C. § 78A ET SEQ.), AND IS NOT A MEMBER OF THE
+          FINANCIAL INDUSTRY REGULATORY AUTHORITY ("FINRA") OR THE SECURITIES INVESTOR PROTECTION CORPORATION
+          ("SIPC").
+        </WarningBox>
+        <p>
+          TradVue does not execute, route, or facilitate the purchase or sale of any securities or other
+          financial instruments. TradVue does not hold customer funds or securities. Your brokerage relationship
+          is solely with your registered broker-dealer.
+        </p>
+      </Section>
+
+      <Section id="ai-coach" title="4. AI Coach Disclaimer">
+        <WarningBox>
+          THE AI COACH FEATURE IS AN AUTOMATED ANALYTICAL TOOL POWERED BY ARTIFICIAL INTELLIGENCE. IT IS NOT
+          A FINANCIAL ADVISER, INVESTMENT ADVISER, OR TRADING SYSTEM. AI COACH IS NOT DESIGNED OR INTENDED
+          TO PROVIDE, AND DOES NOT PROVIDE, PERSONALIZED INVESTMENT ADVICE OR RECOMMENDATIONS.
+        </WarningBox>
+        <p>
+          <strong>4.1 AI Limitations.</strong> AI Coach outputs are generated by machine learning models
+          (via OpenAI's API) that analyze your historical trade data. These outputs:
+        </p>
+        <UL items={[
+          'May be inaccurate, incomplete, misleading, or factually incorrect;',
+          'Are not personalized to your individual financial situation, investment objectives, risk tolerance, time horizon, or tax circumstances;',
+          'Do not account for real-time market conditions, regulatory changes, or events occurring after the data analyzed;',
+          'Reflect limitations and potential biases inherent in large language models and AI systems;',
+          'Should not be treated as reliable predictions of future trading performance.',
+        ]} />
+        <p>
+          <strong>4.2 Independent Verification Required.</strong> You should not rely on AI Coach output for
+          any trading or investment decision without independent verification by a qualified financial
+          professional and your own due diligence.
+        </p>
+        <p>
+          <strong>4.3 No Substitute for Professional Advice.</strong> AI Coach is not a substitute for advice
+          from a licensed investment adviser, broker-dealer, or other qualified financial professional who
+          understands your complete financial situation.
+        </p>
+        <p>
+          <strong>4.4 User Responsibility.</strong> All investment and trading decisions are solely your
+          responsibility. TradVue accepts no responsibility for any losses or adverse outcomes resulting from
+          reliance on AI Coach outputs.
+        </p>
+      </Section>
+
+      <Section id="market-data" title="5. Market Data Disclaimer">
+        <p>
+          <strong>5.1 Third-Party Data.</strong> Market data, price quotes, financial news, and other market
+          information displayed on TradVue are obtained from third-party providers (Alpaca Markets, Marketaux,
+          Finnhub, and others). TradVue does not independently generate, verify, or warrant the accuracy of
+          this data.
+        </p>
+        <p>
+          <strong>5.2 Data May Be Delayed.</strong> Market data displayed on TradVue may be delayed by 15
+          minutes or more. Delayed data is not suitable for real-time trading decisions.
+        </p>
+        <p>
+          <strong>5.3 Potential Errors.</strong> Market data may contain errors, gaps, or inaccuracies. Prices
+          displayed may not reflect actual executable prices.
+        </p>
+        <p>
+          <strong>5.4 Not Suitable for Real-Time Trading.</strong> Do not rely on TradVue market data as the
+          sole source for real-time trading decisions. Always verify pricing and data through your broker, the
+          relevant exchange, or other official sources before executing any trade.
+        </p>
+        <p>
+          <strong>5.5 No Warranty on Data.</strong> TRADVUE MAKES NO WARRANTY, EXPRESS OR IMPLIED, REGARDING
+          THE ACCURACY, COMPLETENESS, OR TIMELINESS OF ANY MARKET DATA.
+        </p>
+      </Section>
+
+      <Section id="broker-sync" title="6. Broker Sync Disclaimer">
+        <p>
+          <strong>6.1 Third-Party Accuracy.</strong> When you import trade data via CSV or, where available,
+          automated broker synchronization, the data TradVue displays reflects what was imported from
+          third-party sources. TradVue does not independently verify the accuracy of imported or synchronized
+          data.
+        </p>
+        <p>
+          <strong>6.2 Potential Discrepancies.</strong> Data imported from brokers may:
+        </p>
+        <UL items={[
+          'Contain errors, omissions, or discrepancies compared to your actual trade executions;',
+          'Reflect delayed or incomplete information due to API limitations;',
+          'Differ from official broker statements.',
+        ]} />
+        <p>
+          <strong>6.3 Official Statements Control.</strong> Your official broker statements, confirmations,
+          and account records are the authoritative source for your trade and account data. In any discrepancy
+          between TradVue and your broker, your broker's records control.
+        </p>
+        <p>
+          <strong>6.4 No Liability for Broker Errors.</strong> TradVue is not responsible for errors,
+          failures, or inaccuracies originating from your broker, from third-party data aggregators, or from
+          the CSV data you import.
+        </p>
+      </Section>
+
+      <Section id="warranties" title="7. No Warranties">
+        <WarningBox>
+          THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. TO THE FULLEST EXTENT PERMITTED BY
+          APPLICABLE LAW, TRADVUE AND APEX LOGICS LLC EXPRESSLY DISCLAIM ALL WARRANTIES OF ANY KIND, WHETHER
+          EXPRESS, IMPLIED, OR STATUTORY, INCLUDING BUT NOT LIMITED TO:
+          <br /><br />
+          (A) WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT;
+          <br /><br />
+          (B) WARRANTIES THAT THE SERVICE WILL BE UNINTERRUPTED, TIMELY, SECURE, OR ERROR-FREE;
+          <br /><br />
+          (C) WARRANTIES AS TO THE ACCURACY, RELIABILITY, COMPLETENESS, OR CURRENCY OF ANY CONTENT, DATA, OR
+          INFORMATION PROVIDED THROUGH THE SERVICE;
+          <br /><br />
+          (D) WARRANTIES THAT DEFECTS WILL BE CORRECTED.
         </WarningBox>
       </Section>
 
-      <Section id="portfolio-calcs" title="4. PORTFOLIO CALCULATIONS & PERFORMANCE DISCLAIMERS">
-        <SubSection title="4.1 Portfolio Performance Estimates">
-          <p>
-            <strong>Portfolio performance calculations, dividend projections, and gain/loss estimates are approximations and may contain errors.</strong>
-          </p>
-          <UL items={[
-            'Calculations may not reflect actual trading commissions, fees, or slippage',
-            'Dividend projections are based on historical dividend data and API estimates; actual dividends may differ',
-            'Portfolio valuations may not reflect real-time market conditions',
-            'Tax lots, cost basis, and realized/unrealized gains are approximations',
-            'Adjustments for corporate actions (splits, mergers) may be delayed or incomplete',
-          ]} />
-        </SubSection>
-
-        <SubSection title="4.2 Verification Required">
-          <p>
-            <strong>Always verify all portfolio figures with your broker statements and professional advisors.</strong>
-          </p>
-          <UL items={[
-            'Compare cost basis, share counts, and valuations with your broker',
-            'Use broker-supplied documents for tax reporting and accounting records',
-            'Do NOT rely solely on TradVue calculations for financial reporting or tax filing',
-          ]} />
-        </SubSection>
-
-        <SubSection title="4.3 Past Performance & Future Results">
-          <p>
-            <strong>Past performance is not indicative of future results.</strong>
-          </p>
-          <UL items={[
-            'Historical returns are not predictive of future performance',
-            'Market conditions change; past winners may underperform',
-            'Volatility and risk may increase or decrease unexpectedly',
-            'No strategy, tool, or indicator guarantees profitable outcomes',
-          ]} />
-          <WarningBox>
-            <strong>PAST PERFORMANCE IS NOT INDICATIVE OF FUTURE RESULTS.</strong> Any historical
-            performance data shown on TradVue is provided for informational purposes only and should
-            not be interpreted as a guarantee or projection of future performance.
-          </WarningBox>
-        </SubSection>
-      </Section>
-
-      <Section id="ai-analysis" title="5. AI-GENERATED CONTENT DISCLAIMER">
-        <p>
-          TradVue may provide AI-generated insights, analysis, and support responses. These are for
-          <strong> informational purposes only</strong> and do not constitute financial advice.
-          AI outputs may contain errors. Always verify information independently.
-        </p>
-        <p>
-          <strong>AI-generated analysis, summaries, and recommendations are informational only and do NOT constitute personalized investment recommendations.</strong>
-        </p>
-        <UL items={[
-          'AI models may produce inaccurate, outdated, or biased analysis',
-          'AI analysis should not be your sole basis for investment decisions',
-          'Always conduct your own independent research and due diligence',
-          'Consult with professional advisors before acting on AI recommendations',
-          'AI analysis may not account for your individual financial situation, goals, or risk tolerance',
-          'AI support responses are automated and may not address your specific circumstances',
-        ]} />
+      <Section id="liability" title="8. Limitation of Liability">
         <WarningBox>
-          <strong>AI-generated content is NOT financial advice. Always consult a qualified financial professional before making investment decisions.</strong>
+          TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL APEX LOGICS LLC, TRADVUE, OR
+          THEIR RESPECTIVE OFFICERS, DIRECTORS, MEMBERS, EMPLOYEES, AGENTS, LICENSORS, OR SERVICE PROVIDERS
+          BE LIABLE FOR:
+          <br /><br />
+          (A) ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES;
+          <br /><br />
+          (B) ANY TRADING LOSSES, INVESTMENT LOSSES, OR FINANCIAL LOSSES OF ANY KIND;
+          <br /><br />
+          (C) ANY LOSS OF DATA, REVENUE, PROFITS, GOODWILL, OR BUSINESS OPPORTUNITIES;
+          <br /><br />
+          ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF OR INABILITY TO USE THE SERVICE, OR YOUR RELIANCE
+          ON ANY INFORMATION, ANALYTICS, AI COACH OUTPUT, OR MARKET DATA PROVIDED THROUGH THE SERVICE.
+          <br /><br />
+          TRADVUE'S TOTAL CUMULATIVE LIABILITY TO YOU SHALL NOT EXCEED THE TOTAL SUBSCRIPTION FEES ACTUALLY
+          PAID BY YOU TO TRADVUE DURING THE TWELVE (12) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE
+          TO THE CLAIM, OR $100.00, WHICHEVER IS GREATER.
         </WarningBox>
       </Section>
 
-      <Section id="responsibility" title="6. TRADVUE RESPONSIBILITY LIMITATIONS">
-        <p>
-          <strong>TradVue is not responsible for any financial decisions made based on information provided by this platform.</strong>
-        </p>
-        <UL items={[
-          'You accept full responsibility for all investment and trading decisions',
-          'You accept full responsibility for understanding the risks of trading and investing',
-          'TradVue is not liable for losses arising from reliance on platform data or analysis',
-          'TradVue is not liable for missed trading opportunities or market timing errors',
-          'You are solely responsible for verifying information before using it',
-        ]} />
-      </Section>
-
-      <Section id="third-party" title="7. THIRD-PARTY DATA SOURCES">
-        <p>TradVue uses market data from external sources, including:</p>
-        <UL items={[
-          'Stock exchanges and market data providers',
-          'Cryptocurrency exchanges',
-          'Financial data aggregators',
-          'News and economic calendars',
-          'Broker APIs',
-        ]} />
-        <p><strong>We are not responsible for:</strong></p>
-        <UL items={[
-          'Delays in data delivery',
-          'Inaccuracies in third-party data',
-          'Disruptions in external services',
-          'Changes in data availability',
-          'Errors introduced by third-party sources',
-        ]} />
-        <p>
-          We do not control, audit, or guarantee the accuracy of third-party data.
-          Always verify critical information through official sources.
-        </p>
-      </Section>
-
-      <Section id="data-limits" title="8. MARKET DATA & DELAY LIMITATIONS">
-        <SubSection title="4.1 Real-Time vs. Delayed Data">
-          <UL items={[
-            'TradVue may display delayed data (15–20 minutes behind live market)',
-            'During market hours, delays are common',
-            'Do NOT use delayed data for time-sensitive trading decisions',
-            "For live trading, use your broker's official platform",
-          ]} />
-        </SubSection>
-        <SubSection title="4.2 Price Gaps & Liquidity">
-          <UL items={[
-            'Charts may show gaps during market closures',
-            'Bid-ask spreads are not displayed',
-            'Actual execution prices may differ from displayed prices',
-            'Low-liquidity securities may have unreliable pricing',
-          ]} />
-        </SubSection>
-        <SubSection title="4.3 Historical Data">
-          <UL items={[
-            'Historical data may be incomplete for newer securities',
-            'Data may be reconstructed or adjusted after market events',
-            'Splits and dividends may not be reflected accurately',
-            'Free data sources may have limitations',
-          ]} />
-        </SubSection>
-      </Section>
-
-      <Section id="risk" title="9. RISK DISCLAIMER">
-        <SubSection title="5.1 Market Risk">
-          <UL items={[
-            'Financial markets are inherently unpredictable',
-            'Past performance does not guarantee future results',
-            'Market conditions can change rapidly and dramatically',
-            'Unexpected events (geopolitical, economic) can cause sharp price movements',
-          ]} />
-        </SubSection>
-        <SubSection title="5.2 Investment Risk">
-          <UL items={[
-            'You may lose some or all of your investment',
-            'Leverage amplifies both gains and losses',
-            'Derivatives (options, futures) carry extreme risk',
-            'Volatile assets (crypto) can decline rapidly',
-            'Penny stocks and micro-caps are highly speculative',
-          ]} />
-        </SubSection>
-        <SubSection title="5.3 Trading Risk">
-          <UL items={[
-            'Day trading and short-term trading involve substantial risk',
-            'Emotional decision-making often leads to losses',
-            'Overconfidence is a common cause of trading failure',
-            'Most retail traders lose money',
-          ]} />
-        </SubSection>
+      <Section id="risk" title="9. Risk Disclosure and Assumption of Risk">
         <WarningBox>
-          <strong>If you cannot afford to lose money, DO NOT trade.</strong>
+          TRADING IN SECURITIES, EQUITIES, OPTIONS, FUTURES, FOREIGN EXCHANGE, CRYPTOCURRENCIES, AND OTHER
+          FINANCIAL INSTRUMENTS INVOLVES SUBSTANTIAL RISK OF LOSS. YOU MAY LOSE ALL OR MORE THAN YOUR INITIAL
+          INVESTMENT. PAST PERFORMANCE IS NOT INDICATIVE OF FUTURE RESULTS. THERE IS NO GUARANTEE THAT ANY
+          TRADING STRATEGY, SYSTEM, OR TOOL — INCLUDING TRADVUE — WILL RESULT IN PROFITS OR PREVENT LOSSES.
+          <br /><br />
+          BY USING TRADVUE, YOU EXPRESSLY ACKNOWLEDGE AND ACCEPT THAT:
+          <ul style={{ marginTop: '10px', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <li>(A) TRADING INVOLVES SUBSTANTIAL RISK OF LOSS, UP TO AND INCLUDING THE TOTAL LOSS OF ALL INVESTED CAPITAL;</li>
+            <li>(B) YOU ARE SOLELY RESPONSIBLE FOR ALL TRADING AND INVESTMENT DECISIONS YOU MAKE;</li>
+            <li>(C) TRADVUE'S ANALYTICS AND AI COACH FEATURES ARE TOOLS TO REVIEW YOUR PAST ACTIVITY, NOT PREDICTIONS OR GUARANTEES OF FUTURE PERFORMANCE;</li>
+            <li>(D) YOU HAVE SUFFICIENT KNOWLEDGE, EXPERIENCE, AND FINANCIAL RESOURCES TO BEAR THE RISKS OF YOUR TRADING ACTIVITY;</li>
+            <li>(E) YOU WILL NOT HOLD TRADVUE OR APEX LOGICS LLC LIABLE FOR ANY TRADING LOSSES, REGARDLESS OF WHETHER YOU REVIEWED TRADVUE DATA BEFORE MAKING A TRADING DECISION.</li>
+          </ul>
         </WarningBox>
       </Section>
 
-      <Section id="no-personalization" title="10. NO PERSONALIZATION">
-        <p>TradVue does <strong>NOT</strong>:</p>
+      <Section id="tax" title="10. Tax Disclaimer">
+        <p>
+          <strong>TradVue does not provide tax advice.</strong> The performance data, P&amp;L calculations,
+          and analytics displayed in TradVue are for journaling and self-analysis purposes only and are{' '}
+          <strong>not</strong> intended for use in tax reporting. TradVue's calculations may not match the
+          calculations used by your broker for tax purposes (e.g., wash sale rules, cost basis methods,
+          short-term vs. long-term treatment).
+        </p>
+        <p>
+          You are solely responsible for accurately reporting your trading income, gains, and losses to the
+          applicable tax authorities.
+        </p>
+        <WarningBox>
+          <strong>Consult a qualified tax professional or CPA before using TradVue data for any tax filing purpose.</strong>
+        </WarningBox>
+      </Section>
+
+      <Section id="hypothetical" title="11. Hypothetical and Historical Performance">
+        <p>
+          <strong>11.1 Past Performance.</strong> Any historical trading data or performance metrics displayed
+          in TradVue reflect your past trading activity only. They do not constitute a representation or
+          guarantee of future trading results.
+        </p>
+        <p>
+          <strong>11.2 Hypothetical Results.</strong> Any backtesting, hypothetical analysis, or "what-if"
+          scenarios available on TradVue are simulated and subject to known and unknown limitations:
+        </p>
         <UL items={[
-          'Know your financial situation, goals, or risk tolerance',
-          'Consider your income, assets, or liabilities',
-          'Assess your investment experience or knowledge',
-          'Provide recommendations tailored to your needs',
-          'Manage your portfolio or execute trades for you',
+          'Hypothetical performance does not represent actual trading results;',
+          'Hypothetical results may not reflect the impact of actual market conditions, liquidity, slippage, commissions, or other transaction costs;',
+          'The ability to replicate hypothetical results is not guaranteed.',
         ]} />
         <p>
-          Any content on the platform applies equally to all users. Your personal circumstances
-          may make any strategy inappropriate for you.
+          <strong>11.3 No Guarantee.</strong> TradVue makes no representation or warranty that any trading
+          strategy, playbook, or approach reflected in your TradVue data will result in profits in the future.
         </p>
       </Section>
 
-      <Section id="prohibited" title="11. PROHIBITED USES">
-        <SubSection title="7.1 Securities Law Violations">
-          <UL items={[
-            'Use the platform to engage in insider trading',
-            'Share material non-public information',
-            'Manipulate markets or engage in pump-and-dump schemes',
-            'Violate SEC, FINRA, or other regulatory rules',
-            'Trade without proper licensing if required by law',
-          ]} />
-        </SubSection>
-        <SubSection title="7.2 Unethical Trading">
-          <UL items={[
-            'Front-run other traders',
-            'Engage in spoofing or layering',
-            'Use high-frequency or algorithmic trading without proper compliance',
-            'Trade based on misrepresented information',
-          ]} />
-        </SubSection>
-        <SubSection title="7.3 Platform Abuse">
-          <UL items={[
-            'Use bots or automated scrapers without permission',
-            'Reverse-engineer the platform',
-            'Attempt unauthorized access',
-            'Disrupt service for other users',
-          ]} />
-        </SubSection>
+      <Section id="third-party" title="12. Third-Party Content and Links">
+        <p>
+          <strong>12.1 Third-Party Information.</strong> TradVue may display content, data, news, analysis,
+          or links provided by third parties (including Market Data Providers). TradVue does not endorse,
+          verify, or assume responsibility for the accuracy, completeness, or legality of any third-party content.
+        </p>
+        <p>
+          <strong>12.2 Third-Party Links.</strong> The Service may contain links to third-party websites or
+          services. These links are provided for convenience only. TradVue has no control over the content of
+          linked sites and is not responsible for their privacy practices or content. Your use of third-party
+          websites is at your own risk and subject to the terms and policies of those sites.
+        </p>
+        <p>
+          <strong>12.3 No Endorsement.</strong> Reference to any third-party product, service, provider, or
+          website does not constitute an endorsement by TradVue.
+        </p>
       </Section>
 
-      <Section id="liability" title="12. LIMITATION OF LIABILITY">
-        <p><strong>TO THE MAXIMUM EXTENT PERMITTED BY LAW:</strong></p>
-        <p>TradVue shall NOT be liable for ANY losses, damages, or costs, including:</p>
+      <Section id="compliance" title="13. Regulatory and Legal Compliance">
+        <p>
+          Users of TradVue are solely responsible for ensuring that their trading activities comply with all
+          applicable laws and regulations in their jurisdiction, including but not limited to:
+        </p>
         <UL items={[
-          'Trading losses (even if caused by incorrect data)',
-          'Lost profits, revenue, or anticipated savings',
-          'Loss of data or information',
-          'Lost opportunity costs',
-          'Emotional distress or frustration',
-          'Consequential, incidental, special, or punitive damages',
-          'Damages from service interruptions',
-          'Damages from third-party services',
+          'Securities laws (Securities Act of 1933, Securities Exchange Act of 1934, and state blue sky laws)',
+          'Commodity trading regulations (Commodity Exchange Act, CFTC regulations)',
+          'Anti-fraud and market manipulation prohibitions',
+          'Insider trading laws',
+          'Tax reporting obligations',
+          'Export control laws',
         ]} />
         <p>
-          <strong>This applies even if TradVue was advised of the possibility of such damages.</strong>
+          TradVue does not monitor users for regulatory compliance and does not provide legal or compliance advice.
         </p>
+      </Section>
+
+      <Section id="contact" title="14. Contact">
+        <p>For questions regarding this Disclaimer:</p>
         <InfoBox>
-          <strong>Your sole remedy is discontinuing use of the Service.</strong>
+          <strong>Apex Logics LLC d/b/a TradVue</strong><br />
+          1935 Commerce Lane, Suite 9<br />
+          Jupiter, FL 33458<br /><br />
+          Legal:{' '}
+          <a href="mailto:legal@tradvue.com" style={{ color: '#4a9eff' }}>legal@tradvue.com</a><br />
+          Website: <a href="https://tradvue.com" style={{ color: '#4a9eff' }}>https://tradvue.com</a>
         </InfoBox>
-      </Section>
-
-      <Section id="jurisdiction" title="13. JURISDICTIONAL LIMITATIONS">
-        <p>TradVue may not be available or legal in all jurisdictions. You are responsible for:</p>
-        <UL items={[
-          'Determining if TradVue is legal in your country/state',
-          'Complying with all local investment and trading regulations',
-          'Understanding tax implications of your trades',
-          'Obtaining necessary licenses or permissions',
-          'Filing required regulatory documents',
-        ]} />
-        <p>TradVue cannot be held responsible for your violations of local law.</p>
-      </Section>
-
-      <Section id="assumption" title="14. ASSUMPTION OF RISK">
-        <p><strong>By using TradVue, you acknowledge and accept that:</strong></p>
-        <UL items={[
-          'Trading and investing involve substantial risk of loss',
-          'You may lose money using information or tools from TradVue',
-          'You are making your own trading decisions',
-          'You understand the risks involved',
-          'You have read and accepted this disclaimer',
-          'You will not hold TradVue liable for trading losses',
-        ]} />
-      </Section>
-
-      <Section id="reliance" title="15. RELIANCE ON CONTENT">
-        <p>
-          <strong>TradVue does not guarantee the accuracy or completeness of any content.</strong>{' '}
-          Before making any investment decision:
-        </p>
-        <OL items={[
-          'Verify data through official sources (exchanges, company filings, etc.)',
-          'Consult with qualified financial professionals',
-          'Conduct your own independent research',
-          'Do NOT rely solely on information from TradVue',
-          'Understand that errors or delays may occur',
-        ]} />
-      </Section>
-
-      <Section id="changes" title="16. CHANGES TO DISCLAIMER">
-        <p>
-          TradVue may update this disclaimer at any time. Your continued use of the platform
-          after changes constitutes acceptance of the revised disclaimer.
+        <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-2)' }}>
+          TradVue is a product of Apex Logics LLC.<br />
+          Apex Logics LLC, FL Doc# L23000460971, DBA Reg# G26000036763.<br />
+          Effective Date: March 16, 2026
         </p>
       </Section>
 
-      <Section id="contact" title="17. CONTACT">
+      <Section id="full-agreement" title="15. Full Agreement">
         <p>
-          Questions about this disclaimer?{' '}
-          <a href="mailto:legal@tradvue.com" style={{ color: '#4a9eff' }}>legal@tradvue.com</a>
-        </p>
-        <p>
-          Reporting data errors?{' '}
-          <a href="mailto:support@tradvue.com" style={{ color: '#4a9eff' }}>support@tradvue.com</a>{' '}
-          — include "Data Error" in the subject line.
-        </p>
-      </Section>
-
-      <Section id="agreement" title="18. FULL AGREEMENT">
-        <p>
-          This disclaimer, combined with our{' '}
-          <a href="/legal/terms" style={{ color: '#4a9eff' }}>Terms of Service</a>{' '}
-          and{' '}
-          <a href="/legal/privacy" style={{ color: '#4a9eff' }}>Privacy Policy</a>,
+          This Disclaimer, combined with our{' '}
+          <a href="/legal/terms" style={{ color: '#4a9eff' }}>Terms of Service</a>,{' '}
+          <a href="/legal/privacy" style={{ color: '#4a9eff' }}>Privacy Policy</a>,{' '}
+          <a href="/legal/cookies" style={{ color: '#4a9eff' }}>Cookie Policy</a>, and{' '}
+          <a href="/legal/aup" style={{ color: '#4a9eff' }}>Acceptable Use Policy</a>,
           constitutes the complete agreement between you and TradVue regarding the use of the platform.
         </p>
       </Section>
 
       <AcknowledgmentBox>
-        By using TradVue, you certify that you have read this entire disclaimer, understand the risks of
-        trading and investing, acknowledge that TradVue provides no financial advice, and accept all limitations
-        and disclaimers outlined above. <strong>Use at Your Own Risk ⚠️</strong>
+        By using TradVue, you certify that you have read this entire Disclaimer, understand the risks of
+        trading and investing, acknowledge that TradVue provides no financial advice, and accept all
+        limitations and disclaimers outlined above. <strong>Use at Your Own Risk ⚠️</strong>
       </AcknowledgmentBox>
 
     </LegalPage>

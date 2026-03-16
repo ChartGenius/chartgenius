@@ -1,273 +1,193 @@
 # Disclaimer
 
-**TradVue**
+**TradVue** — *TradVue is a product of Apex Logics LLC*
+**Last Updated: March 16, 2026**
 
-Last Updated: March 6, 2026
+---
 
-## ⚠️ IMPORTANT LEGAL NOTICE
-
-Read this disclaimer carefully before using TradVue. Your use of the platform constitutes acceptance of all terms outlined below.
+> **THIS DISCLAIMER IS PART OF TRADVUE'S LEGAL AGREEMENT WITH YOU. BY USING THE SERVICE, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREED TO THIS DISCLAIMER. SEE ALSO: [TERMS OF SERVICE](https://tradvue.com/legal/terms) | [PRIVACY POLICY](https://tradvue.com/legal/privacy)**
 
 ---
 
 ## 1. NOT FINANCIAL ADVICE
 
-**TradVue is NOT a financial advisor and does NOT provide investment, trading, or financial advice.**
+> **THE TRADVUE PLATFORM, INCLUDING ALL FEATURES, CONTENT, ANALYTICS, DATA, TOOLS, AI COACH OUTPUTS, MARKET DATA, JOURNAL ANALYTICS, AND ANY OTHER INFORMATION PROVIDED THROUGH THE SERVICE, IS FOR INFORMATIONAL, JOURNALING, AND ANALYTICAL PURPOSES ONLY. NOTHING ON TRADVUE CONSTITUTES FINANCIAL ADVICE, INVESTMENT ADVICE, TRADING ADVICE, TAX ADVICE, LEGAL ADVICE, OR ANY OTHER TYPE OF REGULATED PROFESSIONAL ADVICE.**
+>
+> **NO CONTENT ON TRADVUE SHOULD BE CONSTRUED AS A RECOMMENDATION, SOLICITATION, OR OFFER TO BUY, SELL, HOLD, OR OTHERWISE TRANSACT IN ANY SECURITY, COMMODITY, CRYPTOCURRENCY, FUTURES CONTRACT, OPTIONS CONTRACT, OR OTHER FINANCIAL INSTRUMENT.**
 
-Nothing on TradVue—including charts, analysis, indicators, alerts, or any other content—should be construed as:
-- A recommendation to buy, sell, or hold any security
-- An offer to provide financial or investment advice
-- A solicitation to invest in any particular asset or strategy
-- Personalized financial guidance based on your situation
-- Professional investment management services
+**1.1 Informational Purpose.** TradVue is a journaling and analytics tool. Its purpose is to help you organize, review, and analyze your own historical trading data — not to guide future investment decisions.
 
-TradVue is a **research and visualization tool only**. All decisions to buy, sell, or trade securities must be made independently by you, preferably with guidance from a qualified financial advisor.
-
-**If you need financial advice, consult with a licensed financial advisor, broker, or investment professional.**
+**1.2 No Advisory Relationship.** Your use of TradVue does not create a financial advisory, broker-dealer, or fiduciary relationship between you and TradVue or Apex Logics LLC.
 
 ---
 
-## 2. NO WARRANTIES
+## 2. Not a Registered Investment Adviser
 
-TradVue is provided "AS-IS" without any warranties, express or implied.
+> **APEX LOGICS LLC (D/B/A TRADVUE) IS NOT REGISTERED AS AN INVESTMENT ADVISER WITH THE UNITED STATES SECURITIES AND EXCHANGE COMMISSION ("SEC") UNDER THE INVESTMENT ADVISERS ACT OF 1940, AS AMENDED (15 U.S.C. § 80B-1 ET SEQ.), NOR IS IT REGISTERED OR LICENSED AS AN INVESTMENT ADVISER UNDER ANY APPLICABLE STATE SECURITIES LAW.**
 
-We make no guarantees regarding:
-
-### 2.1 Data Accuracy
-- Market data may contain errors, omissions, or delays
-- Historical data may be incomplete or inaccurate
-- Real-time prices may lag actual market conditions
-- Corporate actions (splits, dividends) may not be reflected immediately
-- Indicators and calculations may not be perfect
-
-### 2.2 Service Availability
-- The platform may be temporarily unavailable for maintenance
-- We do not guarantee 24/7 uptime or error-free operation
-- Service interruptions may occur without notice
-- Market data feeds may be delayed or disconnected
-- Features may malfunction due to technical issues
-
-### 2.3 Indicator Reliability
-- Technical indicators are mathematical tools, not guarantees
-- Past signals do not predict future performance
-- Indicators may fail or produce misleading results under certain conditions
-- No indicator is 100% accurate
-
-### 2.4 Watchlist Accuracy
-- Watchlists may not include all available securities
-- Securities may be added, delisted, or renamed without notice
-- Real-time alerts may be delayed or missed
-- Price data may be inaccurate
+TradVue does not provide, and nothing on the TradVue platform should be construed as, "investment advice" as defined under the Investment Advisers Act of 1940. TradVue is not a "financial planner," "financial consultant," "wealth manager," or any other type of regulated financial professional.
 
 ---
 
-## 3. THIRD-PARTY DATA SOURCES
+## 3. Not a Broker-Dealer
 
-TradVue uses market data from external sources, including:
-- Stock exchanges and market data providers
-- Cryptocurrency exchanges
-- Financial data aggregators
-- News and economic calendars
-- Broker APIs
+> **APEX LOGICS LLC (D/B/A TRADVUE) IS NOT REGISTERED AS A BROKER-DEALER WITH THE SEC UNDER THE SECURITIES EXCHANGE ACT OF 1934, AS AMENDED (15 U.S.C. § 78A ET SEQ.), AND IS NOT A MEMBER OF THE FINANCIAL INDUSTRY REGULATORY AUTHORITY ("FINRA") OR THE SECURITIES INVESTOR PROTECTION CORPORATION ("SIPC").**
 
-**We are not responsible for:**
-- Delays in data delivery
-- Inaccuracies in third-party data
-- Disruptions in external services
-- Changes in data availability
-- Errors introduced by third-party sources
-
-We do not control, audit, or guarantee the accuracy of third-party data. Always verify critical information through official sources.
+TradVue does not execute, route, or facilitate the purchase or sale of any securities or other financial instruments. TradVue does not hold customer funds or securities. Your brokerage relationship is solely with your registered broker-dealer.
 
 ---
 
-## 4. MARKET DATA LIMITATIONS
+## 4. AI Coach Disclaimer
 
-### 4.1 Real-Time vs. Delayed Data
-- TradVue may display delayed data (15-20 minutes behind live market)
-- During market hours, delays are common
-- Do NOT use delayed data for time-sensitive trading decisions
-- For live trading, use your broker's official platform
+> **THE AI COACH FEATURE IS AN AUTOMATED ANALYTICAL TOOL POWERED BY ARTIFICIAL INTELLIGENCE. IT IS NOT A FINANCIAL ADVISER, INVESTMENT ADVISER, OR TRADING SYSTEM. AI COACH IS NOT DESIGNED OR INTENDED TO PROVIDE, AND DOES NOT PROVIDE, PERSONALIZED INVESTMENT ADVICE OR RECOMMENDATIONS.**
 
-### 4.2 Price Gaps & Liquidity
-- Charts may show gaps during market closures
-- Bid-ask spreads are not displayed
-- Actual execution prices may differ from displayed prices
-- Low-liquidity securities may have unreliable pricing
+**4.1 AI Limitations.** AI Coach outputs are generated by machine learning models (via OpenAI's API) that analyze your historical trade data. These outputs:
 
-### 4.3 Historical Data
-- Historical data may be incomplete for newer securities
-- Data may be reconstructed or adjusted after market events
-- Splits and dividends may not be reflected accurately
-- Free data sources may have limitations
+- **(a)** May be inaccurate, incomplete, misleading, or factually incorrect;
+- **(b)** Are not personalized to your individual financial situation, investment objectives, risk tolerance, time horizon, or tax circumstances;
+- **(c)** Do not account for real-time market conditions, regulatory changes, or events occurring after the data analyzed;
+- **(d)** Reflect limitations and potential biases inherent in large language models and AI systems;
+- **(e)** Should not be treated as reliable predictions of future trading performance.
+
+**4.2 Independent Verification Required.** You should not rely on AI Coach output for any trading or investment decision without independent verification by a qualified financial professional and your own due diligence.
+
+**4.3 No Substitute for Professional Advice.** AI Coach is not a substitute for advice from a licensed investment adviser, broker-dealer, or other qualified financial professional who understands your complete financial situation.
+
+**4.4 User Responsibility.** All investment and trading decisions are solely your responsibility. TradVue accepts no responsibility for any losses or adverse outcomes resulting from reliance on AI Coach outputs.
 
 ---
 
-## 5. RISK DISCLAIMER
+## 5. Market Data Disclaimer
 
-### 5.1 Market Risk
-- Financial markets are inherently unpredictable
-- Past performance does not guarantee future results
-- Market conditions can change rapidly and dramatically
-- Unexpected events (geopolitical, economic) can cause sharp price movements
+**5.1 Third-Party Data.** Market data, price quotes, financial news, and other market information displayed on TradVue are obtained from third-party providers (Alpaca Markets, Marketaux, Finnhub, and others). TradVue does not independently generate, verify, or warrant the accuracy of this data.
 
-### 5.2 Investment Risk
-- You may lose some or all of your investment
-- Leverage amplifies both gains and losses
-- Derivatives (options, futures) carry extreme risk
-- Volatile assets (crypto) can decline rapidly
-- Penny stocks and micro-caps are highly speculative
+**5.2 Data May Be Delayed.** Market data displayed on TradVue may be delayed by 15 minutes or more. Delayed data is not suitable for real-time trading decisions.
 
-### 5.3 Trading Risk
-- Day trading and short-term trading involve substantial risk
-- Emotional decision-making often leads to losses
-- Overconfidence is a common cause of trading failure
-- Most retail traders lose money
+**5.3 Potential Errors.** Market data may contain errors, gaps, or inaccuracies. Prices displayed may not reflect actual executable prices.
 
-**If you cannot afford to lose money, DO NOT trade.**
+**5.4 Not Suitable for Real-Time Trading.** Do not rely on TradVue market data as the sole source for real-time trading decisions. Always verify pricing and data through your broker, the relevant exchange, or other official sources before executing any trade.
+
+**5.5 No Warranty on Data.** TRADVUE MAKES NO WARRANTY, EXPRESS OR IMPLIED, REGARDING THE ACCURACY, COMPLETENESS, OR TIMELINESS OF ANY MARKET DATA.
 
 ---
 
-## 6. NO PERSONALIZATION
+## 6. Broker Sync Disclaimer
 
-TradVue does NOT:
-- Know your financial situation, goals, or risk tolerance
-- Consider your income, assets, or liabilities
-- Assess your investment experience or knowledge
-- Provide recommendations tailored to your needs
-- Manage your portfolio or execute trades for you
+**6.1 Third-Party Accuracy.** When you import trade data via CSV or, where available, automated broker synchronization, the data TradVue displays reflects what was imported from third-party sources. TradVue does not independently verify the accuracy of imported or synchronized data.
 
-**Any content on the platform applies equally to all users.** Your personal circumstances may make any strategy inappropriate for you.
+**6.2 Potential Discrepancies.** Data imported from brokers may:
 
----
+- Contain errors, omissions, or discrepancies compared to your actual trade executions;
+- Reflect delayed or incomplete information due to API limitations;
+- Differ from official broker statements.
 
-## 7. PROHIBITED USES
+**6.3 Official Statements Control.** Your official broker statements, confirmations, and account records are the authoritative source for your trade and account data. In any discrepancy between TradVue and your broker, your broker's records control.
 
-By using TradVue, you acknowledge that you will NOT:
-
-### 7.1 Securities Law Violations
-- Use the platform to engage in insider trading
-- Share material non-public information
-- Manipulate markets or engage in pump-and-dump schemes
-- Violate SEC, FINRA, or other regulatory rules
-- Trade without proper licensing if required by law
-
-### 7.2 Unethical Trading
-- Front-run other traders
-- Engage in spoofing or layering
-- Use high-frequency or algorithmic trading without proper compliance
-- Trade based on misrepresented information
-
-### 7.3 Platform Abuse
-- Use bots or automated scrapers without permission
-- Reverse-engineer the platform
-- Attempt unauthorized access
-- Disrupt service for other users
+**6.4 No Liability for Broker Errors.** TradVue is not responsible for errors, failures, or inaccuracies originating from your broker, from third-party data aggregators, or from the CSV data you import.
 
 ---
 
-## 8. LIMITATION OF LIABILITY
+## 7. No Warranties
 
-**TO THE MAXIMUM EXTENT PERMITTED BY LAW:**
-
-TradVue shall NOT be liable for ANY losses, damages, or costs, including:
-
-- Trading losses (even if caused by incorrect data)
-- Lost profits, revenue, or anticipated savings
-- Loss of data or information
-- Lost opportunity costs
-- Emotional distress or frustration
-- Consequential, incidental, special, or punitive damages
-- Damages from service interruptions
-- Damages from third-party services
-
-**This applies even if TradVue was advised of the possibility of such damages.**
-
-**Your sole remedy is discontinuing use of the Service.**
+> **THE SERVICE IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS. TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, TRADVUE AND APEX LOGICS LLC EXPRESSLY DISCLAIM ALL WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING BUT NOT LIMITED TO:**
+>
+> **(A) WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT;**
+>
+> **(B) WARRANTIES THAT THE SERVICE WILL BE UNINTERRUPTED, TIMELY, SECURE, OR ERROR-FREE;**
+>
+> **(C) WARRANTIES AS TO THE ACCURACY, RELIABILITY, COMPLETENESS, OR CURRENCY OF ANY CONTENT, DATA, OR INFORMATION PROVIDED THROUGH THE SERVICE;**
+>
+> **(D) WARRANTIES THAT DEFECTS WILL BE CORRECTED.**
 
 ---
 
-## 9. JURISDICTIONAL LIMITATIONS
+## 8. Limitation of Liability
 
-TradVue may not be available or legal in all jurisdictions. You are responsible for:
-- Determining if TradVue is legal in your country/state
-- Complying with all local investment and trading regulations
-- Understanding tax implications of your trades
-- Obtaining necessary licenses or permissions
-- Filing required regulatory documents
-
-TradVue cannot be held responsible for your violations of local law.
-
----
-
-## 10. ASSUMPTION OF RISK
-
-**By using TradVue, you acknowledge and accept that:**
-
-- ✓ Trading and investing involve substantial risk of loss
-- ✓ You may lose money using information or tools from TradVue
-- ✓ You are making your own trading decisions
-- ✓ You understand the risks involved
-- ✓ You have read and accepted this disclaimer
-- ✓ You will not hold TradVue liable for trading losses
+> **TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL APEX LOGICS LLC, TRADVUE, OR THEIR RESPECTIVE OFFICERS, DIRECTORS, MEMBERS, EMPLOYEES, AGENTS, LICENSORS, OR SERVICE PROVIDERS BE LIABLE FOR:**
+>
+> **(A) ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES;**
+>
+> **(B) ANY TRADING LOSSES, INVESTMENT LOSSES, OR FINANCIAL LOSSES OF ANY KIND;**
+>
+> **(C) ANY LOSS OF DATA, REVENUE, PROFITS, GOODWILL, OR BUSINESS OPPORTUNITIES;**
+>
+> **ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF OR INABILITY TO USE THE SERVICE, OR YOUR RELIANCE ON ANY INFORMATION, ANALYTICS, AI COACH OUTPUT, OR MARKET DATA PROVIDED THROUGH THE SERVICE.**
+>
+> **TRADVUE'S TOTAL CUMULATIVE LIABILITY TO YOU SHALL NOT EXCEED THE TOTAL SUBSCRIPTION FEES ACTUALLY PAID BY YOU TO TRADVUE DURING THE TWELVE (12) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM, OR $100.00, WHICHEVER IS GREATER.**
 
 ---
 
-## 11. RELIANCE ON CONTENT
+## 9. Risk Disclosure and Assumption of Risk
 
-**TradVue does not guarantee the accuracy or completeness of any content.** Before making any investment decision:
-
-1. ✓ Verify data through official sources (exchanges, company filings, etc.)
-2. ✓ Consult with qualified financial professionals
-3. ✓ Conduct your own independent research
-4. ✓ Do NOT rely solely on information from TradVue
-5. ✓ Understand that errors or delays may occur
-
----
-
-## 12. CHANGES TO DISCLAIMER
-
-TradVue may update this disclaimer at any time. Your continued use of the platform after changes constitutes acceptance of the revised disclaimer.
+> **TRADING IN SECURITIES, EQUITIES, OPTIONS, FUTURES, FOREIGN EXCHANGE, CRYPTOCURRENCIES, AND OTHER FINANCIAL INSTRUMENTS INVOLVES SUBSTANTIAL RISK OF LOSS. YOU MAY LOSE ALL OR MORE THAN YOUR INITIAL INVESTMENT. PAST PERFORMANCE IS NOT INDICATIVE OF FUTURE RESULTS. THERE IS NO GUARANTEE THAT ANY TRADING STRATEGY, SYSTEM, OR TOOL — INCLUDING TRADVUE — WILL RESULT IN PROFITS OR PREVENT LOSSES.**
+>
+> **BY USING TRADVUE, YOU EXPRESSLY ACKNOWLEDGE AND ACCEPT THAT:**
+> - **(A) TRADING INVOLVES SUBSTANTIAL RISK OF LOSS, UP TO AND INCLUDING THE TOTAL LOSS OF ALL INVESTED CAPITAL;**
+> - **(B) YOU ARE SOLELY RESPONSIBLE FOR ALL TRADING AND INVESTMENT DECISIONS YOU MAKE;**
+> - **(C) TRADVUE'S ANALYTICS AND AI COACH FEATURES ARE TOOLS TO REVIEW YOUR PAST ACTIVITY, NOT PREDICTIONS OR GUARANTEES OF FUTURE PERFORMANCE;**
+> - **(D) YOU HAVE SUFFICIENT KNOWLEDGE, EXPERIENCE, AND FINANCIAL RESOURCES TO BEAR THE RISKS OF YOUR TRADING ACTIVITY;**
+> - **(E) YOU WILL NOT HOLD TRADVUE OR APEX LOGICS LLC LIABLE FOR ANY TRADING LOSSES, REGARDLESS OF WHETHER YOU REVIEWED TRADVUE DATA BEFORE MAKING A TRADING DECISION.**
 
 ---
 
-## 13. CONTACT
+## 10. Tax Disclaimer
 
-**Questions about this disclaimer?**
+**TradVue does not provide tax advice.** The performance data, P&L calculations, and analytics displayed in TradVue are for journaling and self-analysis purposes only and are **not** intended for use in tax reporting. TradVue's calculations may not match the calculations used by your broker for tax purposes (e.g., wash sale rules, cost basis methods, short-term vs. long-term treatment).
 
-Email: legal@tradvue.com
-
-**Reporting Data Errors:**
-
-Email: support@tradvue.com with "Data Error" in the subject line.
+You are solely responsible for accurately reporting your trading income, gains, and losses to the applicable tax authorities. **Consult a qualified tax professional or CPA before using TradVue data for any tax filing purpose.**
 
 ---
 
-## 14. FULL AGREEMENT
+## 11. Hypothetical and Historical Performance
 
-This disclaimer, combined with our Terms of Service and Privacy Policy, constitutes the complete agreement between you and TradVue regarding the use of the platform.
+**11.1 Past Performance.** Any historical trading data or performance metrics displayed in TradVue reflect your past trading activity only. They do not constitute a representation or guarantee of future trading results.
 
----
+**11.2 Hypothetical Results.** Any backtesting, hypothetical analysis, or "what-if" scenarios available on TradVue are simulated and subject to known and unknown limitations:
 
-**ACKNOWLEDGMENT**
+- Hypothetical performance does not represent actual trading results;
+- Hypothetical results may not reflect the impact of actual market conditions, liquidity, slippage, commissions, or other transaction costs;
+- The ability to replicate hypothetical results is not guaranteed.
 
-**By using TradVue, you certify that:**
-
-1. You have read this entire disclaimer
-2. You understand the risks of trading and investing
-3. You understand that TradVue provides no financial advice
-4. You acknowledge that data may be inaccurate or delayed
-5. You accept all limitations and disclaimers
-6. You will not hold TradVue liable for any losses
+**11.3 No Guarantee.** TradVue makes no representation or warranty that any trading strategy, playbook, or approach reflected in your TradVue data will result in profits in the future.
 
 ---
 
-**Last Updated: March 6, 2026**
+## 12. Third-Party Content and Links
 
-**Use at Your Own Risk** ⚠️
+**12.1 Third-Party Information.** TradVue may display content, data, news, analysis, or links provided by third parties (including Market Data Providers). TradVue does not endorse, verify, or assume responsibility for the accuracy, completeness, or legality of any third-party content.
+
+**12.2 Third-Party Links.** The Service may contain links to third-party websites or services. These links are provided for convenience only. TradVue has no control over the content of linked sites and is not responsible for their privacy practices or content. Your use of third-party websites is at your own risk and subject to the terms and policies of those sites.
+
+**12.3 No Endorsement.** Reference to any third-party product, service, provider, or website does not constitute an endorsement by TradVue.
 
 ---
 
-**FOR PROFESSIONAL INVESTORS & FINANCIAL ADVISORS:**
+## 13. Regulatory and Legal Compliance
 
-If you are a licensed financial professional and wish to use TradVue in a professional capacity, contact legal@tradvue.com to discuss licensing options and compliance requirements.
+Users of TradVue are solely responsible for ensuring that their trading activities comply with all applicable laws and regulations in their jurisdiction, including but not limited to:
+
+- Securities laws (Securities Act of 1933, Securities Exchange Act of 1934, and state blue sky laws)
+- Commodity trading regulations (Commodity Exchange Act, CFTC regulations)
+- Anti-fraud and market manipulation prohibitions
+- Insider trading laws
+- Tax reporting obligations
+- Export control laws
+
+TradVue does not monitor users for regulatory compliance and does not provide legal or compliance advice.
+
+---
+
+## 14. Contact
+
+For questions regarding this Disclaimer:
+
+**Apex Logics LLC d/b/a TradVue**
+1935 Commerce Lane, Suite 9
+Jupiter, FL 33458
+
+- **Legal:** legal@tradvue.com
+- **Website:** https://tradvue.com
+
+---
+
+*TradVue is a product of Apex Logics LLC. Apex Logics LLC, FL Doc# L23000460971, DBA Reg# G26000036763.*
