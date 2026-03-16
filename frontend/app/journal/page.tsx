@@ -1396,13 +1396,14 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
               <FieldLabel label="Entry Price" tooltip="The price you bought/shorted at. Be exact — this is your cost basis." />
               <div style={{ position: 'relative' }}>
                 <input type="number" value={form.entryPrice} onChange={e => set('entryPrice')(e.target.value)} placeholder="e.g. 150.00" step="any" style={inputSx} />
-                {form.symbol && !form.entryPrice && (
+                {form.symbol && !form.entryPrice && form.assetClass !== 'Futures' && (
                   <button
                     type="button"
                     disabled={livePriceFetching}
                     onClick={async () => {
                       if (!form.symbol) return
                       setLivePriceFetching(true)
+                      setLivePriceHint(null)
                       try {
                         const API_BASE_J = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
                         const r = await fetch(`${API_BASE_J}/api/market-data/quote/${form.symbol}`)
@@ -1411,8 +1412,12 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                         if (price) {
                           set('entryPrice')(String(price.toFixed(2)))
                           setLivePriceHint({ symbol: form.symbol, price })
+                        } else {
+                          setLivePriceHint(null)
                         }
-                      } catch {}
+                      } catch {
+                        setLivePriceHint(null)
+                      }
                       setLivePriceFetching(false)
                     }}
                     style={{ marginTop: 4, fontSize: 10, padding: '2px 8px', background: 'var(--accent-dim)', border: '1px solid rgba(74,158,255,0.3)', borderRadius: 4, cursor: 'pointer', color: 'var(--accent)' }}
@@ -1420,7 +1425,12 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                     {livePriceFetching ? 'Fetching…' : `Fill ${form.symbol} current price`}
                   </button>
                 )}
-                {livePriceHint && livePriceHint.symbol === form.symbol && (
+                {form.symbol && !form.entryPrice && form.assetClass === 'Futures' && (
+                  <div style={{ marginTop: 4, fontSize: 10, color: 'var(--text-3)', padding: '2px 0' }}>
+                    Live price fill not available for futures — enter manually.
+                  </div>
+                )}
+                {livePriceHint && livePriceHint.symbol === form.symbol && form.assetClass !== 'Futures' && (
                   <div style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 2 }}>
                     Current: <strong style={{ color: 'var(--accent)' }}>${livePriceHint.price.toFixed(2)}</strong> — you can edit above
                   </div>
