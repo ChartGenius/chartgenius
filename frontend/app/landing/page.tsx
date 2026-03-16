@@ -280,7 +280,7 @@ const features = [
   {
     icon: <IconTools />,
     title: '30+ Trading Calculators',
-    desc: 'Options Profit, Futures Risk/Reward, Position Sizing, Risk of Ruin, Compound Growth, Forex Pip, Trade Expectancy, Correlation Matrix, and more — all free, no sign-up.',
+    desc: 'Options Profit, Futures Risk/Reward, Position Sizing, Risk of Ruin, Compound Growth, Forex Pip, Trade Expectancy, Correlation Matrix, and more — no sign-up required.',
     color: 'var(--blue)',
   },
   {

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: '%s | TradVue',
   },
   description:
-    'Track trades, analyze portfolios, calculate risk, and monitor markets — all free. 11 trading calculators, smart alerts, DRIP simulator, and more. No account required.',
+    'Track trades, analyze portfolios, calculate risk, and monitor markets — free to start. 30+ trading calculators, smart alerts, DRIP simulator, and more. No account required.',
 
   keywords: [
     'trading journal',
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     siteName: 'TradVue',
     title: 'TradVue — Free Trading Journal, Portfolio Tracker & Market Tools',
     description:
-      'Track trades, analyze portfolios, calculate risk, and monitor markets — all free. 11 trading calculators, smart alerts, DRIP simulator, and more. No account required.',
+      'Track trades, analyze portfolios, calculate risk, and monitor markets — free to start. 30+ trading calculators, smart alerts, DRIP simulator, and more. No account required.',
     images: [
       {
         url: '/og-image.png',
@@ -83,7 +83,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TradVue — Free Trading Journal, Portfolio Tracker & Market Tools',
     description:
-      'Track trades, analyze portfolios, calculate risk, and monitor markets — all free. 11 trading calculators, smart alerts, DRIP simulator, and more. No account required.',
+      'Track trades, analyze portfolios, calculate risk, and monitor markets — free to start. 30+ trading calculators, smart alerts, DRIP simulator, and more. No account required.',
     images: ['/og-image.png'],
   },
 
