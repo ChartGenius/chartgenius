@@ -27,6 +27,54 @@ export interface ParseResult {
   errors: string[]
 }
 
+// ── CSV Security ──────────────────────────────────────────────────────────────
+
+/**
+ * Sanitize a single CSV field value to prevent:
+ *  - HTML/XSS injection (strip tags)
+ *  - Formula injection (Excel/Sheets: =, +, -, @, tab, carriage return)
+ *  - Memory bombs (limit field length)
+ */
+export function sanitizeCSVField(value: string): string {
+  if (!value) return value
+
+  // Strip HTML tags
+  let clean = value.replace(/<[^>]*>/g, '')
+
+  // Block formula injection (Excel/Sheets attack vector)
+  // Fields starting with =, +, @, tab, or carriage return can execute formulas.
+  // For '-': only dangerous when NOT followed by a digit/decimal (e.g. -HYPERLINK()),
+  //          plain negative numbers like "-10" or "-1234.56" are safe.
+  const startsWithFormula =
+    /^[=+@\t\r]/.test(clean) ||
+    (clean.startsWith('-') && !/^-[\d.]/.test(clean))
+  if (startsWithFormula) {
+    clean = "'" + clean // Prefix with single quote to neutralize
+  }
+
+  // Trim whitespace
+  clean = clean.trim()
+
+  // Limit field length (prevent memory bombs)
+  if (clean.length > 10000) {
+    clean = clean.substring(0, 10000)
+  }
+
+  return clean
+}
+
+/**
+ * Sanitize a cell value for CSV export to prevent formula injection.
+ * Prefixes cells starting with formula characters with a single quote.
+ */
+export function sanitizeCSVExportCell(value: string): string {
+  if (!value) return value
+  if (/^[=+\-@\t\r]/.test(value)) {
+    return "'" + value
+  }
+  return value
+}
+
 // ── CSV Utilities ─────────────────────────────────────────────────────────────
 
 function parseCSVLine(line: string): string[] {
@@ -58,7 +106,8 @@ function parseCSVText(text: string): { headers: string[]; rows: Record<string, s
     const values = parseCSVLine(lines[i])
     if (values.every(v => !v.trim())) continue
     const row: Record<string, string> = {}
-    headers.forEach((h, idx) => { row[h] = (values[idx] ?? '').trim() })
+    // Apply sanitization to every field value to prevent XSS and formula injection
+    headers.forEach((h, idx) => { row[h] = sanitizeCSVField((values[idx] ?? '').trim()) })
     rows.push(row)
   }
   return { headers, rows }
