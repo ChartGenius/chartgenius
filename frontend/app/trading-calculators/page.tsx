@@ -89,7 +89,7 @@ export default function TradingCalculatorsPage() {
               fontSize: '13px',
               fontWeight: 600,
               padding: '9px 20px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
@@ -135,15 +135,14 @@ export default function TradingCalculatorsPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '14px 32px',
-            background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+            background: 'var(--accent)',
             color: '#fff',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             cursor: 'pointer',
             textDecoration: 'none',
             fontSize: '15px',
             fontWeight: 700,
-            boxShadow: '0 0 40px rgba(99,102,241,0.25)',
           }}
         >
           Access All Calculators
@@ -214,7 +213,7 @@ export default function TradingCalculatorsPage() {
                 style={{
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                   textDecoration: 'none',
                   color: 'inherit',
@@ -255,7 +254,7 @@ export default function TradingCalculatorsPage() {
           Why These Calculators Matter
         </h2>
 
-        <div style={{ display: 'grid', gap: '24px' }}>
+        <div style={{ display: 'grid', gap: '20px' }}>
           {[
             {
               title: 'Calculate Before You Trade',
@@ -279,7 +278,7 @@ export default function TradingCalculatorsPage() {
               style={{
                 background: 'var(--bg-1)',
                 border: '1px solid var(--border)',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 padding: '24px',
               }}
             >
@@ -287,7 +286,7 @@ export default function TradingCalculatorsPage() {
                 style={{
                   fontSize: '16px',
                   fontWeight: 700,
-                  color: 'var(--blue)',
+                  color: 'var(--accent)',
                   marginBottom: '10px',
                 }}
               >
@@ -338,15 +337,14 @@ export default function TradingCalculatorsPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '16px 40px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               textDecoration: 'none',
               fontSize: '16px',
               fontWeight: 700,
-              boxShadow: '0 0 40px rgba(99,102,241,0.25)',
             }}
           >
             Access All Calculators
@@ -416,15 +414,14 @@ export default function TradingCalculatorsPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '16px 40px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               textDecoration: 'none',
               fontSize: '16px',
               fontWeight: 700,
-              boxShadow: '0 0 40px rgba(99,102,241,0.25)',
             }}
           >
             Use Calculators Now
@@ -447,7 +444,7 @@ export default function TradingCalculatorsPage() {
                 <Link
                   href={link.href}
                   style={{
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     textDecoration: 'none',
                     fontSize: '14px',
                   }}

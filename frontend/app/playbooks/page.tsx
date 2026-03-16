@@ -817,7 +817,7 @@ export default function PlaybooksPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-0)', margin: '0 0 4px 0' }}>
-                  📋 Playbook Templates
+                  Playbook Templates
                 </h1>
                 <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>
                   Define your strategies. Tag trades. Track what works.

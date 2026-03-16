@@ -6,9 +6,36 @@ import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { getSyncStatus, subscribeSyncStatus, initFullSync, type SyncStatus } from '../utils/cloudSync'
 
+// ─── Inline nav icons (16×16, currentColor) ───────────────────────────────────
+
+function NavIconRitual() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2L9.5 8.5 3 9.27l5 4.87L6.82 21 12 17.77 17.18 21 16 14.14l5-4.87-6.5-.77z"/>
+    </svg>
+  )
+}
+
+function NavIconCoach() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+    </svg>
+  )
+}
+
+function NavIconRules() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  )
+}
+
 // ─── Nav items ───────────────────────────────────────────────────────────────
 
-const NAV_ITEMS = [
+const NAV_ITEMS: Array<{ label: string; href: string; icon?: React.ReactNode }> = [
   { label: 'Dashboard', href: '/' },
   { label: 'News',      href: '/news' },
   { label: 'Analysis',  href: '/?view=analysis' },
@@ -18,9 +45,9 @@ const NAV_ITEMS = [
   { label: 'Journal',   href: '/journal' },
   { label: 'Prop Firm', href: '/propfirm' },
   { label: 'Playbooks', href: '/playbooks' },
-  { label: '✨ Ritual', href: '/ritual' },
-  { label: '🧠 AI Coach', href: '/coach' },
-  { label: '🛡️ Rules',   href: '/rules' },
+  { label: 'Ritual',    href: '/ritual',  icon: <NavIconRitual /> },
+  { label: 'AI Coach',  href: '/coach',   icon: <NavIconCoach /> },
+  { label: 'Rules',     href: '/rules',   icon: <NavIconRules /> },
   { label: 'Help',      href: '/help' },
 ]
 
@@ -154,7 +181,9 @@ function NavInner() {
               key={item.label}
               href={item.href}
               className={`nav-item${isActive(item.href) ? ' active' : ''}`}
+              style={item.icon ? { display: 'inline-flex', alignItems: 'center', gap: '5px' } : undefined}
             >
+              {item.icon}
               {item.label}
             </Link>
           ))}
@@ -211,7 +240,9 @@ function NavInner() {
               href={item.href}
               className={`nav-item${isActive(item.href) ? ' active' : ''}`}
               onClick={handleNavClick}
+              style={item.icon ? { display: 'inline-flex', alignItems: 'center', gap: '5px' } : undefined}
             >
+              {item.icon}
               {item.label}
             </Link>
           ))}

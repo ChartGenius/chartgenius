@@ -31,7 +31,6 @@ function formatWeek(start: string, end: string): string {
 const SEVERITY = {
   positive: {
     icon: <IconCheck size={16} />,
-    label: '✅',
     accent: '#4ade80',
     bg: 'rgba(74, 222, 128, 0.07)',
     border: 'rgba(74, 222, 128, 0.25)',
@@ -39,7 +38,6 @@ const SEVERITY = {
   },
   neutral: {
     icon: <IconInfo size={16} />,
-    label: 'ℹ️',
     accent: '#60a5fa',
     bg: 'rgba(96, 165, 250, 0.07)',
     border: 'rgba(96, 165, 250, 0.25)',
@@ -47,7 +45,6 @@ const SEVERITY = {
   },
   warning: {
     icon: <IconAlert size={16} />,
-    label: '⚠️',
     accent: '#fb923c',
     bg: 'rgba(251, 146, 60, 0.07)',
     border: 'rgba(251, 146, 60, 0.25)',
@@ -55,7 +52,6 @@ const SEVERITY = {
   },
   critical: {
     icon: <IconZap size={16} />,
-    label: '🚨',
     accent: '#f87171',
     bg: 'rgba(248, 113, 113, 0.07)',
     border: 'rgba(248, 113, 113, 0.25)',
@@ -77,7 +73,7 @@ function DisclaimerBox() {
       gap: 12,
       alignItems: 'flex-start',
     }}>
-      <span style={{ fontSize: 22, flexShrink: 0 }}>🧠</span>
+      <span style={{ fontSize: 0, flexShrink: 0, color: 'var(--accent)', display: 'flex', alignItems: 'center' }}><IconBrain size={20} /></span>
       <p style={{ margin: 0, fontSize: 13, color: 'var(--text-1)', lineHeight: 1.7 }}>
         <strong style={{ color: 'var(--text-0)' }}>AI Trade Coach</strong> analyzes patterns in YOUR trading data
         using statistical methods only. It does not provide financial advice, trading recommendations, or predictions.
@@ -107,7 +103,10 @@ function ThresholdProgressBar({ info }: { info: ThresholdInfo }) {
           {info.progressLabel}
         </span>
         {isComplete && (
-          <span style={{ fontSize: 11, color: '#4ade80', fontWeight: 700 }}>🏆 HIGH CONFIDENCE</span>
+          <span style={{ fontSize: 11, color: '#4ade80', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 4H17l-1 7a5 5 0 0 1-10 0L5 4H2m5 0H5a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h1M17 4h2a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-1"/><polyline points="8 21 12 21 16 21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            HIGH CONFIDENCE
+          </span>
         )}
       </div>
       <div style={{ background: 'var(--bg-3)', borderRadius: 999, height: 6, overflow: 'hidden' }}>
@@ -137,14 +136,14 @@ function ThresholdProgressBar({ info }: { info: ThresholdInfo }) {
 // ─── Locked Feature Preview ───────────────────────────────────────────────────
 
 const LOCKED_PREVIEWS = [
-  { icon: '🕵️', label: 'Revenge Trading Detection', threshold: 20 },
-  { icon: '🕐', label: 'Time-of-Day Analysis', threshold: 20 },
-  { icon: '🔥', label: 'Streak Patterns', threshold: 10 },
-  { icon: '📊', label: 'Overtrading Detection', threshold: 10 },
-  { icon: '🎯', label: 'Ticker Concentration Analysis', threshold: 10 },
-  { icon: '📋', label: 'Playbook Performance', threshold: 20 },
-  { icon: '💭', label: 'Emotion-Performance Correlation', threshold: 20 },
-  { icon: '⚖️', label: 'Risk/Reward Analysis', threshold: 20 },
+  { label: 'Revenge Trading Detection', threshold: 20 },
+  { label: 'Time-of-Day Analysis', threshold: 20 },
+  { label: 'Streak Patterns', threshold: 10 },
+  { label: 'Overtrading Detection', threshold: 10 },
+  { label: 'Ticker Concentration Analysis', threshold: 10 },
+  { label: 'Playbook Performance', threshold: 20 },
+  { label: 'Emotion-Performance Correlation', threshold: 20 },
+  { label: 'Risk/Reward Analysis', threshold: 20 },
 ]
 
 function LockedPreviewCards({ tradeCount }: { tradeCount: number }) {
@@ -171,11 +170,13 @@ function LockedPreviewCards({ tradeCount }: { tradeCount: number }) {
               gap: 10,
             }}
           >
-            <span style={{ fontSize: 20, filter: 'grayscale(1)' }}>{p.icon}</span>
+            <span style={{ color: 'var(--text-3)', display: 'flex', alignItems: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}>{p.label}</div>
               <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>
-                🔒 Unlocks at {p.threshold} trades
+                Unlocks at {p.threshold} trades
               </div>
             </div>
           </div>
@@ -204,7 +205,7 @@ function InsightCard({ insight, showConfidence }: { insight: CoachInsight; showC
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 18 }}>{s.label}</span>
+        <span style={{ color: s.accent, display: 'flex', alignItems: 'center' }}>{s.icon}</span>
         <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-0)' }}>{insight.title}</span>
       </div>
 

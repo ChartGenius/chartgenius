@@ -89,7 +89,7 @@ export default function OptionsTradingJournalPage() {
               fontSize: '13px',
               fontWeight: 600,
               padding: '9px 20px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
@@ -135,15 +135,14 @@ export default function OptionsTradingJournalPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '14px 32px',
-            background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+            background: 'var(--accent)',
             color: '#fff',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             cursor: 'pointer',
             textDecoration: 'none',
             fontSize: '15px',
             fontWeight: 700,
-            boxShadow: '0 0 40px rgba(99,102,241,0.25)',
           }}
         >
           Try Options Journaling
@@ -172,7 +171,7 @@ export default function OptionsTradingJournalPage() {
             Built for Options Traders
           </h2>
 
-          <div style={{ display: 'grid', gap: '24px' }}>
+          <div style={{ display: 'grid', gap: '20px' }}>
             {[
               {
                 title: 'Multi-Leg Strategies',
@@ -204,7 +203,7 @@ export default function OptionsTradingJournalPage() {
                 style={{
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                 }}
               >
@@ -212,7 +211,7 @@ export default function OptionsTradingJournalPage() {
                   style={{
                     fontSize: '16px',
                     fontWeight: 700,
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     marginBottom: '8px',
                   }}
                 >
@@ -332,7 +331,7 @@ export default function OptionsTradingJournalPage() {
                   gap: '20px',
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                 }}
               >
@@ -340,7 +339,7 @@ export default function OptionsTradingJournalPage() {
                   style={{
                     fontSize: '20px',
                     fontWeight: 800,
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     flexShrink: 0,
                   }}
                 >
@@ -406,7 +405,7 @@ export default function OptionsTradingJournalPage() {
                 padding: '16px',
               }}
             >
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--blue)', marginBottom: '6px' }}>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--accent)', marginBottom: '6px' }}>
                 {item.greek}
               </div>
               <p style={{ fontSize: '13px', color: 'var(--text-2)', margin: 0, lineHeight: 1.6 }}>
@@ -451,15 +450,14 @@ export default function OptionsTradingJournalPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '16px 40px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               textDecoration: 'none',
               fontSize: '16px',
               fontWeight: 700,
-              boxShadow: '0 0 40px rgba(99,102,241,0.25)',
             }}
           >
             Try Options Journaling
@@ -482,7 +480,7 @@ export default function OptionsTradingJournalPage() {
                 <Link
                   href={link.href}
                   style={{
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     textDecoration: 'none',
                     fontSize: '14px',
                   }}

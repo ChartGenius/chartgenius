@@ -204,7 +204,7 @@ function AccountCard({ account, onSelect, onDelete }: {
   const drawdownColor = getDrawdownColor(drawdownPct)
   const profitColor = profitPct >= 100 ? 'var(--green)' : 'var(--accent)'
   const dailyColor  = getDrawdownColor(dailyPct)
-  const firmColor   = firm?.color ?? '#6366f1'
+  const firmColor   = firm?.color ?? 'var(--accent)'
   const [confirmDel, setConfirmDel] = useState(false)
 
   const hasMinDays = !!(account.rules.minTradingDays && account.rules.minTradingDays > 0)
@@ -215,13 +215,13 @@ function AccountCard({ account, onSelect, onDelete }: {
         background: 'var(--card-bg)',
         border: '1px solid var(--border)',
         borderRadius: 12,
-        padding: '18px 20px',
+        padding: '20px',
         cursor: 'pointer',
         transition: 'border-color 0.15s, box-shadow 0.15s',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: 16,
       }}
       onClick={() => onSelect(account)}
       onMouseEnter={e => {
@@ -884,7 +884,7 @@ function AccountDetail({ account, onBack, onUpdate }: {
   onUpdate: (updates: Partial<PropFirmAccount>) => void
 }) {
   const firm = getFirmPreset(account.firm)
-  const firmColor = firm?.color ?? '#6366f1'
+  const firmColor = firm?.color ?? 'var(--accent)'
   const statusColor = getStatusColor(account.status)
 
   // Edit Rules mode
@@ -1741,7 +1741,7 @@ export default function PropFirmPage() {
                   <div key={stat.label} style={{
                     background: 'var(--card-bg)',
                     border: '1px solid var(--border)',
-                    borderRadius: 10,
+                    borderRadius: 12,
                     padding: '12px 18px',
                     minWidth: 120,
                   }}>

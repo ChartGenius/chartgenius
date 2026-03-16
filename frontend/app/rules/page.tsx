@@ -290,8 +290,8 @@ function RuleCard({ rule, status, violationCount, onToggle, onValueChange, onDel
       style={{
         background: 'var(--surface)',
         border: `1px solid ${borderColor}`,
-        borderRadius: 10,
-        padding: '14px 18px',
+        borderRadius: 12,
+        padding: '20px',
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
@@ -546,7 +546,7 @@ export default function RulesPage() {
               fontSize: 13, fontWeight: 600, opacity: checking ? 0.7 : 1,
             }}
           >
-            {checking ? 'Checking…' : '🔍 Check Rules Now'}
+            {checking ? 'Checking…' : 'Check Rules Now'}
           </button>
         </div>
 

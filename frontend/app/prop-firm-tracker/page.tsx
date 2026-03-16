@@ -89,7 +89,7 @@ export default function PropFirmTrackerPage() {
               fontSize: '13px',
               fontWeight: 600,
               padding: '9px 20px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
@@ -135,15 +135,14 @@ export default function PropFirmTrackerPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '14px 32px',
-            background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+            background: 'var(--accent)',
             color: '#fff',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             cursor: 'pointer',
             textDecoration: 'none',
             fontSize: '15px',
             fontWeight: 700,
-            boxShadow: '0 0 40px rgba(99,102,241,0.25)',
           }}
         >
           Try Prop Firm Tracker Free
@@ -196,7 +195,7 @@ export default function PropFirmTrackerPage() {
           Key Features
         </h2>
 
-        <div style={{ display: 'grid', gap: '24px' }}>
+        <div style={{ display: 'grid', gap: '20px' }}>
           {[
             {
               title: 'Live Drawdown Gauge',
@@ -228,7 +227,7 @@ export default function PropFirmTrackerPage() {
               style={{
                 background: 'var(--bg-1)',
                 border: '1px solid var(--border)',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 padding: '20px',
               }}
             >
@@ -236,7 +235,7 @@ export default function PropFirmTrackerPage() {
                 style={{
                   fontSize: '16px',
                   fontWeight: 700,
-                  color: 'var(--blue)',
+                  color: 'var(--accent)',
                   marginBottom: '8px',
                 }}
               >
@@ -302,7 +301,7 @@ export default function PropFirmTrackerPage() {
                   gap: '20px',
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                 }}
               >
@@ -310,7 +309,7 @@ export default function PropFirmTrackerPage() {
                   style={{
                     fontSize: '20px',
                     fontWeight: 800,
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     flexShrink: 0,
                   }}
                 >
@@ -344,7 +343,7 @@ export default function PropFirmTrackerPage() {
           Supported Rules
         </h2>
 
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '10px', padding: '24px', marginBottom: '40px' }}>
+        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px', marginBottom: '40px' }}>
           <p style={{ fontSize: '14px', color: 'var(--text-1)', lineHeight: 1.7, margin: '0 0 16px 0' }}>
             TradVue supports custom rules for any prop firm, including:
           </p>
@@ -405,15 +404,14 @@ export default function PropFirmTrackerPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '16px 40px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               textDecoration: 'none',
               fontSize: '16px',
               fontWeight: 700,
-              boxShadow: '0 0 40px rgba(99,102,241,0.25)',
             }}
           >
             Try Prop Firm Tracker
@@ -436,7 +434,7 @@ export default function PropFirmTrackerPage() {
                 <Link
                   href={link.href}
                   style={{
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     textDecoration: 'none',
                     fontSize: '14px',
                   }}

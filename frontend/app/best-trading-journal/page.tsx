@@ -103,7 +103,7 @@ export default function BestTradingJournalPage() {
               fontSize: '13px',
               fontWeight: 600,
               padding: '9px 20px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
@@ -152,15 +152,14 @@ export default function BestTradingJournalPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '14px 32px',
-            background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+            background: 'var(--accent)',
             color: '#fff',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             cursor: 'pointer',
             textDecoration: 'none',
             fontSize: '15px',
             fontWeight: 700,
-            boxShadow: '0 0 40px rgba(99,102,241,0.25)',
           }}
         >
           Start Journaling Free
@@ -192,7 +191,7 @@ export default function BestTradingJournalPage() {
             Why TradVue Stands Out
           </h2>
 
-          <div style={{ display: 'grid', gap: '24px', marginBottom: '40px' }}>
+          <div style={{ display: 'grid', gap: '20px', marginBottom: '40px' }}>
             {[
               {
                 title: 'AI-Powered Trade Analysis',
@@ -224,7 +223,7 @@ export default function BestTradingJournalPage() {
                 style={{
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                 }}
               >
@@ -232,7 +231,7 @@ export default function BestTradingJournalPage() {
                   style={{
                     fontSize: '16px',
                     fontWeight: 700,
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     marginBottom: '8px',
                   }}
                 >
@@ -277,7 +276,7 @@ export default function BestTradingJournalPage() {
                 <th style={{ textAlign: 'left', padding: '12px', color: 'var(--text-1)', fontWeight: 600 }}>
                   Feature
                 </th>
-                <th style={{ textAlign: 'center', padding: '12px', color: 'var(--blue)', fontWeight: 700 }}>
+                <th style={{ textAlign: 'center', padding: '12px', color: 'var(--accent)', fontWeight: 700 }}>
                   TradVue
                 </th>
                 <th style={{ textAlign: 'center', padding: '12px', color: 'var(--text-2)', fontWeight: 600 }}>
@@ -371,7 +370,7 @@ export default function BestTradingJournalPage() {
                   gap: '20px',
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                 }}
               >
@@ -379,7 +378,7 @@ export default function BestTradingJournalPage() {
                   style={{
                     fontSize: '20px',
                     fontWeight: 800,
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     flexShrink: 0,
                   }}
                 >
@@ -518,15 +517,14 @@ export default function BestTradingJournalPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '16px 40px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               textDecoration: 'none',
               fontSize: '16px',
               fontWeight: 700,
-              boxShadow: '0 0 40px rgba(99,102,241,0.25)',
             }}
           >
             Start Journaling Free
@@ -555,7 +553,7 @@ export default function BestTradingJournalPage() {
                 <Link
                   href={link.href}
                   style={{
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     textDecoration: 'none',
                     fontSize: '14px',
                   }}

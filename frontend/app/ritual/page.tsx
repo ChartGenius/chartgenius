@@ -101,7 +101,7 @@ function StepCard({
         margin: '0 auto',
         background: 'var(--card-bg, #1a1a1a)',
         border: '1px solid var(--border, #2a2a2a)',
-        borderRadius: 16,
+        borderRadius: 12,
         padding: '36px 40px',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(16px)',
@@ -277,7 +277,7 @@ function HistoryItem({ entry }: { entry: RitualEntry }) {
       style={{
         background: 'var(--card-bg, #1a1a1a)',
         border: '1px solid var(--border, #2a2a2a)',
-        borderRadius: 10,
+        borderRadius: 12,
         padding: '14px 18px',
         cursor: 'pointer',
         transition: 'border-color 0.2s',
@@ -388,7 +388,7 @@ function CompletedView({
           width: '100%',
           background: 'linear-gradient(135deg, #1a2a1a 0%, #1a1a2a 100%)',
           border: '1px solid #4a9eff33',
-          borderRadius: 16,
+          borderRadius: 12,
           padding: '28px 32px',
           display: 'flex',
           alignItems: 'center',
@@ -445,7 +445,7 @@ function CompletedView({
           width: '100%',
           background: 'var(--card-bg, #1a1a1a)',
           border: '1px solid var(--border, #2a2a2a)',
-          borderRadius: 16,
+          borderRadius: 12,
           padding: '28px 32px',
           display: 'flex',
           flexDirection: 'column',
@@ -520,7 +520,7 @@ function CompletedView({
           width: '100%',
           background: 'var(--card-bg, #1a1a1a)',
           border: '1px solid var(--border, #2a2a2a)',
-          borderRadius: 16,
+          borderRadius: 12,
           padding: '24px 28px',
         }}
       >
@@ -1232,7 +1232,9 @@ export default function RitualPage() {
               borderRadius: 12,
             }}
           >
-            <span style={{ fontSize: 20 }}>🔥</span>
+            <span style={{ color: streak.currentStreak > 0 ? '#f97316' : 'var(--text-3)', display: 'flex', alignItems: 'center' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </span>
             <div>
               <div style={{ fontSize: 20, fontWeight: 700, color: streak.currentStreak > 0 ? '#f97316' : 'var(--text-3, #666)', lineHeight: 1 }}>
                 {streak.currentStreak}

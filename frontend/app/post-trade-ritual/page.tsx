@@ -89,7 +89,7 @@ export default function PostTradeRitualPage() {
               fontSize: '13px',
               fontWeight: 600,
               padding: '9px 20px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
@@ -135,15 +135,14 @@ export default function PostTradeRitualPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '14px 32px',
-            background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+            background: 'var(--accent)',
             color: '#fff',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             cursor: 'pointer',
             textDecoration: 'none',
             fontSize: '15px',
             fontWeight: 700,
-            boxShadow: '0 0 40px rgba(99,102,241,0.25)',
           }}
         >
           Start Your Ritual
@@ -206,7 +205,7 @@ export default function PostTradeRitualPage() {
                   gap: '20px',
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                 }}
               >
@@ -284,7 +283,7 @@ export default function PostTradeRitualPage() {
               style={{
                 background: 'var(--bg-1)',
                 border: '1px solid var(--border)',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 padding: '20px',
               }}
             >
@@ -293,7 +292,7 @@ export default function PostTradeRitualPage() {
                   style={{
                     fontSize: '32px',
                     fontWeight: 800,
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     flexShrink: 0,
                     width: '40px',
                     textAlign: 'center',
@@ -358,7 +357,7 @@ export default function PostTradeRitualPage() {
                 style={{
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '16px',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -366,7 +365,7 @@ export default function PostTradeRitualPage() {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--blue)', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent)', marginBottom: '4px' }}>
                     {item.milestone}
                   </div>
                   <div style={{ fontSize: '13px', color: 'var(--text-2)' }}>{item.reward}</div>
@@ -401,7 +400,7 @@ export default function PostTradeRitualPage() {
           you start to notice patterns.
         </p>
 
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '10px', padding: '24px' }}>
+        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
           <p style={{ fontSize: '14px', color: 'var(--text-1)', marginBottom: '16px' }}>
             Common emotion tags:
           </p>
@@ -470,15 +469,14 @@ export default function PostTradeRitualPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '16px 40px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               textDecoration: 'none',
               fontSize: '16px',
               fontWeight: 700,
-              boxShadow: '0 0 40px rgba(99,102,241,0.25)',
             }}
           >
             Start Your Ritual
@@ -501,7 +499,7 @@ export default function PostTradeRitualPage() {
                 <Link
                   href={link.href}
                   style={{
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     textDecoration: 'none',
                     fontSize: '14px',
                   }}

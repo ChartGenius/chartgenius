@@ -89,7 +89,7 @@ export default function FuturesTradingJournalPage() {
               fontSize: '13px',
               fontWeight: 600,
               padding: '9px 20px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
@@ -135,15 +135,14 @@ export default function FuturesTradingJournalPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '14px 32px',
-            background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+            background: 'var(--accent)',
             color: '#fff',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             cursor: 'pointer',
             textDecoration: 'none',
             fontSize: '15px',
             fontWeight: 700,
-            boxShadow: '0 0 40px rgba(99,102,241,0.25)',
           }}
         >
           Start Journaling Free
@@ -172,7 +171,7 @@ export default function FuturesTradingJournalPage() {
             Why Futures Traders Choose TradVue
           </h2>
 
-          <div style={{ display: 'grid', gap: '24px' }}>
+          <div style={{ display: 'grid', gap: '20px' }}>
             {[
               {
                 title: '20 Built-In Contracts',
@@ -204,7 +203,7 @@ export default function FuturesTradingJournalPage() {
                 style={{
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                 }}
               >
@@ -212,7 +211,7 @@ export default function FuturesTradingJournalPage() {
                   style={{
                     fontSize: '16px',
                     fontWeight: 700,
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     marginBottom: '8px',
                   }}
                 >
@@ -252,7 +251,7 @@ export default function FuturesTradingJournalPage() {
             gap: '16px',
             background: 'var(--bg-1)',
             border: '1px solid var(--border)',
-            borderRadius: '10px',
+            borderRadius: '12px',
             padding: '24px',
           }}
         >
@@ -338,7 +337,7 @@ export default function FuturesTradingJournalPage() {
                   gap: '20px',
                   background: 'var(--bg-2)',
                   border: '1px solid var(--border)',
-                  borderRadius: '10px',
+                  borderRadius: '12px',
                   padding: '20px',
                 }}
               >
@@ -346,7 +345,7 @@ export default function FuturesTradingJournalPage() {
                   style={{
                     fontSize: '20px',
                     fontWeight: 800,
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     flexShrink: 0,
                   }}
                 >
@@ -380,7 +379,7 @@ export default function FuturesTradingJournalPage() {
           Example: NQ Trade Calculation
         </h2>
 
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '10px', padding: '24px' }}>
+        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
           <p style={{ fontSize: '14px', color: 'var(--text-1)', marginBottom: '16px' }}>
             Let's say you trade NQ (Nasdaq-100 E-mini):
           </p>
@@ -393,7 +392,7 @@ export default function FuturesTradingJournalPage() {
               'Multiplier: $100 per point',
             ].map((item) => (
               <li key={item} style={{ fontSize: '14px', color: 'var(--text-1)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: 'var(--blue)' }}>→</span>
+                <span style={{ color: 'var(--accent)' }}>→</span>
                 {item}
               </li>
             ))}
@@ -443,15 +442,14 @@ export default function FuturesTradingJournalPage() {
               alignItems: 'center',
               gap: '8px',
               padding: '16px 40px',
-              background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
+              background: 'var(--accent)',
               color: '#fff',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               textDecoration: 'none',
               fontSize: '16px',
               fontWeight: 700,
-              boxShadow: '0 0 40px rgba(99,102,241,0.25)',
             }}
           >
             Start Journaling Free
@@ -474,7 +472,7 @@ export default function FuturesTradingJournalPage() {
                 <Link
                   href={link.href}
                   style={{
-                    color: 'var(--blue)',
+                    color: 'var(--accent)',
                     textDecoration: 'none',
                     fontSize: '14px',
                   }}
