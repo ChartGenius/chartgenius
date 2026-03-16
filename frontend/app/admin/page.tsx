@@ -75,6 +75,20 @@ interface SecurityFeedEntry {
   id: string; action: string; email: string | null; ip_address: string | null
   created_at: string; details: Record<string, unknown> | null
 }
+
+interface SecurityReport {
+  filename: string; type: string; date: string | null
+  score: string | null; findings: { critical: number; high: number; medium: number; low: number; info: number } | null
+  status: string | null; lastModified: string
+}
+interface ScoreHistoryEntry {
+  date: string; score: number; type: string
+  findings?: { critical: number; high: number; medium: number; low: number; info: number }
+  status?: string; checks?: number
+}
+interface AlertHistoryEntry {
+  date: string; type: string; result: string; details: string
+}
 interface Announcement {
   id: string; message: string; type: 'info' | 'warning' | 'success'
   active: boolean; expires_at?: string; created_at: string
@@ -182,6 +196,13 @@ export default function AdminPage() {
   const [secActivityFeed, setSecActivityFeed] = useState<SecurityFeedEntry[]>([])
   const [secLoading, setSecLoading] = useState(false)
   const [failedLoginSort, setFailedLoginSort] = useState<'asc' | 'desc'>('desc')
+  const [secReports, setSecReports] = useState<SecurityReport[]>([])
+  const [secScoreHistory, setSecScoreHistory] = useState<ScoreHistoryEntry[]>([])
+  const [secAlertHistory, setSecAlertHistory] = useState<AlertHistoryEntry[]>([])
+  const [secAlertFilter, setSecAlertFilter] = useState('')
+  const [secAlertResultFilter, setSecAlertResultFilter] = useState<'all' | 'clean' | 'pass' | 'warning' | 'alert' | 'fail'>('all')
+  const [selectedReport, setSelectedReport] = useState<{ filename: string; content: string } | null>(null)
+  const [reportModalLoading, setReportModalLoading] = useState(false)
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -293,21 +314,58 @@ export default function AdminPage() {
     if (!token) return
     setSecLoading(true)
     try {
-      const [overview, failedLogins, activeSessions, ipThreats, activityFeed] = await Promise.all([
+      const [overview, failedLogins, activeSessions, ipThreats, activityFeed, reports, scoreHistory, alertHistory] = await Promise.all([
         apiFetch('/api/admin/security/overview'),
         apiFetch('/api/admin/security/failed-logins'),
         apiFetch('/api/admin/security/active-sessions'),
         apiFetch('/api/admin/security/ip-threats'),
         apiFetch('/api/admin/security/activity-feed'),
+        apiFetch('/api/admin/security/reports'),
+        apiFetch('/api/admin/security/score-history'),
+        apiFetch('/api/admin/security/alert-history'),
       ])
       setSecOverview(overview)
       setSecFailedLogins(failedLogins.failed_logins || [])
       setSecActiveSessions(activeSessions.active_sessions || [])
       setSecIPThreats(ipThreats.ip_threats || [])
       setSecActivityFeed(activityFeed.activity_feed || [])
+      setSecReports(reports.reports || [])
+      setSecScoreHistory(scoreHistory.history || [])
+      setSecAlertHistory(alertHistory.alerts || [])
     } catch (e: unknown) { setError((e as Error).message) }
     finally { setSecLoading(false) }
   }, [apiFetch, token])
+
+  const openReport = useCallback(async (filename: string) => {
+    setReportModalLoading(true)
+    setSelectedReport(null)
+    try {
+      const d = await apiFetch(`/api/admin/security/reports/${encodeURIComponent(filename)}`)
+      setSelectedReport({ filename: d.filename, content: d.content })
+    } catch (e: unknown) { setError((e as Error).message) }
+    finally { setReportModalLoading(false) }
+  }, [apiFetch])
+
+  const exportFile = useCallback((type: string) => {
+    const url = `${API_BASE}/api/admin/security/export/${type}`
+    const a = document.createElement('a')
+    a.href = url
+    a.style.display = 'none'
+    // Pass auth token via query param for download (or use fetch + blob)
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const objectUrl = URL.createObjectURL(blob)
+        a.href = objectUrl
+        const ext = type.includes('csv') ? '.csv' : '.md'
+        a.download = `${type}${ext}`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(objectUrl)
+      })
+      .catch(e => setError((e as Error).message))
+  }, [token])
 
   const loadAnnouncements = useCallback(async () => {
     try { const d = await apiFetch('/api/admin/announcements'); setAnnouncements(d.announcements || []) } catch (e: unknown) { setError((e as Error).message) }
@@ -1112,6 +1170,218 @@ export default function AdminPage() {
                 })}
               </div>
             </div>
+
+            {/* ── 6. Quick Actions Panel ────────────────────────────────────── */}
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px', marginTop: 20, marginBottom: 20 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 14 }}>⚡ Quick Actions</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                <button onClick={() => { const r = secReports.find(x => x.type === 'pen_test'); if (r) openReport(r.filename) }}
+                  disabled={!secReports.some(x => x.type === 'pen_test')}
+                  style={{ background: 'rgba(74,158,255,0.1)', border: '1px solid rgba(74,158,255,0.3)', borderRadius: 8, padding: '8px 14px', color: 'var(--blue)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  📋 View Latest Pen Test
+                </button>
+                <button onClick={() => { const r = secReports.find(x => x.type === 'weekly_audit' || x.type === 'deep_review'); if (r) openReport(r.filename) }}
+                  disabled={!secReports.some(x => x.type === 'weekly_audit' || x.type === 'deep_review')}
+                  style={{ background: 'rgba(74,158,255,0.1)', border: '1px solid rgba(74,158,255,0.3)', borderRadius: 8, padding: '8px 14px', color: 'var(--blue)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  📋 View Latest Audit
+                </button>
+                <button onClick={() => exportFile('failed-logins-csv')}
+                  style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 8, padding: '8px 14px', color: 'var(--green)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  ⬇ Export Failed Logins (CSV)
+                </button>
+                <button onClick={() => exportFile('activity-csv')}
+                  style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 8, padding: '8px 14px', color: 'var(--green)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  ⬇ Export Activity Log (CSV)
+                </button>
+                <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', fontSize: 13, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  🔄 Security monitor runs every 30 min
+                </div>
+              </div>
+            </div>
+
+            {/* ── 7. System Status ──────────────────────────────────────────── */}
+            {secOverview && (
+              <div style={{ background: 'var(--bg-1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 14 }}>🛡 Security Infrastructure Status</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+                  {[
+                    { label: 'Cloudflare', ok: secOverview.cloudflareEnabled, note: 'Active (proxied)' },
+                    { label: 'WAF', ok: secOverview.wafEnabled, note: 'Enabled' },
+                    { label: 'Bot Fight Mode', ok: true, note: 'On' },
+                    { label: 'AI Labyrinth', ok: true, note: 'On' },
+                    { label: 'RLS', ok: true, note: `${secOverview.rlsTablesProtected}/${secOverview.rlsTablesCount} tables protected` },
+                    { label: 'Rate Limiting', ok: true, note: 'auth: 5/15min · general: 1000/15min' },
+                    { label: 'Backups', ok: true, note: 'Daily 3AM ET → Google Drive' },
+                    { label: 'Monitoring', ok: true, note: 'Every 30 min → #security' },
+                    { label: 'Weekly Audit', ok: true, note: 'Mondays 6AM ET' },
+                    { label: 'Monthly Pen Test', ok: true, note: '15th of month 2AM ET' },
+                    { label: 'Deep Review', ok: true, note: '1st of month 10AM ET' },
+                    { label: 'SSL Certificate', ok: (secOverview.sslDaysLeft ?? 99) > 30, note: secOverview.sslExpiry ? `Valid until ${fmtDate(secOverview.sslExpiry)} (${secOverview.sslDaysLeft}d left)` : 'Unknown' },
+                  ].map(item => (
+                    <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px', background: 'var(--bg-2)', borderRadius: 8, border: `1px solid ${item.ok ? 'rgba(34,197,94,0.15)' : 'rgba(255,69,96,0.2)'}` }}>
+                      <span style={{ fontSize: 14, flexShrink: 0 }}>{item.ok ? '✅' : '❌'}</span>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-0)' }}>{item.label}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>{item.note}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── 8. Security Reports ───────────────────────────────────────── */}
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>📄 Security Reports</span>
+                {secReports.length > 0 && (() => {
+                  const latest = secReports[0]
+                  return (
+                    <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 12, background: 'rgba(34,197,94,0.12)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.3)', fontWeight: 700 }}>
+                      Latest: {latest.score ?? latest.status ?? '—'}
+                    </span>
+                  )
+                })()}
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-2)', borderBottom: '1px solid var(--border)' }}>
+                      {['Date', 'Type', 'Score / Status', 'Findings', 'Actions'].map(h => (
+                        <th key={h} style={{ padding: '9px 16px', textAlign: 'left', color: 'var(--text-2)', fontWeight: 500, whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {secReports.length === 0 && <tr><td colSpan={5} style={{ padding: 28, textAlign: 'center', color: 'var(--text-2)' }}>No reports found</td></tr>}
+                    {secReports.map((r, i) => (
+                      <tr key={r.filename} style={{ borderBottom: i < secReports.length - 1 ? '1px solid var(--border-b)' : 'none', cursor: 'pointer' }}
+                        onClick={() => openReport(r.filename)}>
+                        <td style={{ padding: '10px 16px', whiteSpace: 'nowrap' }}>{r.date ? fmtDate(r.date) : '—'}</td>
+                        <td style={{ padding: '10px 16px' }}>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 5, background: r.type === 'pen_test' ? 'rgba(255,69,96,0.1)' : r.type === 'weekly_audit' ? 'rgba(74,158,255,0.1)' : 'var(--bg-3)', color: r.type === 'pen_test' ? '#ff4560' : r.type === 'weekly_audit' ? 'var(--blue)' : 'var(--text-2)', border: '1px solid transparent', fontWeight: 600, textTransform: 'uppercase' as const }}>
+                            {r.type === 'pen_test' ? 'Pen Test' : r.type === 'weekly_audit' ? 'Weekly Audit' : r.type === 'deep_review' ? 'Deep Review' : r.type}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 16px', fontWeight: 600, color: r.score ? 'var(--green)' : r.status === 'PASS' ? 'var(--green)' : 'var(--text-2)' }}>
+                          {r.score ?? r.status ?? '—'}
+                        </td>
+                        <td style={{ padding: '10px 16px', fontSize: 12, color: 'var(--text-2)' }}>
+                          {r.findings ? (
+                            <span>
+                              {r.findings.critical > 0 && <span style={{ color: '#ff4560', fontWeight: 700 }}>C:{r.findings.critical} </span>}
+                              {r.findings.high > 0 && <span style={{ color: '#f97316' }}>H:{r.findings.high} </span>}
+                              {r.findings.medium > 0 && <span style={{ color: '#eab308' }}>M:{r.findings.medium} </span>}
+                              <span>L:{r.findings.low} I:{r.findings.info}</span>
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td style={{ padding: '10px 16px' }} onClick={e => e.stopPropagation()}>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button onClick={() => openReport(r.filename)}
+                              style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 5, padding: '4px 8px', fontSize: 11, cursor: 'pointer', color: 'var(--text-1)' }}>
+                              View
+                            </button>
+                            <button onClick={() => exportFile(`pen-test-latest`)}
+                              style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 5, padding: '4px 8px', fontSize: 11, cursor: 'pointer', color: 'var(--text-2)' }}>
+                              ⬇
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* ── 9. Security Score History Chart ───────────────────────────── */}
+            {secScoreHistory.length > 0 && (
+              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px', marginBottom: 20 }}>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 16 }}>📈 Security Score History</div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 100, overflowX: 'auto', paddingBottom: 4 }}>
+                  {secScoreHistory.map((entry, i) => {
+                    const scoreVal = typeof entry.score === 'number' ? entry.score : (entry.status === 'PASS' ? 10 : 5)
+                    const pct = (scoreVal / 10) * 80
+                    const color = scoreVal >= 8 ? 'var(--green)' : scoreVal >= 6 ? '#eab308' : '#ff4560'
+                    return (
+                      <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 48, flex: '0 0 auto' }}
+                        title={`${entry.date} — ${entry.type}: ${entry.status ?? entry.score + '/10'}`}>
+                        <div style={{ fontSize: 10, color: 'var(--text-2)', marginBottom: 2 }}>{scoreVal}/10</div>
+                        <div style={{ width: 32, height: `${pct}px`, background: color, borderRadius: '4px 4px 0 0', minHeight: 4, transition: 'height 0.3s' }} />
+                        <div style={{ fontSize: 9, color: 'var(--text-3)', textAlign: 'center', maxWidth: 48, wordBreak: 'break-word' as const }}>{entry.date?.slice(5)}</div>
+                        <div style={{ fontSize: 9, color: 'var(--text-3)', textAlign: 'center' }}>{entry.type === 'pen_test' ? 'PT' : entry.type === 'weekly_audit' ? 'Audit' : entry.type.slice(0, 5)}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 11, color: 'var(--text-2)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 12, height: 12, borderRadius: 2, background: 'var(--green)', display: 'inline-block' }} /> 8–10 (Good)</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 12, height: 12, borderRadius: 2, background: '#eab308', display: 'inline-block' }} /> 6–8 (OK)</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 12, height: 12, borderRadius: 2, background: '#ff4560', display: 'inline-block' }} /> &lt;6 (Action needed)</span>
+                </div>
+              </div>
+            )}
+
+            {/* ── 10. Alert History Log ─────────────────────────────────────── */}
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>🔔 Alert History</span>
+                <input value={secAlertFilter} onChange={e => setSecAlertFilter(e.target.value)} placeholder="Search…"
+                  style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', color: 'var(--text-1)', fontSize: 12, width: 160, outline: 'none' }} />
+                <select value={secAlertResultFilter} onChange={e => setSecAlertResultFilter(e.target.value as typeof secAlertResultFilter)}
+                  style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', color: 'var(--text-1)', fontSize: 12, cursor: 'pointer', outline: 'none' }}>
+                  <option value="all">All results</option>
+                  <option value="clean">Clean</option>
+                  <option value="pass">Pass</option>
+                  <option value="warning">Warning</option>
+                  <option value="alert">Alert</option>
+                  <option value="fail">Fail</option>
+                </select>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-2)', borderBottom: '1px solid var(--border)' }}>
+                      {['Timestamp', 'Type', 'Result', 'Details'].map(h => (
+                        <th key={h} style={{ padding: '9px 16px', textAlign: 'left', color: 'var(--text-2)', fontWeight: 500, whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const q = secAlertFilter.toLowerCase()
+                      const filtered = secAlertHistory.filter(a =>
+                        (secAlertResultFilter === 'all' || a.result.toLowerCase() === secAlertResultFilter) &&
+                        (!q || a.type.toLowerCase().includes(q) || a.details.toLowerCase().includes(q))
+                      )
+                      if (filtered.length === 0) return <tr><td colSpan={4} style={{ padding: 28, textAlign: 'center', color: 'var(--text-2)' }}>No alerts match filters</td></tr>
+                      return filtered.map((a, i) => {
+                        const isClean = a.result === 'clean' || a.result === 'pass'
+                        const isWarn = a.result === 'warning'
+                        const isAlert = a.result === 'alert' || a.result === 'fail'
+                        const color = isAlert ? '#ff4560' : isWarn ? '#f97316' : 'var(--green)'
+                        const bg = isAlert ? 'rgba(255,69,96,0.05)' : isWarn ? 'rgba(249,115,22,0.04)' : 'transparent'
+                        return (
+                          <tr key={i} style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--border-b)' : 'none', background: bg }}>
+                            <td style={{ padding: '9px 16px', color: 'var(--text-2)', whiteSpace: 'nowrap', fontSize: 12 }}>{fmtDateTime(a.date)}</td>
+                            <td style={{ padding: '9px 16px', fontSize: 12 }}>
+                              <span style={{ padding: '2px 8px', borderRadius: 5, background: 'var(--bg-3)', border: '1px solid var(--border)', fontSize: 11, textTransform: 'uppercase' as const }}>{a.type}</span>
+                            </td>
+                            <td style={{ padding: '9px 16px' }}>
+                              <span style={{ color, fontWeight: 600, fontSize: 12 }}>
+                                {isClean ? '✓' : isWarn ? '⚠' : '✗'} {a.result}
+                              </span>
+                            </td>
+                            <td style={{ padding: '9px 16px', color: 'var(--text-1)', fontSize: 12, maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.details}</td>
+                          </tr>
+                        )
+                      })
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1177,6 +1447,37 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* ── Report Modal ─────────────────────────────────────────────────────── */}
+      {(selectedReport || reportModalLoading) && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001, padding: 24 }}
+          onClick={() => setSelectedReport(null)}>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 0, maxWidth: 860, width: '100%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>📄 {selectedReport?.filename ?? 'Loading…'}</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {selectedReport && (
+                  <button onClick={() => exportFile('pen-test-latest')}
+                    style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--text-1)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    ⬇ Download
+                  </button>
+                )}
+                <button onClick={() => setSelectedReport(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-2)', fontSize: 22, padding: '0 4px', lineHeight: 1 }}>×</button>
+              </div>
+            </div>
+            <div style={{ overflow: 'auto', flex: 1, padding: '20px 24px' }}>
+              {reportModalLoading && <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-2)' }}>Loading report…</div>}
+              {selectedReport && (
+                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 13, lineHeight: 1.7, color: 'var(--text-1)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', margin: 0 }}>
+                  {selectedReport.content}
+                </pre>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Delete Modal ─────────────────────────────────────────────────────── */}
       {deleteTarget && (

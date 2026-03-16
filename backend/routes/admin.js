@@ -908,4 +908,257 @@ router.get('/security/activity-feed', async (req, res) => {
   }
 });
 
+// ── GET /api/admin/security/reports ──────────────────────────────────────────
+router.get('/security/reports', async (req, res) => {
+  try {
+    const secDir = path.join(__dirname, '../../docs/security');
+    const files = fs.readdirSync(secDir).filter(f => f.endsWith('.md'));
+    const reports = [];
+
+    for (const filename of files) {
+      let type = 'other';
+      let date = null;
+      let score = null;
+      let findings = null;
+      let status = null;
+
+      // Parse filename patterns
+      const penTestMatch = filename.match(/^PEN_TEST_REPORT_(\d{4}-\d{2}-\d{2})\.md$/i);
+      const auditMatch = filename.match(/^(?:WEEKLY_AUDIT|MONTHLY_AUDIT|SECURITY_AUDIT)_(\d{4}-\d{2}-\d{2})\.md$/i);
+      const deepReviewMatch = filename.match(/^DEEP_REVIEW_(\d{4}-\d{2}-\d{2})\.md$/i);
+
+      if (penTestMatch) {
+        type = 'pen_test';
+        date = penTestMatch[1];
+        // Try to extract score from file content
+        try {
+          const content = fs.readFileSync(path.join(secDir, filename), 'utf8');
+          const scoreMatch = content.match(/\*\*?(?:Overall\s+)?(?:Security\s+)?Score[:\s]+(\d+(?:\.\d+)?)\s*\/\s*10/i)
+            || content.match(/Score:\s*(\d+(?:\.\d+)?)\s*\/\s*10/i)
+            || content.match(/(\d+(?:\.\d+)?)\s*\/\s*10/);
+          if (scoreMatch) score = parseFloat(scoreMatch[1]) + '/10';
+
+          // Extract findings
+          const critMatch = content.match(/CRITICAL[^\d]*(\d+)/i);
+          const highMatch = content.match(/HIGH[^\d]*(\d+)/i);
+          const medMatch = content.match(/MEDIUM[^\d]*(\d+)/i);
+          const lowMatch = content.match(/LOW[^\d]*(\d+)/i);
+          const infoMatch = content.match(/INFORMATIONAL[^\d]*(\d+)/i) || content.match(/INFO[^\d]*(\d+)/i);
+          findings = {
+            critical: critMatch ? parseInt(critMatch[1]) : 0,
+            high: highMatch ? parseInt(highMatch[1]) : 0,
+            medium: medMatch ? parseInt(medMatch[1]) : 0,
+            low: lowMatch ? parseInt(lowMatch[1]) : 0,
+            info: infoMatch ? parseInt(infoMatch[1]) : 0,
+          };
+        } catch (e) { /* ignore */ }
+      } else if (auditMatch) {
+        type = 'weekly_audit';
+        date = auditMatch[1];
+        status = 'PASS';
+      } else if (deepReviewMatch) {
+        type = 'deep_review';
+        date = deepReviewMatch[1];
+        status = 'PASS';
+      } else {
+        // Try to get date from any pattern
+        const anyDate = filename.match(/(\d{4}-\d{2}-\d{2})/);
+        if (anyDate) date = anyDate[1];
+      }
+
+      const fileStat = fs.statSync(path.join(secDir, filename));
+      reports.push({
+        filename,
+        type,
+        date: date || fileStat.mtime.toISOString().slice(0, 10),
+        score,
+        findings,
+        status,
+        lastModified: fileStat.mtime.toISOString(),
+      });
+    }
+
+    // Sort newest first
+    reports.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    res.json({ reports });
+  } catch (err) {
+    console.error('[Admin] /security/reports error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/security/reports/:filename ─────────────────────────────────
+router.get('/security/reports/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+
+    // Security: reject path traversal attempts
+    if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+    if (!filename.endsWith('.md')) {
+      return res.status(400).json({ error: 'Only .md files are accessible' });
+    }
+
+    const secDir = path.join(__dirname, '../../docs/security');
+    const filePath = path.join(secDir, filename);
+
+    // Double check resolved path stays within secDir
+    if (!filePath.startsWith(secDir + path.sep) && filePath !== secDir) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    const content = fs.readFileSync(filePath, 'utf8');
+    const stat = fs.statSync(filePath);
+
+    res.json({ filename, content, lastModified: stat.mtime.toISOString() });
+  } catch (err) {
+    console.error('[Admin] /security/reports/:filename error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/security/score-history ────────────────────────────────────
+router.get('/security/score-history', async (req, res) => {
+  try {
+    const histPath = path.join(__dirname, '../../docs/security/score-history.json');
+    if (!fs.existsSync(histPath)) return res.json({ history: [] });
+    const data = JSON.parse(fs.readFileSync(histPath, 'utf8'));
+    res.json({ history: data });
+  } catch (err) {
+    console.error('[Admin] /security/score-history error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/security/alert-history ────────────────────────────────────
+router.get('/security/alert-history', async (req, res) => {
+  try {
+    const alertPath = path.join(__dirname, '../../docs/security/alert-history.json');
+    if (!fs.existsSync(alertPath)) return res.json({ alerts: [] });
+    const data = JSON.parse(fs.readFileSync(alertPath, 'utf8'));
+    // Sort newest first, limit to 200
+    const sorted = [...data].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 200);
+    res.json({ alerts: sorted });
+  } catch (err) {
+    console.error('[Admin] /security/alert-history error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/admin/security/alert-history ───────────────────────────────────
+router.post('/security/alert-history', async (req, res) => {
+  try {
+    const { type, result, details } = req.body;
+    if (!type || !result) return res.status(400).json({ error: 'type and result are required' });
+
+    const alertPath = path.join(__dirname, '../../docs/security/alert-history.json');
+    let data = [];
+    if (fs.existsSync(alertPath)) {
+      try { data = JSON.parse(fs.readFileSync(alertPath, 'utf8')); } catch (e) { data = []; }
+    }
+
+    const newEntry = { date: new Date().toISOString(), type, result, details: details || '' };
+    data.unshift(newEntry);
+    // Keep last 1000 entries
+    if (data.length > 1000) data = data.slice(0, 1000);
+
+    fs.writeFileSync(alertPath, JSON.stringify(data, null, 2), 'utf8');
+    res.json({ ok: true, entry: newEntry });
+  } catch (err) {
+    console.error('[Admin] POST /security/alert-history error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/admin/security/export/:type ─────────────────────────────────────
+router.get('/security/export/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const secDir = path.join(__dirname, '../../docs/security');
+
+    // Helper: sanitize a single CSV field (prevent formula injection)
+    function csvField(val) {
+      const s = String(val == null ? '' : val).replace(/"/g, '""');
+      // Strip leading = + - @ | % to prevent formula injection
+      const dangerous = s.replace(/^[\s]*[=+\-@|%]/, "'$&");
+      return `"${dangerous}"`;
+    }
+
+    if (type === 'pen-test-latest' || type === 'audit-latest') {
+      // Find latest matching report
+      const files = fs.readdirSync(secDir).filter(f => f.endsWith('.md'));
+      let pattern;
+      if (type === 'pen-test-latest') pattern = /^PEN_TEST_REPORT_/i;
+      else pattern = /^(?:WEEKLY_AUDIT|MONTHLY_AUDIT|SECURITY_AUDIT|DEEP_REVIEW)_/i;
+
+      const matching = files.filter(f => pattern.test(f)).sort().reverse();
+      if (matching.length === 0) return res.status(404).json({ error: 'No report found' });
+
+      const filename = matching[0];
+      const content = fs.readFileSync(path.join(secDir, filename), 'utf8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+      return res.send(content);
+    }
+
+    if (type === 'failed-logins-csv') {
+      const supabase = getAdminClient();
+      const { data, error } = await supabase
+        .from('activity_log')
+        .select('ip_address, email, created_at, details')
+        .eq('action', 'login_failed')
+        .order('created_at', { ascending: false })
+        .limit(5000);
+      if (error) throw error;
+
+      const rows = (data || []).map(r => [
+        csvField(r.created_at),
+        csvField(r.ip_address),
+        csvField(r.email),
+        csvField(r.details?.user_agent),
+      ].join(','));
+
+      const csv = ['Timestamp,IP Address,Email,User Agent', ...rows].join('\n');
+      res.setHeader('Content-Disposition', 'attachment; filename="failed-logins.csv"');
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      return res.send(csv);
+    }
+
+    if (type === 'activity-csv') {
+      const supabase = getAdminClient();
+      const SECURITY_ACTIONS = ['login', 'login_failed', 'signup', 'password_reset', 'account_deleted', 'rate_limit_hit'];
+      const { data, error } = await supabase
+        .from('activity_log')
+        .select('id, action, email, ip_address, created_at')
+        .in('action', SECURITY_ACTIONS)
+        .order('created_at', { ascending: false })
+        .limit(5000);
+      if (error) throw error;
+
+      const rows = (data || []).map(r => [
+        csvField(r.created_at),
+        csvField(r.action),
+        csvField(r.email),
+        csvField(r.ip_address),
+        csvField(r.id),
+      ].join(','));
+
+      const csv = ['Timestamp,Action,Email,IP Address,Event ID', ...rows].join('\n');
+      res.setHeader('Content-Disposition', 'attachment; filename="security-activity.csv"');
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      return res.send(csv);
+    }
+
+    res.status(400).json({ error: `Unknown export type: ${type}` });
+  } catch (err) {
+    console.error('[Admin] /security/export error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

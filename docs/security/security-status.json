@@ -9,5 +9,13 @@
   "rlsProtected": 32,
   "cloudflareEnabled": true,
   "wafEnabled": true,
+  "botFightMode": true,
+  "aiLabyrinth": true,
+  "rateLimiting": {"auth": "5/15min", "general": "1000/15min"},
+  "backups": {"enabled": true, "schedule": "Daily 3AM ET", "destination": "Google Drive"},
+  "monitoring": {"enabled": true, "interval": "30min", "channel": "#security"},
+  "weeklyAudit": {"enabled": true, "schedule": "Mondays 6AM ET"},
+  "monthlyPenTest": {"enabled": true, "schedule": "15th of month 2AM ET"},
+  "monthlyDeepReview": {"enabled": true, "schedule": "1st of month 10AM ET"},
   "lastUpdated": "2026-03-16"
 }
