@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { label: 'News',      href: '/news' },
   { label: 'Analysis',  href: '/?view=analysis' },
   { label: 'Calendar',  href: '/calendar' },
+  { label: 'Tools',     href: '/tools' },
   { label: 'Portfolio', href: '/portfolio' },
   { label: 'Journal',   href: '/journal' },
   { label: 'Prop Firm', href: '/propfirm' },
@@ -20,7 +21,6 @@ const NAV_ITEMS = [
   { label: '✨ Ritual', href: '/ritual' },
   { label: '🧠 AI Coach', href: '/coach' },
   { label: '🛡️ Rules',   href: '/rules' },
-  { label: 'Tools',     href: '/tools' },
   { label: 'Help',      href: '/help' },
 ]
 
