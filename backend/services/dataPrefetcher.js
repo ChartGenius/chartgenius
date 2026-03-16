@@ -24,6 +24,9 @@ const coinGecko    = require('./coinGecko');
 const calendarService  = require('./calendarService');
 const { getAnalystRatings } = require('./analystRatings');
 const axios        = require('axios');
+const fredService     = require('./fred');
+const secEdgar        = require('./secEdgar');
+
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
@@ -279,6 +282,27 @@ async function prefetchRareData() {
   console.log(`[Prefetch] 6h cycle — updated ${profileCount} profiles, ${ratingsCount} analyst ratings`);
 }
 
+
+/**
+ * Every 15 minutes:
+ *  - FRED economic indicators (1h cache but warm on start)
+ *  - SEC EDGAR insider trades
+ *  - Finnhub earnings + IPO calendars
+ */
+async function prefetchMarketIntel() {
+  // FRED economic indicators
+  await safe('FRED indicators', () => fredService.getAllIndicators());
+
+  // SEC EDGAR insider trades (Form 4)
+  await safe('SEC insider trades', () => secEdgar.getInsiderTrades({ count: 40 }));
+
+  // Finnhub earnings + IPO calendars
+  await safe('earnings calendar', () => finnhub.getEarningsCalendar());
+  await safe('IPO calendar', () => finnhub.getIPOCalendar());
+
+  console.log('[Prefetch] 15m intel cycle — updated FRED, SEC insider trades, earnings/IPO calendars');
+}
+
 // ─── Scheduler ───────────────────────────────────────────────────────────────
 
 let _started = false;
@@ -300,12 +324,14 @@ function start() {
   prefetchMediumFrequency().catch(() => {});
   prefetchLowFrequency().catch(() => {});
   prefetchRareData().catch(() => {});
+  prefetchMarketIntel().catch(() => {});
 
   // ── Schedule recurring cycles ──
   setInterval(() => prefetchHighFrequency().catch(() => {}), 30 * 1000);           // 30 s — keep quotes fresh
   setInterval(() => prefetchMediumFrequency().catch(() => {}), 5 * 60 * 1000);    // 5 min
   setInterval(() => prefetchLowFrequency().catch(() => {}), 15 * 60 * 1000);      // 15 min (was 30)
   setInterval(() => prefetchRareData().catch(() => {}), 6 * 60 * 60 * 1000);      // 6 h
+  setInterval(() => prefetchMarketIntel().catch(() => {}), 15 * 60 * 1000);        // 15 min — FRED, SEC, calendars
 
   console.log('[Prefetch] Scheduler running. High-freq cycles active during market hours (09:30–16:00 ET).');
 }

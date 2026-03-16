@@ -142,6 +142,8 @@ app.use('/api/admin',         cachePrivate,   require('./routes/admin'));       
 app.use('/api/announcements', cachePublic30s, require('./routes/announcements'));   // Public announcement banner
 app.use('/api/stripe',        cachePrivate,   require('./routes/stripe'));           // Stripe payment integration
 app.use('/api/push',          cachePrivate,   require('./routes/push'));             // PWA push notification subscriptions
+// Market Intelligence routes (public — no auth required)
+app.use('/api',               require('./routes/marketIntel'));         // FRED, SEC EDGAR, earnings/IPO calendars
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

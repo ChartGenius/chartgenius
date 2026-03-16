@@ -5,6 +5,7 @@ import Link from 'next/link'
 import PersistentNav from '../components/PersistentNav'
 import { apiFetchSafe } from '../lib/apiFetch'
 import { formatRelativeTime } from '../lib/timezone'
+import MarketIntel from '../components/MarketIntel'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -325,7 +326,12 @@ export default function NewsPage() {
         </div>
       )}
 
-      {/* Footer */}
+      {/* Market Intelligence Section */}
+      <div style={{ padding: '0 24px 24px' }}>
+        <MarketIntel />
+      </div>
+
+            {/* Footer */}
       <footer style={{
         padding: '12px 24px',
         borderTop: '1px solid var(--border)',
