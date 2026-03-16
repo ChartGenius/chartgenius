@@ -376,6 +376,7 @@ describe('PATCH /api/alerts/read', () => {
 
     const res = await request(app)
       .patch('/api/alerts/read')
+      .set('x-test-user', JSON.stringify({ id: 42, email: 'test@example.com' }))
       .send({ ids: [1, 2, 3] });
 
     expect(res.status).toBe(200);
@@ -385,6 +386,7 @@ describe('PATCH /api/alerts/read', () => {
   test('returns 400 for missing ids', async () => {
     const res = await request(app)
       .patch('/api/alerts/read')
+      .set('x-test-user', JSON.stringify({ id: 42, email: 'test@example.com' }))
       .send({});
 
     expect(res.status).toBe(400);

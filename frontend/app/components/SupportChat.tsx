@@ -234,7 +234,7 @@ export default function SupportChat() {
           aria-label="TradVue Support Chat"
           style={{
             position: 'fixed',
-            bottom: 88,
+            bottom: 152,
             right: 20,
             width: 'min(380px, calc(100vw - 24px))',
             height: 500,
@@ -440,7 +440,7 @@ export default function SupportChat() {
         aria-label={isOpen ? 'Close support chat' : 'Open support chat'}
         style={{
           position: 'fixed',
-          bottom: 20,
+          bottom: 84,
           right: 20,
           width: 56,
           height: 56,
