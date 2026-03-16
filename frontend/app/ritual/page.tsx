@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import PersistentNav from '../components/PersistentNav'
+import PushNotificationPanel from '../components/PushNotificationPanel'
 import {
   loadRitualEntries,
   upsertRitualEntry,
@@ -1289,6 +1290,9 @@ export default function RitualPage() {
             <HistorySection entries={entries} currentDate={today} />
           </div>
         )}
+
+        {/* ── Push Notification Panel ──────────────────────────────────────── */}
+        <PushNotificationPanel />
 
         {/* ── Disclaimer ──────────────────────────────────────────────────── */}
         <div style={{ padding: '12px 0', marginTop: 24, borderTop: '1px solid var(--border)' }}>

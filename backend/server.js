@@ -141,6 +141,7 @@ app.use('/api/support',                       require('./routes/support'));     
 app.use('/api/admin',         cachePrivate,   require('./routes/admin'));            // Admin dashboard (allowlisted only)
 app.use('/api/announcements', cachePublic30s, require('./routes/announcements'));   // Public announcement banner
 app.use('/api/stripe',        cachePrivate,   require('./routes/stripe'));           // Stripe payment integration
+app.use('/api/push',          cachePrivate,   require('./routes/push'));             // PWA push notification subscriptions
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
@@ -176,6 +177,15 @@ app.listen(PORT, () => {
   console.log(`📡 Alert stream: http://localhost:${PORT}/api/alerts/live`);
   console.log(`₿  Crypto:       http://localhost:${PORT}/api/crypto/snapshot`);
   console.log(`🚨 Movers:       http://localhost:${PORT}/api/market-movers`);
+  console.log(`🔔 Push:         http://localhost:${PORT}/api/push/vapid-public-key`);
+
+  // Start push notification scheduler (fires at 4:05 PM ET on market days)
+  try {
+    const { startScheduler } = require('./services/notificationScheduler');
+    startScheduler();
+  } catch (err) {
+    console.warn('[Server] Notification scheduler failed to start:', err.message);
+  }
 
   // Delay DB-dependent background tasks by 5s to let healthcheck pass first.
   // By the time the first real user hits the site the data prefetcher will have

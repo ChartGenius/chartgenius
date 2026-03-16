@@ -7,6 +7,10 @@
   "background_color": "#0f1117",
   "theme_color": "#6366f1",
   "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["finance", "productivity"],
+  "scope": "/",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -19,6 +23,33 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Post-Trade Ritual",
+      "short_name": "Ritual",
+      "description": "Log your daily trades and emotions",
+      "url": "/ritual",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Journal",
+      "short_name": "Journal",
+      "description": "View your trading journal",
+      "url": "/journal",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
