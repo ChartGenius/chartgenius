@@ -564,31 +564,55 @@ export default function BestTradingJournalPage() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────────
-          INTERNAL LINKS
+          RELATED FEATURES + INTERNAL LINKS
       ───────────────────────────────────────────────────────────────── */}
-      <section style={{ padding: '60px 24px', borderTop: '1px solid var(--border)' }}>
+      <section style={{ padding: '60px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-1)' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px', color: 'var(--text-1)' }}>
-            Related Pages
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '24px', color: 'var(--text-0)' }}>
+            Explore TradVue
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '40px' }}>
+            {[
+              { href: '/propfirm', title: 'Prop Firm Tracker', desc: 'Track drawdown & daily limits in real-time', emoji: '🎯' },
+              { href: '/tools', title: '30+ Calculators', desc: 'Position size, risk/reward, Greeks & more', emoji: '🔢' },
+              { href: '/coach', title: 'AI Coach', desc: 'Get AI analysis of your trading patterns', emoji: '🧠' },
+              { href: '/ritual', title: 'Post-Trade Ritual', desc: 'Build your daily journaling habit', emoji: '🔥' },
+              { href: '/portfolio', title: 'Portfolio Tracker', desc: 'Track holdings, dividends & performance', emoji: '📈' },
+              { href: '/news', title: 'Market News', desc: 'Real-time news with AI sentiment analysis', emoji: '📰' },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                style={{
+                  background: 'var(--bg-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  textDecoration: 'none',
+                  display: 'block',
+                  transition: 'border-color 0.15s',
+                }}
+              >
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>{item.emoji}</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent)', marginBottom: '4px' }}>{item.title}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-2)', lineHeight: 1.4 }}>{item.desc}</div>
+              </Link>
+            ))}
+          </div>
+
+          <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-1)' }}>
+            Related Guides
           </h3>
           <ul style={{ listStyle: 'none', display: 'grid', gap: '8px', margin: 0, padding: 0 }}>
             {[
-              { href: '/best-trading-journal', text: 'Best Trading Journal for Day Traders' },
-              { href: '/prop-firm-tracker', text: 'Prop Firm Tracker' },
-              { href: '/trading-calculators', text: '30+ Free Trading Calculators' },
-              { href: '/post-trade-ritual', text: 'Post-Trade Ritual: Build Your Journal Habit' },
-              { href: '/futures-trading-journal', text: 'Futures Trading Journal' },
-              { href: '/options-trading-journal', text: 'Options Trading Journal' },
+              { href: '/prop-firm-tracker', text: 'Free Prop Firm Tracker — Track Drawdown & Daily Limits' },
+              { href: '/trading-calculators', text: '30+ Free Trading Calculators — Position Size, Risk/Reward' },
+              { href: '/post-trade-ritual', text: 'Post-Trade Ritual — Build Your Journaling Habit in 60 Seconds' },
+              { href: '/futures-trading-journal', text: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L' },
+              { href: '/options-trading-journal', text: 'Options Trading Journal — Track Greeks & Multi-Leg Strategies' },
             ].map((link) => (
               <li key={link.href}>
-                <Link
-                  href={link.href}
-                  style={{
-                    color: 'var(--accent)',
-                    textDecoration: 'none',
-                    fontSize: '14px',
-                  }}
-                >
+                <Link href={link.href} style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '14px' }}>
                   → {link.text}
                 </Link>
               </li>

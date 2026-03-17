@@ -78,8 +78,9 @@ function ArticleCard({ article }: { article: NewsArticle }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={article.imageUrl}
-            alt=""
+            alt={article.title}
             className="news-card-img"
+            loading="lazy"
             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
         </div>
