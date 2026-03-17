@@ -67,7 +67,7 @@ export default function TradingCalculatorsPage() {
                     name: 'Does TradVue have a futures calculator for NQ and ES?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'Yes. The futures calculator includes built-in specs for NQ, ES, CL, GC, and 16 other contracts. Enter your entry, exit, and contract count to get exact tick-based P&L.',
+                      text: 'Yes. The futures calculator includes built-in specs for NQ, ES, CL, GC, and 16 other contracts. Enter your entry, exit, and contract count to get tick-based P&L based on published contract specifications.',
                     },
                   },
                   {
@@ -168,7 +168,7 @@ export default function TradingCalculatorsPage() {
               { name: 'Options Greeks', desc: 'Calculate delta, gamma, theta, vega for any option.' },
               { name: 'IV Percentile', desc: 'Know if implied volatility is high or low historically.' },
               { name: 'Breakeven Calculator', desc: 'Find breakeven prices for any multi-leg strategy.', emoji: '↔️' },
-              { name: 'Futures Tick Value', desc: 'Calculate exact P&L per tick for any futures contract.' },
+              { name: 'Futures Tick Value', desc: 'Calculate P&L per tick for any futures contract based on published contract specifications.' },
               { name: 'Margin Calculator', desc: 'Know your margin requirements before you trade.' },
               { name: 'Sharpe Ratio', desc: 'Measure risk-adjusted returns. Is your strategy actually good?' },
               { name: 'Trade Expectancy', desc: 'Calculate expected value per trade based on win rate and R:R.', emoji: '🔮' },
@@ -263,7 +263,7 @@ export default function TradingCalculatorsPage() {
               { q: 'Are TradVue\'s trading calculators really free?', a: 'Yes. All 30+ calculators are free to use. No sign-up, no credit card, no hidden costs. Just open the tools and calculate.' },
               { q: 'What trading calculators does TradVue offer?', a: 'TradVue includes: Position Size Calculator, Risk/Reward Ratio, Options Greeks (Black-Scholes), Futures Tick Value, Sharpe Ratio, Kelly Criterion, Trade Expectancy, Compound Growth, Correlation Matrix, Risk of Ruin, Pip Value (Forex), Dividend Planner, and more.' },
               { q: 'How do I calculate the right position size for a trade?', a: 'Use TradVue\'s position size calculator. Enter your account size, risk percentage (typically 1-2%), and stop loss distance. The calculator tells you exactly how many shares, contracts, or lots to trade.' },
-              { q: 'Does TradVue have a futures calculator for NQ and ES?', a: 'Yes. The futures calculator includes built-in specs for NQ, ES, CL, GC, and 16 other contracts. Enter your entry, exit, and contract count to get exact tick-based P&L.' },
+              { q: 'Does TradVue have a futures calculator for NQ and ES?', a: 'Yes. The futures calculator includes built-in specs for NQ, ES, CL, GC, and 16 other contracts. Enter your entry, exit, and contract count to get tick-based P&L based on published contract specifications.' },
               { q: 'What is the Kelly Criterion and how do I use it?', a: 'The Kelly Criterion calculates the optimal position size percentage based on your historical win rate and average win/loss ratio. TradVue\'s Kelly calculator shows both full and half-Kelly (recommended for trading).' },
             ].map(item => (
               <div key={item.q} className="seo-faq-item">
@@ -327,6 +327,7 @@ export default function TradingCalculatorsPage() {
       </section>
 
       <footer className="seo-footer">
+        <p style={{ fontSize: '12px', color: 'var(--text-3)', marginBottom: '12px' }}>Calculations are based on published contract specifications and user-entered data. Actual P&amp;L may differ due to commissions, fees, slippage, and market conditions. Always verify with your broker.</p>
         <p>© 2026 TradVue. Not financial advice. Trading involves risk.</p>
         <p><Link href="/legal/disclaimer">Disclaimer</Link>{' • '}<Link href="/legal/privacy">Privacy</Link></p>
       </footer>

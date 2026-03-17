@@ -51,7 +51,7 @@ export default function FuturesTradingJournalPage() {
                     name: 'Does TradVue calculate tick-based P&L for futures?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'Yes. TradVue uses each contract\'s exact tick value and multiplier to calculate precise P&L. For NQ: (exit - entry) × $100 per point. For ES: (exit - entry) × $50 per point.',
+                      text: 'Yes. TradVue uses each contract\'s tick value and multiplier to calculate tick-based P&L. For NQ: (exit - entry) × $20 per point ($5.00/tick). For ES: (exit - entry) × $50 per point ($12.50/tick). Calculations are based on published contract specifications.',
                     },
                   },
                   {
@@ -155,7 +155,7 @@ export default function FuturesTradingJournalPage() {
             {[
               { emoji: '20', title: '20 Built-In Contracts', desc: 'NQ, ES, CL, GC, SI, TY, ZB, ZF, NG, RB, GE, ZC, ZS, ZM, ZW, YM, MES, MNQ, MCL, MGC. Add more anytime.', color: 'blue' },
               { emoji: 'AD', title: 'Auto-Detect Contract Specs', desc: 'Enter your symbol — TradVue loads tick value, multiplier, and margin. No manual calculations.', color: 'purple' },
-              { emoji: 'PL', title: 'Tick-Based P&L', desc: 'Your exact profit or loss based on contract specifications. No rounding errors.', color: 'green' },
+              { emoji: 'PL', title: 'Tick-Based P&L', desc: 'Estimated profit or loss based on published contract specifications. Always verify with your broker.', color: 'green' },
               { emoji: 'MG', title: 'Margin Tracking', desc: 'Track your margin usage in real-time. Know your buying power without spreadsheets.', color: 'yellow' },
               { emoji: 'PF', title: 'Prop Firm Integration', desc: 'If you\'re trading with a prop firm, connect your rules and monitor compliance live.', color: 'red' },
               { emoji: '🔬', title: 'Micro Contract Support', desc: 'Trade micros? TradVue calculates correctly for MES, MNQ, MCL, and more.', color: 'blue' },
@@ -214,7 +214,7 @@ export default function FuturesTradingJournalPage() {
             {[
               { step: '01', title: 'Select Your Contract', desc: 'Choose from 20 built-in contracts or add a custom one. TradVue loads the specs automatically.' },
               { step: '02', title: 'Log Your Trade', desc: 'Enter entry price, exit price, contract size. TradVue calculates your P&L instantly.' },
-              { step: '03', title: 'See Tick-Based P&L', desc: 'Your exact profit or loss based on the contract\'s tick value and multiplier.' },
+              { step: '03', title: 'See Tick-Based P&L', desc: 'Estimated profit or loss based on the contract\'s published tick value and multiplier.' },
               { step: '04', title: 'Track Your Progress', desc: 'Analyze your performance over time. Find what works, fix what doesn\'t.' },
             ].map(item => (
               <div key={item.step} className="seo-step">
@@ -245,7 +245,7 @@ export default function FuturesTradingJournalPage() {
               Let's say you trade NQ (Nasdaq-100 E-mini):
             </p>
             <div style={{ display: 'grid', gap: '10px', marginBottom: '24px' }}>
-              {[['Entry', '17500'], ['Exit', '17510'], ['Size', '1 contract'], ['Tick value', '$20 per tick'], ['Multiplier', '$100 per point']].map(([label, val]) => (
+              {[['Entry', '17500'], ['Exit', '17510'], ['Size', '1 contract'], ['Tick value', '$5.00 per tick'], ['Point value', '$20 per point']].map(([label, val]) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '14px' }}>
                   <span style={{ color: 'var(--blue)', fontWeight: 700, minWidth: '100px' }}>{label}</span>
                   <span style={{ color: 'var(--text-1)' }}>{val}</span>
@@ -258,7 +258,7 @@ export default function FuturesTradingJournalPage() {
               borderRadius: '10px', padding: '16px',
               fontSize: '15px', color: 'var(--green)', fontWeight: 700,
             }}>
-              TradVue calculates: (17510 − 17500) × 1 × $100 = <strong>$1,000 profit</strong>
+              TradVue calculates: (17510 − 17500) × (4 ticks) × $5.00/tick × 1 contract = <strong>$200 profit</strong>
             </div>
           </div>
         </div>
@@ -274,7 +274,7 @@ export default function FuturesTradingJournalPage() {
           <div className="seo-faq-list">
             {[
               { q: 'How does TradVue auto-detect futures contract specs?', a: 'Type your contract symbol (NQ, ES, CL, etc.) and TradVue automatically loads the tick value, point value, multiplier, and margin requirement. All 20 built-in contracts are pre-configured.' },
-              { q: 'Does TradVue calculate tick-based P&L for futures?', a: 'Yes. TradVue uses each contract\'s exact tick value and multiplier to calculate precise P&L. For NQ: (exit - entry) × $100 per point. For ES: (exit - entry) × $50 per point.' },
+              { q: 'Does TradVue calculate tick-based P&L for futures?', a: 'Yes. TradVue uses each contract\'s tick value and multiplier to calculate tick-based P&L. For NQ: (exit - entry) × $20 per point ($5.00/tick). For ES: (exit - entry) × $50 per point ($12.50/tick). Calculations are based on published contract specifications and do not account for commissions, fees, or slippage.' },
               { q: 'Does TradVue support micro futures contracts?', a: 'Yes. TradVue has built-in specs for MES (Micro E-mini S&P), MNQ (Micro Nasdaq), MCL (Micro Crude Oil), and MGC (Micro Gold), with correct micro multipliers.' },
               { q: 'Can I track prop firm rules while futures trading?', a: 'Yes. TradVue\'s prop firm tracker integrates directly with your futures journal. Set your daily loss, max drawdown, and trailing loss limits. See live compliance gauges as you trade.' },
             ].map(item => (
@@ -336,6 +336,7 @@ export default function FuturesTradingJournalPage() {
       </section>
 
       <footer className="seo-footer">
+        <p style={{ fontSize: '12px', color: 'var(--text-3)', marginBottom: '12px' }}>Calculations are based on published contract specifications and user-entered data. Actual P&amp;L may differ due to commissions, fees, slippage, and market conditions. Always verify with your broker.</p>
         <p>© 2026 TradVue. Not financial advice. Trading involves risk.</p>
         <p><Link href="/legal/disclaimer">Disclaimer</Link>{' • '}<Link href="/legal/privacy">Privacy</Link></p>
       </footer>

@@ -1787,6 +1787,11 @@ export default function PropFirmPage() {
           onAdd={handleAdd}
         />
       )}
+      <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border)', marginTop: 8 }}>
+        <p style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', margin: 0 }}>
+          Calculations are based on published contract specifications and user-entered data. Actual P&amp;L may differ due to commissions, fees, slippage, and market conditions. Always verify with your broker.
+        </p>
+      </div>
     </div>
   )
 }

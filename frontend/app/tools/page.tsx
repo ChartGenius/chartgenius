@@ -1789,8 +1789,8 @@ const TOOL_SECTION_GROUPS: Record<string, string> = {
 
 const TOOL_CATALOG = [
   // ── NEW: Trading Calculators ──
-  { id: 'positionsizer', category: 'Trading Calculators', title: 'Universal Position Sizer',         desc: 'Size positions for any asset class — stocks, futures, forex, crypto — based on exact dollar risk. Slider, scenarios, buying power bar.' },
-  { id: 'futures',       category: 'Trading Calculators', title: 'Futures Risk/Reward Calculator',   desc: '39 contracts with accurate tick/margin data. Position sizing, multi-target R:R, risk matrix, session indicators.' },
+  { id: 'positionsizer', category: 'Trading Calculators', title: 'Universal Position Sizer',         desc: 'Size positions for any asset class — stocks, futures, forex, crypto — based on your dollar risk parameters. Slider, scenarios, buying power bar.' },
+  { id: 'futures',       category: 'Trading Calculators', title: 'Futures Risk/Reward Calculator',   desc: '39 contracts with tick and margin data based on published exchange specifications. Position sizing, multi-target R:R, risk matrix, session indicators.' },
   { id: 'optionscalc',   category: 'Trading Calculators', title: 'Options Profit Calculator',        desc: 'P&L chart across price range, break-even, range scenarios table, optional Greeks (Delta, Gamma, Theta, Vega).' },
   { id: 'forexcalc',     category: 'Trading Calculators', title: 'Forex Position Calculator',        desc: 'Pip value, margin requirements, risk/reward for 21 pairs. Lot size presets, leverage comparison, swap rates.' },
   { id: 'riskreward',    category: 'Trading Calculators', title: 'Risk/Reward Calculator',           desc: 'Visual ratio bar, break-even win rate. Immediate verdict on trade quality.' },
@@ -2018,6 +2018,10 @@ export default function ToolsPage() {
         )}
       </div>
 
+      {/* Disclaimer */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 20px' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center' }}>Calculations are based on published contract specifications and user-entered data. Actual P&amp;L may differ due to commissions, fees, slippage, and market conditions. Always verify with your broker.</p>
+      </div>
       {/* Footer */}
       <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-1)', padding: '20px 24px', marginTop: 40 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
