@@ -67,7 +67,7 @@ export default function OptionsTradingJournalPage() {
                     name: 'Can I analyze my P&L by options strategy type?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'Yes. TradVue's analytics break down your P&L by strategy type. See whether your Iron Condors are outperforming your spreads, or which strategies perform best in different market conditions.',
+                      text: 'Yes. TradVue analytics break down your P&L by strategy type. See whether your Iron Condors are outperforming your spreads, or which strategies perform best in different market conditions.',
                     },
                   },
                 ],

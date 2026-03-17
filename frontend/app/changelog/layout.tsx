@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Changelog — TradVue Feature Updates & Release Notes',
-  description: 'Full history of TradVue features, fixes, and improvements. See what's new in the latest release. Updated with every release.',
+  description: 'Full history of TradVue features, fixes, and improvements. See what is new in the latest release. Updated with every release.',
   alternates: { canonical: 'https://www.tradvue.com/changelog' },
   openGraph: {
     title: 'Changelog | TradVue',

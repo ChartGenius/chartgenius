@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import '../components/seo-landing.css'
 
 export const metadata: Metadata = {
   title: 'Best Trading Journal for Day Traders 2026 | TradVue',
@@ -28,10 +29,8 @@ export const metadata: Metadata = {
 
 export default function BestTradingJournalPage() {
   return (
-    <div style={{ fontFamily: 'var(--font)', background: 'var(--bg-0)', color: 'var(--text-0)', minHeight: '100vh' }}>
-      {/* ─────────────────────────────────────────────────────────────────
-          STRUCTURED DATA
-      ───────────────────────────────────────────────────────────────── */}
+    <div className="seo-page">
+      {/* ── Structured Data ── */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -95,545 +94,322 @@ export default function BestTradingJournalPage() {
         }}
       />
 
-      {/* ─────────────────────────────────────────────────────────────────
-          HEADER / NAV
-      ───────────────────────────────────────────────────────────────── */}
-      <nav
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          borderBottom: '1px solid var(--border)',
-          background: 'rgba(10, 10, 12, 0.85)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1100px',
-            margin: '0 auto',
-            padding: '0 24px',
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
+      {/* ── Nav ── */}
+      <nav className="seo-nav">
+        <div className="seo-nav-inner">
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-header.svg"
-              alt="TradVue"
-              style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
-            />
+            <img src="/logo-header.svg" alt="TradVue" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
           </Link>
-          <Link
-            href="/#signup"
-            style={{
-              fontSize: '13px',
-              fontWeight: 600,
-              padding: '9px 20px',
-              background: 'var(--accent)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              display: 'inline-block',
-            }}
-          >
-            Get Started Free
-          </Link>
+          <Link href="/#signup" className="seo-nav-cta">Get Started Free</Link>
         </div>
       </nav>
 
-      {/* ─────────────────────────────────────────────────────────────────
-          HERO
-      ───────────────────────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px, 8vw, 100px) 24px 40px', maxWidth: '800px', margin: '0 auto' }}>
-        <h1
-          style={{
-            fontSize: 'clamp(2rem, 5vw, 3.2rem)',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            lineHeight: 1.2,
-            marginBottom: '20px',
-            color: 'var(--text-0)',
-          }}
-        >
-          The Best Free Trading Journal for Day Traders
-        </h1>
-        <p
-          style={{
-            fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
-            color: 'var(--text-1)',
-            lineHeight: 1.6,
-            marginBottom: '32px',
-            fontWeight: 400,
-          }}
-        >
-          Stop journaling in spreadsheets. TradVue gives you AI-powered insights, real-time prop firm tracking, and
-          30+ trading calculators—free to start, no credit card required.
-        </p>
-        <Link
-          href="/#signup"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '14px 32px',
-            background: 'var(--accent)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            textDecoration: 'none',
-            fontSize: '15px',
-            fontWeight: 700,
-          }}
-        >
-          Start Journaling Free
-        </Link>
-      </section>
-
-      {/* ─────────────────────────────────────────────────────────────────
-          FEATURES COMPARISON
-      ───────────────────────────────────────────────────────────────── */}
-      <section
-        style={{
-          padding: 'clamp(60px, 8vw, 100px) 24px',
-          background: 'var(--bg-1)',
-          borderTop: '1px solid var(--border)',
-          borderBottom: '1px solid var(--border)',
-        }}
-      >
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <h2
-            style={{
-              fontSize: '2rem',
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              marginBottom: '40px',
-              textAlign: 'center',
-              color: 'var(--text-0)',
-            }}
-          >
-            Why TradVue Stands Out
-          </h2>
-
-          <div style={{ display: 'grid', gap: '20px', marginBottom: '40px' }}>
-            {[
-              {
-                title: 'AI-Powered Trade Analysis',
-                desc: 'Every trade you log gets analyzed by AI. Spot your patterns, weaknesses, and edges without manually reviewing hundreds of trades.',
-              },
-              {
-                title: '30+ Free Trading Calculators',
-                desc: 'Position sizing, risk/reward, profit targets, options Greeks, futures tick value, Sharpe ratio, and more—all built in. No more switching between tabs.',
-              },
-              {
-                title: 'Real-Time Prop Firm Tracking',
-                desc: 'Link your journal to prop firm rules. See your drawdown gauge, daily loss limits, and trailing loss in real-time. Never exceed your rules again.',
-              },
-              {
-                title: 'Multi-Asset Support',
-                desc: 'Trade stocks, options, futures, crypto, or forex. TradVue auto-detects your asset class and applies the right calculations for each.',
-              },
-              {
-                title: 'Smart Trade Tags & Notes',
-                desc: 'Tag trades by setup, emotion, market condition, and outcome. Find patterns that make you money. Identify what loses you money.',
-              },
-              {
-                title: 'Streak Tracking & Habits',
-                desc: 'Build a journaling habit. Watch your streak grow. Research shows traders who journal consistently improve faster.',
-              },
-            ].map((feature, i) => (
-              <div
-                key={i}
-                style={{
-                  background: 'var(--bg-2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '12px',
-                  padding: '20px',
-                }}
-              >
-                <h3
-                  style={{
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    color: 'var(--accent)',
-                    marginBottom: '8px',
-                  }}
-                >
-                  {feature.title}
-                </h3>
-                <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
-                  {feature.desc}
-                </p>
-              </div>
+      {/* ── Hero ── */}
+      <section className="seo-hero">
+        <div className="seo-hero-glow-1" />
+        <div className="seo-hero-glow-2" />
+        <div className="seo-hero-inner">
+          <div className="seo-hero-badge">
+            <span className="seo-hero-badge-dot" />
+            Free to start — no credit card required
+          </div>
+          <h1 className="seo-hero-h1">
+            The Best Free Trading Journal<br />
+            <span className="gradient-text">Built for Day Traders</span>
+          </h1>
+          <p className="seo-hero-sub">
+            Stop journaling in spreadsheets. TradVue gives you AI-powered insights, real-time prop firm tracking,
+            and 30+ trading calculators — no credit card required.
+          </p>
+          <Link href="/#signup" className="seo-hero-cta">
+            Start Journaling Free
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </Link>
+          <div className="seo-hero-trust">
+            {['No credit card required', 'Free tier forever', 'Instant CSV import'].map(t => (
+              <span key={t} className="seo-hero-trust-item">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {t}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─────────────────────────────────────────────────────────────────
-          FEATURE COMPARISON TABLE
-      ───────────────────────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px, 8vw, 100px) 24px', maxWidth: '800px', margin: '0 auto' }}>
-        <h2
-          style={{
-            fontSize: '2rem',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            marginBottom: '40px',
-            textAlign: 'center',
-            color: 'var(--text-0)',
-          }}
-        >
-          Feature Comparison
-        </h2>
-
-        <div style={{ overflowX: 'auto', marginBottom: '40px' }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              fontSize: '14px',
-            }}
-          >
-            <thead>
-              <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                <th style={{ textAlign: 'left', padding: '12px', color: 'var(--text-1)', fontWeight: 600 }}>
-                  Feature
-                </th>
-                <th style={{ textAlign: 'center', padding: '12px', color: 'var(--accent)', fontWeight: 700 }}>
-                  TradVue
-                </th>
-                <th style={{ textAlign: 'center', padding: '12px', color: 'var(--text-2)', fontWeight: 600 }}>
-                  Spreadsheet
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ['AI Trade Analysis', '✓', '✗'],
-                ['30+ Calculators', '✓', '✗'],
-                ['Prop Firm Sync', '✓', '✗'],
-                ['Pattern Detection', '✓', '✗'],
-                ['Mobile App', '✓ (coming)', '✗'],
-                ['Emotion Tags', '✓', '✗'],
-                ['Real-Time Updates', '✓', '✗'],
-                ['CSV Import', '✓', '✓'],
-                ['Free Forever', '✓', '✓'],
-              ].map((row, i) => (
-                <tr
-                  key={i}
-                  style={{
-                    borderBottom: '1px solid var(--border)',
-                    background: i % 2 === 0 ? 'var(--bg-1)' : 'transparent',
-                  }}
-                >
-                  <td style={{ padding: '12px', color: 'var(--text-1)' }}>{row[0]}</td>
-                  <td style={{ padding: '12px', textAlign: 'center', color: 'var(--green)', fontWeight: 700 }}>
-                    {row[1]}
-                  </td>
-                  <td style={{ padding: '12px', textAlign: 'center', color: 'var(--text-2)' }}>{row[2]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* ─────────────────────────────────────────────────────────────────
-          HOW IT WORKS
-      ───────────────────────────────────────────────────────────────── */}
-      <section
-        style={{
-          padding: 'clamp(60px, 8vw, 100px) 24px',
-          background: 'var(--bg-1)',
-          borderTop: '1px solid var(--border)',
-          borderBottom: '1px solid var(--border)',
-        }}
-      >
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <h2
-            style={{
-              fontSize: '2rem',
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              marginBottom: '40px',
-              textAlign: 'center',
-              color: 'var(--text-0)',
-            }}
-          >
-            How It Works
-          </h2>
-
-          <div style={{ display: 'grid', gap: '20px' }}>
-            {[
-              {
-                step: '01',
-                title: 'Log Your Trades',
-                desc: 'Enter your trades manually or import from CSV. TradVue auto-detects your asset class.',
-              },
-              {
-                step: '02',
-                title: 'AI Analysis',
-                desc: 'Our AI reviews every trade, spots patterns, and highlights what\'s working.',
-              },
-              {
-                step: '03',
-                title: 'Track Prop Firm Rules',
-                desc: 'Connect to prop firms. See real-time drawdown, daily loss, and trailing loss gauges.',
-              },
-              {
-                step: '04',
-                title: 'Build Your Edge',
-                desc: 'Use the insights to trade better. Repeat. Improve.',
-              },
-            ].map((item) => (
-              <div
-                key={item.step}
-                style={{
-                  display: 'flex',
-                  gap: '20px',
-                  background: 'var(--bg-2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '12px',
-                  padding: '20px',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: '20px',
-                    fontWeight: 800,
-                    color: 'var(--accent)',
-                    flexShrink: 0,
-                  }}
-                >
-                  {item.step}
-                </div>
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-0)' }}>
-                    {item.title}
-                  </h3>
-                  <p style={{ fontSize: '14px', color: 'var(--text-2)', margin: 0, lineHeight: 1.5 }}>
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─────────────────────────────────────────────────────────────────
-          PRICING
-      ───────────────────────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px, 8vw, 100px) 24px', maxWidth: '800px', margin: '0 auto' }}>
-        <h2
-          style={{
-            fontSize: '2rem',
-            fontWeight: 800,
-            letterSpacing: '-0.03em',
-            marginBottom: '24px',
-            textAlign: 'center',
-            color: 'var(--text-0)',
-          }}
-        >
-          Pricing
-        </h2>
-
-        <p style={{ textAlign: 'center', color: 'var(--text-2)', marginBottom: '40px', fontSize: '15px' }}>
-          Start free, upgrade only if you need advanced features.
-        </p>
-
-        <div style={{ display: 'grid', gap: '20px' }}>
+      {/* ── Stats bar ── */}
+      <div className="seo-section-alt" style={{ padding: '0' }}>
+        <div className="seo-stats-bar" style={{ borderRadius: '0', border: 'none', borderBottom: '1px solid var(--border)' }}>
           {[
-            {
-              name: 'Free',
-              price: 'Free forever',
-              features: [
-                'Unlimited trade logging',
-                'Basic analytics',
-                '30+ calculators',
-                'CSV import',
-                'Email support',
-              ],
-            },
-            {
-              name: 'Pro',
-              price: '$24/month',
-              features: [
-                'Everything in Free',
-                'AI trade analysis',
-                'Prop firm sync',
-                'Advanced patterns',
-                'Priority support',
-              ],
-              highlight: true,
-            },
-          ].map((tier) => (
-            <div
-              key={tier.name}
-              style={{
-                background: tier.highlight ? 'linear-gradient(160deg, rgba(74,158,255,0.06) 0%, rgba(99,102,241,0.06) 100%)' : 'var(--bg-1)',
-                border: tier.highlight ? '1px solid rgba(74,158,255,0.3)' : '1px solid var(--border)',
-                borderRadius: '12px',
-                padding: '24px',
-              }}
-            >
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-0)', marginBottom: '4px' }}>
-                  {tier.name}
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-0)' }}>
-                  {tier.price}
-                </div>
-              </div>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', margin: 0, padding: 0 }}>
-                {tier.features.map((feat) => (
-                  <li
-                    key={feat}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '14px',
-                      color: 'var(--text-1)',
-                    }}
-                  >
-                    <span style={{ color: 'var(--green)', fontWeight: 700 }}>✓</span>
-                    {feat}
-                  </li>
-                ))}
-              </ul>
+            { value: '30+', label: 'Built-in Calculators' },
+            { value: '20', label: 'Futures Contracts' },
+            { value: '60s', label: 'Per-Trade Ritual' },
+            { value: '$24', label: 'Pro / Month' },
+          ].map(s => (
+            <div key={s.label} className="seo-stat">
+              <div className="seo-stat-value">{s.value}</div>
+              <div className="seo-stat-label">{s.label}</div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Features ── */}
+      <section className="seo-section">
+        <div className="seo-section-inner">
+          <div className="seo-section-header">
+            <h2>Why TradVue Stands Out</h2>
+            <div className="seo-divider" />
+            <p style={{ marginTop: '20px' }}>
+              Every feature built to help you trade better — not just log more.
+            </p>
+          </div>
+          <div className="seo-grid-3">
+            {[
+              { emoji: '🤖', title: 'AI-Powered Trade Analysis', desc: 'Every trade you log gets analyzed by AI. Spot your patterns, weaknesses, and edges without manually reviewing hundreds of trades.', color: 'blue' },
+              { emoji: '🔢', title: '30+ Free Trading Calculators', desc: 'Position sizing, risk/reward, profit targets, options Greeks, futures tick value, Sharpe ratio — all built in. No more switching between tabs.', color: 'purple' },
+              { emoji: '🎯', title: 'Real-Time Prop Firm Tracking', desc: 'Link your journal to prop firm rules. See your drawdown gauge, daily loss limits, and trailing loss in real-time. Never exceed your rules again.', color: 'green' },
+              { emoji: '📊', title: 'Multi-Asset Support', desc: 'Trade stocks, options, futures, crypto, or forex. TradVue auto-detects your asset class and applies the right calculations for each.', color: 'yellow' },
+              { emoji: '🏷️', title: 'Smart Trade Tags & Notes', desc: 'Tag trades by setup, emotion, market condition, and outcome. Find patterns that make you money. Identify what loses you money.', color: 'blue' },
+              { emoji: '🔥', title: 'Streak Tracking & Habits', desc: 'Build a journaling habit. Watch your streak grow. Traders who journal consistently improve faster.', color: 'purple' },
+            ].map(f => (
+              <div key={f.title} className="seo-card">
+                <div className={`seo-card-icon seo-card-icon-${f.color}`}>{f.emoji}</div>
+                <div className="seo-card-title">{f.title}</div>
+                <div className="seo-card-desc">{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* ─────────────────────────────────────────────────────────────────
-          CTA
-      ───────────────────────────────────────────────────────────────── */}
-      <section
-        style={{
-          padding: 'clamp(60px, 8vw, 100px) 24px',
-          background: 'var(--bg-1)',
-          borderTop: '1px solid var(--border)',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <h2
-            style={{
-              fontSize: '2.2rem',
-              fontWeight: 800,
-              letterSpacing: '-0.03em',
-              marginBottom: '16px',
-              color: 'var(--text-0)',
-            }}
-          >
-            Ready to Level Up Your Trading?
-          </h2>
-          <p style={{ fontSize: '16px', color: 'var(--text-2)', marginBottom: '32px', lineHeight: 1.6 }}>
-            Join traders who are using AI and data to trade smarter. Start free to start.
+      {/* ── Comparison table ── */}
+      <section className="seo-section-alt">
+        <div className="seo-section-inner-narrow">
+          <div className="seo-section-header">
+            <h2>Feature Comparison</h2>
+            <div className="seo-divider" />
+          </div>
+          <div className="seo-table-wrap">
+            <table className="seo-table">
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th className="highlight" style={{ textAlign: 'center' }}>TradVue</th>
+                  <th style={{ textAlign: 'center', color: 'var(--text-2)' }}>Spreadsheet</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['AI Trade Analysis', '✓', '✗'],
+                  ['30+ Calculators', '✓', '✗'],
+                  ['Prop Firm Sync', '✓', '✗'],
+                  ['Pattern Detection', '✓', '✗'],
+                  ['Mobile App', '✓ (coming)', '✗'],
+                  ['Emotion Tags', '✓', '✗'],
+                  ['Real-Time Updates', '✓', '✗'],
+                  ['CSV Import', '✓', '✓'],
+                  ['Free to Start', '✓', '✓'],
+                ].map((row, i) => (
+                  <tr key={i}>
+                    <td className="feature-cell">{row[0]}</td>
+                    <td className="center-cell"><span className="tick-yes">{row[1]}</span></td>
+                    <td className="center-cell"><span className={row[2] === '✓' ? 'tick-yes' : 'tick-no'}>{row[2]}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ── */}
+      <section className="seo-section">
+        <div className="seo-section-inner-narrow">
+          <div className="seo-section-header">
+            <h2>How It Works</h2>
+            <div className="seo-divider" />
+          </div>
+          <div className="seo-steps">
+            {[
+              { step: '01', title: 'Log Your Trades', desc: 'Enter your trades manually or import from CSV. TradVue auto-detects your asset class.' },
+              { step: '02', title: 'AI Analysis', desc: 'Our AI reviews every trade, spots patterns, and highlights what\'s working.' },
+              { step: '03', title: 'Track Prop Firm Rules', desc: 'Connect to prop firms. See real-time drawdown, daily loss, and trailing loss gauges.' },
+              { step: '04', title: 'Build Your Edge', desc: 'Use the insights to trade better. Repeat. Improve.' },
+            ].map(item => (
+              <div key={item.step} className="seo-step">
+                <div className="seo-step-num">{item.step}</div>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Pricing ── */}
+      <section className="seo-section-alt">
+        <div className="seo-section-inner-narrow">
+          <div className="seo-section-header">
+            <h2>Pricing</h2>
+            <div className="seo-divider" />
+            <p style={{ marginTop: '20px' }}>Start free, upgrade only if you need advanced features.</p>
+          </div>
+          <div className="seo-grid-2">
+            {[
+              {
+                name: 'Free',
+                price: 'Free to Start',
+                sub: 'No credit card',
+                features: ['Unlimited trade logging', 'Basic analytics', '30+ calculators', 'CSV import', 'Email support'],
+                highlight: false,
+              },
+              {
+                name: 'Pro',
+                price: '$24/month',
+                sub: 'Billed monthly',
+                features: ['Everything in Free', 'AI trade analysis', 'Prop firm sync', 'Advanced patterns', 'Priority support'],
+                highlight: true,
+              },
+            ].map(tier => (
+              <div
+                key={tier.name}
+                style={{
+                  background: tier.highlight
+                    ? 'linear-gradient(160deg, rgba(74,158,255,0.06) 0%, rgba(99,102,241,0.06) 100%)'
+                    : 'var(--bg-2)',
+                  border: tier.highlight ? '1px solid rgba(74,158,255,0.3)' : '1px solid var(--border)',
+                  borderRadius: '16px',
+                  padding: '32px',
+                  position: 'relative',
+                }}
+              >
+                {tier.highlight && (
+                  <div style={{
+                    position: 'absolute', top: '20px', right: '20px',
+                    background: 'linear-gradient(135deg, #4a9eff, #6366f1)',
+                    color: '#fff', fontSize: '10px', fontWeight: 700,
+                    letterSpacing: '0.08em', padding: '4px 10px', borderRadius: '100px',
+                    textTransform: 'uppercase',
+                  }}>Popular</div>
+                )}
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em', color: tier.highlight ? 'var(--blue)' : 'var(--text-2)', textTransform: 'uppercase', marginBottom: '8px' }}>{tier.name}</div>
+                  <div style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-0)', lineHeight: 1 }}>{tier.price}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '6px' }}>{tier.sub}</div>
+                </div>
+                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', padding: 0, margin: '0 0 24px' }}>
+                  {tier.features.map(feat => (
+                    <li key={feat} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--text-1)' }}>
+                      <span style={{ color: tier.highlight ? 'var(--blue)' : 'var(--green)' }}>✓</span>
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/#signup" style={{
+                  display: 'block', textAlign: 'center', padding: '12px',
+                  borderRadius: '8px', textDecoration: 'none', fontWeight: 700, fontSize: '14px',
+                  background: tier.highlight ? 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)' : 'var(--bg-3)',
+                  color: '#fff',
+                  border: tier.highlight ? 'none' : '1px solid var(--border)',
+                }}>
+                  Get Started Free
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="seo-section">
+        <div className="seo-section-inner-narrow">
+          <div className="seo-section-header">
+            <h2>Frequently Asked Questions</h2>
+            <div className="seo-divider" />
+          </div>
+          <div className="seo-faq-list">
+            {[
+              { q: 'What makes TradVue the best trading journal for day traders?', a: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real-time drawdown gauges, emotion tracking, and pattern detection — all free to start.' },
+              { q: 'Is TradVue really free to use?', a: 'Yes. TradVue has a free tier that includes manual trade logging, basic analytics, and access to all 30+ calculators. No credit card required to start.' },
+              { q: 'Can I track prop firm drawdowns in TradVue?', a: 'Yes. TradVue has built-in prop firm tracking that syncs your journal with prop firm rules, showing real-time drawdown gauges, daily loss limits, and trailing loss status.' },
+              { q: 'Can I import my existing trades into TradVue?', a: 'Yes. TradVue supports CSV import from most major brokers and platforms. You can import your full trade history to analyze historical performance.' },
+              { q: 'Does TradVue work for options and futures traders?', a: 'Yes. TradVue supports multi-asset journaling including stocks, options (with Greeks tracking), futures (with built-in contract specs for 20 contracts), forex, and crypto.' },
+            ].map(item => (
+              <div key={item.q} className="seo-faq-item">
+                <div className="seo-faq-q">
+                  <span>{item.q}</span>
+                  <span className="seo-faq-q-icon">+</span>
+                </div>
+                <div className="seo-faq-a">{item.a}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="seo-cta-section">
+        <div className="seo-cta-inner">
+          <h2 className="seo-cta-h2">Ready to Level Up Your Trading?</h2>
+          <p className="seo-cta-sub">
+            Join traders using AI and data to trade smarter. Start free today — no credit card required.
           </p>
-          <Link
-            href="/#signup"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '16px 40px',
-              background: 'var(--accent)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              fontSize: '16px',
-              fontWeight: 700,
-            }}
-          >
+          <Link href="/#signup" className="seo-cta-btn">
             Start Journaling Free
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
         </div>
       </section>
 
-      {/* ─────────────────────────────────────────────────────────────────
-          RELATED FEATURES + INTERNAL LINKS
-      ───────────────────────────────────────────────────────────────── */}
-      <section style={{ padding: '60px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-1)' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      {/* ── Related ── */}
+      <section className="seo-related-section">
+        <div className="seo-section-inner-narrow">
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '24px', color: 'var(--text-0)' }}>
             Explore TradVue
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '40px' }}>
+          <div className="seo-related-grid">
             {[
-              { href: '/propfirm', title: 'Prop Firm Tracker', desc: 'Track drawdown & daily limits in real-time', emoji: '🎯' },
-              { href: '/tools', title: '30+ Calculators', desc: 'Position size, risk/reward, Greeks & more', emoji: '🔢' },
+              { href: '/prop-firm-tracker', title: 'Prop Firm Tracker', desc: 'Track drawdown & daily limits in real-time', emoji: '🎯' },
+              { href: '/trading-calculators', title: '30+ Calculators', desc: 'Position size, risk/reward, Greeks & more', emoji: '🔢' },
+              { href: '/futures-trading-journal', title: 'Futures Journal', desc: 'Track NQ, ES, CL with tick-based P&L', emoji: '📈' },
+              { href: '/options-trading-journal', title: 'Options Journal', desc: 'Track Greeks & multi-leg strategies', emoji: '⚡' },
+              { href: '/post-trade-ritual', title: 'Post-Trade Ritual', desc: 'Build your daily journaling habit', emoji: '🔥' },
               { href: '/coach', title: 'AI Coach', desc: 'Get AI analysis of your trading patterns', emoji: '🧠' },
-              { href: '/ritual', title: 'Post-Trade Ritual', desc: 'Build your daily journaling habit', emoji: '🔥' },
-              { href: '/portfolio', title: 'Portfolio Tracker', desc: 'Track holdings, dividends & performance', emoji: '📈' },
-              { href: '/news', title: 'Market News', desc: 'Real-time news with AI sentiment analysis', emoji: '📰' },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                style={{
-                  background: 'var(--bg-2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  textDecoration: 'none',
-                  display: 'block',
-                  transition: 'border-color 0.15s',
-                }}
-              >
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>{item.emoji}</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--accent)', marginBottom: '4px' }}>{item.title}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-2)', lineHeight: 1.4 }}>{item.desc}</div>
+            ].map(item => (
+              <Link key={item.href} href={item.href} className="seo-related-card">
+                <span className="seo-related-card-emoji">{item.emoji}</span>
+                <div className="seo-related-card-title">{item.title}</div>
+                <div className="seo-related-card-desc">{item.desc}</div>
               </Link>
             ))}
           </div>
-
-          <h3 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-1)' }}>
-            Related Guides
-          </h3>
-          <ul style={{ listStyle: 'none', display: 'grid', gap: '8px', margin: 0, padding: 0 }}>
-            {[
-              { href: '/prop-firm-tracker', text: 'Free Prop Firm Tracker — Track Drawdown & Daily Limits' },
-              { href: '/trading-calculators', text: '30+ Free Trading Calculators — Position Size, Risk/Reward' },
-              { href: '/post-trade-ritual', text: 'Post-Trade Ritual — Build Your Journaling Habit in 60 Seconds' },
-              { href: '/futures-trading-journal', text: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L' },
-              { href: '/options-trading-journal', text: 'Options Trading Journal — Track Greeks & Multi-Leg Strategies' },
-            ].map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} style={{ color: 'var(--accent)', textDecoration: 'none', fontSize: '14px' }}>
-                  → {link.text}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <div className="seo-guide-links">
+            <h3>Related Guides</h3>
+            <ul>
+              {[
+                { href: '/prop-firm-tracker', text: 'Free Prop Firm Tracker — Track Drawdown & Daily Limits' },
+                { href: '/trading-calculators', text: '30+ Free Trading Calculators — Position Size, Risk/Reward' },
+                { href: '/post-trade-ritual', text: 'Post-Trade Ritual — Build Your Journaling Habit in 60 Seconds' },
+                { href: '/futures-trading-journal', text: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L' },
+                { href: '/options-trading-journal', text: 'Options Trading Journal — Track Greeks & Multi-Leg Strategies' },
+              ].map(link => (
+                <li key={link.href}><Link href={link.href}>→ {link.text}</Link></li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
 
-      {/* ─────────────────────────────────────────────────────────────────
-          FOOTER
-      ───────────────────────────────────────────────────────────────── */}
-      <footer style={{ padding: '40px 24px', borderTop: '1px solid var(--border)', background: 'var(--bg-1)', textAlign: 'center', fontSize: '12px', color: 'var(--text-3)' }}>
-        <p style={{ margin: '8px 0' }}>© 2026 TradVue. Not financial advice. Trading involves risk.</p>
-        <p style={{ margin: '8px 0' }}>
-          <Link href="/legal/disclaimer" style={{ color: 'var(--text-2)', textDecoration: 'none' }}>
-            Disclaimer
-          </Link>
+      {/* ── Footer ── */}
+      <footer className="seo-footer">
+        <p>© 2026 TradVue. Not financial advice. Trading involves risk.</p>
+        <p>
+          <Link href="/legal/disclaimer">Disclaimer</Link>
           {' • '}
-          <Link href="/legal/privacy" style={{ color: 'var(--text-2)', textDecoration: 'none' }}>
-            Privacy
-          </Link>
+          <Link href="/legal/privacy">Privacy</Link>
         </p>
       </footer>
     </div>

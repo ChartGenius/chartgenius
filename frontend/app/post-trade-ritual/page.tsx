@@ -4,7 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'Post-Trade Ritual — Build a Daily Trading Journal Habit in 60 Seconds',
   description:
-    'Build a consistent trading journal habit with TradVue's post-trade ritual. Emotion tags, streak tracking, and 60-second journaling. Free to start, try now.',
+    'Build a consistent trading journal habit with TradVue post-trade ritual. Emotion tags, streak tracking, and 60-second journaling. Free to start, try now.',
   alternates: {
     canonical: 'https://www.tradvue.com/post-trade-ritual',
   },
@@ -67,7 +67,7 @@ export default function PostTradeRitualPage() {
                     name: 'What emotion tags does TradVue use in the post-trade ritual?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'TradVue includes emotion tags like: Confident, Fearful, Greedy, Bored, FOMO, Overextended, Regretful, and Lucky. Over time you'll see correlations between emotions and your P&L.',
+                      text: 'TradVue includes emotion tags like: Confident, Fearful, Greedy, Bored, FOMO, Overextended, Regretful, and Lucky. Over time you will see correlations between emotions and your P&L.',
                     },
                   },
                 ],

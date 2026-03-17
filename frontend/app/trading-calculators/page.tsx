@@ -40,7 +40,7 @@ export default function TradingCalculatorsPage() {
                 mainEntity: [
                   {
                     '@type': 'Question',
-                    name: 'Are TradVue's trading calculators really free?',
+                    name: 'Are TradVue trading calculators really free?',
                     acceptedAnswer: {
                       '@type': 'Answer',
                       text: 'Yes. All 30+ calculators are completely free, forever. No sign-up, no credit card, no hidden costs. Just open the tools and calculate.',
@@ -59,7 +59,7 @@ export default function TradingCalculatorsPage() {
                     name: 'How do I calculate the right position size for a trade?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'Use TradVue's position size calculator. Enter your account size, risk percentage (typically 1-2%), and stop loss distance. The calculator tells you exactly how many shares, contracts, or lots to trade.',
+                      text: 'Use TradVue position size calculator. Enter your account size, risk percentage (typically 1-2%), and stop loss distance. The calculator tells you exactly how many shares, contracts, or lots to trade.',
                     },
                   },
                   {
@@ -75,7 +75,7 @@ export default function TradingCalculatorsPage() {
                     name: 'What is the Kelly Criterion and how do I use it?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'The Kelly Criterion calculates the optimal position size percentage based on your historical win rate and average win/loss ratio. TradVue's Kelly calculator shows both full and half-Kelly (recommended for trading).',
+                      text: 'The Kelly Criterion calculates the optimal position size percentage based on your historical win rate and average win/loss ratio. TradVue Kelly calculator shows both full and half-Kelly (recommended for trading).',
                     },
                   },
                 ],

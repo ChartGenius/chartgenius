@@ -55,7 +55,7 @@ const jsonLd = {
           name: 'How do I set up prop firm tracking?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Go to the Prop Firm Tracker page, click "Add Account," and enter your firm's rules (daily loss limit, max drawdown, trailing loss). TradVue will track your compliance automatically as you log trades.',
+            text: 'Go to the Prop Firm Tracker page, click "Add Account," and enter your firm rules (daily loss limit, max drawdown, trailing loss). TradVue will track your compliance automatically as you log trades.',
           },
         },
         {
@@ -71,7 +71,7 @@ const jsonLd = {
           name: 'How do I cancel my TradVue Pro subscription?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Go to Account Settings and click "Manage Subscription." You'll be taken to the Stripe billing portal where you can cancel at any time. Your Pro access continues until the end of the current billing period.',
+            text: 'Go to Account Settings and click "Manage Subscription." You will be taken to the Stripe billing portal where you can cancel at any time. Your Pro access continues until the end of the current billing period.',
           },
         },
       ],
