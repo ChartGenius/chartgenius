@@ -3,8 +3,8 @@
 /**
  * /pricing — TradVue pricing page
  *
- * Shows 3 tiers: No Account / Free / Pro with a full comparison table.
- * Authenticated users are taken to Stripe Checkout.
+ * Shows 2 tiers: Free / Pro with a full comparison table.
+ * Both tiers require an account. Authenticated users are taken to Stripe Checkout.
  * Unauthenticated users are prompted to sign up first.
  */
 
@@ -31,7 +31,6 @@ type CellValue = { text: string; positive?: boolean; dim?: boolean }
 
 interface CompareRow {
   feature: string
-  noAccount: CellValue
   free: CellValue
   pro: CellValue
 }
@@ -39,93 +38,78 @@ interface CompareRow {
 const COMPARE_ROWS: CompareRow[] = [
   {
     feature: 'Dashboard & market data',
-    noAccount: { text: '✓ Full access', positive: true },
-    free:      { text: '✓ Full access', positive: true },
-    pro:       { text: '✓ Full access', positive: true },
+    free: { text: '✓ Full access', positive: true },
+    pro:  { text: '✓ Full access', positive: true },
   },
   {
     feature: '30+ trading calculators',
-    noAccount: { text: '✓ All calculators', positive: true },
-    free:      { text: '✓ All calculators', positive: true },
-    pro:       { text: '✓ All calculators', positive: true },
+    free: { text: '✓ All calculators', positive: true },
+    pro:  { text: '✓ All calculators', positive: true },
   },
   {
     feature: 'News & economic calendar',
-    noAccount: { text: '✓ Full access', positive: true },
-    free:      { text: '✓ Full access', positive: true },
-    pro:       { text: '✓ Full access', positive: true },
+    free: { text: '✓ Full access', positive: true },
+    pro:  { text: '✓ Full access', positive: true },
   },
   {
     feature: 'Trading journal',
-    noAccount: { text: '✓ 3-week trial', positive: true },
-    free:      { text: '30-day view window' },
-    pro:       { text: '✓ Unlimited history', positive: true },
+    free: { text: '30-day view window' },
+    pro:  { text: '✓ Unlimited history', positive: true },
   },
   {
     feature: 'Portfolio tracker',
-    noAccount: { text: '✓ 3-week trial', positive: true },
-    free:      { text: '30-day view window' },
-    pro:       { text: '✓ Unlimited', positive: true },
+    free: { text: '30-day view window' },
+    pro:  { text: '✓ Unlimited', positive: true },
   },
   {
     feature: 'Prop firm tracker',
-    noAccount: { text: '✓ 3-week trial', positive: true },
-    free:      { text: '30-day view window' },
-    pro:       { text: '✓ Unlimited', positive: true },
+    free: { text: '30-day view window' },
+    pro:  { text: '✓ Unlimited', positive: true },
   },
   {
     feature: 'AI Trade Coach',
-    noAccount: { text: '✓ 3-week trial', positive: true },
-    free:      { text: '30-day view window' },
-    pro:       { text: '✓ Full access', positive: true },
+    free: { text: '30-day view window' },
+    pro:  { text: '✓ Full access', positive: true },
   },
   {
     feature: 'Playbooks & rituals',
-    noAccount: { text: '✓ 3-week trial', positive: true },
-    free:      { text: '30-day view window' },
-    pro:       { text: '✓ Unlimited', positive: true },
+    free: { text: '30-day view window' },
+    pro:  { text: '✓ Unlimited', positive: true },
   },
   {
     feature: 'CSV import/export',
-    noAccount: { text: '✓ 3-week trial', positive: true },
-    free:      { text: 'Last 30 days only' },
-    pro:       { text: '✓ Any date range', positive: true },
+    free: { text: 'Last 30 days only' },
+    pro:  { text: '✓ Any date range', positive: true },
   },
   {
     feature: 'Cloud sync',
-    noAccount: { text: '—', dim: true },
-    free:      { text: '—', dim: true },
-    pro:       { text: '✓ All devices', positive: true },
+    free: { text: '—', dim: true },
+    pro:  { text: '✓ All devices', positive: true },
   },
   {
     feature: 'Broker auto-sync',
-    noAccount: { text: '—', dim: true },
-    free:      { text: '—', dim: true },
-    pro:       { text: '✓ Coming soon', positive: true },
+    free: { text: '—', dim: true },
+    pro:  { text: '✓ Coming soon', positive: true },
   },
   {
     feature: 'Advanced reports',
-    noAccount: { text: '—', dim: true },
-    free:      { text: '—', dim: true },
-    pro:       { text: '✓ Full access', positive: true },
+    free: { text: '—', dim: true },
+    pro:  { text: '✓ Full access', positive: true },
   },
   {
     feature: 'Price alerts',
-    noAccount: { text: '—', dim: true },
-    free:      { text: '3 alerts' },
-    pro:       { text: '✓ Unlimited', positive: true },
+    free: { text: '3 alerts' },
+    pro:  { text: '✓ Unlimited', positive: true },
   },
   {
     feature: 'Support',
-    noAccount: { text: 'Community' },
-    free:      { text: 'Community' },
-    pro:       { text: 'Priority', positive: true },
+    free: { text: 'Community' },
+    pro:  { text: 'Priority', positive: true },
   },
   {
-    feature: 'Account required',
-    noAccount: { text: 'No' },
-    free:      { text: 'Yes' },
-    pro:       { text: 'Yes' },
+    feature: '3-week full trial',
+    free: { text: '✓ From account creation', positive: true },
+    pro:  { text: '✓ Included', positive: true },
   },
 ]
 
@@ -186,57 +170,30 @@ export default function PricingPage() {
           Start free. Upgrade when<br />you&apos;re ready.
         </h1>
         <p style={subtitleStyle}>
-          Everything works out of the box — no account needed for 3 weeks.
-          Sign in free to continue, or go Pro for unlimited everything.
+          Create a free account — no credit card required.
+          Enjoy a 3-week full-featured trial, then continue free or go Pro for unlimited everything.
         </p>
       </div>
 
-      {/* ── 3 Tier Cards ───────────────────────────────────────────────────── */}
+      {/* ── 2 Tier Cards ───────────────────────────────────────────────────── */}
       <div style={cardsWrapStyle}>
-
-        {/* No Account Card */}
-        <div style={tierCardStyle(false)}>
-          <div style={{ marginBottom: 20 }}>
-            <div style={tierLabelStyle('#9ca3af')}>No Account</div>
-            <div style={tierPriceStyle}>Free</div>
-            <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 6 }}>3-week full access</div>
-          </div>
-          <p style={tierDescStyle}>
-            Full access to every feature for 3 weeks. No sign-in needed.
-            Explore tools, journal, portfolio — everything works.
-          </p>
-          <ul style={tierFeatureListStyle}>
-            <li style={tierFeatureItemStyle}>All calculators & market data</li>
-            <li style={tierFeatureItemStyle}>Trading journal & portfolio</li>
-            <li style={tierFeatureItemStyle}>AI Trade Coach & analytics</li>
-            <li style={tierFeatureItemStyle}>No credit card · No sign-up</li>
-          </ul>
-          <div style={{
-            marginTop: 'auto',
-            paddingTop: 20,
-            fontSize: 13,
-            color: '#6b7280',
-            textAlign: 'center',
-          }}>
-            Just open the app and start
-          </div>
-        </div>
 
         {/* Free Card */}
         <div style={tierCardStyle(false)}>
           <div style={{ marginBottom: 20 }}>
             <div style={tierLabelStyle('#9ca3af')}>Free</div>
             <div style={tierPriceStyle}>Free</div>
-            <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 6 }}>After 3-week trial</div>
+            <div style={{ fontSize: 13, color: '#9ca3af', marginTop: 6 }}>No credit card required</div>
           </div>
           <p style={tierDescStyle}>
-            After 3 weeks, sign in to continue. 30-day viewing window —
-            older entries locked, not deleted. Limited CSV access.
+            Create an account — get 3 weeks of full access to every feature.
+            After the trial, enjoy a limited free tier with a 30-day rolling view window.
           </p>
           <ul style={tierFeatureListStyle}>
+            <li style={tierFeatureItemStyle}>✓ 3-week full-featured trial</li>
             <li style={tierFeatureItemStyle}>All calculators & market data</li>
             <li style={tierFeatureItemStyle}>30-day journal & portfolio view</li>
-            <li style={tierFeatureItemStyle}>3 price alerts</li>
+            <li style={tierFeatureItemStyle}>3 price alerts · Community support</li>
             <li style={tierFeatureItemStyle}>CSV import/export (last 30 days)</li>
           </ul>
           <div style={{ marginTop: 'auto', paddingTop: 20 }}>
@@ -305,16 +262,18 @@ export default function PricingPage() {
           </div>
 
           <p style={tierDescStyle}>
-            Everything unlimited. Full history, cloud sync, auto-sync,
+            Everything unlimited. Full history, cloud sync, broker auto-sync,
             advanced reports, and priority support.
           </p>
 
           <ul style={tierFeatureListStyle}>
-            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>Unlimited journal history</li>
-            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>Cloud sync — all devices</li>
-            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>Full CSV any date range</li>
-            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>Advanced reports & AI Coach</li>
-            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>Priority support</li>
+            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>✓ Unlimited trade history</li>
+            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>✓ Cloud sync — all devices</li>
+            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>✓ Full CSV any date range</li>
+            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>✓ Broker auto-sync (coming soon)</li>
+            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>✓ Advanced reports & AI Coach</li>
+            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>✓ Unlimited price alerts</li>
+            <li style={{ ...tierFeatureItemStyle, color: '#c4b5fd' }}>✓ Priority support</li>
           </ul>
 
           <div style={{ marginTop: 'auto', paddingTop: 20 }}>
@@ -357,10 +316,7 @@ export default function PricingPage() {
           <table style={tableStyle}>
             <thead>
               <tr>
-                <th style={{ ...thStyle, textAlign: 'left', width: '30%' }}>Feature</th>
-                <th style={{ ...thStyle, ...thCenterStyle }}>
-                  <span style={{ color: '#9ca3af' }}>No Account</span>
-                </th>
+                <th style={{ ...thStyle, textAlign: 'left', width: '40%' }}>Feature</th>
                 <th style={{ ...thStyle, ...thCenterStyle }}>
                   <span style={{ color: '#d1d5db' }}>Free</span>
                 </th>
@@ -373,7 +329,6 @@ export default function PricingPage() {
               {COMPARE_ROWS.map((row, i) => (
                 <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.018)' }}>
                   <td style={tdFeatureStyle}>{row.feature}</td>
-                  <td style={tdCellStyle(row.noAccount)}>{row.noAccount.text}</td>
                   <td style={tdCellStyle(row.free)}>{row.free.text}</td>
                   <td style={{ ...tdCellStyle(row.pro), background: 'rgba(99,102,241,0.07)' }}>
                     {row.pro.text}
@@ -458,10 +413,10 @@ const subtitleStyle: React.CSSProperties = {
 
 const cardsWrapStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
   gap: 20,
   width: '100%',
-  maxWidth: 980,
+  maxWidth: 720,
   marginBottom: 56,
   alignItems: 'start',
 }
@@ -598,7 +553,7 @@ const secondaryBtnStyle: React.CSSProperties = {
 
 const tableWrapStyle: React.CSSProperties = {
   width: '100%',
-  maxWidth: 900,
+  maxWidth: 720,
 }
 
 const tableScrollStyle: React.CSSProperties = {
@@ -610,7 +565,7 @@ const tableScrollStyle: React.CSSProperties = {
 const tableStyle: React.CSSProperties = {
   width: '100%',
   borderCollapse: 'collapse',
-  minWidth: 520,
+  minWidth: 400,
 }
 
 const thStyle: React.CSSProperties = {

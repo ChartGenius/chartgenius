@@ -111,7 +111,7 @@ const FAQ_DATA: {
       },
       {
         q: 'Do I need an account?',
-        a: 'No account is required to use TradVue. All data (journal entries, portfolio holdings, watchlist) is saved locally in your browser. Sign in to enable cloud sync — your data will then be available on any device.',
+        a: "A free account is required to use TradVue. Sign up in seconds — no credit card required. You'll get a 3-week full trial of all features from the day you create your account. After the trial, your free tier includes a 30-day rolling view window, limited CSV access, and 3 price alerts. Upgrade to Pro for unlimited everything.",
       },
       {
         q: 'What markets and assets are supported?',

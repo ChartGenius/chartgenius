@@ -1,11 +1,16 @@
 /**
  * tierAccess.ts — Free tier, trial, and paywall logic for TradVue
  *
- * Three-tier model:
- *   demo  — Unauthenticated. Sample data only. No interactive features.
- *   free  — Logged in. 3-week full trial → restricted after trial.
- *           Post-trial: 30-day view window, limited CSV, no auto-sync.
- *   paid  — $24/mo. Everything unlimited.
+ * Two-tier model (per Terms of Service, Section 5):
+ *   demo  — Unauthenticated. No trial access. Users should be prompted to
+ *           create a free account. No data is stored for unauthenticated users.
+ *   free  — Logged in. 3-week full trial from account creation date.
+ *           Post-trial: 30-day rolling view window, limited CSV (last 30 days),
+ *           no cloud sync, no auto-sync, no advanced reports, 3 price alerts.
+ *           No credit card required.
+ *   paid  — Pro: $24/mo or $16.80/mo (billed annually at $201.60/year).
+ *           Everything unlimited. Full history, cloud sync, broker auto-sync,
+ *           advanced reports, unlimited price alerts, priority support.
  *
  * Data is retained while your account is active. Free tier restricts VIEW, not storage.
  */
@@ -27,18 +32,18 @@ export type GatedFeature =
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-export const TRIAL_DAYS = 21          // 3 weeks from signup
-export const VIEW_WINDOW_DAYS = 30    // free tier post-trial view window
-export const MONTHLY_PRICE = 24       // $/mo
-export const ANNUAL_PRICE = 16.80     // $/mo billed annually
+export const TRIAL_DAYS = 21          // 3-week trial from account creation date (ToS §5)
+export const VIEW_WINDOW_DAYS = 30    // free tier post-trial rolling view window
+export const MONTHLY_PRICE = 24       // $/mo (Pro monthly)
+export const ANNUAL_PRICE = 16.80     // $/mo billed annually ($201.60/year)
 
 // ── Core tier resolution ──────────────────────────────────────────────────────
 
 /**
  * Returns the user's effective tier.
- *   null user  → 'demo'
+ *   null user       → 'demo'  (unauthenticated — prompt to create account)
  *   user.tier === 'pro'  → 'paid'
- *   otherwise  → 'free'
+ *   otherwise       → 'free'  (includes 3-week trial window from created_at)
  */
 export function getUserTier(user: AuthUser | null): UserTier {
   if (!user) return 'demo'
@@ -50,7 +55,8 @@ export function getUserTier(user: AuthUser | null): UserTier {
 
 /**
  * Returns true if the user is within the 3-week free trial window.
- * Trial starts from user.created_at (Supabase signup timestamp).
+ * Trial starts from user.created_at (account creation date per ToS §5).
+ * Only applies to authenticated free-tier users.
  */
 export function isTrialActive(user: AuthUser | null): boolean {
   if (!user) return false
@@ -81,11 +87,12 @@ export function getTrialDaysRemaining(user: AuthUser | null): number {
 /**
  * Returns true if the user can fully access a given feature.
  *
- * Gating matrix:
- *   demo          → nothing (redirect to sign up)
- *   free (trial)  → everything
- *   free (post)   → csv-import/export limited to 30d; no auto-sync, history, advanced
- *   paid          → everything
+ * Gating matrix (per ToS §5):
+ *   demo          → nothing (redirect to sign up — account required)
+ *   free (trial)  → everything (3-week full trial from account creation)
+ *   free (post)   → csv-import/export limited to last 30 days;
+ *                   no auto-sync, unlimited history, or advanced reports
+ *   paid          → everything unlimited
  */
 export function canAccessFeature(user: AuthUser | null, feature: GatedFeature): boolean {
   const tier = getUserTier(user)
@@ -116,15 +123,16 @@ export function canAccessFeature(user: AuthUser | null, feature: GatedFeature): 
 // ── Data locking ──────────────────────────────────────────────────────────────
 
 /**
- * Returns true if a given entry date is beyond the 30-day view window
- * for a free-tier post-trial user.
+ * Returns true if a given entry date is beyond the 30-day rolling view window
+ * for a free-tier post-trial user (per ToS §5).
  *
  * IMPORTANT: Data is retained while the account is active. Only the view is restricted.
+ * Upgrade to Pro to restore access to the full history.
  */
 export function isDataLocked(user: AuthUser | null, entryDate: string | Date): boolean {
   const tier = getUserTier(user)
 
-  if (tier === 'demo') return false   // demo shows sample data (never "locked")
+  if (tier === 'demo') return false   // demo: no user data
   if (tier === 'paid') return false   // paid = fully unlocked
 
   // Free trial: no lock
@@ -140,8 +148,9 @@ export function isDataLocked(user: AuthUser | null, entryDate: string | Date): b
 // ── CSV date filter ────────────────────────────────────────────────────────────
 
 /**
- * Returns a Date cutoff for CSV import — rows before this date are filtered out.
- * Returns null if no limit (paid or trial users).
+ * Returns a Date cutoff for CSV import/export — rows before this date are filtered out.
+ * Returns null if no limit (paid users, or free users still in trial).
+ * Free post-trial users are limited to the last VIEW_WINDOW_DAYS (per ToS §5).
  */
 export function getCsvDateLimit(user: AuthUser | null): Date | null {
   const tier = getUserTier(user)
@@ -158,7 +167,7 @@ export function getCsvDateLimit(user: AuthUser | null): Date | null {
 
 /**
  * Returns the number of entries that are locked for this user.
- * Used for the conversion copy: "Your 847 trades are waiting."
+ * Used for conversion copy: "Your 847 trades are waiting — upgrade to access them."
  */
 export function getLockedEntryCount(user: AuthUser | null, dates: string[]): number {
   if (!dates.length) return 0

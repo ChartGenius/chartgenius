@@ -110,7 +110,7 @@ export default function TradingCalculatorsPage() {
         <div className="seo-hero-inner">
           <div className="seo-hero-badge">
             <span className="seo-hero-badge-dot" />
-            30+ calculators — no sign-up required
+            30+ calculators — free account, no credit card required
           </div>
           <h1 className="seo-hero-h1">
             30+ Free Trading Calculators<br />
@@ -118,7 +118,7 @@ export default function TradingCalculatorsPage() {
           </h1>
           <p className="seo-hero-sub">
             Everything a trader needs to calculate. Position sizing, risk/reward, Greeks, futures specs,
-            Sharpe ratio, and more. Free to use — no account needed.
+            Sharpe ratio, and more. Free to use — create a free account, no credit card required.
           </p>
           <Link href="/tools" className="seo-hero-cta">
             Access All Calculators

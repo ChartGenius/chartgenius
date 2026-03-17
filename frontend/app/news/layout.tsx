@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Market News — Real-Time Financial News with AI Sentiment',
   description:
-    'Stay ahead of the market with real-time financial news and AI sentiment analysis. Stocks, crypto, forex, and commodities. Free to read, no account required.',
+    'Stay ahead of the market with real-time financial news and AI sentiment analysis. Stocks, crypto, forex, and commodities. Free to read — create a free account, no credit card required.',
   openGraph: {
     title: 'Market News — Real-Time Financial News with AI Sentiment | TradVue',
     description:
