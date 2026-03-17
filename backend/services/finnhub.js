@@ -686,7 +686,6 @@ class FinnhubService {
     const hours = eastern.getHours() + eastern.getMinutes() / 60;
     return day >= 1 && day <= 5 && hours >= 9.5 && hours < 16;
   }
-}
 
   // ──────────────────────────────────────────
   // Insider Transactions (Form 4 via Finnhub)
@@ -868,5 +867,7 @@ class FinnhubService {
   }
 
 
+
+}
 
 module.exports = new FinnhubService();
