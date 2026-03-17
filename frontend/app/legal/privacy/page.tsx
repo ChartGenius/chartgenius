@@ -393,8 +393,8 @@ export default function PrivacyPage() {
             <tbody>
               {[
                 ['Account and trading data (active account)', 'Retained while account is active'],
-                ['Account and trading data (after deletion)', 'Removed from active systems within 90 days'],
-                ['Encrypted backup copies', 'Purged within 90 additional days after account deletion'],
+                ['Account and trading data (after deletion)', 'Removed from active systems within approximately 90 days using commercially reasonable efforts'],
+                ['Encrypted backup copies', 'Purged in the ordinary course of backup rotation (retained for a reasonable period)'],
                 ['Usage and access logs', 'Up to 12 months'],
                 ['Payment records', 'As required by applicable tax and financial law'],
                 ['Cookies', 'Per Cookie Policy'],

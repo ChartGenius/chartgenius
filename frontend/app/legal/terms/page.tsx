@@ -82,6 +82,7 @@ export default function TermsPage() {
         <p>
           <strong>2.3 Service Availability.</strong> We strive for high availability but do not guarantee uninterrupted or
           error-free service. Maintenance windows, third-party outages, and unforeseen events may affect availability.
+          TradVue is not liable for any downtime, service interruptions, or data unavailability, whether scheduled or unscheduled.
         </p>
       </Section>
 
@@ -471,7 +472,7 @@ export default function TermsPage() {
           See Section 13 for data retention timelines.
         </p>
         <p>
-          <strong>12.5 No Sale of User Data.</strong> TradVue does not sell your personal information or trade data to
+          <strong>12.5 No Sale of User Data.</strong> TradVue does not sell your User Data or other personal information to
           third parties for advertising or other commercial purposes.
         </p>
       </Section>
@@ -486,8 +487,8 @@ export default function TermsPage() {
           <strong>13.2 Account Deletion.</strong> Upon deletion of your account:
         </p>
         <UL items={[
-          'Your User Data will be removed from active production systems within ninety (90) days of account deletion;',
-          'Residual copies of your User Data may persist in encrypted backup systems for up to an additional ninety (90) days before being purged in the ordinary course of backup rotation;',
+          'Your User Data will be removed from active production systems within approximately ninety (90) days of account deletion using commercially reasonable efforts;',
+          'Residual copies of your User Data may persist in encrypted backup systems for a reasonable period before being purged in the ordinary course of backup rotation;',
           'Aggregated, anonymized data derived from your usage may be retained for analytical purposes while the service operates.',
         ]} />
         <p>
@@ -730,13 +731,13 @@ export default function TermsPage() {
 
       <Section id="force-majeure" title="21. Force Majeure">
         <p>
-          TradVue shall not be liable for any failure or delay in the performance of its obligations under these Terms
-          to the extent such failure or delay is caused by circumstances beyond TradVue's reasonable control,
-          including but not limited to: acts of God, natural disasters, earthquakes, floods, fires, epidemics,
-          pandemics, governmental actions, wars, acts of terrorism, civil unrest, strikes, labor disputes, Internet
-          or telecommunications failures, cyberattacks, power outages, or failures of third-party service providers
-          (including hosting providers, payment processors, and market data providers). TradVue will use commercially
-          reasonable efforts to resume performance as soon as reasonably practicable.
+          <strong>Force Majeure.</strong> TradVue shall not be liable for any delay or failure to perform any obligation
+          under these Terms due to causes beyond its reasonable control, including but not limited to: natural disasters,
+          acts of God, pandemics, epidemics, government actions or orders, war, terrorism, riots, embargoes, acts of civil
+          or military authorities, fire, floods, accidents, strikes, labor disputes, utility or infrastructure failures,
+          internet or telecommunications outages, cyberattacks, or shortages of transportation, facilities, fuel, energy,
+          labor, or materials. TradVue will use commercially reasonable efforts to resume performance as soon as reasonably
+          practicable following cessation of the force majeure event.
         </p>
       </Section>
 

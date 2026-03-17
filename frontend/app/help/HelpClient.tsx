@@ -208,7 +208,7 @@ const FAQ_DATA: {
     questions: [
       {
         q: 'Where is my data stored?',
-        a: 'Your data is stored locally in your browser\'s localStorage by default — nothing leaves your device without your consent. When you sign in, cloud sync activates automatically and your journal, settings, and data become available on any device. You can also export a backup as JSON or CSV anytime.',
+        a: 'Your data is stored locally in your browser\'s localStorage by default — nothing leaves your device without your consent. Cloud sync is a Pro feature: when you have an active Pro subscription, your journal, settings, and data sync automatically across all your devices. During your 3-week free trial, cloud sync is also available. After the trial, cloud sync requires a Pro plan. You can always export a backup as JSON or CSV anytime.',
       },
       {
         q: 'Do you sell my data?',
@@ -340,7 +340,7 @@ const FAQ_DATA: {
       },
       {
         q: 'Does my portfolio data sync across devices?',
-        a: 'Without an account, data is stored in your browser\'s local storage (device-specific). Sign in to enable cloud sync — your data will then be available on any device. Use the Export button to back up your data as JSON or CSV anytime.',
+        a: 'Without an account, data is stored in your browser\'s local storage (device-specific). Cloud sync is a Pro feature — with an active Pro subscription (or during your 3-week free trial), your data syncs automatically across all your devices. After the trial, cloud sync requires a Pro plan. Use the Export button to back up your data as JSON or CSV anytime.',
       },
       {
         q: 'How accurate are the dividend calculations?',
