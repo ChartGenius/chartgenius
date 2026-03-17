@@ -153,12 +153,12 @@ export default function OptionsTradingJournalPage() {
           </div>
           <div className="seo-grid-3">
             {[
-              { emoji: '🔀', title: 'Multi-Leg Strategies', desc: 'Trade spreads, straddles, Iron Condors, Butterflies, and any complex position. Log multiple legs at once.', color: 'blue' },
-              { emoji: '🧮', title: 'Greeks Tracking', desc: 'View delta, gamma, theta, vega, and rho exposure. Understand your portfolio risk at a glance.', color: 'purple' },
-              { emoji: '📊', title: 'P&L by Strategy Type', desc: 'See which strategies are profitable. Analyze spreads vs. straddles vs. iron condors separately.', color: 'green' },
-              { emoji: '🏷️', title: 'Strike & Expiration Tags', desc: 'Organize by strike price, days to expiration, and strategy type. Find patterns that work.', color: 'yellow' },
-              { emoji: '⚖️', title: 'Breakeven Analysis', desc: 'TradVue calculates breakeven prices for any multi-leg strategy automatically.', color: 'red' },
-              { emoji: '🛡️', title: 'Risk Management', desc: 'Max loss, max profit, probability of profit — see your full risk profile before you trade.', color: 'blue' },
+              { emoji: 'ML', title: 'Multi-Leg Strategies', desc: 'Trade spreads, straddles, Iron Condors, Butterflies, and any complex position. Log multiple legs at once.', color: 'blue' },
+              { emoji: 'GK', title: 'Greeks Tracking', desc: 'View delta, gamma, theta, vega, and rho exposure. Understand your portfolio risk at a glance.', color: 'purple' },
+              { emoji: 'PA', title: 'P&L by Strategy Type', desc: 'Analyze P&L by strategy type. Compare spreads vs. straddles vs. iron condors to see what the data shows.', color: 'green' },
+              { emoji: 'TG', title: 'Strike & Expiration Tags', desc: 'Organize by strike price, days to expiration, and strategy type. Find patterns that work.', color: 'yellow' },
+              { emoji: 'BE', title: 'Breakeven Analysis', desc: 'TradVue calculates breakeven prices for any multi-leg strategy automatically.', color: 'red' },
+              { emoji: 'RM', title: 'Risk Management', desc: 'Max loss, max profit, probability of profit — see your full risk profile before you trade.', color: 'blue' },
             ].map(f => (
               <div key={f.title} className="seo-card">
                 <div className={`seo-card-icon seo-card-icon-${f.color}`}>{f.emoji}</div>
@@ -307,7 +307,6 @@ export default function OptionsTradingJournalPage() {
               { href: '/trading-calculators', title: 'All Calculators', desc: '30+ free trading tools and calculators', emoji: '🔢' },
             ].map(item => (
               <Link key={item.href} href={item.href} className="seo-related-card">
-                <span className="seo-related-card-emoji">{item.emoji}</span>
                 <div className="seo-related-card-title">{item.title}</div>
                 <div className="seo-related-card-desc">{item.desc}</div>
               </Link>

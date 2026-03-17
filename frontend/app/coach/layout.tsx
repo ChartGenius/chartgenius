@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.tradvue.com/coach' },
   openGraph: {
     title: 'AI Trading Coach | TradVue',
-    description: 'AI-powered trade analysis and coaching. Spot patterns, find your edge, improve your trading.',
+    description: 'AI-powered trade analysis and coaching. Spot patterns, find your edge, analyze your trading history.',
     url: 'https://www.tradvue.com/coach',
     type: 'website',
     images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'TradVue AI Trading Coach' }],

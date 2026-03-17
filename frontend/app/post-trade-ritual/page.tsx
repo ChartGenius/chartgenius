@@ -52,7 +52,7 @@ export default function PostTradeRitualPage() {
                     name: 'Why does journaling after every trade help traders improve?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'Journaling captures the data and emotions behind every trade. Over time, patterns emerge — you see which setups work, which emotions lead to bad decisions, and exactly where your edge is. Traders who journal consistently improve measurably faster.',
+                      text: 'Journaling captures the data and emotions behind every trade. Over time, patterns emerge — you see which setups work, which emotions lead to bad decisions, and exactly where your edge is. Traders who journal consistently build a richer dataset to analyze their own patterns and tendencies.',
                     },
                   },
                   {
@@ -234,10 +234,10 @@ export default function PostTradeRitualPage() {
           </p>
           <div style={{ display: 'grid', gap: '12px' }}>
             {[
-              { milestone: '🌱 7 days', reward: 'You\'ve built the habit. Keep it going.', color: 'var(--green)' },
-              { milestone: '📅 30 days', reward: 'You have a month of data. Patterns are emerging.', color: 'var(--blue)' },
-              { milestone: '📊 90 days', reward: 'You have a quarter of data. Real insights now.', color: 'var(--purple)' },
-              { milestone: '🏆 1 year', reward: 'A full year of trading data. This is your edge.', color: 'var(--yellow)' },
+              { milestone: '7 days', reward: 'You\'ve built the habit. Keep it going.', color: 'var(--green)' },
+              { milestone: '30 days', reward: 'You have a month of data. Patterns are emerging.', color: 'var(--blue)' },
+              { milestone: '90 days', reward: 'You have a quarter of data. Real insights now.', color: 'var(--purple)' },
+              { milestone: '1 year', reward: 'A full year of trading data. This is your edge.', color: 'var(--yellow)' },
             ].map(item => (
               <div key={item.milestone} style={{
                 background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px',
@@ -301,7 +301,7 @@ export default function PostTradeRitualPage() {
           <div className="seo-faq-list">
             {[
               { q: 'What is the post-trade ritual for traders?', a: 'The post-trade ritual is a 60-second routine to journal every trade immediately after closing it: entry/exit details, emotion tag, and a quick note. Designed to build a consistent journaling habit through streak tracking.' },
-              { q: 'Why does journaling after every trade help traders improve?', a: 'Journaling captures the data and emotions behind every trade. Over time, patterns emerge — you see which setups work, which emotions lead to bad decisions, and exactly where your edge is. Traders who journal consistently improve measurably faster.' },
+              { q: 'Why does journaling after every trade help traders improve?', a: 'Journaling captures the data and emotions behind every trade. Over time, patterns emerge — you see which setups work, which emotions lead to bad decisions, and exactly where your edge is. Traders who journal consistently build a richer dataset to analyze their own patterns and tendencies.' },
               { q: 'How does streak tracking help build a journaling habit?', a: 'TradVue tracks your consecutive days of journaling. Seeing your streak grow creates motivation to keep going. Missing a day feels significant — which prevents the common pattern of slowly stopping.' },
               { q: 'What emotion tags does TradVue use in the post-trade ritual?', a: 'TradVue includes emotion tags like: Confident, Fearful, Greedy, Bored, FOMO, Overextended, Regretful, and Lucky. Over time you\'ll see correlations between emotions and your P&L.' },
             ].map(item => (
@@ -343,7 +343,6 @@ export default function PostTradeRitualPage() {
               { href: '/coach', title: 'AI Trading Coach', desc: 'Get AI insights on your trade patterns', emoji: '🧠' },
             ].map(item => (
               <Link key={item.href} href={item.href} className="seo-related-card">
-                <span className="seo-related-card-emoji">{item.emoji}</span>
                 <div className="seo-related-card-title">{item.title}</div>
                 <div className="seo-related-card-desc">{item.desc}</div>
               </Link>

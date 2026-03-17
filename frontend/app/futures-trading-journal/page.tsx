@@ -153,11 +153,11 @@ export default function FuturesTradingJournalPage() {
           </div>
           <div className="seo-grid-3">
             {[
-              { emoji: '📋', title: '20 Built-In Contracts', desc: 'NQ, ES, CL, GC, SI, TY, ZB, ZF, NG, RB, GE, ZC, ZS, ZM, ZW, YM, MES, MNQ, MCL, MGC. Add more anytime.', color: 'blue' },
-              { emoji: '⚡', title: 'Auto-Detect Contract Specs', desc: 'Enter your symbol — TradVue loads tick value, multiplier, and margin. No manual calculations.', color: 'purple' },
-              { emoji: '💰', title: 'Tick-Based P&L', desc: 'Your exact profit or loss based on contract specifications. No rounding errors.', color: 'green' },
-              { emoji: '📊', title: 'Margin Tracking', desc: 'Track your margin usage in real-time. Know your buying power without spreadsheets.', color: 'yellow' },
-              { emoji: '🎯', title: 'Prop Firm Integration', desc: 'If you\'re trading with a prop firm, connect your rules and monitor compliance live.', color: 'red' },
+              { emoji: '20', title: '20 Built-In Contracts', desc: 'NQ, ES, CL, GC, SI, TY, ZB, ZF, NG, RB, GE, ZC, ZS, ZM, ZW, YM, MES, MNQ, MCL, MGC. Add more anytime.', color: 'blue' },
+              { emoji: 'AD', title: 'Auto-Detect Contract Specs', desc: 'Enter your symbol — TradVue loads tick value, multiplier, and margin. No manual calculations.', color: 'purple' },
+              { emoji: 'PL', title: 'Tick-Based P&L', desc: 'Your exact profit or loss based on contract specifications. No rounding errors.', color: 'green' },
+              { emoji: 'MG', title: 'Margin Tracking', desc: 'Track your margin usage in real-time. Know your buying power without spreadsheets.', color: 'yellow' },
+              { emoji: 'PF', title: 'Prop Firm Integration', desc: 'If you\'re trading with a prop firm, connect your rules and monitor compliance live.', color: 'red' },
               { emoji: '🔬', title: 'Micro Contract Support', desc: 'Trade micros? TradVue calculates correctly for MES, MNQ, MCL, and more.', color: 'blue' },
             ].map(f => (
               <div key={f.title} className="seo-card">
@@ -314,7 +314,6 @@ export default function FuturesTradingJournalPage() {
               { href: '/best-trading-journal', title: 'Best Trading Journal', desc: 'Why TradVue works for futures traders', emoji: '🏆' },
             ].map(item => (
               <Link key={item.href} href={item.href} className="seo-related-card">
-                <span className="seo-related-card-emoji">{item.emoji}</span>
                 <div className="seo-related-card-title">{item.title}</div>
                 <div className="seo-related-card-desc">{item.desc}</div>
               </Link>

@@ -161,17 +161,17 @@ export default function BestTradingJournalPage() {
             <h2>Why TradVue Stands Out</h2>
             <div className="seo-divider" />
             <p style={{ marginTop: '20px' }}>
-              Every feature built to help you trade better — not just log more.
+              Every feature built to help you analyze your trading — not just log more.
             </p>
           </div>
           <div className="seo-grid-3">
             {[
-              { emoji: '🤖', title: 'AI-Powered Trade Analysis', desc: 'Every trade you log gets analyzed by AI. Spot your patterns, weaknesses, and edges without manually reviewing hundreds of trades.', color: 'blue' },
-              { emoji: '🔢', title: '30+ Free Trading Calculators', desc: 'Position sizing, risk/reward, profit targets, options Greeks, futures tick value, Sharpe ratio — all built in. No more switching between tabs.', color: 'purple' },
-              { emoji: '🎯', title: 'Real-Time Prop Firm Tracking', desc: 'Link your journal to prop firm rules. See your drawdown gauge, daily loss limits, and trailing loss in real-time. Never exceed your rules again.', color: 'green' },
-              { emoji: '📊', title: 'Multi-Asset Support', desc: 'Trade stocks, options, futures, crypto, or forex. TradVue auto-detects your asset class and applies the right calculations for each.', color: 'yellow' },
-              { emoji: '🏷️', title: 'Smart Trade Tags & Notes', desc: 'Tag trades by setup, emotion, market condition, and outcome. Find patterns that make you money. Identify what loses you money.', color: 'blue' },
-              { emoji: '🔥', title: 'Streak Tracking & Habits', desc: 'Build a journaling habit. Watch your streak grow. Traders who journal consistently improve faster.', color: 'purple' },
+              { emoji: 'AI', title: 'AI-Powered Trade Analysis', desc: 'Every trade you log gets analyzed by AI. Spot your patterns, weaknesses, and edges without manually reviewing hundreds of trades.', color: 'blue' },
+              { emoji: '30+', title: '30+ Free Trading Calculators', desc: 'Position sizing, risk/reward, profit targets, options Greeks, futures tick value, Sharpe ratio — all built in. No more switching between tabs.', color: 'purple' },
+              { emoji: 'PF', title: 'Real-Time Prop Firm Tracking', desc: 'Link your journal to prop firm rules. See your drawdown gauge, daily loss limits, and trailing loss in real-time. Never exceed your rules again.', color: 'green' },
+              { emoji: 'MA', title: 'Multi-Asset Support', desc: 'Trade stocks, options, futures, crypto, or forex. TradVue auto-detects your asset class and applies the right calculations for each.', color: 'yellow' },
+              { emoji: 'TG', title: 'Smart Trade Tags & Notes', desc: 'Tag trades by setup, emotion, market condition, and outcome. Find patterns that make you money. Identify what loses you money.', color: 'blue' },
+              { emoji: 'ST', title: 'Streak Tracking & Habits', desc: 'Build a journaling habit. Watch your streak grow. Consistency creates the data you need to analyze your patterns.', color: 'purple' },
             ].map(f => (
               <div key={f.title} className="seo-card">
                 <div className={`seo-card-icon seo-card-icon-${f.color}`}>{f.emoji}</div>
@@ -235,7 +235,7 @@ export default function BestTradingJournalPage() {
               { step: '01', title: 'Log Your Trades', desc: 'Enter your trades manually or import from CSV. TradVue auto-detects your asset class.' },
               { step: '02', title: 'AI Analysis', desc: 'Our AI reviews every trade, spots patterns, and highlights what\'s working.' },
               { step: '03', title: 'Track Prop Firm Rules', desc: 'Connect to prop firms. See real-time drawdown, daily loss, and trailing loss gauges.' },
-              { step: '04', title: 'Build Your Edge', desc: 'Use the insights to trade better. Repeat. Improve.' },
+              { step: '04', title: 'Build Your Edge', desc: 'Use the insights to analyze your patterns. Find your edge. Repeat.' },
             ].map(item => (
               <div key={item.step} className="seo-step">
                 <div className="seo-step-num">{item.step}</div>
@@ -380,7 +380,6 @@ export default function BestTradingJournalPage() {
               { href: '/coach', title: 'AI Coach', desc: 'Get AI analysis of your trading patterns', emoji: '🧠' },
             ].map(item => (
               <Link key={item.href} href={item.href} className="seo-related-card">
-                <span className="seo-related-card-emoji">{item.emoji}</span>
                 <div className="seo-related-card-title">{item.title}</div>
                 <div className="seo-related-card-desc">{item.desc}</div>
               </Link>

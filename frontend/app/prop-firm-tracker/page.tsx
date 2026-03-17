@@ -118,8 +118,8 @@ export default function PropFirmTrackerPage() {
             <span className="gradient-text">In Real-Time</span>
           </h1>
           <p className="seo-hero-sub">
-            Never exceed your daily loss or max drawdown again. TradVue's prop firm tracker syncs your journal
-            with your firm's rules and shows you exactly where you stand — live.
+            Monitor your daily loss and max drawdown limits as you log trades. TradVue's prop firm tracker syncs your journal
+            with your firm's rules and shows you exactly where you stand.
           </p>
           <Link href="/#signup" className="seo-hero-cta">
             Try Prop Firm Tracker Free
@@ -143,7 +143,7 @@ export default function PropFirmTrackerPage() {
             { value: '6', label: 'Rule Types Tracked' },
             { value: '∞', label: 'Prop Firms Supported' },
             { value: '100%', label: 'Rule Flexibility' },
-            { value: '0', label: 'Blown Accounts' },
+            { value: '8', label: 'Firm Presets' },
           ].map(s => (
             <div key={s.label} className="seo-stat">
               <div className="seo-stat-value">{s.value}</div>
@@ -171,8 +171,7 @@ export default function PropFirmTrackerPage() {
             </p>
             <p style={{ fontSize: '15px', color: 'var(--text-1)', lineHeight: 1.75, margin: 0 }}>
               TradVue's prop firm tracker integrates directly into your journal. Every trade you log automatically
-              updates your metrics. See live gauges showing how close you are to hitting a rule limit — and never
-              get surprised by a blown account again.
+              updates your metrics. See live gauges showing how close you are to hitting a rule limit — so you always know your standing before taking another trade.
             </p>
           </div>
         </div>
@@ -187,12 +186,12 @@ export default function PropFirmTrackerPage() {
           </div>
           <div className="seo-grid-3">
             {[
-              { emoji: '📊', title: 'Live Drawdown Gauge', desc: 'See your current drawdown as a percentage of your starting balance. Color-coded warnings when you\'re approaching your limit.', color: 'blue' },
-              { emoji: '📉', title: 'Daily Loss Tracking', desc: 'Track your daily losses in real-time. Get alerts when you\'re close to hitting your firm\'s daily loss limit.', color: 'red' },
-              { emoji: '📈', title: 'Trailing Loss Monitoring', desc: 'Some firms require a trailing stop — your account never drops below a recent high. TradVue tracks this automatically.', color: 'purple' },
-              { emoji: '🏢', title: 'Multi-Firm Support', desc: 'Trading with multiple prop firms? Set rules for each firm and switch between them instantly.', color: 'green' },
-              { emoji: '⚙️', title: 'Rule Flexibility', desc: 'Every prop firm has different rules. TradVue lets you customize your limits. Whatever your firm demands, we track it.', color: 'yellow' },
-              { emoji: '📋', title: 'Historical Compliance', desc: 'Review your compliance history. See when you came close to limits and learn from it.', color: 'blue' },
+              { emoji: 'DG', title: 'Live Drawdown Gauge', desc: 'See your current drawdown as a percentage of your starting balance. Color-coded warnings when you\'re approaching your limit.', color: 'blue' },
+              { emoji: 'DL', title: 'Daily Loss Tracking', desc: 'Track your daily losses in real-time. Get alerts when you\'re close to hitting your firm\'s daily loss limit.', color: 'red' },
+              { emoji: 'TL', title: 'Trailing Loss Monitoring', desc: 'Some firms require a trailing stop — your account never drops below a recent high. TradVue tracks this automatically.', color: 'purple' },
+              { emoji: 'MF', title: 'Multi-Firm Support', desc: 'Trading with multiple prop firms? Set rules for each firm and switch between them instantly.', color: 'green' },
+              { emoji: 'RX', title: 'Rule Flexibility', desc: 'Every prop firm has different rules. TradVue lets you customize your limits. Whatever your firm demands, we track it.', color: 'yellow' },
+              { emoji: 'HC', title: 'Historical Compliance', desc: 'Review your compliance history. See when you came close to limits and learn from it.', color: 'blue' },
             ].map(f => (
               <div key={f.title} className="seo-card">
                 <div className={`seo-card-icon seo-card-icon-${f.color}`}>{f.emoji}</div>
@@ -216,7 +215,7 @@ export default function PropFirmTrackerPage() {
               { step: '01', title: 'Set Your Rules', desc: 'Enter your firm\'s daily loss, max drawdown, and trailing loss limits.' },
               { step: '02', title: 'Log Your Trades', desc: 'Journal trades as usual. TradVue auto-syncs your P&L with prop firm metrics.' },
               { step: '03', title: 'Watch Your Gauges', desc: 'Real-time drawdown, daily loss, and trailing loss gauges in your dashboard.' },
-              { step: '04', title: 'Stay Compliant', desc: 'Alerts warn you before you hit limits. Make better decisions, keep your account alive.' },
+              { step: '04', title: 'Stay Informed', desc: 'Color-coded gauges show your status before you hit limits. See where you stand before taking another trade.' },
             ].map(item => (
               <div key={item.step} className="seo-step">
                 <div className="seo-step-num">{item.step}</div>
@@ -286,7 +285,7 @@ export default function PropFirmTrackerPage() {
       {/* ── CTA ── */}
       <section className="seo-cta-section">
         <div className="seo-cta-inner">
-          <h2 className="seo-cta-h2">Never Blow Your Account Again</h2>
+          <h2 className="seo-cta-h2">Always Know Where You Stand</h2>
           <p className="seo-cta-sub">
             Real-time tracking keeps you compliant. Prop firm trading requires discipline — let TradVue handle the math.
           </p>
@@ -309,7 +308,6 @@ export default function PropFirmTrackerPage() {
               { href: '/best-trading-journal', title: 'Best Trading Journal Guide', desc: 'Why TradVue is the best journal for day traders', emoji: '🏆' },
             ].map(item => (
               <Link key={item.href} href={item.href} className="seo-related-card">
-                <span className="seo-related-card-emoji">{item.emoji}</span>
                 <div className="seo-related-card-title">{item.title}</div>
                 <div className="seo-related-card-desc">{item.desc}</div>
               </Link>

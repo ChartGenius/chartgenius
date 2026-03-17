@@ -162,42 +162,39 @@ export default function TradingCalculatorsPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
             {[
-              { name: 'Position Size Calculator', desc: 'Calculate optimal position size based on risk percentage and stop loss.', emoji: '📐' },
+              { name: 'Position Size Calculator', desc: 'Calculate optimal position size based on risk percentage and stop loss.' },
               { name: 'Risk/Reward Ratio', desc: 'Calculate your risk-to-reward ratio. Know your edge before you trade.', emoji: '⚖️' },
-              { name: 'Profit Target Calculator', desc: 'Set profit targets based on risk/reward multiples.', emoji: '🎯' },
-              { name: 'Options Greeks', desc: 'Calculate delta, gamma, theta, vega for any option.', emoji: '🧮' },
-              { name: 'IV Percentile', desc: 'Know if implied volatility is high or low historically.', emoji: '📊' },
+              { name: 'Profit Target Calculator', desc: 'Set profit targets based on risk/reward multiples.' },
+              { name: 'Options Greeks', desc: 'Calculate delta, gamma, theta, vega for any option.' },
+              { name: 'IV Percentile', desc: 'Know if implied volatility is high or low historically.' },
               { name: 'Breakeven Calculator', desc: 'Find breakeven prices for any multi-leg strategy.', emoji: '↔️' },
-              { name: 'Futures Tick Value', desc: 'Calculate exact P&L per tick for any futures contract.', emoji: '📈' },
-              { name: 'Margin Calculator', desc: 'Know your margin requirements before you trade.', emoji: '💰' },
-              { name: 'Sharpe Ratio', desc: 'Measure risk-adjusted returns. Is your strategy actually good?', emoji: '📉' },
+              { name: 'Futures Tick Value', desc: 'Calculate exact P&L per tick for any futures contract.' },
+              { name: 'Margin Calculator', desc: 'Know your margin requirements before you trade.' },
+              { name: 'Sharpe Ratio', desc: 'Measure risk-adjusted returns. Is your strategy actually good?' },
               { name: 'Trade Expectancy', desc: 'Calculate expected value per trade based on win rate and R:R.', emoji: '🔮' },
-              { name: 'Compound Growth', desc: 'Project account growth over time at various monthly returns.', emoji: '📈' },
-              { name: 'Kelly Criterion', desc: 'Optimal position sizing based on your win rate and payoff ratio.', emoji: '🎲' },
+              { name: 'Compound Growth', desc: 'Project account growth over time at various monthly returns.' },
+              { name: 'Kelly Criterion', desc: 'Optimal position sizing based on your win rate and payoff ratio.' },
               { name: 'Pip Value Calculator', desc: 'Calculate pip value for forex pairs and account currency.', emoji: '💱' },
-              { name: 'Correlation Matrix', desc: 'See which assets move together. Diversify smarter.', emoji: '🔗' },
+              { name: 'Correlation Matrix', desc: 'See which assets move together. Diversify smarter.' },
               { name: 'Max Consecutive Losers', desc: 'How many losers in a row can you handle? Model it.', emoji: '😤' },
-              { name: 'Drawdown Calculator', desc: 'Calculate max drawdown and recovery time.', emoji: '📉' },
+              { name: 'Drawdown Calculator', desc: 'Calculate max drawdown and recovery time.' },
               { name: 'Percent Return', desc: 'Quick calculation of percentage gains and losses.', emoji: '💹' },
               { name: 'Tax Calculator (US)', desc: 'Estimate taxes on trading gains (short-term capital gains).', emoji: '🏛️' },
-              { name: 'Day Trading Buying Power', desc: 'Calculate your FINRA day trading buying power.', emoji: '⚡' },
+              { name: 'Day Trading Buying Power', desc: 'Calculate your FINRA day trading buying power.' },
               { name: 'Probability of Ruin', desc: 'What is the chance your account hits zero?', emoji: '🎰' },
               { name: 'Forex Lot Size', desc: 'Calculate lot sizes based on pip risk.', emoji: '🌍' },
               { name: 'Crypto Position Size', desc: 'Position sizing for volatile assets.', emoji: '₿' },
               { name: 'Options Breakeven Multi-Leg', desc: 'Breakeven for spreads, straddles, iron condors.', emoji: '🔀' },
               { name: 'Portfolio Volatility', desc: 'Calculate expected volatility across your portfolio.', emoji: '🌊' },
-              { name: 'Leverage Calculator', desc: 'Understand true leverage and margin usage.', emoji: '⚙️' },
-              { name: 'Break-Even Success Rate', desc: 'What win rate do you need to break even?', emoji: '📋' },
-              { name: 'Risk per Trade', desc: 'How much money are you risking per trade?', emoji: '🛡️' },
+              { name: 'Leverage Calculator', desc: 'Understand true leverage and margin usage.' },
+              { name: 'Break-Even Success Rate', desc: 'What win rate do you need to break even?' },
+              { name: 'Risk per Trade', desc: 'How much money are you risking per trade?' },
               { name: 'Time Value Decay', desc: 'See how much an option loses per day to theta.', emoji: '⏳' },
-              { name: 'Volatility Cone', desc: 'See historical volatility percentiles.', emoji: '🔔' },
+              { name: 'Volatility Cone', desc: 'See historical volatility percentiles.' },
             ].map(calc => (
-              <Link key={calc.name} href="/tools" className="seo-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '20px' }}>
-                <span style={{ fontSize: '24px', flexShrink: 0 }}>{calc.emoji}</span>
-                <div>
-                  <div className="seo-card-title" style={{ marginBottom: '6px' }}>{calc.name}</div>
-                  <div className="seo-card-desc">{calc.desc}</div>
-                </div>
+              <Link key={calc.name} href="/tools" className="seo-card" style={{ textDecoration: 'none', color: 'inherit', padding: '20px' }}>
+                <div className="seo-card-title" style={{ marginBottom: '6px' }}>{calc.name}</div>
+                <div className="seo-card-desc">{calc.desc}</div>
               </Link>
             ))}
           </div>
@@ -213,10 +210,10 @@ export default function TradingCalculatorsPage() {
           </div>
           <div className="seo-grid-2">
             {[
-              { emoji: '📊', title: 'Calculate Before You Trade', desc: 'Most traders skip this step. The ones who calculate position size, risk, and reward consistently outperform. Use our calculators to plan every trade.', color: 'blue' },
-              { emoji: '🧠', title: 'No More Mental Math', desc: 'Stop trying to calculate Greeks in your head or searching YouTube for formulas. Get exact answers instantly.', color: 'purple' },
-              { emoji: '🔍', title: 'Understand Your Edge', desc: 'Sharpe ratio, expected value, probability of ruin — these metrics tell you whether your strategy is actually profitable.', color: 'green' },
-              { emoji: '🌐', title: 'Trade All Markets', desc: 'Stocks, options, futures, forex, crypto. We have calculators for everything.', color: 'yellow' },
+              { emoji: '📊', title: 'Calculate Before You Trade', desc: 'Most traders skip this step. Calculating position size, risk, and reward before every trade is a discipline that separates systematic traders from impulsive ones.', color: 'blue' },
+              { emoji: 'MM', title: 'No More Mental Math', desc: 'Stop trying to calculate Greeks in your head or searching YouTube for formulas. Get exact answers instantly.', color: 'purple' },
+              { emoji: 'AN', title: 'Analyze Your Edge', desc: 'Sharpe ratio, expected value, probability of ruin — these metrics help you evaluate whether your strategy has a statistical edge.', color: 'green' },
+              { emoji: 'AM', title: 'All Markets', desc: 'Stocks, options, futures, forex, crypto. Calculators for every asset class.', color: 'yellow' },
             ].map(item => (
               <div key={item.title} className="seo-card">
                 <div className={`seo-card-icon seo-card-icon-${item.color}`}>{item.emoji}</div>
@@ -307,7 +304,6 @@ export default function TradingCalculatorsPage() {
               { href: '/options-trading-journal', title: 'Options Journal', desc: 'Track Greeks and multi-leg strategies', emoji: '⚡' },
             ].map(item => (
               <Link key={item.href} href={item.href} className="seo-related-card">
-                <span className="seo-related-card-emoji">{item.emoji}</span>
                 <div className="seo-related-card-title">{item.title}</div>
                 <div className="seo-related-card-desc">{item.desc}</div>
               </Link>

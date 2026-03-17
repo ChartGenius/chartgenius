@@ -3626,7 +3626,7 @@ function JournalPageInner() {
           <span style={{ color: 'var(--accent)' }}><IconBook size={18} /></span>
           Trading Journal
         </div>
-        <div className="page-header-desc">Track, analyze, and improve your trading</div>
+        <div className="page-header-desc">Track and analyze your trading patterns</div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{trades.length} trades</span>
           <button
