@@ -44,7 +44,16 @@ export default function TermsPage() {
       <Section id="description" title="2. Service Description">
         <p>
           <strong>2.1 What TradVue Provides.</strong> TradVue is a software-as-a-service ("SaaS") trading journal and analytics
-          platform that helps traders organize, analyze, and review their trading activity. The Service currently includes:
+          platform that helps traders organize, analyze, and review their trading activity. The Service is available at three
+          access levels:
+        </p>
+        <UL items={[
+          'Anonymous Access (no account required): Dashboard market data, news feed, economic calendar, 30+ trading calculators, and watchlist. No personal data is stored for unauthenticated visitors.',
+          'Free Account: Create a free account — no credit card required. Receive a 3-week full-featured trial from account creation date, then downgraded to a limited free tier (30-day rolling view window, limited CSV import/export, 3 price alerts, community support). Your data is not deleted upon downgrade.',
+          'Pro Subscription: Everything unlimited — $24.00/month (monthly) or $16.80/month billed annually at $201.60/year. Full trade history, cloud sync, full CSV import/export, broker auto-sync (coming soon), advanced reports, unlimited price alerts, and priority support.',
+        ]} />
+        <p>
+          <strong>2.1A Service Features.</strong> The Service currently includes:
         </p>
         <UL items={[
           'Trade Journaling: Tools to log, tag, annotate, and organize trade records.',
@@ -108,8 +117,11 @@ export default function TermsPage() {
 
       <Section id="accounts" title="4. Account Registration and Responsibility">
         <p>
-          <strong>4.1 Account Creation.</strong> To access most features of the Service, you must create an account by
-          providing accurate, current, and complete information. You agree to keep your account information updated.
+          <strong>4.1 Account Creation.</strong> Certain features of the Service — including the trading dashboard,
+          news feed, economic calendar, trading calculators, and watchlist — are available without creating an account.
+          To access all other features, including the trading journal, portfolio tracker, playbooks, AI Coach, prop firm
+          tracker, and trade rules, you must create an account by providing accurate, current, and complete information.
+          You agree to keep your account information updated.
         </p>
         <p>
           <strong>4.2 Account Security.</strong> You are solely responsible for:
@@ -488,6 +500,21 @@ export default function TermsPage() {
           where required by applicable law, legal process, or to preserve evidence in connection with actual or
           reasonably anticipated litigation or regulatory investigations.
         </p>
+        <p>
+          <strong>13.5 Inactive Accounts.</strong> An account is considered inactive if no login activity has occurred
+          for twelve (12) consecutive months. TradVue reserves the right to delete User Data associated with inactive
+          accounts after providing thirty (30) days written notice to the email address on file. If the account holder
+          does not respond or log in within the notice period, data may be permanently deleted. TradVue is not
+          responsible for any data loss resulting from account inactivity.
+        </p>
+        <WarningBox>
+          <strong>13.6 Free Tier Data Disclaimer.</strong>
+          <br /><br />
+          DATA STORED UNDER FREE-TIER ACCOUNTS IS PROVIDED ON A BEST-EFFORT BASIS. TRADVUE SHALL NOT BE LIABLE FOR
+          ANY LOSS, CORRUPTION, OR UNAVAILABILITY OF DATA ASSOCIATED WITH FREE-TIER ACCOUNTS. Free-tier users are
+          solely responsible for maintaining their own backup copies of any data they input into TradVue. For enhanced
+          data protection and reliability, consider upgrading to a paid subscription plan.
+        </WarningBox>
       </Section>
 
       <Section id="liability" title="14. Disclaimers and Limitation of Liability">

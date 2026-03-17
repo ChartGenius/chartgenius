@@ -99,8 +99,8 @@ const PLATFORM_FEATURES = [
       </svg>
     ),
     title: 'Free to Start',
-    desc: 'No paywall for core features. No account required to start. Sign in only to sync your watchlist across devices.',
-    href: '/',
+    desc: 'Dashboard, news, calendar, and calculators are free — no account needed. Create a free account to unlock the journal, portfolio, AI Coach, playbooks, and more with a 3-week full trial.',
+    href: '/pricing',
   },
 ]
 
@@ -124,7 +124,7 @@ export default function FeaturesShowcase() {
             Everything You Need to Trade Smarter
           </h2>
           <p style={{ fontSize: 13, color: 'var(--text-3)', margin: 0 }}>
-            Free to start · 30+ calculators · Smart alerts · Journal · Portfolio tracker · Real-time data
+            No account needed for dashboard, news &amp; calculators · Free account for journal, portfolio &amp; AI Coach
           </p>
         </div>
 

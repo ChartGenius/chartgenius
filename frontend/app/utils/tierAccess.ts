@@ -1,18 +1,28 @@
 /**
- * tierAccess.ts — Free tier, trial, and paywall logic for TradVue
+ * tierAccess.ts — Three-tier access model for TradVue
  *
- * Two-tier model (per Terms of Service, Section 5):
- *   demo  — Unauthenticated. No trial access. Users should be prompted to
- *           create a free account. No data is stored for unauthenticated users.
- *   free  — Logged in. 3-week full trial from account creation date.
- *           Post-trial: 30-day rolling view window, limited CSV (last 30 days),
- *           no cloud sync, no auto-sync, no advanced reports, 3 price alerts.
- *           No credit card required.
- *   paid  — Pro: $24/mo or $16.80/mo (billed annually at $201.60/year).
- *           Everything unlimited. Full history, cloud sync, broker auto-sync,
- *           advanced reports, unlimited price alerts, priority support.
+ * Three-tier model (per Terms of Service, Sections 2.1 and 5):
  *
- * Data is retained while your account is active. Free tier restricts VIEW, not storage.
+ *   demo  — Anonymous visitor (no account). Access to dashboard, news, economic calendar,
+ *           30+ trading calculators, and watchlist. No data stored server-side.
+ *           Users should be prompted to create a free account to access journal,
+ *           portfolio, playbooks, AI Coach, prop firm tracker, and trade rules.
+ *
+ *   free  — Authenticated free account. 3-week full-featured trial from account creation
+ *           date (all Pro features). After trial expires:
+ *             - 30-day rolling view window (older data locked, not deleted)
+ *             - Limited CSV import/export (last 30 days only)
+ *             - No cloud sync, no auto-sync, no advanced reports
+ *             - 3 price alerts
+ *             - Community support
+ *           No credit card required. Data is retained — free tier restricts VIEW, not storage.
+ *
+ *   paid  — Pro: $24/mo (monthly) or $16.80/mo billed annually at $201.60/year.
+ *           Everything unlimited. Full trade history, cloud sync, broker auto-sync (coming soon),
+ *           advanced reports & AI pattern detection, unlimited price alerts, priority support.
+ *
+ * ANONYMOUS_FEATURES: features accessible without any account (demo tier)
+ * ACCOUNT_REQUIRED_FEATURES: features requiring at minimum a free account
  */
 
 import { AuthUser } from '../lib/api'
@@ -36,6 +46,32 @@ export const TRIAL_DAYS = 21          // 3-week trial from account creation date
 export const VIEW_WINDOW_DAYS = 30    // free tier post-trial rolling view window
 export const MONTHLY_PRICE = 24       // $/mo (Pro monthly)
 export const ANNUAL_PRICE = 16.80     // $/mo billed annually ($201.60/year)
+
+/** Features available without any account (anonymous visitors / demo tier) */
+export const ANONYMOUS_FEATURES = [
+  'dashboard',
+  'news',
+  'calendar',
+  'tools',
+  'watchlist',
+] as const
+
+/** Features requiring at minimum a free account (not available anonymously) */
+export const ACCOUNT_REQUIRED_FEATURES = [
+  'journal',
+  'portfolio',
+  'playbooks',
+  'ritual',
+  'coach',
+  'propfirm',
+  'rules',
+  'csv-import',
+  'csv-export',
+  'price-alerts',
+  'cloud-sync',
+  'advanced-reports',
+  'auto-sync',
+] as const
 
 // ── Core tier resolution ──────────────────────────────────────────────────────
 

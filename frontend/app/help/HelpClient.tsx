@@ -107,11 +107,27 @@ const FAQ_DATA: {
       },
       {
         q: 'Is TradVue free?',
-        a: 'TradVue offers a generous free tier with core features. Premium features require a Pro subscription ($24/month or $16.80/month annual). Core features including the dashboard, journal, portfolio tracker, tools, news, and calendar are available on the free tier. Some data sources have a 15-minute delay on free API tiers.',
+        a: 'TradVue has three access levels. (1) No Account: Dashboard, news, economic calendar, 30+ calculators, and watchlist are free to use with no account required. (2) Free Account: Create a free account (no credit card) for a 3-week full trial of all Pro features, then a limited free tier with a 30-day view window. (3) Pro: $24/month (or $16.80/month billed annually) — everything unlimited.',
       },
       {
         q: 'Do I need an account?',
-        a: "A free account is required to use TradVue. Sign up in seconds — no credit card required. You'll get a 3-week full trial of all features from the day you create your account. After the trial, your free tier includes a 30-day rolling view window, limited CSV access, and 3 price alerts. Upgrade to Pro for unlimited everything.",
+        a: "No account is needed to use the dashboard, news feed, economic calendar, trading calculators, and watchlist. To access the trading journal, portfolio tracker, playbooks, AI Coach, prop firm tracker, and trade rules, you need a free account. Sign up in seconds — no credit card required.",
+      },
+      {
+        q: 'What can I do without an account?',
+        a: 'Without an account, you can access the market dashboard (live indices, quotes, market status), news feed, economic calendar, all 30+ trading calculators, and the watchlist. No sign-up, no credit card required.',
+      },
+      {
+        q: 'What do I need an account for?',
+        a: 'A free account is required for the trading journal, portfolio tracker, playbooks, post-trade ritual, AI Trade Coach, prop firm tracker, and trade rules. Create a free account in seconds — no credit card required.',
+      },
+      {
+        q: "What's included in the free trial?",
+        a: "When you create a free account, you get 3 weeks of full Pro features from the day you sign up — trading journal, portfolio tracker, AI Coach, playbooks, rituals, prop firm tracker, trade rules, full CSV import/export, cloud sync, advanced reports, and unlimited price alerts. No credit card required.",
+      },
+      {
+        q: 'What happens after my trial ends?',
+        a: 'After your 3-week trial, your account moves to the free tier: a 30-day rolling view window (data older than 30 days is locked but not deleted), limited CSV import/export (last 30 days only), 3 price alerts, and community support. Upgrade to Pro anytime to restore full access to your entire history.',
       },
       {
         q: 'What markets and assets are supported?',
@@ -169,7 +185,7 @@ const FAQ_DATA: {
     questions: [
       {
         q: 'What are the differences between Free and Pro?',
-        a: 'Free includes unlimited watchlists, delayed market data, and email alerts. Pro ($24/month, or $16.80/month billed annually) adds cloud sync, ad-free experience, SMS/Webhook alerts, custom indicators, sentiment archives, 2-year historical data, and priority support. New users get a 3-week free trial of all Pro features. No credit card required.',
+        a: 'Free Account (post-trial): 30-day rolling view window for journal/portfolio, limited CSV (last 30 days), 3 price alerts, community support. Pro ($24/month, or $16.80/month billed annually at $201.60/year): unlimited trade history, cloud sync across all devices, full CSV import/export (any date range), broker auto-sync (coming soon), advanced reports & AI pattern detection, unlimited price alerts, and priority support. All new accounts get a 3-week full Pro trial — no credit card required.',
       },
       {
         q: 'How do I upgrade to Pro?',

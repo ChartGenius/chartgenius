@@ -39,7 +39,7 @@ const jsonLd = {
           name: 'How do I get started with TradVue?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'Create a free account at tradvue.com — no credit card required. You can immediately start logging trades in the journal, use all 30+ calculators, and set up your watchlist.',
+            text: 'Create a free account at tradvue.com — no credit card required. You get a 3-week full Pro trial from day one. You can immediately start logging trades in the journal, use all 30+ calculators, and set up your watchlist. Dashboard, news, and calendar are accessible without an account.',
           },
         },
         {

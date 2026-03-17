@@ -42,7 +42,7 @@ const jsonLd = {
         '@type': 'Offer',
         price: '0',
         priceCurrency: 'USD',
-        description: 'Free trading journal, no credit card required.',
+        description: 'Free trading journal — create a free account, no credit card required.',
       },
       featureList: [
         'AI trade analysis',

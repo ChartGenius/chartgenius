@@ -5,7 +5,7 @@ import '../components/seo-landing.css'
 export const metadata: Metadata = {
   title: 'Best Trading Journal for Day Traders 2026 | TradVue',
   description:
-    'The best free trading journal for day traders in 2026. AI analytics, 30+ calculators, prop firm tracking, and real-time alerts. Free to start, no credit card needed.',
+    'The best free trading journal for day traders in 2026. AI analytics, 30+ calculators, prop firm tracking, and real-time alerts. Create a free account — no credit card required.',
   alternates: {
     canonical: 'https://www.tradvue.com/best-trading-journal',
   },
@@ -45,7 +45,7 @@ export default function BestTradingJournalPage() {
                     name: 'What makes TradVue the best trading journal for day traders?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real-time drawdown gauges, emotion tracking, and pattern detection — all free to start.',
+                      text: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real-time drawdown gauges, emotion tracking, and pattern detection — available with a free account.',
                     },
                   },
                   {
@@ -53,7 +53,7 @@ export default function BestTradingJournalPage() {
                     name: 'Is TradVue really free to use?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'Yes. TradVue has a free tier that includes manual trade logging, basic analytics, and access to all 30+ calculators. No credit card required to start.',
+                      text: 'Yes. Create a free account (no credit card required) for a 3-week full trial. The free tier includes basic trade logging, analytics (30-day view window), and all 30+ calculators. Dashboard, news, and calendar are open to all — no account needed.',
                     },
                   },
                   {
@@ -112,7 +112,7 @@ export default function BestTradingJournalPage() {
         <div className="seo-hero-inner">
           <div className="seo-hero-badge">
             <span className="seo-hero-badge-dot" />
-            Free to start — no credit card required
+            Free account — no credit card required
           </div>
           <h1 className="seo-hero-h1">
             The Best Free Trading Journal<br />
@@ -120,7 +120,7 @@ export default function BestTradingJournalPage() {
           </h1>
           <p className="seo-hero-sub">
             Stop journaling in spreadsheets. TradVue gives you AI-powered insights, real-time prop firm tracking,
-            and 30+ trading calculators — no credit card required.
+            and 30+ trading calculators — free account, no credit card required.
           </p>
           <Link href="/#signup" className="seo-hero-cta">
             Start Journaling Free
@@ -332,8 +332,8 @@ export default function BestTradingJournalPage() {
           </div>
           <div className="seo-faq-list">
             {[
-              { q: 'What makes TradVue the best trading journal for day traders?', a: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real-time drawdown gauges, emotion tracking, and pattern detection — all free to start.' },
-              { q: 'Is TradVue really free to use?', a: 'Yes. TradVue has a free tier that includes manual trade logging, basic analytics, and access to all 30+ calculators. No credit card required to start.' },
+              { q: 'What makes TradVue the best trading journal for day traders?', a: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real-time drawdown gauges, emotion tracking, and pattern detection — available with a free account.' },
+              { q: 'Is TradVue really free to use?', a: 'Yes. Create a free account (no credit card required) and get a 3-week full trial of all features. The free tier includes manual trade logging, basic analytics (30-day view window), and access to all 30+ calculators. Dashboard, news, and calendar are available without any account.' },
               { q: 'Can I track prop firm drawdowns in TradVue?', a: 'Yes. TradVue has built-in prop firm tracking that syncs your journal with prop firm rules, showing real-time drawdown gauges, daily loss limits, and trailing loss status.' },
               { q: 'Can I import my existing trades into TradVue?', a: 'Yes. TradVue supports CSV import from most major brokers and platforms. You can import your full trade history to analyze historical performance.' },
               { q: 'Does TradVue work for options and futures traders?', a: 'Yes. TradVue supports multi-asset journaling including stocks, options (with Greeks tracking), futures (with built-in contract specs for 20 contracts), forex, and crypto.' },
@@ -355,7 +355,7 @@ export default function BestTradingJournalPage() {
         <div className="seo-cta-inner">
           <h2 className="seo-cta-h2">Ready to Level Up Your Trading?</h2>
           <p className="seo-cta-sub">
-            Join traders using AI and data to trade smarter. Start free today — no credit card required.
+            Join traders using AI and data to trade smarter. Create a free account today — no credit card required.
           </p>
           <Link href="/#signup" className="seo-cta-btn">
             Start Journaling Free

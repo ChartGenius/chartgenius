@@ -5,7 +5,7 @@ import '../components/seo-landing.css'
 export const metadata: Metadata = {
   title: 'Free Prop Firm Tracker — Monitor Drawdown & Daily Limits in Real-Time',
   description:
-    'Real-time prop firm rule tracker built into your trading journal. Monitor drawdown, daily loss limits, and trailing loss automatically. Free to start, no credit card needed.',
+    'Real-time prop firm rule tracker built into your trading journal. Monitor drawdown, daily loss limits, and trailing loss automatically. Free account required — no credit card needed.',
   alternates: {
     canonical: 'https://www.tradvue.com/prop-firm-tracker',
   },

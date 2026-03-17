@@ -73,7 +73,17 @@ export default function PrivacyPage() {
           ]} />
         </SubSection>
 
-        <SubSection title="2.4 Usage Data">
+        <SubSection title="2.4 Anonymous Visitors vs. Account Holders">
+          <p>
+            TradVue distinguishes between anonymous visitors and registered account holders for data collection purposes:
+          </p>
+          <UL items={[
+            'Anonymous Visitors (no account): When you access TradVue without creating an account, we may collect standard analytics data including page views, device type, browser type, and IP address for security and service improvement purposes. We do not store personal trade data, journal entries, or any personally identifiable information for anonymous visitors. Anonymous usage of publicly available features (dashboard, news, economic calendar, calculators, watchlist) does not result in storage of personal data on our servers.',
+            'Account Holders: Once you create a free or paid account, we collect and store the full range of data described in this Section 2, including your account information, trading data, preferences, and usage data, as necessary to provide the Service.',
+          ]} />
+        </SubSection>
+
+        <SubSection title="2.5 Usage Data">
           <p>When you use the Service, we automatically collect:</p>
           <UL items={[
             'IP address — for security, fraud prevention, and abuse detection.',
@@ -86,7 +96,7 @@ export default function PrivacyPage() {
           ]} />
         </SubSection>
 
-        <SubSection title="2.5 Payment Information">
+        <SubSection title="2.6 Payment Information">
           <p>
             All payment processing is handled exclusively by <strong>Stripe, Inc.</strong> ("Stripe"), a PCI DSS
             Level 1-certified payment processor. TradVue:
@@ -98,7 +108,7 @@ export default function PrivacyPage() {
           ]} />
         </SubSection>
 
-        <SubSection title="2.6 Broker Sync Data (Future Feature)">
+        <SubSection title="2.7 Broker Sync Data (Future Feature)">
           <p>
             If and when TradVue offers automated broker synchronization, and you choose to connect a brokerage account:
           </p>
@@ -109,7 +119,7 @@ export default function PrivacyPage() {
           ]} />
         </SubSection>
 
-        <SubSection title="2.7 Communications">
+        <SubSection title="2.8 Communications">
           <p>
             If you contact TradVue support or send us an email, we retain the content of your communications to
             respond to you and improve our support.
@@ -406,6 +416,21 @@ export default function PrivacyPage() {
           We may retain data for longer periods where required by applicable law or for the establishment,
           exercise, or defense of legal claims.
         </p>
+        <p>
+          <strong>8.A Inactive Accounts.</strong> An account is considered inactive if no login activity has
+          occurred for twelve (12) consecutive months. TradVue reserves the right to delete User Data associated
+          with inactive accounts after providing thirty (30) days written notice to the email address on file. If
+          the account holder does not respond or log in within the notice period, data may be permanently deleted.
+          TradVue is not responsible for any data loss resulting from account inactivity.
+        </p>
+        <WarningBox>
+          <strong>8.B Free Tier Data Disclaimer.</strong>
+          <br /><br />
+          DATA STORED UNDER FREE-TIER ACCOUNTS IS PROVIDED ON A BEST-EFFORT BASIS. TRADVUE SHALL NOT BE LIABLE FOR
+          ANY LOSS, CORRUPTION, OR UNAVAILABILITY OF DATA ASSOCIATED WITH FREE-TIER ACCOUNTS. Free-tier users are
+          solely responsible for maintaining their own backup copies of any data they input into TradVue. For
+          enhanced data protection and reliability, consider upgrading to a paid subscription plan.
+        </WarningBox>
       </Section>
 
       <Section id="your-rights" title="9. Your Rights and Choices">
