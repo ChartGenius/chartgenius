@@ -997,7 +997,8 @@ function WizardFlow({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
-                    alt={`Screenshot ${i + 1}`}
+                    alt={`Trade screenshot ${i + 1}`}
+                    loading="lazy"
                     style={{ width: 80, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border, #333)' }}
                   />
                   <button

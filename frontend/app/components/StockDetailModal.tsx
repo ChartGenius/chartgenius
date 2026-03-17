@@ -32,7 +32,7 @@ function CompanyProfileSection({ profile }: { profile: CompanyProfile }) {
       <div className="company-profile-header">
         {profile.logo && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={profile.logo} alt={profile.name} className="company-logo" />
+          <img src={profile.logo} alt={profile.name} className="company-logo" loading="lazy" />
         )}
         <div className="company-meta">
           <span className="company-name">{profile.name}</span>

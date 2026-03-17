@@ -1775,7 +1775,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
             <FieldLabel label="Chart Screenshot" tooltip="Upload a screenshot of the chart at the time of your trade. Visual evidence helps you review your decisions later." />
             <input type="file" accept="image/*" onChange={handleScreenshot} style={{ fontSize: 12, color: 'var(--text-2)' }} />
             {form.screenshot && (
-              <img src={form.screenshot} alt="screenshot" style={{ maxWidth: 200, maxHeight: 120, marginTop: 8, borderRadius: 6, border: '1px solid var(--border)' }} />
+              <img src={form.screenshot} alt="Trade screenshot preview" loading="lazy" style={{ maxWidth: 200, maxHeight: 120, marginTop: 8, borderRadius: 6, border: '1px solid var(--border)' }} />
             )}
           </div>
 
@@ -2062,7 +2062,7 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                             {t.screenshot && (
                               <>
                                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, textTransform: 'uppercase' }}>Chart Screenshot</div>
-                                <img src={t.screenshot} alt="trade screenshot" style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 6, border: '1px solid var(--border)' }} />
+                                <img src={t.screenshot} alt="Trade screenshot" loading="lazy" style={{ maxWidth: '100%', maxHeight: 160, borderRadius: 6, border: '1px solid var(--border)' }} />
                               </>
                             )}
                             {/* ── Futures details ── */}
