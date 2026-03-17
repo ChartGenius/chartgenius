@@ -2,23 +2,27 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: '30+ Free Trading Calculators | Position Size, Risk/Reward | TradVue',
+  title: '30+ Free Trading Calculators — Position Size, Risk, Options Greeks',
   description:
-    'Free trading calculators for position sizing, risk/reward, options Greeks, futures tick value, Sharpe ratio, and more. No sign-up required.',
+    'Free trading calculators for position sizing, risk/reward, options Greeks, futures tick value, Sharpe ratio, Kelly criterion, trade expectancy, and more. Try now.',
+  alternates: {
+    canonical: 'https://www.tradvue.com/trading-calculators',
+  },
   openGraph: {
-    title: '30+ Free Trading Calculators | Position Size, Risk/Reward | TradVue',
+    title: '30+ Free Trading Calculators — Position Size, Risk, Options Greeks | TradVue',
     description:
-      '30+ free trading calculators. Position sizing, risk/reward, Greeks, futures specs, and more.',
-    url: 'https://tradvue.com/trading-calculators',
+      '30+ free trading calculators: position sizing, risk/reward, Greeks, futures specs, Sharpe ratio, Kelly criterion, and more. No sign-up required.',
+    url: 'https://www.tradvue.com/trading-calculators',
     siteName: 'TradVue',
-    images: [
-      {
-        url: 'https://tradvue.com/og-image.png',
-        width: 1200,
-        height: 630,
-      },
-    ],
+    images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'TradVue Free Trading Calculators' }],
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '30+ Free Trading Calculators | TradVue',
+    description:
+      'Free trading calculators: position sizing, risk/reward, Greeks, futures specs, and more. No sign-up.',
+    images: ['/og-image.png'],
   },
 }
 
@@ -30,23 +34,58 @@ export default function TradingCalculatorsPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: [
+            '@graph': [
               {
-                '@type': 'Question',
-                name: 'Are TradVue calculators really free?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Yes, all 30+ calculators are free forever. No sign-up, no credit card required.',
-                },
+                '@type': 'FAQPage',
+                mainEntity: [
+                  {
+                    '@type': 'Question',
+                    name: 'Are TradVue's trading calculators really free?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. All 30+ calculators are completely free, forever. No sign-up, no credit card, no hidden costs. Just open the tools and calculate.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'What trading calculators does TradVue offer?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'TradVue includes: Position Size Calculator, Risk/Reward Ratio, Options Greeks (Black-Scholes), Futures Tick Value, Sharpe Ratio, Kelly Criterion, Trade Expectancy, Compound Growth, Correlation Matrix, Risk of Ruin, Pip Value (Forex), Dividend Planner, and more.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'How do I calculate the right position size for a trade?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Use TradVue's position size calculator. Enter your account size, risk percentage (typically 1-2%), and stop loss distance. The calculator tells you exactly how many shares, contracts, or lots to trade.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Does TradVue have a futures calculator for NQ and ES?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. The futures calculator includes built-in specs for NQ, ES, CL, GC, and 16 other contracts. Enter your entry, exit, and contract count to get exact tick-based P&L.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'What is the Kelly Criterion and how do I use it?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'The Kelly Criterion calculates the optimal position size percentage based on your historical win rate and average win/loss ratio. TradVue's Kelly calculator shows both full and half-Kelly (recommended for trading).',
+                    },
+                  },
+                ],
               },
               {
-                '@type': 'Question',
-                name: 'What calculators does TradVue have?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Position sizing, risk/reward, options Greeks, futures tick value, Sharpe ratio, trade expectancy, compound growth, correlation matrix, Kelly criterion, and more.',
-                },
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.tradvue.com' },
+                  { '@type': 'ListItem', position: 2, name: 'Trading Calculators', item: 'https://www.tradvue.com/trading-calculators' },
+                ],
               },
             ],
           }),

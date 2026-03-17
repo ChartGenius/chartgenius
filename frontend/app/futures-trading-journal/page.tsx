@@ -2,23 +2,27 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Futures Trading Journal — Track NQ, ES, CL Trades | TradVue',
+  title: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L',
   description:
-    'The best futures trading journal. Auto-detect contract specs for NQ, ES, CL, and 17 others. Tick-based P&L, margin tracking, and prop firm sync. Free to start.',
+    'The best futures trading journal. Auto-detect specs for 20 contracts including NQ, ES, CL. Tick-based P&L, margin tracking, prop firm sync. Free to start.',
+  alternates: {
+    canonical: 'https://www.tradvue.com/futures-trading-journal',
+  },
   openGraph: {
-    title: 'Futures Trading Journal — Track NQ, ES, CL Trades | TradVue',
+    title: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L | TradVue',
     description:
-      'Best futures journal. 17 contract specs built-in. Auto-detect, tick-based P&L, prop firm integration.',
-    url: 'https://tradvue.com/futures-trading-journal',
+      'Best futures journal. 20 contract specs built-in, tick-based P&L, prop firm integration. Free to start.',
+    url: 'https://www.tradvue.com/futures-trading-journal',
     siteName: 'TradVue',
-    images: [
-      {
-        url: 'https://tradvue.com/og-image.png',
-        width: 1200,
-        height: 630,
-      },
-    ],
+    images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'Futures Trading Journal — TradVue' }],
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L | TradVue',
+    description:
+      'Best futures journal with 20 built-in contract specs and tick-based P&L. Free to start.',
+    images: ['/og-image.png'],
   },
 }
 
@@ -30,23 +34,50 @@ export default function FuturesTradingJournalPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: [
+            '@graph': [
               {
-                '@type': 'Question',
-                name: 'How does TradVue auto-detect futures contracts?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Enter your contract symbol and TradVue auto-loads the tick value, multiplier, and margin requirement. NQ, ES, CL, and 17 other contracts are built-in.',
-                },
+                '@type': 'FAQPage',
+                mainEntity: [
+                  {
+                    '@type': 'Question',
+                    name: 'How does TradVue auto-detect futures contract specs?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Type your contract symbol (NQ, ES, CL, etc.) and TradVue automatically loads the tick value, point value, multiplier, and margin requirement. All 20 built-in contracts are pre-configured.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Does TradVue calculate tick-based P&L for futures?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue uses each contract's exact tick value and multiplier to calculate precise P&L. For NQ: (exit - entry) × $100 per point. For ES: (exit - entry) × $50 per point.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Does TradVue support micro futures contracts?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue has built-in specs for MES (Micro E-mini S&P), MNQ (Micro Nasdaq), MCL (Micro Crude Oil), and MGC (Micro Gold), with correct micro multipliers.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Can I track prop firm rules while futures trading?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue's prop firm tracker integrates directly with your futures journal. Set your daily loss, max drawdown, and trailing loss limits. See live compliance gauges as you trade.',
+                    },
+                  },
+                ],
               },
               {
-                '@type': 'Question',
-                name: 'Does TradVue calculate tick-based P&L?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Yes. TradVue uses contract-specific tick values to calculate your exact profit or loss based on entry, exit, and contract specifications.',
-                },
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.tradvue.com' },
+                  { '@type': 'ListItem', position: 2, name: 'Futures Trading Journal', item: 'https://www.tradvue.com/futures-trading-journal' },
+                ],
               },
             ],
           }),

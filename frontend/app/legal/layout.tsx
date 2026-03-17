@@ -6,6 +6,16 @@ export const metadata: Metadata = {
   robots: 'noindex, follow',
 }
 
+// ─── Legal page BreadcrumbList base ──────────────────────────────────────────
+const legalBreadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.tradvue.com' },
+    { '@type': 'ListItem', position: 2, name: 'Legal', item: 'https://www.tradvue.com/legal/terms' },
+  ],
+}
+
 const legalLinks = [
   { label: 'Terms of Service',        href: '/legal/terms' },
   { label: 'Privacy Policy',          href: '/legal/privacy' },

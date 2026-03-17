@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Terms of Service — TradVue',
   description: 'Read the TradVue Terms of Service. By using our platform you agree to these terms.',
   alternates: {
-    canonical: 'https://tradvue.com/legal/terms',
+    canonical: 'https://www.tradvue.com/legal/terms',
   },
   robots: 'noindex, follow',
 }

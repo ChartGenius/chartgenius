@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy — TradVue',
   description: 'Learn how TradVue collects, uses, and protects your personal information.',
   alternates: {
-    canonical: 'https://tradvue.com/legal/privacy',
+    canonical: 'https://www.tradvue.com/legal/privacy',
   },
   robots: 'noindex, follow',
 }

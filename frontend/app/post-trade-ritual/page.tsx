@@ -2,23 +2,27 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Post-Trade Ritual — Build Your Trading Journal Habit | TradVue',
+  title: 'Post-Trade Ritual — Build a Daily Trading Journal Habit in 60 Seconds',
   description:
-    'Build a daily trading journal habit in 60 seconds. Emotion tracking, streak building, and habit science. Free to start.',
+    'Build a consistent trading journal habit with TradVue's post-trade ritual. Emotion tags, streak tracking, and 60-second journaling. Free to start, try now.',
+  alternates: {
+    canonical: 'https://www.tradvue.com/post-trade-ritual',
+  },
   openGraph: {
-    title: 'Post-Trade Ritual — Build Your Trading Journal Habit | TradVue',
+    title: 'Post-Trade Ritual — Build a Daily Trading Journal Habit in 60 Seconds | TradVue',
     description:
-      'The post-trade ritual that builds journaling habits. Track emotions, build streaks, improve faster.',
-    url: 'https://tradvue.com/post-trade-ritual',
+      'Build a trading journal habit in 60 seconds per trade. Emotion tags, streak tracking, habit science. Free to start.',
+    url: 'https://www.tradvue.com/post-trade-ritual',
     siteName: 'TradVue',
-    images: [
-      {
-        url: 'https://tradvue.com/og-image.png',
-        width: 1200,
-        height: 630,
-      },
-    ],
+    images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'Post-Trade Ritual — TradVue' }],
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Post-Trade Ritual — Build a Daily Trading Journal Habit | TradVue',
+    description:
+      'Build a trading journal habit in 60 seconds per trade. Emotion tags and streak tracking. Free to start.',
+    images: ['/og-image.png'],
   },
 }
 
@@ -30,23 +34,50 @@ export default function PostTradeRitualPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: [
+            '@graph': [
               {
-                '@type': 'Question',
-                name: 'What is the post-trade ritual?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'A 60-second routine to journal every trade immediately after closing it. Entry, exit, emotion, and notes. The ritual is designed to build a habit through streak tracking.',
-                },
+                '@type': 'FAQPage',
+                mainEntity: [
+                  {
+                    '@type': 'Question',
+                    name: 'What is the post-trade ritual for traders?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'The post-trade ritual is a 60-second routine to journal every trade immediately after closing it: entry/exit details, emotion tag, and a quick note. Designed to build a consistent journaling habit through streak tracking.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Why does journaling after every trade help traders improve?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Journaling captures the data and emotions behind every trade. Over time, patterns emerge — you see which setups work, which emotions lead to bad decisions, and exactly where your edge is. Traders who journal consistently improve measurably faster.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'How does streak tracking help build a journaling habit?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'TradVue tracks your consecutive days of journaling. Seeing your streak grow creates motivation to keep going. Missing a day feels significant — which prevents the common pattern of slowly stopping.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'What emotion tags does TradVue use in the post-trade ritual?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'TradVue includes emotion tags like: Confident, Fearful, Greedy, Bored, FOMO, Overextended, Regretful, and Lucky. Over time you'll see correlations between emotions and your P&L.',
+                    },
+                  },
+                ],
               },
               {
-                '@type': 'Question',
-                name: 'Why does the ritual matter?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Traders who journal consistently improve faster. The ritual removes friction, makes journaling automatic, and builds the habit through streak tracking and rewards.',
-                },
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.tradvue.com' },
+                  { '@type': 'ListItem', position: 2, name: 'Post-Trade Ritual', item: 'https://www.tradvue.com/post-trade-ritual' },
+                ],
               },
             ],
           }),

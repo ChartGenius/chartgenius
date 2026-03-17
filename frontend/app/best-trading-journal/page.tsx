@@ -4,21 +4,25 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'Best Trading Journal for Day Traders 2026 | TradVue',
   description:
-    'The best free trading journal for day traders. AI-powered analytics, 30+ calculators, prop firm tracking, and real-time alerts. Start journaling free to start.',
+    'The best free trading journal for day traders in 2026. AI analytics, 30+ calculators, prop firm tracking, and real-time alerts. Free to start, no credit card needed.',
+  alternates: {
+    canonical: 'https://www.tradvue.com/best-trading-journal',
+  },
   openGraph: {
     title: 'Best Trading Journal for Day Traders 2026 | TradVue',
     description:
-      'The best free trading journal for day traders. AI-powered analytics, 30+ calculators, prop firm tracking, and real-time alerts. Start journaling free.',
-    url: 'https://tradvue.com/best-trading-journal',
+      'The best free trading journal for day traders. AI-powered analytics, 30+ calculators, prop firm tracking, and real-time alerts. Free to start.',
+    url: 'https://www.tradvue.com/best-trading-journal',
     siteName: 'TradVue',
-    images: [
-      {
-        url: 'https://tradvue.com/og-image.png',
-        width: 1200,
-        height: 630,
-      },
-    ],
+    images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'Best Trading Journal for Day Traders — TradVue' }],
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Best Trading Journal for Day Traders 2026 | TradVue',
+    description:
+      'The best free trading journal. AI analytics, 30+ calculators, prop firm tracking. Free to start.',
+    images: ['/og-image.png'],
   },
 }
 
@@ -33,31 +37,58 @@ export default function BestTradingJournalPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: [
+            '@graph': [
               {
-                '@type': 'Question',
-                name: 'What makes TradVue the best trading journal?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real insights without paying premium prices.',
-                },
+                '@type': 'FAQPage',
+                mainEntity: [
+                  {
+                    '@type': 'Question',
+                    name: 'What makes TradVue the best trading journal for day traders?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real-time drawdown gauges, emotion tracking, and pattern detection — all free to start.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Is TradVue really free to use?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue has a free tier that includes manual trade logging, basic analytics, and access to all 30+ calculators. No credit card required to start.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Can I track prop firm drawdowns in TradVue?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue has built-in prop firm tracking that syncs your journal with prop firm rules, showing real-time drawdown gauges, daily loss limits, and trailing loss status.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Can I import my existing trades into TradVue?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue supports CSV import from most major brokers and platforms. You can import your full trade history to analyze historical performance.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Does TradVue work for options and futures traders?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue supports multi-asset journaling including stocks, options (with Greeks tracking), futures (with built-in contract specs for 20 contracts), forex, and crypto.',
+                    },
+                  },
+                ],
               },
               {
-                '@type': 'Question',
-                name: 'Is TradVue free?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Yes. TradVue has a free tier that includes manual trade logging, basic analytics, and access to all 30+ calculators. Pro features like AI analysis are available during beta at no cost.',
-                },
-              },
-              {
-                '@type': 'Question',
-                name: 'Can I track prop firm drawdowns in TradVue?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Yes. TradVue has built-in prop firm tracking that syncs your journal with prop firm rules, showing real-time drawdown gauges and daily limits.',
-                },
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.tradvue.com' },
+                  { '@type': 'ListItem', position: 2, name: 'Best Trading Journal', item: 'https://www.tradvue.com/best-trading-journal' },
+                ],
               },
             ],
           }),

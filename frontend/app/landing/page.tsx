@@ -442,7 +442,7 @@ export default function LandingPage() {
                 fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em',
                 color: 'var(--blue)', background: 'var(--blue-dim)',
                 border: '1px solid rgba(74,158,255,0.25)', padding: '2px 6px', borderRadius: '4px',
-              }}>BETA</span>
+              }}>NEW</span>
             </Link>
 
             {/* Desktop nav links */}
@@ -507,7 +507,7 @@ export default function LandingPage() {
               fontSize: '12px', color: 'var(--blue)', fontWeight: 600, letterSpacing: '0.02em',
             }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--blue)', display: 'inline-block', animation: 'lp-pulse 2s ease-in-out infinite' }} />
-              Beta now open — free Pro access during beta
+              Start free — upgrade anytime
             </div>
 
             {/* Hero logo with tagline */}
@@ -770,7 +770,7 @@ export default function LandingPage() {
               gap: '40px',
               marginBottom: '64px',
             }}>
-              <StatCounter value={1200} label="traders in beta" suffix="+" />
+              <StatCounter value={1200} label="traders" suffix="+" />
               <StatCounter value={15000} label="hours of data analyzed daily" suffix="+" />
               <StatCounter value={30} label="built-in calculators" suffix="+" />
               <StatCounter value={10} label="years of AI training data" suffix="+" />
@@ -856,7 +856,7 @@ export default function LandingPage() {
                 Start Free. Scale When You're Ready.
               </h2>
               <p style={{ fontSize: '16px', color: 'var(--text-2)', maxWidth: '500px', margin: '0 auto', lineHeight: 1.6 }}>
-                No credit card. During beta period. All early access users get free Pro through beta.
+                No credit card required. Start with full access free for 3 weeks.
               </p>
             </div>
 
@@ -868,7 +868,7 @@ export default function LandingPage() {
               textAlign: 'center', marginBottom: '40px',
               fontSize: '15px', color: 'var(--text-0)', fontWeight: 600,
             }}>
-              Free Pro access for all early beta users. No credit card required. Valid during beta period.
+              Start free. 3-week full trial. Upgrade to Pro for $24/month.
             </div>
 
             {/* Pricing cards */}
@@ -949,7 +949,7 @@ export default function LandingPage() {
                     borderRadius: '6px', padding: '4px 10px', display: 'inline-block',
                     color: 'var(--blue)', fontWeight: 600,
                   }}>
-                    Free during beta
+                    Save 30% annually
                   </div>
                 </div>
 
@@ -975,7 +975,7 @@ export default function LandingPage() {
                   onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                   onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none'; }}
                 >
-                  Join Beta (Free Pro Access)
+                  Get Started Free
                 </button>
               </div>
             </div>
@@ -1001,7 +1001,7 @@ export default function LandingPage() {
                 Get Real-Time Market Intelligence
               </h2>
               <p style={{ fontSize: '15px', color: 'var(--text-2)', lineHeight: 1.6 }}>
-                Join traders who react faster. We'll send you beta access + market tips. No spam. Cancel anytime.
+                Join traders who react faster. We'll send you free access + market tips. No spam. Cancel anytime.
               </p>
             </div>
 

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Disclaimer — TradVue',
   description: 'Important legal disclaimer: TradVue is not a financial advisor and does not provide investment advice. Read before using the platform.',
   alternates: {
-    canonical: 'https://tradvue.com/legal/disclaimer',
+    canonical: 'https://www.tradvue.com/legal/disclaimer',
   },
   robots: 'noindex, follow',
 }

@@ -2,23 +2,27 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Free Prop Firm Tracker — Track Drawdown, Daily Limits | TradVue',
+  title: 'Free Prop Firm Tracker — Monitor Drawdown & Daily Limits in Real-Time',
   description:
-    'Real-time prop firm tracking. Monitor your drawdown, daily loss limits, and trailing loss without leaving your journal. Free to start, no credit card needed.',
+    'Real-time prop firm rule tracker built into your trading journal. Monitor drawdown, daily loss limits, and trailing loss automatically. Free to start, no credit card needed.',
+  alternates: {
+    canonical: 'https://www.tradvue.com/prop-firm-tracker',
+  },
   openGraph: {
-    title: 'Free Prop Firm Tracker — Track Drawdown, Daily Limits | TradVue',
+    title: 'Free Prop Firm Tracker — Monitor Drawdown & Daily Limits | TradVue',
     description:
-      'Real-time prop firm tracking. Monitor your drawdown, daily loss limits, and trailing loss. Built into TradVue journal.',
-    url: 'https://tradvue.com/prop-firm-tracker',
+      'Real-time prop firm tracking. Monitor drawdown, daily loss limits, and trailing loss — built into your TradVue journal. Free to start.',
+    url: 'https://www.tradvue.com/prop-firm-tracker',
     siteName: 'TradVue',
-    images: [
-      {
-        url: 'https://tradvue.com/og-image.png',
-        width: 1200,
-        height: 630,
-      },
-    ],
+    images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'Prop Firm Tracker — TradVue' }],
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Free Prop Firm Tracker — Monitor Drawdown & Daily Limits | TradVue',
+    description:
+      'Real-time prop firm rule tracking built into your trading journal. Free to start.',
+    images: ['/og-image.png'],
   },
 }
 

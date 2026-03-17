@@ -856,8 +856,8 @@ export default function PlaybooksPage() {
               alignItems: 'center',
               gap: 8,
             }}>
-              <span style={{ color: 'var(--accent)', fontWeight: 700 }}>BETA</span>
-              All playbook features are free during beta — create unlimited custom playbooks, tag trades, and track performance.
+              <span style={{ color: 'var(--accent)', fontWeight: 700 }}>PRO</span>
+              All playbook features included with Pro. Free during your trial — create unlimited custom playbooks, tag trades, and track performance.
             </div>
 
             {/* Category filter */}

@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Acceptable Use Policy — TradVue',
   description: 'TradVue Acceptable Use Policy. Understand what is and is not permitted when using the TradVue platform.',
   alternates: {
-    canonical: 'https://tradvue.com/legal/aup',
+    canonical: 'https://www.tradvue.com/legal/aup',
   },
   robots: 'noindex, follow',
 }

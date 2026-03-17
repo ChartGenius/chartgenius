@@ -2,23 +2,27 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Options Trading Journal — Track Greeks, Spreads, P&L | TradVue',
+  title: 'Options Trading Journal — Track Greeks, Spreads & Multi-Leg P&L',
   description:
-    'Options trading journal with Greek tracking, multi-leg strategy support, and P&L by strategy. Track spreads, straddles, and complex positions. Free to start.',
+    'Options journal with Greeks tracking (delta, gamma, theta, vega), multi-leg strategy support (Iron Condors, spreads, straddles), and P&L by strategy type. Free to start.',
+  alternates: {
+    canonical: 'https://www.tradvue.com/options-trading-journal',
+  },
   openGraph: {
-    title: 'Options Trading Journal — Track Greeks, Spreads, P&L | TradVue',
+    title: 'Options Trading Journal — Track Greeks, Spreads & Multi-Leg P&L | TradVue',
     description:
-      'Track your options trades with Greeks, multi-leg strategies, and deep analytics.',
-    url: 'https://tradvue.com/options-trading-journal',
+      'Track options trades with Greeks, multi-leg strategies, and deep analytics. Iron Condors, spreads, straddles. Free to start.',
+    url: 'https://www.tradvue.com/options-trading-journal',
     siteName: 'TradVue',
-    images: [
-      {
-        url: 'https://tradvue.com/og-image.png',
-        width: 1200,
-        height: 630,
-      },
-    ],
+    images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'Options Trading Journal — TradVue' }],
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Options Trading Journal — Track Greeks, Spreads & P&L | TradVue',
+    description:
+      'Track options with Greeks, multi-leg strategies, and analytics. Free to start.',
+    images: ['/og-image.png'],
   },
 }
 
@@ -30,23 +34,50 @@ export default function OptionsTradingJournalPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: [
+            '@graph': [
               {
-                '@type': 'Question',
-                name: 'Can TradVue track multi-leg options strategies?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Yes. TradVue supports spreads, straddles, Iron Condors, and any multi-leg strategy. Tag your trades by strategy type for deep analytics.',
-                },
+                '@type': 'FAQPage',
+                mainEntity: [
+                  {
+                    '@type': 'Question',
+                    name: 'Can TradVue track multi-leg options strategies?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue supports spreads, straddles, Iron Condors, butterflies, and any multi-leg strategy. Log all legs at once and tag trades by strategy type for deep performance analytics.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Does TradVue calculate options Greeks?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue tracks delta, gamma, theta, and vega for individual positions and your overall portfolio, helping you understand your total risk exposure.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Which options strategies does TradVue support?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'TradVue supports covered calls, cash-secured puts, vertical spreads, calendar spreads, straddles, strangles, Iron Condors, butterfly spreads, ratio spreads, and any custom multi-leg position.',
+                    },
+                  },
+                  {
+                    '@type': 'Question',
+                    name: 'Can I analyze my P&L by options strategy type?',
+                    acceptedAnswer: {
+                      '@type': 'Answer',
+                      text: 'Yes. TradVue's analytics break down your P&L by strategy type. See whether your Iron Condors are outperforming your spreads, or which strategies perform best in different market conditions.',
+                    },
+                  },
+                ],
               },
               {
-                '@type': 'Question',
-                name: 'Does TradVue calculate Greeks?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'TradVue tracks Greeks for your portfolio. View delta, gamma, theta, and vega exposure across your positions.',
-                },
+                '@type': 'BreadcrumbList',
+                itemListElement: [
+                  { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.tradvue.com' },
+                  { '@type': 'ListItem', position: 2, name: 'Options Trading Journal', item: 'https://www.tradvue.com/options-trading-journal' },
+                ],
               },
             ],
           }),

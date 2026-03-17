@@ -168,8 +168,8 @@ const FAQ_DATA: {
     Icon: IconCreditCard,
     questions: [
       {
-        q: 'What are the differences between Free, Pro, and Beta?',
-        a: 'Free includes unlimited watchlists, delayed market data, and email alerts. Pro ($24/month, or $16.80/month billed annually) adds cloud sync, ad-free experience, SMS/Webhook alerts, custom indicators, sentiment archives, 2-year historical data, and priority support. During the beta period, all users receive free Pro access with no credit card required.',
+        q: 'What are the differences between Free and Pro?',
+        a: 'Free includes unlimited watchlists, delayed market data, and email alerts. Pro ($24/month, or $16.80/month billed annually) adds cloud sync, ad-free experience, SMS/Webhook alerts, custom indicators, sentiment archives, 2-year historical data, and priority support. New users get a 3-week free trial of all Pro features. No credit card required.',
       },
       {
         q: 'How do I upgrade to Pro?',

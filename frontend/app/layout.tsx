@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: '%s | TradVue',
   },
   description:
-    'Track trades, analyze portfolios, calculate risk, and monitor markets — free to start. 30+ trading calculators, smart alerts, DRIP simulator, and more. No account required.',
+    'TradVue is the free trading journal, portfolio tracker, and market tools platform built for serious traders. 30+ calculators, AI coach, prop firm tracking. Free to start.',
 
   keywords: [
     'trading journal',
@@ -38,6 +38,7 @@ export const metadata: Metadata = {
     'risk management',
     'position sizing',
     'free trading platform',
+    'prop firm tracker',
   ],
 
   alternates: {
@@ -67,7 +68,7 @@ export const metadata: Metadata = {
     siteName: 'TradVue',
     title: 'TradVue — Free Trading Journal, Portfolio Tracker & Market Tools',
     description:
-      'Track trades, analyze portfolios, calculate risk, and monitor markets — free to start. 30+ trading calculators, smart alerts, DRIP simulator, and more. No account required.',
+      'TradVue is the free trading journal, portfolio tracker, and market tools platform built for serious traders. 30+ calculators, AI coach, prop firm tracking.',
     images: [
       {
         url: '/og-image.png',
@@ -83,7 +84,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TradVue — Free Trading Journal, Portfolio Tracker & Market Tools',
     description:
-      'Track trades, analyze portfolios, calculate risk, and monitor markets — free to start. 30+ trading calculators, smart alerts, DRIP simulator, and more. No account required.',
+      'TradVue is the free trading journal, portfolio tracker, and market tools platform built for serious traders. 30+ calculators, AI coach, prop firm tracking.',
     images: ['/og-image.png'],
   },
 
@@ -114,17 +115,93 @@ export const metadata: Metadata = {
 
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'WebApplication',
-  name: 'TradVue',
-  url: 'https://www.tradvue.com',
-  description: 'Free trading journal, portfolio tracker, and market analysis tools',
-  applicationCategory: 'FinanceApplication',
-  operatingSystem: 'Web',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://www.tradvue.com/#organization',
+      name: 'TradVue',
+      url: 'https://www.tradvue.com',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.tradvue.com/og-image.png',
+        width: 1200,
+        height: 630,
+      },
+      sameAs: [],
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: 'support@tradvue.com',
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.tradvue.com/#website',
+      url: 'https://www.tradvue.com',
+      name: 'TradVue',
+      publisher: { '@id': 'https://www.tradvue.com/#organization' },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: { '@type': 'EntryPoint', urlTemplate: 'https://www.tradvue.com/news?q={search_term_string}' },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': 'https://www.tradvue.com/#app',
+      name: 'TradVue',
+      url: 'https://www.tradvue.com',
+      description:
+        'Free trading journal, portfolio tracker, and market analysis tools for day traders and investors.',
+      applicationCategory: 'FinanceApplication',
+      operatingSystem: 'Web',
+      offers: [
+        {
+          '@type': 'Offer',
+          name: 'Free',
+          price: '0',
+          priceCurrency: 'USD',
+          description: 'Free forever tier with trading journal, calculators, and basic analytics.',
+        },
+        {
+          '@type': 'Offer',
+          name: 'TradVue Pro Monthly',
+          price: '24',
+          priceCurrency: 'USD',
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            price: '24',
+            priceCurrency: 'USD',
+            unitCode: 'MON',
+          },
+        },
+        {
+          '@type': 'Offer',
+          name: 'TradVue Pro Annual',
+          price: '201.60',
+          priceCurrency: 'USD',
+          priceSpecification: {
+            '@type': 'UnitPriceSpecification',
+            price: '201.60',
+            priceCurrency: 'USD',
+            unitCode: 'ANN',
+          },
+        },
+      ],
+      featureList: [
+        'AI-powered trade analysis',
+        'Unlimited trade journal',
+        '30+ trading calculators',
+        'Prop firm rule tracking',
+        'Portfolio tracker',
+        'Real-time market news',
+        'Price alerts',
+        'CSV import/export',
+        'Post-trade ritual & streak tracking',
+      ],
+      publisher: { '@id': 'https://www.tradvue.com/#organization' },
+    },
+  ],
 }
 
 // ─── Root Layout ──────────────────────────────────────────────────────────────
@@ -133,13 +210,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="theme-dark">
       <head>
-        <meta name="theme-color" content="#6366f1" />
-        <link rel="canonical" href="https://www.tradvue.com" />
+        <meta name="theme-color" content="#0a0a1a" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        {/* Preconnect for performance */}
+        <link rel="preconnect" href="https://tradvue-api.onrender.com" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
+        <link rel="preconnect" href="https://s3.tradingview.com" />
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
