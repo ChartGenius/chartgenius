@@ -1,0 +1,66 @@
+// ============================================================
+// TradVue — Moving Average Crossover Strategy
+// ============================================================
+// Strategy:  EMA 9 / EMA 21 crossover
+// Timeframe: Works on any timeframe (1m–Daily recommended)
+// Difficulty: Beginner
+//
+// HOW TO SET UP WITH TRADVUE:
+//   1. Open TradingView Pine Editor and paste this script
+//   2. Click "Add to Chart"
+//   3. Right-click the strategy → "Add Alert on Strategy"
+//   4. In the "Notifications" tab, enable "Webhook URL"
+//   5. Paste your TradVue webhook URL from the Integrations page
+//   6. In the "Message" field, type exactly: {{strategy.order.alert_message}}
+//   7. Click "Create" — trades will auto-journal in TradVue!
+// ============================================================
+
+//@version=6
+// @strategy_alert_message {{strategy.order.alert_message}}
+
+strategy(
+    title       = "TradVue — EMA Crossover",
+    shorttitle  = "TV EMA Cross",
+    overlay     = true,
+    default_qty_type  = strategy.percent_of_equity,
+    default_qty_value = 10,
+    initial_capital   = 10000,
+    commission_type   = strategy.commission.percent,
+    commission_value  = 0.1
+)
+
+// ── Inputs ────────────────────────────────────────────────
+fastLen  = input.int(9,  title="Fast EMA Period", minval=1, maxval=200)
+slowLen  = input.int(21, title="Slow EMA Period", minval=1, maxval=200)
+showEMAs = input.bool(true, title="Show EMAs on Chart")
+
+// ── Indicators ────────────────────────────────────────────
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+
+// ── Plots ─────────────────────────────────────────────────
+plot(showEMAs ? emaFast : na, title="EMA Fast", color=color.new(color.lime, 0),   linewidth=2)
+plot(showEMAs ? emaSlow : na, title="EMA Slow", color=color.new(color.orange, 0), linewidth=2)
+
+// ── Crossover signals ─────────────────────────────────────
+bullCross = ta.crossover(emaFast, emaSlow)
+bearCross = ta.crossunder(emaFast, emaSlow)
+
+// === TradVue Auto-Journal Integration ===
+longMsg      = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)            + ',"position":"long","strategy":"EMA Crossover"}'
+shortMsg     = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size))   + ',"position":"short","strategy":"EMA Crossover"}'
+exitLongMsg  = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)            + ',"position":"flat","strategy":"EMA Crossover"}'
+exitShortMsg = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size))   + ',"position":"flat","strategy":"EMA Crossover"}'
+
+// ── Entries & Exits ───────────────────────────────────────
+if bullCross
+    strategy.close("Short", alert_message=exitShortMsg)
+    strategy.entry("Long",  strategy.long,  alert_message=longMsg)
+
+if bearCross
+    strategy.close("Long",  alert_message=exitLongMsg)
+    strategy.entry("Short", strategy.short, alert_message=shortMsg)
+
+// ── Visual signals ─────────────────────────────────────────
+plotshape(bullCross, title="Bull Cross", style=shape.triangleup,   location=location.belowbar, color=color.new(color.lime, 0), size=size.small)
+plotshape(bearCross, title="Bear Cross", style=shape.triangledown, location=location.abovebar, color=color.new(color.red,  0), size=size.small)

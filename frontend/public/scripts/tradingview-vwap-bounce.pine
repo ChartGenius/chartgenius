@@ -1,0 +1,82 @@
+// ============================================================
+// TradVue — VWAP Bounce Strategy
+// ============================================================
+// Strategy:  Enter on VWAP bounce with ATR-based stop loss
+// Timeframe: 1m, 5m, 15m intraday recommended
+// Difficulty: Intermediate
+//
+// HOW TO SET UP WITH TRADVUE:
+//   1. Open TradingView Pine Editor and paste this script
+//   2. Click "Add to Chart"
+//   3. Right-click the strategy → "Add Alert on Strategy"
+//   4. In the "Notifications" tab, enable "Webhook URL"
+//   5. Paste your TradVue webhook URL from the Integrations page
+//   6. In the "Message" field, type exactly: {{strategy.order.alert_message}}
+//   7. Click "Create" — trades will auto-journal in TradVue!
+// ============================================================
+
+//@version=6
+// @strategy_alert_message {{strategy.order.alert_message}}
+
+strategy(
+    title       = "TradVue — VWAP Bounce",
+    shorttitle  = "TV VWAP",
+    overlay     = true,
+    default_qty_type  = strategy.percent_of_equity,
+    default_qty_value = 10,
+    initial_capital   = 10000,
+    commission_type   = strategy.commission.percent,
+    commission_value  = 0.1
+)
+
+// ── Inputs ────────────────────────────────────────────────
+atrLen       = input.int(14,   title="ATR Length",         minval=1)
+atrMult      = input.float(1.5, title="ATR Stop Multiplier", minval=0.1, step=0.1)
+bounceBuffer = input.float(0.1, title="VWAP Bounce Buffer %", minval=0.0, step=0.05)
+useShorts    = input.bool(true, title="Enable Short Trades")
+
+// ── Indicators ────────────────────────────────────────────
+vwapVal = ta.vwap(hlc3)
+atrVal  = ta.atr(atrLen)
+
+// Bounce buffer in price terms
+buffer = vwapVal * (bounceBuffer / 100)
+
+// ── Plots ─────────────────────────────────────────────────
+plot(vwapVal, title="VWAP", color=color.new(color.blue, 0), linewidth=2)
+plot(vwapVal + buffer, title="VWAP Upper Buffer", color=color.new(color.blue, 70), linewidth=1, style=plot.style_stepline)
+plot(vwapVal - buffer, title="VWAP Lower Buffer", color=color.new(color.blue, 70), linewidth=1, style=plot.style_stepline)
+
+// ── Bounce detection ──────────────────────────────────────
+// Long: previous bar was below VWAP, current bar closes above VWAP
+wasBelow    = close[1] < (vwapVal - buffer)
+nowAbove    = close    > (vwapVal + buffer)
+longSignal  = wasBelow and nowAbove
+
+// Short: previous bar was above VWAP, current bar closes below VWAP
+wasAbove    = close[1] > (vwapVal + buffer)
+nowBelow    = close    < (vwapVal - buffer)
+shortSignal = wasAbove and nowBelow
+
+// ── Stop levels ───────────────────────────────────────────
+longStop  = close - (atrVal * atrMult)
+shortStop = close + (atrVal * atrMult)
+
+// === TradVue Auto-Journal Integration ===
+longMsg      = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"long","strategy":"VWAP Bounce"}'
+shortMsg     = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"short","strategy":"VWAP Bounce"}'
+exitLongMsg  = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"flat","strategy":"VWAP Bounce"}'
+exitShortMsg = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"flat","strategy":"VWAP Bounce"}'
+
+// ── Entries & Exits ───────────────────────────────────────
+if longSignal
+    strategy.entry("Long", strategy.long, alert_message=longMsg)
+    strategy.exit("Long SL", from_entry="Long", stop=longStop, alert_message=exitLongMsg)
+
+if useShorts and shortSignal
+    strategy.entry("Short", strategy.short, alert_message=shortMsg)
+    strategy.exit("Short SL", from_entry="Short", stop=shortStop, alert_message=exitShortMsg)
+
+// ── Visual signals ─────────────────────────────────────────
+plotshape(longSignal,             title="Long Signal",  style=shape.triangleup,   location=location.belowbar, color=color.new(color.lime, 0), size=size.small)
+plotshape(useShorts and shortSignal, title="Short Signal", style=shape.triangledown, location=location.abovebar, color=color.new(color.red,  0), size=size.small)

@@ -1,0 +1,74 @@
+// ============================================================
+// TradVue — RSI Overbought / Oversold Strategy
+// ============================================================
+// Strategy:  RSI-based mean reversion
+// Timeframe: 15m, 1H, 4H recommended
+// Difficulty: Beginner
+//
+// HOW TO SET UP WITH TRADVUE:
+//   1. Open TradingView Pine Editor and paste this script
+//   2. Click "Add to Chart"
+//   3. Right-click the strategy → "Add Alert on Strategy"
+//   4. In the "Notifications" tab, enable "Webhook URL"
+//   5. Paste your TradVue webhook URL from the Integrations page
+//   6. In the "Message" field, type exactly: {{strategy.order.alert_message}}
+//   7. Click "Create" — trades will auto-journal in TradVue!
+// ============================================================
+
+//@version=6
+// @strategy_alert_message {{strategy.order.alert_message}}
+
+strategy(
+    title       = "TradVue — RSI Strategy",
+    shorttitle  = "TV RSI",
+    overlay     = false,
+    default_qty_type  = strategy.percent_of_equity,
+    default_qty_value = 10,
+    initial_capital   = 10000,
+    commission_type   = strategy.commission.percent,
+    commission_value  = 0.1
+)
+
+// ── Inputs ────────────────────────────────────────────────
+rsiLen      = input.int(14, title="RSI Length", minval=1, maxval=100)
+oversold    = input.int(30,  title="Oversold Level",   minval=1,  maxval=49)
+overbought  = input.int(70,  title="Overbought Level", minval=51, maxval=99)
+useShorts   = input.bool(true, title="Enable Short Trades")
+
+// ── Indicator ─────────────────────────────────────────────
+rsiVal = ta.rsi(close, rsiLen)
+
+// ── Plots ─────────────────────────────────────────────────
+plot(rsiVal, title="RSI", color=color.new(color.purple, 0), linewidth=2)
+hline(overbought, "Overbought", color=color.new(color.red,   30), linestyle=hline.style_dashed)
+hline(oversold,   "Oversold",   color=color.new(color.lime,  30), linestyle=hline.style_dashed)
+hline(50,         "Midline",    color=color.new(color.gray,  50), linestyle=hline.style_dotted)
+
+bgcolor(rsiVal < oversold   ? color.new(color.lime, 90) : na, title="Oversold Zone")
+bgcolor(rsiVal > overbought ? color.new(color.red,  90) : na, title="Overbought Zone")
+
+// ── Signals ───────────────────────────────────────────────
+enterLong  = ta.crossover(rsiVal, oversold)     // RSI crosses back above oversold
+enterShort = ta.crossunder(rsiVal, overbought)  // RSI crosses back below overbought
+exitLong   = rsiVal >= overbought
+exitShort  = rsiVal <= oversold
+
+// === TradVue Auto-Journal Integration ===
+longMsg      = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"long","strategy":"RSI"}'
+shortMsg     = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"short","strategy":"RSI"}'
+exitLongMsg  = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"flat","strategy":"RSI"}'
+exitShortMsg = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"flat","strategy":"RSI"}'
+
+// ── Entries & Exits ───────────────────────────────────────
+if enterLong
+    strategy.entry("Long", strategy.long, alert_message=longMsg)
+
+if exitLong and strategy.position_size > 0
+    strategy.close("Long", alert_message=exitLongMsg)
+
+if useShorts
+    if enterShort
+        strategy.entry("Short", strategy.short, alert_message=shortMsg)
+
+    if exitShort and strategy.position_size < 0
+        strategy.close("Short", alert_message=exitShortMsg)

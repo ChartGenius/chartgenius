@@ -675,6 +675,88 @@ managementRouter.get('/events', requireAuth, async (req, res) => {
   }
 });
 
+
+// Simulates a TradingView webhook for the user's active token.
+// Bypasses IP allowlist — marks event with source_ip = 'test', status = 'test'.
+managementRouter.post('/test', requireAuth, async (req, res) => {
+  try {
+    const supabase = getServiceClient();
+    const userId   = req.user.id;
+
+    // Find user's active token
+    const { data: tokenRow, error: tokenErr } = await supabase
+      .from('webhook_tokens')
+      .select('id, token, is_active')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (tokenErr) {
+      console.error('[Webhook Test] Token lookup error:', tokenErr.message);
+      return res.status(500).json({ error: 'Failed to look up your webhook token' });
+    }
+
+    if (!tokenRow) {
+      return res.status(400).json({
+        error: 'No active webhook token found. Generate a webhook URL first.',
+      });
+    }
+
+    const { id: tokenId } = tokenRow;
+
+    // Build a synthetic test payload
+    const testPayload = {
+      ticker:   'TEST',
+      action:   'buy',
+      price:    100.00,
+      quantity: 1,
+      position: 'long',
+      comment:  'TradVue connection test',
+    };
+
+    // Insert test event directly (bypass IP check and rate limit)
+    const { data: eventRow, error: insertErr } = await supabase
+      .from('webhook_events')
+      .insert({
+        token_id:        tokenId,
+        user_id:         userId,
+        source_ip:       'test',
+        raw_payload:     testPayload,
+        parsed_ticker:   testPayload.ticker,
+        parsed_action:   testPayload.action,
+        parsed_price:    testPayload.price,
+        parsed_quantity: testPayload.quantity,
+        status:          'test',
+      })
+      .select('id, token_id, source_ip, parsed_ticker, parsed_action, parsed_price, parsed_quantity, status, created_at')
+      .single();
+
+    if (insertErr) {
+      console.error('[Webhook Test] Event insert error:', insertErr.message);
+      return res.status(500).json({ error: 'Failed to create test event' });
+    }
+
+    // Update token last_used_at
+    await supabase
+      .from('webhook_tokens')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('id', tokenId);
+
+    console.log(`[Webhook Test] Test event created for user=${userId} token=${tokenRow.token.slice(0, 8)}...`);
+
+    res.status(201).json({
+      success: true,
+      message: 'Test event created successfully! Check the events log below.',
+      event:   eventRow,
+    });
+  } catch (err) {
+    console.error('[Webhook Test] Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
 module.exports = { receiverRouter, managementRouter };

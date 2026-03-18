@@ -5,10 +5,11 @@
  *
  * Sections:
  *   1. Webhook URL (generate, copy, rotate, delete)
- *   2. Quick Setup Guide (step-by-step accordion)
+ *   2. Quick Setup Guide (step-by-step accordion + Test Connection)
  *   3. Alert Message Templates (strategy + simple, with copy)
- *   4. Recent Events Log (auto-refresh every 30s)
- *   5. Token Management (multiple tokens list)
+ *   4. Pine Script Templates (copy-ready scripts with How-to)
+ *   5. Recent Events Log (auto-refresh every 30s)
+ *   6. Token Management (multiple tokens list)
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react'
@@ -40,7 +41,7 @@ interface WebhookEvent {
   parsed_price: number | null
   parsed_quantity: number | null
   trade_id: number | null
-  status: 'received' | 'matched' | 'ignored' | 'error'
+  status: 'received' | 'matched' | 'ignored' | 'error' | 'test'
   error_message: string | null
   created_at: string
 }
@@ -64,6 +65,155 @@ const SIMPLE_TEMPLATE = `{
   "action": "buy",
   "price": {{close}}
 }`
+
+// ── Pine Script Templates ──────────────────────────────────────────────────────
+
+const MA_CROSSOVER_SCRIPT = `//@version=6
+// @strategy_alert_message {{strategy.order.alert_message}}
+
+strategy(
+    title       = "TradVue — EMA Crossover",
+    shorttitle  = "TV EMA Cross",
+    overlay     = true,
+    default_qty_type  = strategy.percent_of_equity,
+    default_qty_value = 10,
+    initial_capital   = 10000,
+    commission_type   = strategy.commission.percent,
+    commission_value  = 0.1
+)
+
+fastLen  = input.int(9,  title="Fast EMA Period", minval=1, maxval=200)
+slowLen  = input.int(21, title="Slow EMA Period", minval=1, maxval=200)
+showEMAs = input.bool(true, title="Show EMAs on Chart")
+
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+
+plot(showEMAs ? emaFast : na, title="EMA Fast", color=color.new(color.lime, 0),   linewidth=2)
+plot(showEMAs ? emaSlow : na, title="EMA Slow", color=color.new(color.orange, 0), linewidth=2)
+
+bullCross = ta.crossover(emaFast, emaSlow)
+bearCross = ta.crossunder(emaFast, emaSlow)
+
+// === TradVue Auto-Journal Integration ===
+longMsg      = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"long","strategy":"EMA Crossover"}'
+shortMsg     = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"short","strategy":"EMA Crossover"}'
+exitLongMsg  = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"flat","strategy":"EMA Crossover"}'
+exitShortMsg = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"flat","strategy":"EMA Crossover"}'
+
+if bullCross
+    strategy.close("Short", alert_message=exitShortMsg)
+    strategy.entry("Long",  strategy.long,  alert_message=longMsg)
+
+if bearCross
+    strategy.close("Long",  alert_message=exitLongMsg)
+    strategy.entry("Short", strategy.short, alert_message=shortMsg)
+
+plotshape(bullCross, title="Bull Cross", style=shape.triangleup,   location=location.belowbar, color=color.new(color.lime, 0), size=size.small)
+plotshape(bearCross, title="Bear Cross", style=shape.triangledown, location=location.abovebar, color=color.new(color.red,  0), size=size.small)`
+
+const RSI_SCRIPT = `//@version=6
+// @strategy_alert_message {{strategy.order.alert_message}}
+
+strategy(
+    title       = "TradVue — RSI Strategy",
+    shorttitle  = "TV RSI",
+    overlay     = false,
+    default_qty_type  = strategy.percent_of_equity,
+    default_qty_value = 10,
+    initial_capital   = 10000,
+    commission_type   = strategy.commission.percent,
+    commission_value  = 0.1
+)
+
+rsiLen     = input.int(14, title="RSI Length", minval=1, maxval=100)
+oversold   = input.int(30,  title="Oversold Level",   minval=1,  maxval=49)
+overbought = input.int(70,  title="Overbought Level", minval=51, maxval=99)
+useShorts  = input.bool(true, title="Enable Short Trades")
+
+rsiVal = ta.rsi(close, rsiLen)
+
+plot(rsiVal, title="RSI", color=color.new(color.purple, 0), linewidth=2)
+hline(overbought, "Overbought", color=color.new(color.red,  30), linestyle=hline.style_dashed)
+hline(oversold,   "Oversold",   color=color.new(color.lime, 30), linestyle=hline.style_dashed)
+
+enterLong  = ta.crossover(rsiVal, oversold)
+enterShort = ta.crossunder(rsiVal, overbought)
+exitLong   = rsiVal >= overbought
+exitShort  = rsiVal <= oversold
+
+// === TradVue Auto-Journal Integration ===
+longMsg      = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"long","strategy":"RSI"}'
+shortMsg     = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"short","strategy":"RSI"}'
+exitLongMsg  = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"flat","strategy":"RSI"}'
+exitShortMsg = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"flat","strategy":"RSI"}'
+
+if enterLong
+    strategy.entry("Long", strategy.long, alert_message=longMsg)
+
+if exitLong and strategy.position_size > 0
+    strategy.close("Long", alert_message=exitLongMsg)
+
+if useShorts
+    if enterShort
+        strategy.entry("Short", strategy.short, alert_message=shortMsg)
+    if exitShort and strategy.position_size < 0
+        strategy.close("Short", alert_message=exitShortMsg)`
+
+const VWAP_SCRIPT = `//@version=6
+// @strategy_alert_message {{strategy.order.alert_message}}
+
+strategy(
+    title       = "TradVue — VWAP Bounce",
+    shorttitle  = "TV VWAP",
+    overlay     = true,
+    default_qty_type  = strategy.percent_of_equity,
+    default_qty_value = 10,
+    initial_capital   = 10000,
+    commission_type   = strategy.commission.percent,
+    commission_value  = 0.1
+)
+
+atrLen       = input.int(14,    title="ATR Length",            minval=1)
+atrMult      = input.float(1.5, title="ATR Stop Multiplier",   minval=0.1, step=0.1)
+bounceBuffer = input.float(0.1, title="VWAP Bounce Buffer %",  minval=0.0, step=0.05)
+useShorts    = input.bool(true, title="Enable Short Trades")
+
+vwapVal = ta.vwap(hlc3)
+atrVal  = ta.atr(atrLen)
+buffer  = vwapVal * (bounceBuffer / 100)
+
+plot(vwapVal, title="VWAP", color=color.new(color.blue, 0), linewidth=2)
+plot(vwapVal + buffer, title="VWAP Upper Buffer", color=color.new(color.blue, 70), linewidth=1, style=plot.style_stepline)
+plot(vwapVal - buffer, title="VWAP Lower Buffer", color=color.new(color.blue, 70), linewidth=1, style=plot.style_stepline)
+
+wasBelow    = close[1] < (vwapVal - buffer)
+nowAbove    = close    > (vwapVal + buffer)
+longSignal  = wasBelow and nowAbove
+
+wasAbove    = close[1] > (vwapVal + buffer)
+nowBelow    = close    < (vwapVal - buffer)
+shortSignal = wasAbove and nowBelow
+
+longStop    = close - (atrVal * atrMult)
+shortStop   = close + (atrVal * atrMult)
+
+// === TradVue Auto-Journal Integration ===
+longMsg      = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"long","strategy":"VWAP Bounce"}'
+shortMsg     = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"short","strategy":"VWAP Bounce"}'
+exitLongMsg  = '{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(strategy.position_size)          + ',"position":"flat","strategy":"VWAP Bounce"}'
+exitShortMsg = '{"ticker":"' + syminfo.ticker + '","action":"buy","price":'  + str.tostring(close, "#.##") + ',"quantity":' + str.tostring(math.abs(strategy.position_size)) + ',"position":"flat","strategy":"VWAP Bounce"}'
+
+if longSignal
+    strategy.entry("Long",     strategy.long,  alert_message=longMsg)
+    strategy.exit("Long SL",   from_entry="Long",  stop=longStop,  alert_message=exitLongMsg)
+
+if useShorts and shortSignal
+    strategy.entry("Short",    strategy.short, alert_message=shortMsg)
+    strategy.exit("Short SL",  from_entry="Short", stop=shortStop, alert_message=exitShortMsg)
+
+plotshape(longSignal,              title="Long Signal",  style=shape.triangleup,   location=location.belowbar, color=color.new(color.lime, 0), size=size.small)
+plotshape(useShorts and shortSignal, title="Short Signal", style=shape.triangledown, location=location.abovebar, color=color.new(color.red,  0), size=size.small)`
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -123,6 +273,7 @@ function Badge({ label, color }: { label: string; color: string }) {
     yellow: { bg: 'rgba(234,179,8,0.12)',   border: 'rgba(234,179,8,0.3)',   text: '#fbbf24' },
     red:    { bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.3)', text: '#f87171' },
     blue:   { bg: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.3)',  text: '#a78bfa' },
+    teal:   { bg: 'rgba(20,184,166,0.12)',  border: 'rgba(20,184,166,0.3)',  text: '#2dd4bf' },
     gray:   { bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)', text: '#9ca3af' },
   }
   const c = colorMap[color] || colorMap.gray
@@ -229,7 +380,6 @@ function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, ge
         </div>
       ) : (
         <>
-          {/* Status */}
           {(() => {
             const s = getStatus(primaryToken)
             return (
@@ -240,7 +390,6 @@ function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, ge
             )
           })()}
 
-          {/* URL box */}
           <div style={{
             background: 'rgba(0,0,0,0.3)',
             border: '1px solid rgba(255,255,255,0.08)',
@@ -262,7 +411,6 @@ function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, ge
             </button>
           </div>
 
-          {/* Action buttons */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {rotateConfirm === primaryToken.id ? (
               <div style={{
@@ -317,21 +465,42 @@ function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, ge
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Section 2: Quick Setup Guide
+// Section 2: Quick Setup Guide + Test Connection
 // ══════════════════════════════════════════════════════════════════════════════
 
 const SETUP_STEPS = [
-  { n: 1, title: 'Open TradingView and add a strategy to your chart', body: 'Load any chart and apply a Pine Script strategy or indicator you want to alert on.' },
+  { n: 1, title: 'Open TradingView and add a strategy to your chart', body: 'Load any chart and apply a Pine Script strategy or indicator you want to alert on. Need a ready-to-use script? Check the Pine Script Templates section below.' },
   { n: 2, title: 'Click "Create Alert" (⏰ icon or right-click → Add Alert)', body: 'You can also press Alt+A on Windows / Option+A on Mac.' },
   { n: 3, title: 'Check the "Webhook URL" checkbox', body: 'In the "Notifications" tab of the Alert dialog, enable the Webhook URL option.' },
   { n: 4, title: 'Paste your TradVue webhook URL', body: 'Copy the URL from the section above and paste it into the Webhook URL field.' },
-  { n: 5, title: 'Paste the alert message template', body: 'In the "Message" field, paste the Strategy Template from Section 3 below.', hasTemplate: true },
+  { n: 5, title: 'Set the alert message to {{strategy.order.alert_message}}', body: 'In the "Message" field, type exactly: {{strategy.order.alert_message}} — TradingView will substitute the right JSON for each order automatically.', hasTemplate: true },
   { n: 6, title: 'Click "Create" — you\'re done!', body: 'TradingView will now send alerts to TradVue whenever your strategy fires. Trades will auto-journal.' },
 ]
 
-function SetupGuideSection() {
+function SetupGuideSection({ authToken, onTestSuccess }: { authToken: string; onTestSuccess: () => void }) {
   const [openStep, setOpenStep] = useState<number | null>(null)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null)
   const copyText = useCopyText()
+
+  async function handleTestConnection() {
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const res = await fetch(`${API_BASE}/api/webhooks/test`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}` },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Test failed')
+      setTestResult({ ok: true, message: data.message || 'Test event created! Check the events log below.' })
+      onTestSuccess()
+    } catch (err: unknown) {
+      setTestResult({ ok: false, message: err instanceof Error ? err.message : 'Test failed' })
+    } finally {
+      setTesting(false)
+    }
+  }
 
   return (
     <SectionCard title="Quick Setup Guide" subtitle="Get connected to TradingView in under 5 minutes.">
@@ -364,8 +533,8 @@ function SetupGuideSection() {
                     background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)',
                     borderRadius: 8, padding: '12px 14px', fontSize: 11, color: '#a78bfa',
                     fontFamily: 'monospace', overflowX: 'auto', margin: 0,
-                  }}>{STRATEGY_TEMPLATE}</pre>
-                  <button onClick={() => copyText(STRATEGY_TEMPLATE, 'Template copied!')} style={{
+                  }}>{'{{strategy.order.alert_message}}'}</pre>
+                  <button onClick={() => copyText('{{strategy.order.alert_message}}', 'Template copied!')} style={{
                     position: 'absolute', top: 8, right: 8, padding: '4px 10px',
                     background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.4)',
                     borderRadius: 6, color: '#a78bfa', fontSize: 11, fontWeight: 700, cursor: 'pointer',
@@ -376,6 +545,61 @@ function SetupGuideSection() {
           )}
         </div>
       ))}
+
+      {/* Test Connection */}
+      <div style={{
+        marginTop: 20,
+        padding: '16px',
+        background: 'rgba(99,102,241,0.06)',
+        border: '1px solid rgba(99,102,241,0.2)',
+        borderRadius: 12,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0)', marginBottom: 4 }}>
+              🔌 Test Your Connection
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>
+              Send a test event to verify your webhook is working. It will appear in the Events Log below.
+            </div>
+          </div>
+          <button
+            onClick={handleTestConnection}
+            disabled={testing}
+            style={{
+              flexShrink: 0,
+              padding: '10px 20px',
+              background: testing ? 'rgba(99,102,241,0.1)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              border: testing ? '1px solid rgba(99,102,241,0.3)' : 'none',
+              borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700,
+              cursor: testing ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            {testing ? (
+              <><span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span> Testing…</>
+            ) : (
+              '⚡ Send Test Event'
+            )}
+          </button>
+        </div>
+
+        {testResult && (
+          <div style={{
+            marginTop: 12,
+            padding: '10px 14px',
+            background: testResult.ok ? 'rgba(34,197,94,0.1)' : 'rgba(248,113,113,0.1)',
+            border: `1px solid ${testResult.ok ? 'rgba(34,197,94,0.3)' : 'rgba(248,113,113,0.3)'}`,
+            borderRadius: 8,
+            fontSize: 13,
+            color: testResult.ok ? '#4ade80' : '#f87171',
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span>{testResult.ok ? '✅' : '❌'}</span>
+            <span>{testResult.message}</span>
+          </div>
+        )}
+      </div>
     </SectionCard>
   )
 }
@@ -439,10 +663,200 @@ function TemplatesSection() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Section 4: Recent Events Log
+// Section 4: Pine Script Templates
 // ══════════════════════════════════════════════════════════════════════════════
 
-function EventsSection({ token }: { token: string }) {
+interface PineTemplate {
+  id: string
+  name: string
+  emoji: string
+  description: string
+  whatItDoes: string
+  difficulty: 'Beginner' | 'Intermediate'
+  difficultyColor: string
+  script: string
+  downloadFile: string
+}
+
+const PINE_TEMPLATES: PineTemplate[] = [
+  {
+    id: 'ma-crossover',
+    name: 'Moving Average Crossover',
+    emoji: '📊',
+    description: 'EMA 9/21 crossover strategy — classic trend-following entry/exit signals.',
+    whatItDoes: 'Enters long when the 9-period EMA crosses above the 21-period EMA, and short when it crosses below. Configurable periods. Sends full TradVue JSON with each order.',
+    difficulty: 'Beginner',
+    difficultyColor: 'green',
+    script: MA_CROSSOVER_SCRIPT,
+    downloadFile: '/scripts/tradingview-ma-crossover.pine',
+  },
+  {
+    id: 'rsi',
+    name: 'RSI Overbought / Oversold',
+    emoji: '📈',
+    description: 'Mean-reversion strategy using RSI with configurable overbought/oversold levels.',
+    whatItDoes: 'Enters long when RSI crosses back above the oversold level (default 30), exits when it reaches overbought (default 70). Reverse for shorts. Ideal for range-bound markets.',
+    difficulty: 'Beginner',
+    difficultyColor: 'green',
+    script: RSI_SCRIPT,
+    downloadFile: '/scripts/tradingview-rsi.pine',
+  },
+  {
+    id: 'vwap-bounce',
+    name: 'VWAP Bounce',
+    emoji: '🎯',
+    description: 'Intraday VWAP bounce strategy with ATR-based stop loss.',
+    whatItDoes: 'Enters long when price bounces off VWAP from below, short when it rejects from above. Uses an ATR multiplier for dynamic stop placement. Best on 1m–15m intraday charts.',
+    difficulty: 'Intermediate',
+    difficultyColor: 'yellow',
+    script: VWAP_SCRIPT,
+    downloadFile: '/scripts/tradingview-vwap-bounce.pine',
+  },
+]
+
+const HOW_TO_STEPS = [
+  { n: 1, text: 'Click "Copy Script" to copy the Pine Script code' },
+  { n: 2, text: 'Open TradingView → Pine Editor (bottom panel) → paste the code' },
+  { n: 3, text: 'Click "Add to Chart" — the strategy will appear on your chart' },
+  { n: 4, text: 'Right-click the strategy → "Add Alert on Strategy"' },
+  { n: 5, text: 'In the "Notifications" tab, enable "Webhook URL" and paste your TradVue URL' },
+  { n: 6, text: 'Set the Message field to: {{strategy.order.alert_message}}' },
+  { n: 7, text: 'Click "Create" — every trade auto-journals in TradVue! 🎉' },
+]
+
+function ScriptsSection() {
+  const copyText = useCopyText()
+  const [expandedHowTo, setExpandedHowTo] = useState<string | null>(null)
+
+  return (
+    <SectionCard
+      title="Pine Script Templates"
+      subtitle="Ready-to-use TradingView strategies with TradVue auto-journaling built in."
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {PINE_TEMPLATES.map(tpl => (
+          <div key={tpl.id} style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 12,
+            overflow: 'hidden',
+          }}>
+            {/* Card header */}
+            <div style={{ padding: '16px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 28, flexShrink: 0 }}>{tpl.emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-0)' }}>
+                      {tpl.name}
+                    </h3>
+                    <Badge label={tpl.difficulty} color={tpl.difficultyColor} />
+                  </div>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                    {tpl.description}
+                  </p>
+                  <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--text-3)', lineHeight: 1.6 }}>
+                    <strong style={{ color: 'var(--text-2)' }}>What it does:</strong> {tpl.whatItDoes}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => copyText(tpl.script, `${tpl.name} copied!`)}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    border: 'none', borderRadius: 8, color: '#fff',
+                    fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  📋 Copy Script
+                </button>
+                <a
+                  href={tpl.downloadFile}
+                  download
+                  style={{
+                    padding: '8px 16px',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: 8, color: 'var(--text-1)',
+                    fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  ⬇ Download .pine
+                </a>
+                <button
+                  onClick={() => setExpandedHowTo(expandedHowTo === tpl.id ? null : tpl.id)}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 8, color: 'var(--text-2)',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}
+                >
+                  {expandedHowTo === tpl.id ? '▲ Hide' : '▼ How to Use'}
+                </button>
+              </div>
+            </div>
+
+            {/* How to Use accordion */}
+            {expandedHowTo === tpl.id && (
+              <div style={{
+                borderTop: '1px solid rgba(255,255,255,0.07)',
+                padding: '16px 18px',
+                background: 'rgba(99,102,241,0.04)',
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)', marginBottom: 12 }}>
+                  How to use with TradVue:
+                </div>
+                <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {HOW_TO_STEPS.map(step => (
+                    <li key={step.n} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <span style={{
+                        flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
+                        background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.35)',
+                        color: '#a78bfa', fontSize: 11, fontWeight: 800,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>{step.n}</span>
+                      <span style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, paddingTop: 2 }}>
+                        {step.n === 6 ? (
+                          <>Set the Message field to:{' '}
+                            <code style={{ fontSize: 11, color: '#a78bfa', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', padding: '1px 6px', borderRadius: 4 }}>
+                              {'{{strategy.order.alert_message}}'}
+                            </code>
+                          </>
+                        ) : step.text}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+                <div style={{
+                  marginTop: 14, padding: '10px 14px',
+                  background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+                  borderRadius: 8, fontSize: 12, color: '#4ade80',
+                }}>
+                  💡 <strong>Tip:</strong> Use the &ldquo;Send Test Event&rdquo; button in the Setup Guide above to verify your webhook before going live.
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </SectionCard>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Section 5: Recent Events Log
+// ══════════════════════════════════════════════════════════════════════════════
+
+function EventsSection({ token, refreshKey }: { token: string; refreshKey: number }) {
   const [events, setEvents] = useState<WebhookEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -466,6 +880,9 @@ function EventsSection({ token }: { token: string }) {
 
   useEffect(() => {
     fetchEvents()
+  }, [fetchEvents, refreshKey])
+
+  useEffect(() => {
     intervalRef.current = setInterval(() => { if (!document.hidden) fetchEvents() }, 30000)
     const onVisibility = () => { if (!document.hidden) fetchEvents() }
     document.addEventListener('visibilitychange', onVisibility)
@@ -481,6 +898,7 @@ function EventsSection({ token }: { token: string }) {
       received: { icon: '⏳', label: 'Received',  color: 'blue' },
       ignored:  { icon: '⚠️', label: 'Unmatched', color: 'yellow' },
       error:    { icon: '❌', label: 'Error',      color: 'red' },
+      test:     { icon: '🔌', label: 'Test',       color: 'teal' },
     }
     const s = map[status] || map.ignored
     return <Badge label={`${s.icon} ${s.label}`} color={s.color} />
@@ -495,7 +913,7 @@ function EventsSection({ token }: { token: string }) {
       ) : events.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-2)', fontSize: 14 }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📭</div>
-          <p style={{ margin: 0 }}>No webhook events yet. Fire an alert from TradingView to see it here.</p>
+          <p style={{ margin: 0 }}>No webhook events yet. Use &ldquo;Send Test Event&rdquo; above to verify your setup, or fire an alert from TradingView.</p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -543,7 +961,7 @@ function EventsSection({ token }: { token: string }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Section 5: Token Management (multi-token)
+// Section 6: Token Management (multi-token)
 // ══════════════════════════════════════════════════════════════════════════════
 
 function TokenManagementSection({ tokens, onDelete, onGenerate, generating }: {
@@ -616,6 +1034,7 @@ export default function IntegrationsPage() {
   const [tokens, setTokens] = useState<WebhookToken[]>([])
   const [tokensLoading, setTokensLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
 
   const fetchTokens = useCallback(async () => {
     if (!token) return
@@ -756,9 +1175,10 @@ export default function IntegrationsPage() {
         </div>
 
         <WebhookURLSection tokens={tokens} loading={tokensLoading} onGenerate={handleGenerate} onRotate={handleRotate} onDelete={handleDelete} generating={generating} />
-        <SetupGuideSection />
+        <SetupGuideSection authToken={token} onTestSuccess={() => setEventsRefreshKey(k => k + 1)} />
         <TemplatesSection />
-        <EventsSection token={token} />
+        <ScriptsSection />
+        <EventsSection token={token} refreshKey={eventsRefreshKey} />
         <TokenManagementSection tokens={tokens} onDelete={handleDelete} onGenerate={handleGenerate} generating={generating} />
 
         {/* Footer */}
