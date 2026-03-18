@@ -159,7 +159,7 @@ export default function PricingPage() {
 
   async function handleSubscribe(plan: 'monthly' | 'annual') {
     if (!user || !token) {
-      router.push('/?next=/pricing')
+      router.push('/?signup=true')
       return
     }
 
@@ -235,7 +235,7 @@ export default function PricingPage() {
           </ul>
           <div style={{ marginTop: 'auto', paddingTop: 20 }}>
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push('/')}
               style={secondaryBtnStyle}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
@@ -269,7 +269,7 @@ export default function PricingPage() {
           </ul>
           <div style={{ marginTop: 'auto', paddingTop: 20 }}>
             <button
-              onClick={() => router.push('/auth/signup')}
+              onClick={() => router.push('/?signup=true')}
               style={secondaryBtnStyle}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}

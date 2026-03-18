@@ -175,6 +175,10 @@ export default function HomeClient() {
   // ── Read ?view= query param on initial load ──────────────────────────────────
   useEffect(() => {
     const view = searchParams?.get('view')
+    const wantsSignup = searchParams?.get('signup')
+    if (wantsSignup === 'true' && !user) {
+      setAuthModalOpen(true)
+    }
     if (view === 'analysis') {
       setActiveNav('Analysis')
     }
@@ -745,6 +749,8 @@ export default function HomeClient() {
                   { label: 'Prop Firm Tracker',  href: '/propfirm' },
                   { label: 'Trade Rules',        href: '/rules' },
                   { label: 'Help',               href: '/help' },
+                  { label: '⚡ Upgrade',          href: '/pricing' },
+                  ...(user ? [{ label: '👤 Account', href: '/account' }] : []),
                 ].map(item => (
                   <a
                     key={item.href}
