@@ -1,10 +1,8 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
-import dynamic from 'next/dynamic'
 import type { Quote, CalendarEvent } from '../types'
 
-const MarketIntel = dynamic(() => import('./MarketIntel'), { ssr: false })
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -782,17 +780,6 @@ export default function AnalysisPanel({ wlQuotes, tickerQuotes, calendarEvents, 
       <IndexBars       wlQuotes={wlQuotes}     tickerQuotes={tickerQuotes} />
       <TopMovers       wlQuotes={wlQuotes} />
       <MarketBreadth   wlQuotes={wlQuotes} />
-
-      {/* ── Market Intelligence ───────────────────────────────────────────── */}
-      <Card>
-        <SectionHeader icon={<BarChartIcon />} title="Market Intelligence" />
-        <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8, paddingLeft: 4 }}>
-          SEC EDGAR · FRED · Finnhub
-        </div>
-        <div style={{ maxHeight: 480, overflowY: 'auto' }}>
-          <MarketIntel />
-        </div>
-      </Card>
 
       {/* ── Disclaimer ────────────────────────────────────────────────────── */}
       <div style={{ padding: '10px 4px', marginTop: 8, borderTop: '1px solid var(--border)' }}>

@@ -168,11 +168,14 @@ function ErrorMsg({ msg, onRetry }: { msg: string; onRetry?: () => void }) {
 
 // ─── Tab: Insider Trades ────────────────────────────────────────────────────────
 
+type InsiderFilter = 'All' | 'Buy' | 'Sell' | 'Award' | 'Gift' | 'Other'
+
 function InsiderTradesTab({ symbol }: { symbol?: string }) {
   const [data, setData] = useState<InsiderTrade[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
+  const [activeFilter, setActiveFilter] = useState<InsiderFilter>('All')
 
   const load = useCallback(async () => {
     setLoading(true); setError(false)
@@ -189,19 +192,63 @@ function InsiderTradesTab({ symbol }: { symbol?: string }) {
 
   if (error) return <ErrorMsg msg="Failed to load insider trades" onRetry={load} />
 
-  const filtered = search.trim()
-    ? data.filter(item => {
-        const q = search.toLowerCase()
-        return (item.ticker || '').toLowerCase().includes(q) ||
-               (item.name || '').toLowerCase().includes(q) ||
-               (item.title || '').toLowerCase().includes(q) ||
-               (item.transactionType || '').toLowerCase().includes(q) ||
-               (item.source || '').toLowerCase().includes(q)
-      })
-    : data
+  const FILTERS: InsiderFilter[] = ['All', 'Buy', 'Sell', 'Award', 'Gift', 'Other']
+
+  function matchesFilter(item: InsiderTrade, filter: InsiderFilter): boolean {
+    const t = (item.transactionType || '').toLowerCase()
+    const title = (item.title || '').toLowerCase()
+    switch (filter) {
+      case 'All':   return true
+      case 'Buy':   return t.includes('buy') || t.includes('purchase') || title.includes('purchase')
+      case 'Sell':  return t.includes('sell') || t.includes('sale') || title.includes('sale')
+      case 'Award': return t.includes('award')
+      case 'Gift':  return t === 'g' || t.includes('gift')
+      case 'Other': {
+        const isBuy   = t.includes('buy') || t.includes('purchase')
+        const isSell  = t.includes('sell') || t.includes('sale')
+        const isAward = t.includes('award')
+        const isGift  = t === 'g' || t.includes('gift')
+        return !isBuy && !isSell && !isAward && !isGift
+      }
+    }
+  }
+
+  const filtered = data
+    .filter(item => matchesFilter(item, activeFilter))
+    .filter(item => {
+      if (!search.trim()) return true
+      const q = search.toLowerCase()
+      return (item.ticker || '').toLowerCase().includes(q) ||
+             (item.name || '').toLowerCase().includes(q) ||
+             (item.title || '').toLowerCase().includes(q) ||
+             (item.transactionType || '').toLowerCase().includes(q) ||
+             (item.source || '').toLowerCase().includes(q)
+    })
 
   return (
     <div>
+      {/* Quick filter pills */}
+      <div style={{ padding: '10px 16px 0', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {FILTERS.map(f => (
+          <button
+            key={f}
+            onClick={() => setActiveFilter(f)}
+            style={{
+              padding: '3px 10px',
+              fontSize: 11,
+              fontWeight: activeFilter === f ? 700 : 500,
+              borderRadius: 99,
+              border: activeFilter === f ? '1px solid var(--purple)' : '1px solid var(--border)',
+              background: activeFilter === f ? 'var(--purple)' : 'transparent',
+              color: activeFilter === f ? '#fff' : 'var(--text-2)',
+              cursor: 'pointer',
+              transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+            }}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
       {/* Search bar */}
       <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-3)', flexShrink: 0 }}>

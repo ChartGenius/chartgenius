@@ -56,6 +56,7 @@ const NAV_ITEMS: Array<{ label: string; href: string; icon?: React.ReactNode; au
   { label: 'Dashboard', href: '/' },
   { label: 'News',      href: '/news' },
   { label: 'Analysis',  href: '/?view=analysis' },
+  { label: 'Market Intel', href: '/?view=market-intel' },
   { label: 'Calendar',  href: '/calendar' },
   { label: 'Tools',     href: '/tools' },
   { label: 'Portfolio', href: '/portfolio' },
