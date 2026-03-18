@@ -529,52 +529,135 @@ export default function RulesPage() {
   // Auth gating
   const tier = getUserTier(user)
   if (tier === 'demo') {
-    const DEMO_RULES = [
-      { rule: 'Max 3 trades per day', status: 'ok', detail: '2 / 3 used today', statusLabel: 'On Track' },
-      { rule: 'No trading in first 15 minutes', status: 'ok', detail: 'Market opened 9:30 AM — first trade at 9:52 AM', statusLabel: 'Followed' },
-      { rule: 'Risk max 1% per trade', status: 'ok', detail: 'All trades within 0.8% risk limit', statusLabel: 'Followed' },
-      { rule: 'Stop trading after 2 consecutive losses', status: 'ok', detail: '0 consecutive losses today', statusLabel: 'Clear' },
+    const DEMO_RULES_DATA = [
+      {
+        id: 'demo-r1', name: 'Max 3 Trades Per Day', type: 'max_trades_per_day' as TradingRule['type'],
+        enabled: true, value: 3,
+        description: 'Limit your daily trade count to stay disciplined.',
+        detail: '2 / 3 trades used today', status: 'following' as const,
+        createdAt: '2026-03-01T00:00:00Z',
+      },
+      {
+        id: 'demo-r2', name: 'Max Daily Loss $500', type: 'max_loss_per_day' as TradingRule['type'],
+        enabled: true, value: 500,
+        description: 'Stop trading if total daily loss reaches $500.',
+        detail: '$192 of $500 used today', status: 'following' as const,
+        createdAt: '2026-03-01T00:00:00Z',
+      },
+      {
+        id: 'demo-r3', name: 'No Trading After 3:30 PM', type: 'no_trading_after_time' as TradingRule['type'],
+        enabled: true, value: '15:30',
+        description: 'Avoid the volatile close — cut off at 3:30 PM EST.',
+        detail: 'Last trade: 2:47 PM — Rule followed', status: 'following' as const,
+        createdAt: '2026-03-01T00:00:00Z',
+      },
+      {
+        id: 'demo-r4', name: 'Max Loss Per Trade $250', type: 'max_loss_per_trade' as TradingRule['type'],
+        enabled: true, value: 250,
+        description: 'Never lose more than $250 on a single trade.',
+        detail: 'Largest loss today: $192 — within limit', status: 'following' as const,
+        createdAt: '2026-03-01T00:00:00Z',
+      },
+      {
+        id: 'demo-r5', name: 'Stop After 2 Consecutive Losses', type: 'max_consecutive_losses' as TradingRule['type'],
+        enabled: false, value: 2,
+        description: 'Take a break after 2 losses in a row.',
+        detail: 'Currently disabled', status: 'following' as const,
+        createdAt: '2026-03-01T00:00:00Z',
+      },
     ]
+    const enabledRules = DEMO_RULES_DATA.filter(r => r.enabled)
+    const followedToday = enabledRules.length
+
     return (
-      <AuthGate
-        featureName="Rule Cop"
-        featureDesc="Define your trading rules and get automatic violation alerts."
-      >
+      <AuthGate featureName="Rule Cop" featureDesc="Define your trading rules and get automatic violation alerts.">
         <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
           <PersistentNav />
           <main style={{ maxWidth: 820, margin: '0 auto', padding: '80px 16px 60px' }}>
+            {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <IconShield size={22} />
                 </div>
                 <div>
-                  <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>Rule Cop</h1>
-                  <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Your trading rule enforcer</div>
+                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Trading Rules</h1>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>Your personal rule enforcer — self-accountability only</div>
                 </div>
               </div>
-              <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 10, padding: '8px 16px', textAlign: 'center' as const }}>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#10b981' }}>4 / 4</div>
-                <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Rules Followed Today</div>
+              <button style={{ padding: '8px 16px', borderRadius: 7, border: 'none', background: 'var(--accent)', color: '#0a0a0c', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                Check Rules Now
+              </button>
+            </div>
+
+            {/* Today's Summary with CircularGauge */}
+            <div style={{ background: 'var(--surface, var(--bg-2))', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+              <CircularGauge value={followedToday} total={enabledRules.length} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{followedToday}/{enabledRules.length} rules followed today</div>
+                <div style={{ fontSize: 13, color: 'var(--text-2)' }}>All active rules on track. Keep it up.</div>
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {DEMO_RULES.map((r, i) => (
-                <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+
+            {/* Rules list */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Your Rules ({DEMO_RULES_DATA.length})</h2>
+              <button style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                + Add Custom Rule
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
+              {DEMO_RULES_DATA.map(rule => (
+                <div key={rule.id} style={{ background: 'var(--surface, var(--bg-2))', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    {/* Toggle */}
+                    <div
+                      style={{
+                        width: 40, height: 22, borderRadius: 11,
+                        background: rule.enabled ? 'var(--accent)' : 'var(--border)',
+                        position: 'relative', flexShrink: 0, cursor: 'pointer',
+                        transition: 'background 0.2s',
+                      }}
+                    >
+                      <span style={{
+                        position: 'absolute', top: 3, left: rule.enabled ? 21 : 3,
+                        width: 16, height: 16, borderRadius: '50%',
+                        background: '#fff', transition: 'left 0.2s',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                      }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0)', marginBottom: 1 }}>{rule.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-2)' }}>
+                        {getRuleTypeLabel(rule.type)}
+                        {rule.type !== 'custom' && rule.value !== undefined && (
+                          <span style={{ fontFamily: 'var(--mono)', color: 'var(--accent)', marginLeft: 6, fontSize: 11 }}>
+                            {rule.type === 'no_trading_after_time' ? `After ${rule.value}` : String(rule.value)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{rule.detail}</span>
+                      {rule.enabled && <StatusBadge status={rule.status} />}
+                      {!rule.enabled && (
+                        <span style={{ fontSize: 11, color: 'var(--text-3)', background: 'var(--bg-1)', borderRadius: 20, padding: '2px 8px', border: '1px solid var(--border)' }}>Disabled</span>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', marginBottom: 2 }}>{r.rule}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{r.detail}</div>
-                  </div>
-                  <span style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 12px', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' as const }}>
-                    {r.statusLabel}
-                  </span>
+                  <div style={{ marginTop: 8, marginLeft: 54, fontSize: 11, color: 'var(--text-3)' }}>{rule.description}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 20, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample rules — create an account to define your own trading rules and get violation alerts</div>
+
+            {/* Violations log */}
+            <h2 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 700 }}>Violations Log</h2>
+            <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--text-3)', fontSize: 13, border: '1px dashed var(--border)', borderRadius: 10 }}>
+              No violations recorded. Keep following your rules!
+            </div>
+
+            <div style={{ marginTop: 24, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample rules — create an account to define your own trading rules and get violation alerts</div>
           </main>
         </div>
       </AuthGate>

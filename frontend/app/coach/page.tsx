@@ -516,70 +516,110 @@ export default function CoachPage() {
       { label: 'Trades Analyzed', value: '30', color: 'var(--text-2)' },
     ]
     return (
-      <AuthGate
-        featureName="AI Trade Coach"
-        featureDesc="Get weekly AI-powered insights on your trading patterns. Identify strengths and areas for improvement."
-      >
+      <AuthGate featureName="AI Trade Coach" featureDesc="Get weekly AI-powered insights on your trading patterns. Identify strengths and areas for improvement.">
         <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
           <PersistentNav />
-          <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px' }}>
-            <div style={{ marginBottom: 24 }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>AI Trade Coach</h1>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2)' }}>Weekly AI analysis of your trading patterns</p>
+          <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px 80px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>AI Trade Coach</h1>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2)' }}>Weekly AI analysis of your trading patterns</p>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 11, background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '4px 10px', fontWeight: 600 }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }}><polyline points="20 6 9 17 4 12"/></svg>
+                  Analysis Ready
+                </span>
+              </div>
             </div>
-            {/* AI analysis card */}
+
+            {/* Main AI analysis card */}
             <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>Weekly Performance Analysis</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>Based on last 30 trades • Generated Mar 14, 2026</div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Weekly Performance Analysis</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>Based on last 30 trades · Generated Mar 14, 2026</div>
                 </div>
               </div>
-              <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
+
+              {/* Summary paragraph */}
+              <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 8, padding: '14px 16px', marginBottom: 14 }}>
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--text-1)', lineHeight: 1.75 }}>
-                  Based on your last 30 trades, your win rate is <strong style={{ color: '#10b981' }}>72%</strong> on momentum setups vs <strong style={{ color: '#ef4444' }}>45%</strong> on reversals. Consider focusing on momentum plays during high-volatility sessions. Your average hold time of 47 minutes suggests you have good patience — but you're exiting too early on your best trades, leaving roughly 0.4R on the table per winner.
+                  Based on your last <strong>30 trades</strong>, your win rate is <strong style={{ color: '#10b981' }}>72%</strong> on momentum setups vs <strong style={{ color: '#ef4444' }}>45%</strong> on reversals. Consider focusing on momentum plays during high-volatility sessions. Your average hold time of <strong>47 minutes</strong> suggests good patience — but you are exiting too early on your best trades, leaving roughly <strong>0.4R</strong> on the table per winner. Tighten your entry criteria on reversals or drop them entirely.
                 </p>
               </div>
-              <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6 }}>Top Strengths</div>
+
+              {/* Strengths */}
+              <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 8, padding: '14px 16px', marginBottom: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>Top Strengths</div>
                 {[
-                  'Excellent discipline on stop losses — only 2 blown stops in 30 trades',
-                  'Strong Tuesday performance (78% win rate) — leverage this pattern',
-                  'Futures edge is clear: 68% win rate vs 51% on stocks',
+                  'Excellent discipline on stop losses — only 2 blown stops in 30 trades (93% adherence)',
+                  'Strong Tuesday performance: 78% win rate — best day of the week for you',
+                  'Futures edge is clear: 68% win rate on NQ/ES vs 51% on stocks',
+                  'Position sizing consistency: standard deviation of 8% — well controlled',
                 ].map((s, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-1)', marginBottom: 4 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
+                  <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-1)', marginBottom: 6 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><polyline points="20 6 9 17 4 12"/></svg>
                     {s}
                   </div>
                 ))}
               </div>
+
+              {/* Areas to improve */}
               <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 8, padding: '14px 16px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6 }}>Areas to Improve</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>Areas to Improve</div>
                 {[
-                  'Avoid reversal setups — 45% win rate is below breakeven after fees',
-                  'Friday trades: 38% win rate — consider reducing size or skipping',
+                  'Avoid reversal setups — 45% win rate is below breakeven after commissions',
+                  'Friday trades: 38% win rate — consider reducing size or skipping entirely',
                   'Increase position size on A+ momentum setups (currently undersizing by ~30%)',
+                  'Holding period variance is high: address inconsistent exit rules for winners',
                 ].map((s, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-1)', marginBottom: 4 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: 'var(--text-1)', marginBottom: 6 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     {s}
                   </div>
                 ))}
               </div>
             </div>
-            {/* Metrics grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
-              {DEMO_COACH_METRICS.map(m => (
-                <div key={m.label} style={{ background: 'var(--bg-2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' as const }}>
-                  <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 6 }}>{m.label}</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: m.color, fontFamily: 'monospace' }}>{m.value}</div>
+
+            {/* Performance metrics grid */}
+            <div style={{ marginBottom: 16 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 12px' }}>Performance Metrics</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
+                {DEMO_COACH_METRICS.map(m => (
+                  <div key={m.label} style={{ background: 'var(--bg-2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' as const }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 6 }}>{m.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: m.color, fontFamily: 'monospace' }}>{m.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pattern Insights */}
+            <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 14px' }}>Trade Pattern Insights</h2>
+              {[
+                { title: 'Momentum Mastery', detail: 'You execute momentum setups with above-average precision. Entry timing is within 0.15% of optimal in 68% of cases.', color: '#10b981' },
+                { title: 'Morning Session Edge', detail: '9:30–11:00 AM generates 71% of your profits. Afternoon trades (post 1 PM) have a 43% win rate. Consider cutting off trading at noon.', color: '#f59e0b' },
+                { title: 'Futures vs Stocks', detail: 'Your futures discipline significantly outperforms stocks. NQ win rate: 68%. Stock win rate: 54%. Allocate more capital to futures.', color: '#6366f1' },
+              ].map((p, i) => (
+                <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < 2 ? '1px solid var(--border)' : 'none' }}>
+                  <div style={{ width: 3, borderRadius: 3, background: p.color, alignSelf: 'stretch', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', marginBottom: 3 }}>{p.title}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>{p.detail}</div>
+                  </div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 16, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample AI analysis — create an account and log trades to get personalized insights</div>
+
+            <div style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic', marginTop: 8 }}>
+              Sample AI analysis — create an account and log trades to get personalized weekly insights
+            </div>
           </div>
         </div>
       </AuthGate>

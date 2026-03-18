@@ -3490,6 +3490,344 @@ const TABS: { id: string; label: string; Icon: React.FC<{ size?: number; classNa
   { id: 'advanced',  label: 'Advanced',  Icon: IconBrain },
 ]
 
+
+// ─── Demo Journal Content ──────────────────────────────────────────────────
+
+function DemoJournalContent({ trades, totalPnl, winRate, avgR, wins, tabs }: {
+  trades: Trade[]
+  totalPnl: number
+  winRate: string
+  avgR: string
+  wins: number
+  tabs: Array<{ id: string; label: string; iconPath: string }>
+}) {
+  const [activeTab, setActiveTab] = useState('log')
+  const BLUE = 'var(--blue)'
+  const GREEN = 'var(--green)'
+  const RED = 'var(--red)'
+
+  const totalPnlPositive = totalPnl >= 0
+
+  // Mini equity curve points
+  const eqPoints = (() => {
+    let cum = 0
+    return trades.slice().sort((a, b) => a.date.localeCompare(b.date)).map(t => { cum += t.pnl; return cum })
+  })()
+  const eqMin = Math.min(0, ...eqPoints)
+  const eqMax = Math.max(...eqPoints, 1)
+  const W = 500, H = 100
+  const xs = eqPoints.map((_, i) => (i / (eqPoints.length - 1)) * W)
+  const ys = eqPoints.map(p => H - ((p - eqMin) / (eqMax - eqMin)) * H * 0.85)
+  const eqPath = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x},${ys[i]}`).join(' ')
+
+  const profitFactor = (() => {
+    const grossWins = trades.filter(t => t.pnl > 0).reduce((s, t) => s + t.pnl, 0)
+    const grossLoss = Math.abs(trades.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0))
+    return grossLoss === 0 ? Infinity : grossWins / grossLoss
+  })()
+
+  const kpis = [
+    { label: 'Total Trades', value: String(trades.length), icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', color: 'var(--text-0)' },
+    { label: 'Win Rate', value: `${winRate}%`, icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: GREEN, sub: `${wins}W / ${trades.length - wins}L` },
+    { label: 'Net P&L', value: `${totalPnlPositive ? '+$' : '-$'}${Math.abs(totalPnl).toFixed(2)}`, icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: totalPnlPositive ? GREEN : RED },
+    { label: 'Avg R-Multiple', value: `${parseFloat(avgR) >= 0 ? '+' : ''}${avgR}R`, icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z', color: parseFloat(avgR) >= 0 ? GREEN : RED },
+    { label: 'Profit Factor', value: profitFactor === Infinity ? '∞' : profitFactor.toFixed(2), icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', color: profitFactor >= 1.5 ? GREEN : profitFactor >= 1 ? 'var(--yellow)' : RED },
+    { label: 'Best Trade', value: `+$${Math.max(...trades.map(t => t.pnl)).toFixed(2)}`, icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', color: GREEN },
+  ]
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
+      <PersistentNav />
+      <header className="page-header">
+        <div className="page-header-title">
+          <span style={{ color: 'var(--accent)' }}><IconBook size={18} /></span>
+          Trading Journal
+        </div>
+        <div className="page-header-desc">Track and analyze your trading patterns</div>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{trades.length} trades</span>
+          <button className="btn btn-secondary btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import CSV
+          </button>
+        </div>
+      </header>
+
+      {/* Tab bar */}
+      <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-2)', padding: '0 24px', display: 'flex', gap: 0, overflowX: 'auto' }}>
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              background: 'none', border: 'none',
+              borderBottom: `2px solid ${activeTab === tab.id ? BLUE : 'transparent'}`,
+              padding: '14px 20px',
+              color: activeTab === tab.id ? BLUE : 'var(--text-2)',
+              fontSize: 13, fontWeight: activeTab === tab.id ? 700 : 400,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+              transition: 'color 0.15s, border-color 0.15s',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}>
+              <path d={tab.iconPath} />
+            </svg>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
+        {activeTab === 'dashboard' && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Dashboard</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-2)' }}>Your trading performance at a glance.</p>
+            </div>
+            {/* KPI cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+              {kpis.map(k => (
+                <div key={k.label} className="ds-card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div className="tv-card-icon" style={{ width: 32, height: 32, fontSize: 15 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={k.icon} /></svg>
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{k.label}</div>
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: k.color, fontFamily: 'var(--mono)' }}>{k.value}</div>
+                  {k.sub && <div style={{ fontSize: 11, color: 'var(--text-2)' }}>{k.sub}</div>}
+                </div>
+              ))}
+            </div>
+            {/* Equity curve */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Cumulative P&L Curve</div>
+                <svg viewBox={`0 0 ${W} ${H + 20}`} style={{ width: '100%', maxHeight: 140 }}>
+                  <defs>
+                    <linearGradient id="demoGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--green)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="var(--green)" stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <path d={`${eqPath} L${W},${H} L0,${H} Z`} fill="url(#demoGrad)" />
+                  <path d={eqPath} fill="none" stroke="var(--green)" strokeWidth={2} strokeLinejoin="round" />
+                  <circle cx={xs[xs.length - 1]} cy={ys[ys.length - 1]} r={4} fill="var(--green)" />
+                </svg>
+              </div>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>P&L by Setup Tag</div>
+                {[
+                  { label: 'Breakout', value: 1262.50 },
+                  { label: 'Momentum', value: 1500.00 },
+                  { label: 'Reversal', value: 1115.00 },
+                  { label: 'Support/Resistance', value: 650.00 },
+                  { label: 'Trend Follow', value: 746.00 },
+                  { label: 'Pullback', value: 91.00 },
+                ].map(s => (
+                  <div key={s.label} style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 2 }}>
+                      <span style={{ color: 'var(--text-2)' }}>{s.label}</span>
+                      <span style={{ color: s.value >= 0 ? GREEN : RED, fontFamily: 'var(--mono)' }}>+${s.value.toFixed(2)}</span>
+                    </div>
+                    <div style={{ background: 'var(--bg-1)', borderRadius: 4, height: 7 }}>
+                      <div style={{ height: '100%', width: `${(s.value / 1500) * 100}%`, background: GREEN, borderRadius: 4 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'log' && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Trade Log</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-2)' }}>Record every trade you make — even the bad ones!</p>
+            </div>
+            {/* Summary stat bar */}
+            <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 16, display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{trades.length} trades</span>
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Win Rate: <strong style={{ color: GREEN }}>{winRate}%</strong></span>
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Net P&L: <strong style={{ color: totalPnlPositive ? GREEN : RED, fontFamily: 'var(--mono)' }}>{totalPnlPositive ? '+$' : '-$'}{Math.abs(totalPnl).toFixed(2)}</strong></span>
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Avg R: <strong style={{ color: 'var(--blue)' }}>{avgR}R</strong></span>
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Profit Factor: <strong style={{ color: GREEN }}>{profitFactor.toFixed(2)}</strong></span>
+            </div>
+            {/* Action bar */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                style={{ background: 'var(--accent)', border: 'none', borderRadius: 'var(--btn-radius)', padding: '10px 20px', color: '#0a0a0c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                + Log Trade
+              </button>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span style={{ fontSize: 11, color: 'var(--text-2)' }}>Filter: All Assets | All Directions | Win/Loss</span>
+              </div>
+              <span style={{ fontSize: 12, color: 'var(--text-2)', marginLeft: 'auto' }}>{trades.length} of {trades.length} trades shown</span>
+            </div>
+            {/* Trade table */}
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    {['Date', 'Symbol', 'Dir', 'Asset', 'Entry', 'Exit', 'Size', 'P&L', 'R', 'Setup', '★'].map(h => (
+                      <th key={h} style={{ padding: '8px 12px', fontSize: 11, fontWeight: 600, color: 'var(--text-2)', textAlign: 'left', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {trades.map(t => (
+                    <tr key={t.id} style={{ borderBottom: '1px solid var(--border)', background: t.pnl > 0 ? 'rgba(16,185,129,0.03)' : 'rgba(239,68,68,0.03)', cursor: 'pointer' }}>
+                      <td style={{ padding: '10px 12px' }}>{t.date}</td>
+                      <td style={{ padding: '10px 12px', fontWeight: 700, fontFamily: 'var(--mono)', color: BLUE }}>{t.symbol}</td>
+                      <td style={{ padding: '10px 12px', color: t.direction === 'Long' ? GREEN : RED }}>{t.direction}</td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-2)' }}>{t.assetClass}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>${t.entryPrice.toFixed(2)}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>${t.exitPrice.toFixed(2)}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>{t.positionSize}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)', fontWeight: 700, color: t.pnl >= 0 ? GREEN : RED }}>{t.pnl >= 0 ? '+$' : '-$'}{Math.abs(t.pnl).toFixed(2)}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)', color: t.rMultiple >= 0 ? GREEN : RED }}>{t.rMultiple >= 0 ? '+' : ''}{t.rMultiple.toFixed(2)}R</td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-2)', fontSize: 11 }}>{t.setupTag}</td>
+                      <td style={{ padding: '10px 12px', fontSize: 11, color: 'var(--yellow)' }}>{'★'.repeat(t.rating)}{'○'.repeat(5 - t.rating)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'calendar' && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Calendar</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-2)' }}>See your trading performance by day. Click any day to see the trades.</p>
+            </div>
+            <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+                <button style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 14px', color: 'var(--text-0)', cursor: 'pointer', fontSize: 14 }}>‹</button>
+                <span style={{ fontSize: 18, fontWeight: 700, minWidth: 160, textAlign: 'center' }}>March 2026</span>
+                <button style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 14px', color: 'var(--text-0)', cursor: 'pointer', fontSize: 14 }}>›</button>
+                <span style={{ marginLeft: 'auto', fontSize: 15, fontWeight: 700, color: GREEN, fontFamily: 'var(--mono)' }}>Month: +${totalPnl.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                  <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 600, color: 'var(--text-2)', padding: '4px 0', textTransform: 'uppercase' }}>{d}</div>
+                ))}
+                {[null,null,...Array(31)].slice(0,35).map((_, i) => {
+                  const day = i - 0
+                  const dateStr = day <= 0 ? null : `2026-03-${String(day).padStart(2, '0')}`
+                  const dayTrades = dateStr ? trades.filter(t => t.date === dateStr) : []
+                  const dayPnl = dayTrades.reduce((s, t) => s + t.pnl, 0)
+                  const hasData = dayTrades.length > 0
+                  return (
+                    <div key={i} style={{
+                      background: hasData ? (dayPnl >= 0 ? 'rgba(16,185,129,0.35)' : 'rgba(239,68,68,0.35)') : 'var(--bg-1)',
+                      border: `1px solid ${hasData ? (dayPnl >= 0 ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)') : 'var(--border)'}`,
+                      borderRadius: 8, minHeight: 56, padding: '6px 4px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    }}>
+                      {day > 0 && <div style={{ fontSize: 11 }}>{day}</div>}
+                      {hasData && <div style={{ fontSize: 9, fontFamily: 'var(--mono)', color: '#fff', fontWeight: 700, marginTop: 2 }}>{dayPnl >= 0 ? '+' : ''}{Math.round(dayPnl)}</div>}
+                      {hasData && <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)' }}>{dayTrades.length}t</div>}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'analytics' && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Analytics</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-2)' }}>Deep dive into your trading patterns. Find what works, eliminate what doesn't.</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Avg P&L by Day of Week</div>
+                {[
+                  { label: 'Mon', value: 925.00 },
+                  { label: 'Tue', value: 577.50 },
+                  { label: 'Wed', value: 342.50 },
+                  { label: 'Thu', value: 668.00 },
+                  { label: 'Fri', value: -192.00 },
+                ].map(d => (
+                  <div key={d.label} style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 2 }}>
+                      <span style={{ color: 'var(--text-2)' }}>{d.label}</span>
+                      <span style={{ color: d.value >= 0 ? GREEN : RED, fontFamily: 'var(--mono)' }}>{d.value >= 0 ? '+$' : '-$'}{Math.abs(d.value).toFixed(2)}</span>
+                    </div>
+                    <div style={{ background: 'var(--bg-1)', borderRadius: 4, height: 7 }}>
+                      <div style={{ height: '100%', width: `${(Math.abs(d.value) / 925) * 100}%`, background: d.value >= 0 ? GREEN : RED, borderRadius: 4 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Long vs Short Performance</div>
+                {[
+                  { label: 'Long', value: trades.filter(t => t.direction === 'Long').reduce((s, t) => s + t.pnl, 0) },
+                  { label: 'Short', value: trades.filter(t => t.direction === 'Short').reduce((s, t) => s + t.pnl, 0) },
+                ].map(d => (
+                  <div key={d.label} style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 2 }}>
+                      <span style={{ color: 'var(--text-2)' }}>{d.label}</span>
+                      <span style={{ color: d.value >= 0 ? GREEN : RED, fontFamily: 'var(--mono)' }}>{d.value >= 0 ? '+$' : '-$'}{Math.abs(d.value).toFixed(2)}</span>
+                    </div>
+                    <div style={{ background: 'var(--bg-1)', borderRadius: 4, height: 7 }}>
+                      <div style={{ height: '100%', width: `${(Math.abs(d.value) / Math.max(Math.abs(trades.filter(t => t.direction === 'Long').reduce((s, t) => s + t.pnl, 0)), Math.abs(trades.filter(t => t.direction === 'Short').reduce((s, t) => s + t.pnl, 0)))) * 100}%`, background: d.value >= 0 ? GREEN : RED, borderRadius: 4 }} />
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 20, fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Win/Loss Streaks</div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ flex: 1, background: 'var(--bg-1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-2)', marginBottom: 4 }}>Best Win Streak</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: GREEN }}>7</div>
+                  </div>
+                  <div style={{ flex: 1, background: 'var(--bg-1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-2)', marginBottom: 4 }}>Current</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: GREEN }}>+8W</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(activeTab === 'notebook' || activeTab === 'reports' || activeTab === 'advanced') && (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
+              {activeTab === 'notebook' ? 'Notebook' : activeTab === 'reports' ? 'Reports' : 'Advanced Analytics'}
+            </h3>
+            <p style={{ color: 'var(--text-2)', fontSize: 14, margin: '0 0 24px', maxWidth: 400, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
+              {activeTab === 'notebook'
+                ? 'Write daily trading plans, weekly recaps, and strategy playbooks. Templates included.'
+                : activeTab === 'reports'
+                  ? 'Generate detailed P&L reports by date range. Export to CSV for deeper analysis.'
+                  : 'Advanced pattern detection, expectancy calculator, and detailed behavioral analytics.'
+              }
+            </p>
+            <div style={{ display: 'inline-block', background: 'var(--accent)', borderRadius: 8, padding: '10px 24px', color: '#0a0a0c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              Sign up free to unlock
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function JournalPageInner() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [trades, setTrades] = useState<Trade[]>([])
@@ -3516,67 +3854,42 @@ function JournalPageInner() {
   // Auth gating — show demo content for unauthenticated users
   const tier = getUserTier(user)
   if (tier === 'demo') {
-    const DEMO_TRADES = [
-      { id: 'd1', symbol: 'NVDA', direction: 'Long', asset: 'Stock', entry: 875.20, exit: 892.45, size: 50, pnl: 862.50, date: '2026-03-14' },
-      { id: 'd2', symbol: 'NQ', direction: 'Long', asset: 'Futures', entry: 20150, exit: 20225, size: 2, pnl: 1500.00, date: '2026-03-14' },
-      { id: 'd3', symbol: 'AAPL', direction: 'Short', asset: 'Stock', entry: 242.80, exit: 238.15, size: 100, pnl: 465.00, date: '2026-03-13' },
-      { id: 'd4', symbol: 'ES', direction: 'Short', asset: 'Futures', entry: 5685, exit: 5672, size: 1, pnl: 650.00, date: '2026-03-13' },
-      { id: 'd5', symbol: 'TSLA', direction: 'Long', asset: 'Stock', entry: 168.50, exit: 172.30, size: 75, pnl: 285.00, date: '2026-03-12' },
-      { id: 'd6', symbol: 'META', direction: 'Long', asset: 'Stock', entry: 612.40, exit: 625.80, size: 30, pnl: 402.00, date: '2026-03-12' },
-      { id: 'd7', symbol: 'CL', direction: 'Long', asset: 'Futures', entry: 68.45, exit: 69.20, size: 1, pnl: 750.00, date: '2026-03-11' },
-      { id: 'd8', symbol: 'SPY', direction: 'Short', asset: 'Stock', entry: 568.90, exit: 565.20, size: 100, pnl: 370.00, date: '2026-03-11' },
+    const DEMO_TRADES: Trade[] = [
+      { id: 'd1', symbol: 'NVDA', direction: 'Long', assetClass: 'Stock', entryPrice: 875.20, exitPrice: 892.45, positionSize: 50, stopLoss: 865.00, takeProfit: 910.00, commissions: 2.00, pnl: 862.50, rMultiple: 1.82, pctGainLoss: 1.97, holdMinutes: 45, setupTag: 'Breakout', mistakeTag: 'None', rating: 5, notes: 'Clean breakout above $875 resistance on high volume.', screenshot: '', date: '2026-03-14', time: '10:15' },
+      { id: 'd2', symbol: 'NQ', direction: 'Long', assetClass: 'Futures', entryPrice: 20150, exitPrice: 20225, positionSize: 2, stopLoss: 20100, takeProfit: 20275, commissions: 8.00, pnl: 1500.00, rMultiple: 1.50, pctGainLoss: 0.37, holdMinutes: 32, setupTag: 'Momentum', mistakeTag: 'None', rating: 4, notes: 'Strong momentum continuation after market open.', screenshot: '', date: '2026-03-14', time: '09:52' },
+      { id: 'd3', symbol: 'AAPL', direction: 'Short', assetClass: 'Stock', entryPrice: 242.80, exitPrice: 238.15, positionSize: 100, stopLoss: 245.00, takeProfit: 235.00, commissions: 2.00, pnl: 465.00, rMultiple: 2.11, pctGainLoss: 1.91, holdMinutes: 78, setupTag: 'Reversal', mistakeTag: 'None', rating: 4, notes: 'Rejection at VWAP with bearish engulfing. Clean short entry.', screenshot: '', date: '2026-03-13', time: '11:30' },
+      { id: 'd4', symbol: 'ES', direction: 'Short', assetClass: 'Futures', entryPrice: 5685, exitPrice: 5672, positionSize: 1, stopLoss: 5692, takeProfit: 5660, commissions: 4.00, pnl: 650.00, rMultiple: 1.86, pctGainLoss: 0.23, holdMinutes: 22, setupTag: 'Support/Resistance', mistakeTag: 'None', rating: 5, notes: 'Perfect rejection at key resistance.', screenshot: '', date: '2026-03-13', time: '14:20' },
+      { id: 'd5', symbol: 'TSLA', direction: 'Long', assetClass: 'Stock', entryPrice: 168.50, exitPrice: 172.30, positionSize: 75, stopLoss: 165.00, takeProfit: 178.00, commissions: 2.00, pnl: 283.00, rMultiple: 1.08, pctGainLoss: 2.26, holdMinutes: 110, setupTag: 'Pullback', mistakeTag: 'Early Exit', rating: 3, notes: 'Pullback to 20 EMA entry. Exited early before target.', screenshot: '', date: '2026-03-12', time: '10:45' },
+      { id: 'd6', symbol: 'META', direction: 'Long', assetClass: 'Stock', entryPrice: 612.40, exitPrice: 625.80, positionSize: 30, stopLoss: 605.00, takeProfit: 635.00, commissions: 2.00, pnl: 400.00, rMultiple: 1.80, pctGainLoss: 2.19, holdMinutes: 95, setupTag: 'Breakout', mistakeTag: 'None', rating: 4, notes: 'Gap up continuation. Strong institutional buying.', screenshot: '', date: '2026-03-12', time: '09:42' },
+      { id: 'd7', symbol: 'CL', direction: 'Long', assetClass: 'Futures', entryPrice: 68.45, exitPrice: 69.20, positionSize: 1, stopLoss: 67.90, takeProfit: 70.00, commissions: 4.00, pnl: 746.00, rMultiple: 1.36, pctGainLoss: 1.10, holdMinutes: 55, setupTag: 'Trend Follow', mistakeTag: 'None', rating: 4, notes: 'Crude oil trend continuation.', screenshot: '', date: '2026-03-11', time: '10:05' },
+      { id: 'd8', symbol: 'SPY', direction: 'Short', assetClass: 'Stock', entryPrice: 568.90, exitPrice: 565.20, positionSize: 100, stopLoss: 571.50, takeProfit: 562.00, commissions: 2.00, pnl: 368.00, rMultiple: 1.42, pctGainLoss: 0.65, holdMinutes: 38, setupTag: 'Reversal', mistakeTag: 'None', rating: 4, notes: 'Bearish divergence on 5-min. Clean fade.', screenshot: '', date: '2026-03-11', time: '11:22' },
+      { id: 'd9', symbol: 'MSFT', direction: 'Long', assetClass: 'Stock', entryPrice: 412.30, exitPrice: 408.50, positionSize: 50, stopLoss: 408.00, takeProfit: 422.00, commissions: 2.00, pnl: -192.00, rMultiple: -0.87, pctGainLoss: -0.92, holdMinutes: 60, setupTag: 'Pullback', mistakeTag: 'Early Exit', rating: 2, notes: 'Exited on small pullback. Stock recovered to $418.', screenshot: '', date: '2026-03-10', time: '13:15' },
     ]
-    const totalPnl = DEMO_TRADES.reduce((s, t) => s + t.pnl, 0)
+    const demoTotalPnl = DEMO_TRADES.reduce((s, t) => s + t.pnl, 0)
+    const demoWins = DEMO_TRADES.filter(t => t.pnl > 0)
+    const demoWinRate = (demoWins.length / DEMO_TRADES.length * 100).toFixed(1)
+    const demoAvgR = (DEMO_TRADES.reduce((s, t) => s + t.rMultiple, 0) / DEMO_TRADES.length).toFixed(2)
+
+    const DEMO_JOURNAL_TABS = [
+      { id: 'dashboard', label: 'Dashboard', iconPath: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+      { id: 'log',       label: 'Trade Log',  iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+      { id: 'calendar',  label: 'Calendar',   iconPath: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+      { id: 'analytics', label: 'Analytics',  iconPath: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+      { id: 'notebook',  label: 'Notebook',   iconPath: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' },
+      { id: 'reports',   label: 'Reports',    iconPath: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' },
+      { id: 'advanced',  label: 'Advanced',   iconPath: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
+    ]
 
     return (
       <AuthGate featureName="Trading Journal" featureDesc="Track every trade, analyze your patterns, and improve your consistency.">
-        <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
-          <PersistentNav />
-          <header className="page-header">
-            <div className="page-header-title">
-              <span style={{ color: 'var(--accent)' }}><IconBook size={18} /></span>
-              Trading Journal
-            </div>
-          </header>
-          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
-            {/* Summary bar */}
-            <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 20, display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>8 trades</span>
-              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Win Rate: <strong style={{ color: '#10b981' }}>87%</strong></span>
-              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Net P&L: <strong style={{ color: '#10b981', fontFamily: 'monospace' }}>+${totalPnl.toFixed(2)}</strong></span>
-              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Avg R: <strong style={{ color: '#6366f1' }}>1.8R</strong></span>
-            </div>
-            {/* Trade table */}
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    {['Date', 'Symbol', 'Direction', 'Asset', 'Entry', 'Exit', 'Size', 'P&L'].map(h => (
-                      <th key={h} style={{ padding: '9px 12px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {DEMO_TRADES.map(t => (
-                    <tr key={t.id} style={{ borderBottom: '1px solid var(--border)', background: t.pnl > 0 ? 'rgba(16,185,129,0.03)' : 'rgba(239,68,68,0.03)' }}>
-                      <td style={{ padding: '10px 12px', color: 'var(--text-2)' }}>{t.date}</td>
-                      <td style={{ padding: '10px 12px', fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{t.symbol}</td>
-                      <td style={{ padding: '10px 12px', color: t.direction === 'Long' ? '#10b981' : '#ef4444' }}>{t.direction}</td>
-                      <td style={{ padding: '10px 12px', color: 'var(--text-2)' }}>{t.asset}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>${t.entry.toFixed(2)}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>${t.exit.toFixed(2)}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>{t.size}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 700, color: t.pnl > 0 ? '#10b981' : '#ef4444' }}>
-                        +${t.pnl.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div style={{ marginTop: 16, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample trade log — create an account to start logging your real trades</div>
-          </div>
-        </div>
+        <DemoJournalContent
+          trades={DEMO_TRADES}
+          totalPnl={demoTotalPnl}
+          winRate={demoWinRate}
+          avgR={demoAvgR}
+          wins={demoWins.length}
+          tabs={DEMO_JOURNAL_TABS}
+        />
       </AuthGate>
     )
   }

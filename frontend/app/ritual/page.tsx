@@ -1146,6 +1146,198 @@ const btnGhost: React.CSSProperties = {
   fontSize: 14,
 }
 
+// ─── Demo Ritual Content ─────────────────────────────────────────────────────
+
+function DemoRitualContent() {
+  const [activeStep, setActiveStep] = useState(2)
+
+  const DEMO_STEPS = [
+    {
+      num: 1,
+      title: 'How did today go?',
+      answer: 'Traded NQ and AAPL. Two NQ momentum plays and one AAPL breakout. All three closed before 3 PM.',
+      done: true,
+    },
+    {
+      num: 2,
+      title: 'Did you follow your rules?',
+      answer: 'Followed rules on NQ — waited for the right entry and respected my stop. The AAPL trade was slightly rushed but still within my parameters.',
+      done: true,
+    },
+    {
+      num: 3,
+      title: 'Emotional state today?',
+      answer: null,
+      done: false,
+      isCurrent: true,
+    },
+    {
+      num: 4,
+      title: 'Attach chart screenshot',
+      answer: null,
+      done: false,
+    },
+    {
+      num: 5,
+      title: 'Key lesson or insight',
+      answer: null,
+      done: false,
+    },
+  ]
+
+  const EMOTION_OPTIONS = [
+    { label: 'Disciplined', color: '#22c55e' },
+    { label: 'Confident', color: '#3b82f6' },
+    { label: 'Patient', color: '#8b5cf6' },
+    { label: 'Focused', color: '#6366f1' },
+    { label: 'Anxious', color: '#f59e0b' },
+    { label: 'FOMO', color: '#f97316' },
+    { label: 'Neutral', color: 'var(--text-3)' },
+  ]
+
+  const [selectedEmotion, setSelectedEmotion] = useState('Focused')
+  const [emotionScore, setEmotionScore] = useState(4)
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg, #0a0a0a)', color: 'var(--text-0, #f9fafb)' }}>
+      <PersistentNav />
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px 80px' }}>
+        {/* Header with streak */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 40 }}>
+          <div>
+            <h1 style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-1, #e0e0e0)', marginBottom: 6, letterSpacing: '-0.5px' }}>
+              Post-Trade Ritual
+            </h1>
+            <p style={{ fontSize: 14, color: 'var(--text-3, #666)' }}>Wednesday, March 14, 2026</p>
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '10px 16px',
+            background: '#1a1a0a',
+            border: '1px solid #f97316',
+            borderRadius: 12,
+          }}>
+            <span style={{ color: '#f97316', display: 'flex', alignItems: 'center' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </span>
+            <div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#f97316', lineHeight: 1 }}>5</div>
+              <div style={{ fontSize: 10, color: 'var(--text-3, #666)' }}>day streak</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>Step {activeStep} of 5</span>
+            <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{Math.round((activeStep - 1) / 5 * 100)}% complete</span>
+          </div>
+          <div style={{ background: 'var(--border)', borderRadius: 4, height: 6 }}>
+            <div style={{ height: '100%', width: `${(activeStep - 1) / 5 * 100}%`, background: '#f97316', borderRadius: 4, transition: 'width 0.3s' }} />
+          </div>
+        </div>
+
+        {/* Steps */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {DEMO_STEPS.map(s => (
+            <div
+              key={s.num}
+              onClick={() => !s.done && setActiveStep(s.num)}
+              style={{
+                background: s.isCurrent || s.num === activeStep ? 'rgba(99,102,241,0.06)' : 'var(--card-bg, #1a1a1a)',
+                border: `1px solid ${s.isCurrent || s.num === activeStep ? 'rgba(99,102,241,0.3)' : 'var(--border, #2a2a2a)'}`,
+                borderRadius: 12,
+                padding: 20,
+                cursor: s.done ? 'default' : 'pointer',
+                opacity: !s.done && s.num > activeStep ? 0.5 : 1,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: s.done && s.answer ? 10 : (s.num === activeStep ? 14 : 0) }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: s.done ? 'rgba(16,185,129,0.12)' : (s.num === activeStep ? 'rgba(99,102,241,0.12)' : 'var(--bg-1)'),
+                  border: `1px solid ${s.done ? 'rgba(16,185,129,0.4)' : s.num === activeStep ? 'rgba(99,102,241,0.4)' : 'var(--border)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  {s.done ? (
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  ) : (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: s.num === activeStep ? '#6366f1' : 'var(--text-3)' }}>{s.num}</span>
+                  )}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: s.done ? 'var(--text-2)' : 'var(--text-0)' }}>
+                  Step {s.num} — {s.title}
+                </div>
+              </div>
+
+              {/* Completed step answer */}
+              {s.done && s.answer && (
+                <div style={{ marginLeft: 40, fontSize: 13, color: 'var(--text-1, #e5e7eb)', lineHeight: 1.65 }}>
+                  {s.answer}
+                </div>
+              )}
+
+              {/* Current step — emotion picker */}
+              {s.num === activeStep && s.num === 3 && (
+                <div style={{ marginLeft: 40 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12 }}>Rate your emotional discipline today (1–5)</div>
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+                    {[1,2,3,4,5].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setEmotionScore(n)}
+                        style={{
+                          width: 40, height: 40, borderRadius: 8,
+                          background: n <= emotionScore ? 'rgba(99,102,241,0.15)' : 'var(--bg-1)',
+                          border: `1px solid ${n <= emotionScore ? 'rgba(99,102,241,0.5)' : 'var(--border)'}`,
+                          color: n <= emotionScore ? '#6366f1' : 'var(--text-3)',
+                          fontWeight: 700, fontSize: 16, cursor: 'pointer',
+                        }}
+                      >{n}</button>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 8 }}>Emotional tags</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {EMOTION_OPTIONS.map(e => (
+                      <button
+                        key={e.label}
+                        onClick={() => setSelectedEmotion(e.label)}
+                        style={{
+                          padding: '5px 12px', borderRadius: 20,
+                          border: `1px solid ${selectedEmotion === e.label ? e.color : 'var(--border)'}`,
+                          background: selectedEmotion === e.label ? e.color + '22' : 'transparent',
+                          color: selectedEmotion === e.label ? e.color : 'var(--text-2)',
+                          fontSize: 12, cursor: 'pointer', fontWeight: selectedEmotion === e.label ? 700 : 400,
+                        }}
+                      >{e.label}</button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setActiveStep(4)}
+                    style={{ marginTop: 16, background: '#6366f1', border: 'none', borderRadius: 8, padding: '10px 24px', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Continue
+                  </button>
+                </div>
+              )}
+
+              {/* Steps 4 and 5 — locked for demo */}
+              {s.num === activeStep && s.num > 3 && (
+                <div style={{ marginLeft: 40 }}>
+                  <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 8, padding: '14px 16px', fontSize: 13, color: 'var(--text-2)' }}>
+                    Sign up to complete this step and build your daily ritual streak.
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function RitualPage() {
@@ -1198,65 +1390,9 @@ export default function RitualPage() {
   // Auth gating
   const tier = getUserTier(user)
   if (tier === 'demo') {
-    const DEMO_RITUAL_STEPS = [
-      { step: 1, label: 'What did I trade today?', answer: 'Traded NQ and AAPL today. Two NQ positions and one AAPL breakout play.' },
-      { step: 2, label: 'Did I follow my rules?', answer: 'Followed my rules on NQ — waited for the right entry and respected my stop. Overtraded AAPL, took a 3rd position when my plan said max 2.' },
-      { step: 3, label: 'Emotional state', answer: 'Focused' },
-      { step: 4, label: 'Chart screenshot', answer: 'screenshot' },
-    ]
     return (
-      <AuthGate
-        featureName="Post-Trade Ritual"
-        featureDesc="Build your daily trading habits. Review trades, track emotional state, and build consistency."
-      >
-        <div style={{ minHeight: '100vh', background: 'var(--bg, #0a0a0a)', color: 'var(--text-0, #f9fafb)' }}>
-          <PersistentNav />
-          <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 20px' }}>
-            {/* Streak counter */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-              <div>
-                <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>Post-Trade Ritual</h1>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2, #9ca3af)' }}>Daily review to build consistency and discipline</p>
-              </div>
-              <div style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 12, padding: '10px 18px', textAlign: 'center' as const }}>
-                <div style={{ fontSize: 10, color: '#6366f1', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 2 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}>
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                  </svg>
-                  Current Streak
-                </div>
-                <div style={{ fontSize: 28, fontWeight: 800, color: '#6366f1' }}>5</div>
-                <div style={{ fontSize: 10, color: 'var(--text-3, #6b7280)' }}>days in a row</div>
-              </div>
-            </div>
-            {/* Completed ritual steps */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {DEMO_RITUAL_STEPS.map((s, i) => (
-                <div key={i} style={{ background: 'var(--bg-2, #1a1a2e)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: s.answer !== 'screenshot' ? 8 : 0 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2, #9ca3af)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Step {s.step} — {s.label}</span>
-                  </div>
-                  {s.answer === 'screenshot' ? (
-                    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginLeft: 34 }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-3, #6b7280)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                      <span style={{ fontSize: 12, color: 'var(--text-3, #6b7280)' }}>NQ chart screenshot attached</span>
-                    </div>
-                  ) : s.step === 3 ? (
-                    <div style={{ marginLeft: 34 }}>
-                      <span style={{ background: 'rgba(99,102,241,0.12)', color: '#6366f1', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 20, padding: '4px 14px', fontSize: 12, fontWeight: 700 }}>{s.answer}</span>
-                    </div>
-                  ) : (
-                    <div style={{ marginLeft: 34, fontSize: 13, color: 'var(--text-1, #e5e7eb)', lineHeight: 1.6 }}>{s.answer}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: 16, fontSize: 11, color: 'var(--text-3, #6b7280)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample ritual entry — create an account to start building your daily trading habits</div>
-          </div>
-        </div>
+      <AuthGate featureName="Post-Trade Ritual" featureDesc="Build daily trading habits. Review trades, track emotional state, and build consistency.">
+        <DemoRitualContent />
       </AuthGate>
     )
   }

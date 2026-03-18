@@ -1089,6 +1089,208 @@ function PortfolioExportButton() {
   )
 }
 
+// ─── Demo Portfolio Content ───────────────────────────────────────────────────
+
+function DemoPortfolioContent({ holdings, totalValue, totalPnl, totalPnlPct, sectorMap, sectorColorMap, tabs }: {
+  holdings: Array<{ symbol: string; company: string; shares: number; avgCost: number; current: number; sector: string; divYield: number }>
+  totalValue: number
+  totalPnl: number
+  totalPnlPct: number
+  sectorMap: Record<string, number>
+  sectorColorMap: Record<string, string>
+  tabs: string[]
+}) {
+  const [activeTab, setActiveTab] = useState('Holdings')
+
+  const kpis = [
+    { label: 'Portfolio Value', value: `$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'var(--text-0)' },
+    { label: 'Total Gain', value: `+$${totalPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'var(--green)' },
+    { label: 'Total Return', value: `+${totalPnlPct.toFixed(1)}%`, color: 'var(--green)' },
+    { label: 'Holdings', value: String(holdings.length), color: 'var(--text-0)' },
+    { label: 'Daily Change', value: '+$842.30', color: 'var(--green)' },
+    { label: 'Annual Dividends', value: `$${holdings.reduce((s, h) => s + h.current * h.shares * h.divYield / 100, 0).toFixed(2)}`, color: 'var(--blue)' },
+  ]
+
+  // Sector donut
+  const sectorEntries = Object.entries(sectorMap)
+  const sectorTotal = sectorEntries.reduce((s, [, v]) => s + v, 0)
+  let angle = 0
+  const r = 44, cx = 60, cy = 60
+  const sectorSlices = sectorEntries.map(([sector, val]) => {
+    const pct = val / sectorTotal
+    const sweep = pct * 2 * Math.PI
+    const x1 = cx + r * Math.sin(angle)
+    const y1 = cy - r * Math.cos(angle)
+    const x2 = cx + r * Math.sin(angle + sweep)
+    const y2 = cy - r * Math.cos(angle + sweep)
+    const large = sweep > Math.PI ? 1 : 0
+    const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`
+    angle += sweep
+    return { sector, val, pct, path }
+  })
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
+      <PersistentNav />
+      <header className="page-header">
+        <div className="page-header-title">
+          <span style={{ color: 'var(--accent)' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </span>
+          Portfolio Tracker
+        </div>
+        <div className="page-header-desc">Track your holdings, monitor P&L, and analyze sector allocation</div>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <button className="btn btn-secondary btn-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import CSV
+          </button>
+        </div>
+      </header>
+
+      {/* Tab bar */}
+      <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-2)', padding: '0 24px', display: 'flex', gap: 0, overflowX: 'auto' }}>
+        {tabs.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              background: 'none', border: 'none',
+              borderBottom: `2px solid ${activeTab === tab ? 'var(--blue)' : 'transparent'}`,
+              padding: '14px 20px',
+              color: activeTab === tab ? 'var(--blue)' : 'var(--text-2)',
+              fontSize: 13, fontWeight: activeTab === tab ? 700 : 400,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
+        {/* KPI Cards — always visible */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
+          {kpis.map(k => (
+            <div key={k.label} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>{k.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: k.color, fontFamily: 'var(--mono)' }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {activeTab === 'Holdings' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 20, alignItems: 'start' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    {['Symbol', 'Company', 'Shares', 'Avg Cost', 'Current', 'Value', 'P&L', 'Return', 'Sector'].map(h => (
+                      <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {holdings.map(h => {
+                    const value = h.current * h.shares
+                    const cost = h.avgCost * h.shares
+                    const pnl = value - cost
+                    const ret = ((pnl / cost) * 100)
+                    return (
+                      <tr key={h.symbol} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--blue)', fontFamily: 'var(--mono)' }}>{h.symbol}</td>
+                        <td style={{ padding: '10px 12px', color: 'var(--text-2)', fontSize: 12 }}>{h.company}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>{h.shares}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)', color: 'var(--text-2)' }}>${h.avgCost.toFixed(2)}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>${h.current.toFixed(2)}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)', fontWeight: 600 }}>${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)', fontWeight: 700, color: pnl >= 0 ? 'var(--green)' : 'var(--red)' }}>+${pnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style={{ padding: '10px 12px', color: ret >= 0 ? 'var(--green)' : 'var(--red)', fontFamily: 'var(--mono)' }}>+{ret.toFixed(1)}%</td>
+                        <td style={{ padding: '10px 12px', color: 'var(--text-2)', fontSize: 11 }}>{h.sector}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {/* Sector donut */}
+            <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 20, minWidth: 200 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Sector Allocation</div>
+              <svg viewBox="0 0 120 120" style={{ width: 110, height: 110, display: 'block', margin: '0 auto 14px' }}>
+                {sectorSlices.map(({ sector, path }) => (
+                  <path key={sector} d={path} fill={sectorColorMap[sector] || '#888'} opacity={0.85} />
+                ))}
+                <circle cx="60" cy="60" r="26" fill="var(--bg-2)" />
+              </svg>
+              {sectorEntries.map(([sector, val]) => (
+                <div key={sector} style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
+                  <div style={{ width: 9, height: 9, borderRadius: '50%', background: sectorColorMap[sector] || '#888', flexShrink: 0 }} />
+                  <div style={{ fontSize: 11, color: 'var(--text-2)', flex: 1 }}>{sector}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>{((val / sectorTotal) * 100).toFixed(0)}%</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'Dashboard' && (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Portfolio Allocation</div>
+                {sectorEntries.map(([sector, val]) => (
+                  <div key={sector} style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
+                      <span style={{ color: 'var(--text-1)' }}>{sector}</span>
+                      <span style={{ color: 'var(--text-2)', fontFamily: 'var(--mono)' }}>${val.toLocaleString('en-US', { maximumFractionDigits: 0 })} ({((val / sectorTotal) * 100).toFixed(0)}%)</span>
+                    </div>
+                    <div style={{ background: 'var(--bg-1)', borderRadius: 4, height: 8 }}>
+                      <div style={{ height: '100%', width: `${(val / sectorTotal) * 100}%`, background: sectorColorMap[sector] || '#888', borderRadius: 4 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Top Performers</div>
+                {[...holdings].sort((a, b) => ((b.current - b.avgCost) / b.avgCost) - ((a.current - a.avgCost) / a.avgCost)).map(h => {
+                  const ret = ((h.current - h.avgCost) / h.avgCost) * 100
+                  return (
+                    <div key={h.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--blue)', fontFamily: 'var(--mono)' }}>{h.symbol}</span>
+                      <span style={{ color: 'var(--green)', fontFamily: 'var(--mono)', fontWeight: 700 }}>+{ret.toFixed(1)}%</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(activeTab === 'Dividends' || activeTab === 'DRIP' || activeTab === 'Sold' || activeTab === 'Watchlist' || activeTab === 'Tax') && (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>{activeTab}</h3>
+            <p style={{ color: 'var(--text-2)', fontSize: 14, margin: '0 0 24px', maxWidth: 380, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
+              {activeTab === 'Dividends' ? 'Track dividend income, history, and upcoming payments for all your holdings.'
+                : activeTab === 'DRIP' ? 'Simulate dividend reinvestment and see how compounding grows your portfolio.'
+                : activeTab === 'Sold' ? 'View your complete history of closed positions and realized gains/losses.'
+                : activeTab === 'Watchlist' ? 'Monitor stocks on your watchlist with price alerts and target prices.'
+                : 'View your tax lots, short vs. long-term gains, and generate tax reports.'}
+            </p>
+            <div style={{ display: 'inline-block', background: 'var(--accent)', borderRadius: 8, padding: '10px 24px', color: '#0a0a0c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              Sign up free to unlock
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Portfolio Page ───────────────────────────────────────────────────────────
 
 export default function PortfolioPage() {
@@ -1098,112 +1300,38 @@ export default function PortfolioPage() {
   const _demoTier = getUserTier(user)
   if (_demoTier === 'demo') {
     const DEMO_HOLDINGS = [
-      { symbol: 'AAPL', company: 'Apple Inc.', shares: 150, avgCost: 178.50, current: 242.30, sector: 'Technology' },
-      { symbol: 'MSFT', company: 'Microsoft Corp.', shares: 75, avgCost: 310.20, current: 415.80, sector: 'Technology' },
-      { symbol: 'NVDA', company: 'NVIDIA Corp.', shares: 40, avgCost: 485.00, current: 892.45, sector: 'Technology' },
-      { symbol: 'JPM', company: 'JPMorgan Chase', shares: 100, avgCost: 165.30, current: 198.50, sector: 'Financials' },
-      { symbol: 'V', company: 'Visa Inc.', shares: 60, avgCost: 262.40, current: 309.60, sector: 'Financials' },
-      { symbol: 'KO', company: 'Coca-Cola Co.', shares: 200, avgCost: 58.90, current: 62.40, sector: 'Consumer Staples' },
+      { symbol: 'AAPL', company: 'Apple Inc.', shares: 150, avgCost: 178.50, current: 242.30, sector: 'Information Technology', divYield: 0.5 },
+      { symbol: 'MSFT', company: 'Microsoft Corp.', shares: 75, avgCost: 310.20, current: 415.80, sector: 'Information Technology', divYield: 0.8 },
+      { symbol: 'NVDA', company: 'NVIDIA Corp.', shares: 40, avgCost: 485.00, current: 892.45, sector: 'Information Technology', divYield: 0.03 },
+      { symbol: 'JPM', company: 'JPMorgan Chase', shares: 100, avgCost: 165.30, current: 198.50, sector: 'Financials', divYield: 2.5 },
+      { symbol: 'V', company: 'Visa Inc.', shares: 60, avgCost: 262.40, current: 309.60, sector: 'Financials', divYield: 0.7 },
+      { symbol: 'KO', company: 'Coca-Cola Co.', shares: 200, avgCost: 58.90, current: 62.40, sector: 'Consumer Staples', divYield: 3.0 },
     ]
     const totalValue = DEMO_HOLDINGS.reduce((s, h) => s + h.current * h.shares, 0)
     const totalCost = DEMO_HOLDINGS.reduce((s, h) => s + h.avgCost * h.shares, 0)
     const totalPnl = totalValue - totalCost
+    const totalPnlPct = (totalPnl / totalCost) * 100
     const sectorMap: Record<string, number> = {}
     DEMO_HOLDINGS.forEach(h => { sectorMap[h.sector] = (sectorMap[h.sector] || 0) + h.current * h.shares })
-    const sectorColors: Record<string, string> = { 'Technology': '#6366f1', 'Financials': '#f59e0b', 'Consumer Staples': '#10b981' }
+    const sectorColorMap: Record<string, string> = {
+      'Information Technology': '#5b6cf9',
+      'Financials': '#3498db',
+      'Consumer Staples': '#00c06a',
+    }
+
+    const DEMO_PORTFOLIO_TABS = ['Dashboard', 'Holdings', 'Dividends', 'DRIP', 'Sold', 'Watchlist', 'Tax']
 
     return (
       <AuthGate featureName="Portfolio Tracker" featureDesc="Track your stock holdings, dividends, and portfolio performance.">
-        <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
-          <PersistentNav />
-          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
-            <div style={{ marginBottom: 24 }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>Portfolio Tracker</h1>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2)' }}>Track your holdings, monitor P&L, and analyze sector allocation</p>
-            </div>
-            {/* Summary cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
-              {[
-                { label: 'Portfolio Value', value: `$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'var(--text-0)' },
-                { label: 'Total P&L', value: `+$${totalPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: '#10b981' },
-                { label: 'Return', value: `+${((totalPnl / totalCost) * 100).toFixed(1)}%`, color: '#10b981' },
-                { label: 'Holdings', value: '6', color: 'var(--text-0)' },
-              ].map(m => (
-                <div key={m.label} style={{ background: 'var(--bg-2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 5 }}>{m.label}</div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: m.color, fontFamily: 'monospace' }}>{m.value}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 16, marginBottom: 24, alignItems: 'start' }}>
-              {/* Holdings table */}
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                      {['Symbol', 'Company', 'Shares', 'Avg Cost', 'Current', 'Value', 'P&L', 'Return'].map(h => (
-                        <th key={h} style={{ padding: '9px 12px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {DEMO_HOLDINGS.map(h => {
-                      const value = h.current * h.shares
-                      const cost = h.avgCost * h.shares
-                      const pnl = value - cost
-                      const ret = ((pnl / cost) * 100).toFixed(1)
-                      return (
-                        <tr key={h.symbol} style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
-                          <td style={{ padding: '10px 12px', fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{h.symbol}</td>
-                          <td style={{ padding: '10px 12px', color: 'var(--text-2)', fontSize: 12 }}>{h.company}</td>
-                          <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>{h.shares}</td>
-                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', color: 'var(--text-2)' }}>${h.avgCost.toFixed(2)}</td>
-                          <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>${h.current.toFixed(2)}</td>
-                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 600 }}>${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 700, color: pnl >= 0 ? '#10b981' : '#ef4444' }}>+${pnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                          <td style={{ padding: '10px 12px', color: '#10b981', fontFamily: 'monospace' }}>+{ret}%</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {/* Sector donut */}
-              <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 16, minWidth: 180 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 12 }}>Sector Allocation</div>
-                <svg viewBox="0 0 120 120" style={{ width: 100, height: 100, display: 'block', margin: '0 auto 12px' }}>
-                  {(() => {
-                    const entries = Object.entries(sectorMap)
-                    const total = entries.reduce((s, [, v]) => s + v, 0)
-                    let angle = 0
-                    const r = 44, cx = 60, cy = 60
-                    return entries.map(([sector, val]) => {
-                      const pct = val / total
-                      const sweep = pct * 2 * Math.PI
-                      const x1 = cx + r * Math.sin(angle)
-                      const y1 = cy - r * Math.cos(angle)
-                      const x2 = cx + r * Math.sin(angle + sweep)
-                      const y2 = cy - r * Math.cos(angle + sweep)
-                      const large = sweep > Math.PI ? 1 : 0
-                      const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`
-                      angle += sweep
-                      return <path key={sector} d={path} fill={sectorColors[sector] || '#6b7280'} opacity={0.85} />
-                    })
-                  })()}
-                  <circle cx="60" cy="60" r="26" fill="var(--bg-2)" />
-                </svg>
-                {Object.entries(sectorMap).map(([sector, val]) => (
-                  <div key={sector} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: sectorColors[sector] || '#6b7280', flexShrink: 0 }} />
-                    <div style={{ fontSize: 10, color: 'var(--text-2)', flex: 1 }}>{sector}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'monospace' }}>{((val / totalValue) * 100).toFixed(0)}%</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample portfolio — create an account to track your real holdings</div>
-          </div>
-        </div>
+        <DemoPortfolioContent
+          holdings={DEMO_HOLDINGS}
+          totalValue={totalValue}
+          totalPnl={totalPnl}
+          totalPnlPct={totalPnlPct}
+          sectorMap={sectorMap}
+          sectorColorMap={sectorColorMap}
+          tabs={DEMO_PORTFOLIO_TABS}
+        />
       </AuthGate>
     )
   }

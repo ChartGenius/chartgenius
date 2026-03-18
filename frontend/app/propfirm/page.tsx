@@ -1635,94 +1635,167 @@ export default function PropFirmPage() {
   // Auth gating
   const tier = getUserTier(user)
   if (tier === 'demo') {
-    const DEMO_PROP_ACCOUNT = {
-      firm: 'TopStep',
-      accountSize: 150000,
-      maxDailyLoss: 3000,
-      dailyLossUsed: 450,
-      maxDrawdown: 4500,
-      drawdownUsed: 1200,
-      profitTarget: 9000,
-      profitEarned: 2340,
-      status: 'Active',
-      phase: 'Combine',
-    }
-    const DEMO_PROP_TRADES = [
-      { date: '2026-03-14', symbol: 'NQ', direction: 'Long', contracts: 2, pnl: 1500 },
-      { date: '2026-03-13', symbol: 'ES', direction: 'Short', contracts: 1, pnl: 650 },
-      { date: '2026-03-12', symbol: 'NQ', direction: 'Long', contracts: 1, pnl: -320 },
+    const DEMO_PROP_ACCOUNTS = [
+      {
+        id: 'demo-1',
+        firm: 'TopStep',
+        accountName: 'TopStep Combine 150K',
+        accountSize: 150000,
+        phase: 'Combine',
+        status: 'active' as const,
+        maxDailyLoss: 3000,
+        dailyLossUsed: 450,
+        maxDrawdown: 4500,
+        drawdownUsed: 1200,
+        profitTarget: 9000,
+        profitEarned: 2340,
+        rules: [
+          'Daily loss limit: $3,000',
+          'Max trailing drawdown: $4,500',
+          'Profit target: $9,000',
+          'Minimum trading days: 10',
+          'No news trading within 2 minutes',
+        ],
+        trades: [
+          { date: '2026-03-14', symbol: 'NQ', direction: 'Long', contracts: 2, pnl: 1500 },
+          { date: '2026-03-13', symbol: 'ES', direction: 'Short', contracts: 1, pnl: 650 },
+          { date: '2026-03-12', symbol: 'NQ', direction: 'Long', contracts: 1, pnl: -320 },
+          { date: '2026-03-11', symbol: 'MES', direction: 'Long', contracts: 5, pnl: 510 },
+        ],
+      },
+      {
+        id: 'demo-2',
+        firm: 'Apex Trader Funding',
+        accountName: 'Apex 50K — Evaluation',
+        accountSize: 50000,
+        phase: 'Evaluation',
+        status: 'active' as const,
+        maxDailyLoss: 1000,
+        dailyLossUsed: 0,
+        maxDrawdown: 2500,
+        drawdownUsed: 380,
+        profitTarget: 3000,
+        profitEarned: 1850,
+        rules: [
+          'Daily loss limit: $1,000',
+          'Max trailing drawdown: $2,500',
+          'Profit target: $3,000',
+          'No position over weekend',
+          'Max contracts: 5 (NQ/ES)',
+        ],
+        trades: [
+          { date: '2026-03-14', symbol: 'ES', direction: 'Long', contracts: 3, pnl: 1125 },
+          { date: '2026-03-13', symbol: 'NQ', direction: 'Short', contracts: 1, pnl: 725 },
+        ],
+      },
     ]
-    const drawdownPct = (DEMO_PROP_ACCOUNT.drawdownUsed / DEMO_PROP_ACCOUNT.maxDrawdown) * 100
-    const dailyPct = (DEMO_PROP_ACCOUNT.dailyLossUsed / DEMO_PROP_ACCOUNT.maxDailyLoss) * 100
-    const profitPct = (DEMO_PROP_ACCOUNT.profitEarned / DEMO_PROP_ACCOUNT.profitTarget) * 100
 
     return (
-      <AuthGate
-        featureName="Prop Firm Tracker"
-        featureDesc="Track your prop firm account rules, drawdown limits, and daily loss caps."
-      >
+      <AuthGate featureName="Prop Firm Tracker" featureDesc="Track your prop firm account rules, drawdown limits, and daily loss caps.">
         <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
           <PersistentNav />
-          <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
-            <div style={{ marginBottom: 24 }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>Prop Firm Tracker</h1>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2)' }}>Monitor your funded account rules and progress</p>
-            </div>
-            <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-0)' }}>{DEMO_PROP_ACCOUNT.firm}</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-2)' }}>${DEMO_PROP_ACCOUNT.accountSize.toLocaleString()} — {DEMO_PROP_ACCOUNT.phase}</div>
-                </div>
-                <span style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '3px 12px', fontSize: 12, fontWeight: 700 }}>
-                  {DEMO_PROP_ACCOUNT.status}
-                </span>
+          <main style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px 60px', fontFamily: 'var(--font)' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+              <div>
+                <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-0)', display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 4px' }}>
+                  <span style={{ color: 'var(--accent)' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                  </span>
+                  Prop Firm Tracker
+                </h1>
+                <p style={{ fontSize: 13, color: 'var(--text-2)', margin: 0 }}>Track your prop firm challenges and funded account rules in one place.</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
-                {[
-                  { label: 'Max Daily Loss', limit: DEMO_PROP_ACCOUNT.maxDailyLoss, used: DEMO_PROP_ACCOUNT.dailyLossUsed, pct: dailyPct, color: dailyPct > 70 ? '#ef4444' : '#f59e0b' },
-                  { label: 'Max Drawdown', limit: DEMO_PROP_ACCOUNT.maxDrawdown, used: DEMO_PROP_ACCOUNT.drawdownUsed, pct: drawdownPct, color: drawdownPct > 70 ? '#ef4444' : '#f59e0b' },
-                  { label: 'Profit Target', limit: DEMO_PROP_ACCOUNT.profitTarget, used: DEMO_PROP_ACCOUNT.profitEarned, pct: profitPct, color: '#10b981' },
-                ].map(m => (
-                  <div key={m.label} style={{ background: 'var(--bg-1)', borderRadius: 8, padding: '12px 14px' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6 }}>{m.label}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: m.color, fontFamily: 'monospace' }}>${m.used.toLocaleString()}</span>
-                      <span style={{ fontSize: 11, color: 'var(--text-3)' }}>/ ${m.limit.toLocaleString()}</span>
+              <button style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '10px 18px', color: '#0a0a0c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Account
+              </button>
+            </div>
+
+            {/* Account cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {DEMO_PROP_ACCOUNTS.map(acct => {
+                const drawdownPct = (acct.drawdownUsed / acct.maxDrawdown) * 100
+                const dailyPct = (acct.dailyLossUsed / acct.maxDailyLoss) * 100
+                const profitPct = (acct.profitEarned / acct.profitTarget) * 100
+                return (
+                  <div key={acct.id} style={{ background: 'var(--bg-2)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12, padding: 24 }}>
+                    {/* Account header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 18, fontWeight: 800 }}>{acct.accountName}</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 2 }}>{acct.firm} · ${acct.accountSize.toLocaleString()} · {acct.phase}</div>
+                      </div>
+                      <span style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 20, padding: '4px 14px', fontSize: 12, fontWeight: 700, textTransform: 'capitalize' as const }}>
+                        {acct.status}
+                      </span>
                     </div>
-                    <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 4, height: 6, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min(m.pct, 100)}%`, background: m.color, borderRadius: 4 }} />
+
+                    {/* Progress bars */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14, marginBottom: 20 }}>
+                      {[
+                        { label: 'Max Daily Loss', limit: acct.maxDailyLoss, used: acct.dailyLossUsed, pct: dailyPct, color: dailyPct > 70 ? '#ef4444' : '#f59e0b', isLoss: true },
+                        { label: 'Max Drawdown', limit: acct.maxDrawdown, used: acct.drawdownUsed, pct: drawdownPct, color: drawdownPct > 70 ? '#ef4444' : '#f59e0b', isLoss: true },
+                        { label: 'Profit Target', limit: acct.profitTarget, used: acct.profitEarned, pct: profitPct, color: '#10b981', isLoss: false },
+                      ].map(m => (
+                        <div key={m.label} style={{ background: 'var(--bg-1)', borderRadius: 10, padding: '14px 16px' }}>
+                          <div style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>{m.label}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <span style={{ fontSize: 16, fontWeight: 700, color: m.color, fontFamily: 'var(--mono)' }}>
+                              {m.isLoss ? '-' : '+'}${m.used.toLocaleString()}
+                            </span>
+                            <span style={{ fontSize: 11, color: 'var(--text-3)' }}>/ ${m.limit.toLocaleString()}</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 6, height: 8, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${Math.min(m.pct, 100)}%`, background: m.color, borderRadius: 6, transition: 'width 0.4s' }} />
+                          </div>
+                          <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>{m.pct.toFixed(0)}% {m.isLoss ? 'used' : 'achieved'}</div>
+                        </div>
+                      ))}
                     </div>
-                    <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>{m.pct.toFixed(0)}% used</div>
+
+                    {/* Rules */}
+                    <div style={{ marginBottom: 20 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>Account Rules</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {acct.rules.map((r, i) => (
+                          <span key={i} style={{ fontSize: 11, color: 'var(--text-2)', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px' }}>{r}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Recent trades */}
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>Recent Trades</div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                            {['Date', 'Symbol', 'Direction', 'Contracts', 'P&L'].map(h => (
+                              <th key={h} style={{ padding: '6px 10px', textAlign: 'left' as const, color: 'var(--text-3)', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' as const }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {acct.trades.map((t, i) => (
+                            <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td style={{ padding: '8px 10px', color: 'var(--text-2)' }}>{t.date}</td>
+                              <td style={{ padding: '8px 10px', fontWeight: 700, color: 'var(--blue)', fontFamily: 'var(--mono)' }}>{t.symbol}</td>
+                              <td style={{ padding: '8px 10px', color: t.direction === 'Long' ? '#10b981' : '#ef4444' }}>{t.direction}</td>
+                              <td style={{ padding: '8px 10px', color: 'var(--text-2)', fontFamily: 'var(--mono)' }}>{t.contracts}</td>
+                              <td style={{ padding: '8px 10px', fontFamily: 'var(--mono)', fontWeight: 700, color: t.pnl >= 0 ? '#10b981' : '#ef4444' }}>
+                                {t.pnl >= 0 ? '+' : '-'}${Math.abs(t.pnl).toLocaleString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                ))}
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 10 }}>Recent Trades</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 12 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                    {['Date', 'Symbol', 'Direction', 'Contracts', 'P&L'].map(h => (
-                      <th key={h} style={{ padding: '6px 10px', textAlign: 'left' as const, color: 'var(--text-3)', fontWeight: 600, fontSize: 10, textTransform: 'uppercase' as const }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {DEMO_PROP_TRADES.map((t, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '8px 10px', color: 'var(--text-2)' }}>{t.date}</td>
-                      <td style={{ padding: '8px 10px', fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{t.symbol}</td>
-                      <td style={{ padding: '8px 10px', color: t.direction === 'Long' ? '#10b981' : '#ef4444' }}>{t.direction}</td>
-                      <td style={{ padding: '8px 10px', color: 'var(--text-2)' }}>{t.contracts}</td>
-                      <td style={{ padding: '8px 10px', fontFamily: 'monospace', fontWeight: 700, color: t.pnl >= 0 ? '#10b981' : '#ef4444' }}>
-                        {t.pnl >= 0 ? '+$' : '-$'}{Math.abs(t.pnl).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                )
+              })}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample data — create an account to track your real prop firm account</div>
-          </div>
+            <div style={{ marginTop: 20, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample data — create an account to track your real prop firm accounts</div>
+          </main>
         </div>
       </AuthGate>
     )
