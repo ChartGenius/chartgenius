@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext'
 import { debouncedSyncJournal, initJournalSync } from '../utils/cloudSync'
 import { getUserTier, isDataLocked, canAccessFeature, getLockedEntryCount, getCsvDateLimit } from '../utils/tierAccess'
 import UpgradePrompt from '../components/UpgradePrompt'
+import AuthGate from '../components/AuthGate'
 import ImportModal from './ImportModal'
 import AdvancedReports from './AdvancedReports'
 import { TagPicker, TagFilterBar, TagChip, loadCustomTags, saveCustomTags, type TagDefinition } from './TagManager'
@@ -3510,6 +3511,74 @@ function JournalPageInner() {
     setUpgradeFeatureName(name)
     setUpgradeFeatureDesc(desc || '')
     setShowUpgradePrompt(true)
+  }
+
+  // Auth gating — show demo content for unauthenticated users
+  const tier = getUserTier(user)
+  if (tier === 'demo') {
+    const DEMO_TRADES = [
+      { id: 'd1', symbol: 'NVDA', direction: 'Long', asset: 'Stock', entry: 875.20, exit: 892.45, size: 50, pnl: 862.50, date: '2026-03-14' },
+      { id: 'd2', symbol: 'NQ', direction: 'Long', asset: 'Futures', entry: 20150, exit: 20225, size: 2, pnl: 1500.00, date: '2026-03-14' },
+      { id: 'd3', symbol: 'AAPL', direction: 'Short', asset: 'Stock', entry: 242.80, exit: 238.15, size: 100, pnl: 465.00, date: '2026-03-13' },
+      { id: 'd4', symbol: 'ES', direction: 'Short', asset: 'Futures', entry: 5685, exit: 5672, size: 1, pnl: 650.00, date: '2026-03-13' },
+      { id: 'd5', symbol: 'TSLA', direction: 'Long', asset: 'Stock', entry: 168.50, exit: 172.30, size: 75, pnl: 285.00, date: '2026-03-12' },
+      { id: 'd6', symbol: 'META', direction: 'Long', asset: 'Stock', entry: 612.40, exit: 625.80, size: 30, pnl: 402.00, date: '2026-03-12' },
+      { id: 'd7', symbol: 'CL', direction: 'Long', asset: 'Futures', entry: 68.45, exit: 69.20, size: 1, pnl: 750.00, date: '2026-03-11' },
+      { id: 'd8', symbol: 'SPY', direction: 'Short', asset: 'Stock', entry: 568.90, exit: 565.20, size: 100, pnl: 370.00, date: '2026-03-11' },
+    ]
+    const totalPnl = DEMO_TRADES.reduce((s, t) => s + t.pnl, 0)
+
+    return (
+      <AuthGate featureName="Trading Journal" featureDesc="Track every trade, analyze your patterns, and improve your consistency.">
+        <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
+          <PersistentNav />
+          <header className="page-header">
+            <div className="page-header-title">
+              <span style={{ color: 'var(--accent)' }}><IconBook size={18} /></span>
+              Trading Journal
+            </div>
+          </header>
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
+            {/* Summary bar */}
+            <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 20, display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>8 trades</span>
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Win Rate: <strong style={{ color: '#10b981' }}>87%</strong></span>
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Net P&L: <strong style={{ color: '#10b981', fontFamily: 'monospace' }}>+${totalPnl.toFixed(2)}</strong></span>
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Avg R: <strong style={{ color: '#6366f1' }}>1.8R</strong></span>
+            </div>
+            {/* Trade table */}
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    {['Date', 'Symbol', 'Direction', 'Asset', 'Entry', 'Exit', 'Size', 'P&L'].map(h => (
+                      <th key={h} style={{ padding: '9px 12px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {DEMO_TRADES.map(t => (
+                    <tr key={t.id} style={{ borderBottom: '1px solid var(--border)', background: t.pnl > 0 ? 'rgba(16,185,129,0.03)' : 'rgba(239,68,68,0.03)' }}>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-2)' }}>{t.date}</td>
+                      <td style={{ padding: '10px 12px', fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{t.symbol}</td>
+                      <td style={{ padding: '10px 12px', color: t.direction === 'Long' ? '#10b981' : '#ef4444' }}>{t.direction}</td>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-2)' }}>{t.asset}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>${t.entry.toFixed(2)}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>${t.exit.toFixed(2)}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>{t.size}</td>
+                      <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 700, color: t.pnl > 0 ? '#10b981' : '#ef4444' }}>
+                        +${t.pnl.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ marginTop: 16, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample trade log — create an account to start logging your real trades</div>
+          </div>
+        </div>
+      </AuthGate>
+    )
   }
 
   useEffect(() => {

@@ -807,15 +807,106 @@ export default function PlaybooksPage() {
   // Auth gating — demo/unauthenticated users see a sign-in prompt
   const tier = getUserTier(user)
   if (tier === 'demo') {
+    const DEMO_PLAYBOOKS = [
+      {
+        id: 'd1',
+        name: 'Momentum Breakout',
+        category: 'entry',
+        color: '#6366f1',
+        entryRules: ['Wait for price to break above resistance on 2x+ average volume', 'Confirm with RSI > 60', 'Enter on first 5-min candle close above breakout level'],
+        exitRules: ['Target: 2R profit', 'Stop: below breakout candle low', 'Trail stop after 1R gained'],
+        stats: { trades: 47, winRate: 72, avgR: 1.9 },
+      },
+      {
+        id: 'd2',
+        name: 'VWAP Fade',
+        category: 'reversal',
+        color: '#f59e0b',
+        entryRules: ['Price extends 0.5%+ above VWAP in choppy market', 'Volume declining on push up', 'Short at VWAP rejection candle close'],
+        exitRules: ['Stop: above VWAP + 0.5% from entry', 'Target: VWAP retest', 'Exit by 2:30 PM EST regardless'],
+        stats: { trades: 31, winRate: 65, avgR: 1.6 },
+      },
+      {
+        id: 'd3',
+        name: 'Gap and Go',
+        category: 'momentum',
+        color: '#10b981',
+        entryRules: ['Stock gaps up 3%+ premarket on above-average volume', 'News catalyst present (earnings, upgrade, sector move)', 'Entry on first 5-min candle break above premarket high'],
+        exitRules: ['Target: measured move from gap size', 'Stop: below opening 5-min candle low', 'Scale out 50% at 1R'],
+        stats: { trades: 28, winRate: 68, avgR: 2.1 },
+      },
+      {
+        id: 'd4',
+        name: 'Earnings Reversal',
+        category: 'reversal',
+        color: '#8b5cf6',
+        entryRules: ['Stock drops 5%+ on earnings reaction', 'Sector peers not down (isolated overreaction)', 'Enter after 30-min stabilization candle forms'],
+        exitRules: ['Target: 50% gap fill', 'Stop: below earnings low', 'Hold max 3 days'],
+        stats: { trades: 19, winRate: 58, avgR: 2.4 },
+      },
+    ]
+
     return (
       <AuthGate
         featureName="Trade Playbooks"
-        featureDesc="Define your strategies, tag your trades, and track what works. Create a free account to get started."
+        featureDesc="Define your strategies, tag your trades, and track what works."
       >
         <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
           <PersistentNav />
           <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 20px' }}>
-            <h1 style={{ fontSize: 24, fontWeight: 800 }}>Playbook Templates</h1>
+            <div style={{ marginBottom: 28 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>Trade Playbooks</h1>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2)' }}>Your personal strategy library — define entry rules, exit rules, and track performance per setup</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+              {DEMO_PLAYBOOKS.map(pb => (
+                <div key={pb.id} style={{ background: 'var(--bg-2)', border: `1px solid ${pb.color}44`, borderRadius: 12, padding: 18, borderTop: `3px solid ${pb.color}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-0)' }}>{pb.name}</div>
+                    <span style={{ background: pb.color + '22', color: pb.color, border: `1px solid ${pb.color}44`, borderRadius: 20, padding: '2px 10px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>
+                      {pb.category}
+                    </span>
+                  </div>
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 5 }}>Entry Rules</div>
+                    {pb.entryRules.map((r, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 6, fontSize: 11, color: 'var(--text-2)', marginBottom: 3 }}>
+                        <span style={{ color: pb.color, flexShrink: 0 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </span>
+                        {r}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 5 }}>Exit Rules</div>
+                    {pb.exitRules.map((r, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 6, fontSize: 11, color: 'var(--text-2)', marginBottom: 3 }}>
+                        <span style={{ color: '#f59e0b', flexShrink: 0 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </span>
+                        {r}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10, display: 'flex', gap: 14 }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Trades</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0)' }}>{pb.stats.trades}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Win Rate</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#10b981' }}>{pb.stats.winRate}%</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, color: 'var(--text-3)' }}>Avg R</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#6366f1' }}>{pb.stats.avgR}R</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 20, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample playbooks — create an account to build your own strategy library</div>
           </div>
         </div>
       </AuthGate>

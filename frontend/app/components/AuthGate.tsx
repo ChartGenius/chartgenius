@@ -93,7 +93,7 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
             color: 'var(--text-0, #f9fafb)',
             letterSpacing: '-0.02em',
           }}>
-            Sign in to access {featureName}
+            Start your trading journey
           </h2>
 
           <p style={{
@@ -102,7 +102,7 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
             color: 'var(--text-2, #9ca3af)',
             lineHeight: 1.6,
           }}>
-            {featureDesc ?? 'Create a free account to unlock this feature. No credit card required.'}
+            {`See what ${featureName} can do for your trading. Create a free account — no credit card required.`}
           </p>
 
           {/* CTAs */}

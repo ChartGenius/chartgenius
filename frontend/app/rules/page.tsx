@@ -529,16 +529,53 @@ export default function RulesPage() {
   // Auth gating
   const tier = getUserTier(user)
   if (tier === 'demo') {
+    const DEMO_RULES = [
+      { rule: 'Max 3 trades per day', status: 'ok', detail: '2 / 3 used today', statusLabel: 'On Track' },
+      { rule: 'No trading in first 15 minutes', status: 'ok', detail: 'Market opened 9:30 AM — first trade at 9:52 AM', statusLabel: 'Followed' },
+      { rule: 'Risk max 1% per trade', status: 'ok', detail: 'All trades within 0.8% risk limit', statusLabel: 'Followed' },
+      { rule: 'Stop trading after 2 consecutive losses', status: 'ok', detail: '0 consecutive losses today', statusLabel: 'Clear' },
+    ]
     return (
       <AuthGate
         featureName="Rule Cop"
-        featureDesc="Define your trading rules and get automatic violation alerts. Free account required."
+        featureDesc="Define your trading rules and get automatic violation alerts."
       >
         <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
           <PersistentNav />
-          <div style={{ maxWidth: 820, margin: '0 auto', padding: '80px 16px' }}>
-            <h1 style={{ fontSize: 24, fontWeight: 800 }}>Rule Cop</h1>
-          </div>
+          <main style={{ maxWidth: 820, margin: '0 auto', padding: '80px 16px 60px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                  <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>Rule Cop</h1>
+                  <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Your trading rule enforcer</div>
+                </div>
+              </div>
+              <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 10, padding: '8px 16px', textAlign: 'center' as const }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#10b981' }}>4 / 4</div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.05em' }}>Rules Followed Today</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {DEMO_RULES.map((r, i) => (
+                <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', marginBottom: 2 }}>{r.rule}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{r.detail}</div>
+                  </div>
+                  <span style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 20, padding: '3px 12px', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' as const }}>
+                    {r.statusLabel}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 20, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample rules — create an account to define your own trading rules and get violation alerts</div>
+          </main>
         </div>
       </AuthGate>
     )

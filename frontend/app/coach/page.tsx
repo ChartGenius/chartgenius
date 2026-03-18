@@ -507,15 +507,79 @@ export default function CoachPage() {
   // Auth gating
   const tier = getUserTier(user)
   if (tier === 'demo') {
+    const DEMO_COACH_METRICS = [
+      { label: 'Win Rate (Momentum)', value: '72%', color: '#10b981' },
+      { label: 'Win Rate (Reversals)', value: '45%', color: '#ef4444' },
+      { label: 'Avg Hold Time', value: '47 min', color: '#6366f1' },
+      { label: 'Best Day', value: 'Tuesday', color: '#10b981' },
+      { label: 'Risk/Reward Avg', value: '1.8R', color: '#6366f1' },
+      { label: 'Trades Analyzed', value: '30', color: 'var(--text-2)' },
+    ]
     return (
       <AuthGate
         featureName="AI Trade Coach"
-        featureDesc="Get weekly AI-powered insights on your trading patterns. Identify strengths and areas for improvement. Free account required."
+        featureDesc="Get weekly AI-powered insights on your trading patterns. Identify strengths and areas for improvement."
       >
         <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
           <PersistentNav />
           <div style={{ maxWidth: 860, margin: '0 auto', padding: '32px 16px' }}>
-            <h1 style={{ fontSize: 24, fontWeight: 800 }}>AI Trade Coach</h1>
+            <div style={{ marginBottom: 24 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>AI Trade Coach</h1>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2)' }}>Weekly AI analysis of your trading patterns</p>
+            </div>
+            {/* AI analysis card */}
+            <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1H1a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>Weekly Performance Analysis</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)' }}>Based on last 30 trades • Generated Mar 14, 2026</div>
+                </div>
+              </div>
+              <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-1)', lineHeight: 1.75 }}>
+                  Based on your last 30 trades, your win rate is <strong style={{ color: '#10b981' }}>72%</strong> on momentum setups vs <strong style={{ color: '#ef4444' }}>45%</strong> on reversals. Consider focusing on momentum plays during high-volatility sessions. Your average hold time of 47 minutes suggests you have good patience — but you're exiting too early on your best trades, leaving roughly 0.4R on the table per winner.
+                </p>
+              </div>
+              <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: 8, padding: '14px 16px', marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#10b981', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6 }}>Top Strengths</div>
+                {[
+                  'Excellent discipline on stop losses — only 2 blown stops in 30 trades',
+                  'Strong Tuesday performance (78% win rate) — leverage this pattern',
+                  'Futures edge is clear: 68% win rate vs 51% on stocks',
+                ].map((s, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-1)', marginBottom: 4 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><polyline points="20 6 9 17 4 12"/></svg>
+                    {s}
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 8, padding: '14px 16px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6 }}>Areas to Improve</div>
+                {[
+                  'Avoid reversal setups — 45% win rate is below breakeven after fees',
+                  'Friday trades: 38% win rate — consider reducing size or skipping',
+                  'Increase position size on A+ momentum setups (currently undersizing by ~30%)',
+                ].map((s, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--text-1)', marginBottom: 4 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    {s}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Metrics grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
+              {DEMO_COACH_METRICS.map(m => (
+                <div key={m.label} style={{ background: 'var(--bg-2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' as const }}>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.05em', marginBottom: 6 }}>{m.label}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: m.color, fontFamily: 'monospace' }}>{m.value}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 16, fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample AI analysis — create an account and log trades to get personalized insights</div>
           </div>
         </div>
       </AuthGate>

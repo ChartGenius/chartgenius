@@ -13,6 +13,7 @@ import Tooltip from '../components/Tooltip'
 import { useAuth } from '../context/AuthContext'
 import { initPortfolioSync, debouncedSyncPortfolio } from '../utils/cloudSync'
 import { getUserTier, canAccessFeature } from '../utils/tierAccess'
+import AuthGate from '../components/AuthGate'
 import { sanitizeCSVField } from '../utils/brokerParsers'
 
 const AuthModal = dynamic(() => import('../components/AuthModal'), { ssr: false })
@@ -1091,7 +1092,121 @@ function PortfolioExportButton() {
 // ─── Portfolio Page ───────────────────────────────────────────────────────────
 
 export default function PortfolioPage() {
-  const { token: cloudToken } = useAuth()
+  const { token: cloudToken, user } = useAuth()
+
+  // Auth gating — show demo content for unauthenticated users
+  const _demoTier = getUserTier(user)
+  if (_demoTier === 'demo') {
+    const DEMO_HOLDINGS = [
+      { symbol: 'AAPL', company: 'Apple Inc.', shares: 150, avgCost: 178.50, current: 242.30, sector: 'Technology' },
+      { symbol: 'MSFT', company: 'Microsoft Corp.', shares: 75, avgCost: 310.20, current: 415.80, sector: 'Technology' },
+      { symbol: 'NVDA', company: 'NVIDIA Corp.', shares: 40, avgCost: 485.00, current: 892.45, sector: 'Technology' },
+      { symbol: 'JPM', company: 'JPMorgan Chase', shares: 100, avgCost: 165.30, current: 198.50, sector: 'Financials' },
+      { symbol: 'V', company: 'Visa Inc.', shares: 60, avgCost: 262.40, current: 309.60, sector: 'Financials' },
+      { symbol: 'KO', company: 'Coca-Cola Co.', shares: 200, avgCost: 58.90, current: 62.40, sector: 'Consumer Staples' },
+    ]
+    const totalValue = DEMO_HOLDINGS.reduce((s, h) => s + h.current * h.shares, 0)
+    const totalCost = DEMO_HOLDINGS.reduce((s, h) => s + h.avgCost * h.shares, 0)
+    const totalPnl = totalValue - totalCost
+    const sectorMap: Record<string, number> = {}
+    DEMO_HOLDINGS.forEach(h => { sectorMap[h.sector] = (sectorMap[h.sector] || 0) + h.current * h.shares })
+    const sectorColors: Record<string, string> = { 'Technology': '#6366f1', 'Financials': '#f59e0b', 'Consumer Staples': '#10b981' }
+
+    return (
+      <AuthGate featureName="Portfolio Tracker" featureDesc="Track your stock holdings, dividends, and portfolio performance.">
+        <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
+          <PersistentNav />
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
+            <div style={{ marginBottom: 24 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 4px' }}>Portfolio Tracker</h1>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2)' }}>Track your holdings, monitor P&L, and analyze sector allocation</p>
+            </div>
+            {/* Summary cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 24 }}>
+              {[
+                { label: 'Portfolio Value', value: `$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'var(--text-0)' },
+                { label: 'Total P&L', value: `+$${totalPnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: '#10b981' },
+                { label: 'Return', value: `+${((totalPnl / totalCost) * 100).toFixed(1)}%`, color: '#10b981' },
+                { label: 'Holdings', value: '6', color: 'var(--text-0)' },
+              ].map(m => (
+                <div key={m.label} style={{ background: 'var(--bg-2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 5 }}>{m.label}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: m.color, fontFamily: 'monospace' }}>{m.value}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 16, marginBottom: 24, alignItems: 'start' }}>
+              {/* Holdings table */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                      {['Symbol', 'Company', 'Shares', 'Avg Cost', 'Current', 'Value', 'P&L', 'Return'].map(h => (
+                        <th key={h} style={{ padding: '9px 12px', textAlign: 'left' as const, fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DEMO_HOLDINGS.map(h => {
+                      const value = h.current * h.shares
+                      const cost = h.avgCost * h.shares
+                      const pnl = value - cost
+                      const ret = ((pnl / cost) * 100).toFixed(1)
+                      return (
+                        <tr key={h.symbol} style={{ borderBottom: '1px solid var(--border)', background: 'rgba(255,255,255,0.01)' }}>
+                          <td style={{ padding: '10px 12px', fontWeight: 700, color: '#6366f1', fontFamily: 'monospace' }}>{h.symbol}</td>
+                          <td style={{ padding: '10px 12px', color: 'var(--text-2)', fontSize: 12 }}>{h.company}</td>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>{h.shares}</td>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', color: 'var(--text-2)' }}>${h.avgCost.toFixed(2)}</td>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace' }}>${h.current.toFixed(2)}</td>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 600 }}>${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontWeight: 700, color: pnl >= 0 ? '#10b981' : '#ef4444' }}>+${pnl.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          <td style={{ padding: '10px 12px', color: '#10b981', fontFamily: 'monospace' }}>+{ret}%</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {/* Sector donut */}
+              <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: 16, minWidth: 180 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 12 }}>Sector Allocation</div>
+                <svg viewBox="0 0 120 120" style={{ width: 100, height: 100, display: 'block', margin: '0 auto 12px' }}>
+                  {(() => {
+                    const entries = Object.entries(sectorMap)
+                    const total = entries.reduce((s, [, v]) => s + v, 0)
+                    let angle = 0
+                    const r = 44, cx = 60, cy = 60
+                    return entries.map(([sector, val]) => {
+                      const pct = val / total
+                      const sweep = pct * 2 * Math.PI
+                      const x1 = cx + r * Math.sin(angle)
+                      const y1 = cy - r * Math.cos(angle)
+                      const x2 = cx + r * Math.sin(angle + sweep)
+                      const y2 = cy - r * Math.cos(angle + sweep)
+                      const large = sweep > Math.PI ? 1 : 0
+                      const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`
+                      angle += sweep
+                      return <path key={sector} d={path} fill={sectorColors[sector] || '#6b7280'} opacity={0.85} />
+                    })
+                  })()}
+                  <circle cx="60" cy="60" r="26" fill="var(--bg-2)" />
+                </svg>
+                {Object.entries(sectorMap).map(([sector, val]) => (
+                  <div key={sector} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: sectorColors[sector] || '#6b7280', flexShrink: 0 }} />
+                    <div style={{ fontSize: 10, color: 'var(--text-2)', flex: 1 }}>{sector}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'monospace' }}>{((val / totalValue) * 100).toFixed(0)}%</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic' }}>Sample portfolio — create an account to track your real holdings</div>
+          </div>
+        </div>
+      </AuthGate>
+    )
+  }
   const [activeTab, setActiveTab] = useState<'dashboard' | 'holdings' | 'dividends' | 'drip' | 'sold' | 'watchlist' | 'tax'>('dashboard')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
