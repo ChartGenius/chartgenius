@@ -3566,7 +3566,7 @@ function JournalPageInner() {
       }
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading])
+  }, [authLoading, user])
 
   // Initial cloud sync when token becomes available (or on first load if already logged in)
   useEffect(() => {

@@ -1187,7 +1187,7 @@ export default function PortfolioPage() {
     setPortfolioSettings(loadLS('cg_portfolio_settings', DEFAULT_SETTINGS))
     setDataLoaded(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading])
+  }, [authLoading, user])
 
   // Check if localStorage has data to import (show banner after login loads with empty API)
   useEffect(() => {
