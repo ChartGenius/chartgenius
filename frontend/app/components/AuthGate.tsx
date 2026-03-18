@@ -1,24 +1,19 @@
 'use client'
 
 /**
- * AuthGate.tsx — Demo-friendly auth prompt for gated pages
+ * AuthGate.tsx — Demo-friendly wrapper for gated pages
  *
- * When an unauthenticated user hits a gated page:
- * - Shows FULL demo content (no blur, fully visible)
- * - Sticky bottom banner nudges them to sign up
- * - Banner is dismissible — let them explore
- * - Does NOT redirect (keeps URL for bookmarking)
+ * Shows the FULL page with real navigation working. Content is fully
+ * interactive (tabs, nav, scroll). Only write actions are blocked.
+ * Sticky bottom banner nudges signup. Dismissible.
  */
 
 import { useState } from 'react'
 import AuthModal from './AuthModal'
 
 interface AuthGateProps {
-  /** The feature being gated, e.g. "Trade Playbooks" */
   featureName: string
-  /** Short description of what the feature does */
   featureDesc?: string
-  /** The demo page content shown in full */
   children: React.ReactNode
 }
 
@@ -28,10 +23,8 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
-      {/* Demo content — fully visible, read-only */}
-      <div style={{ pointerEvents: 'none', userSelect: 'none' }}>
-        {children}
-      </div>
+      {/* Full page content — fully interactive, navigation works */}
+      {children}
 
       {/* Sticky bottom CTA banner */}
       {!bannerDismissed && (
@@ -53,7 +46,6 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
             gap: 16,
             flexWrap: 'wrap' as const,
             boxShadow: '0 -4px 24px rgba(0,0,0,0.3)',
-            pointerEvents: 'auto',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -61,10 +53,10 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
             </svg>
             <span style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>
-              Like what you see? Create a free account to start using {featureName}.
+              You&apos;re viewing sample data. Sign up free to start tracking your own trades.
             </span>
           </div>
-          <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
+          <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => setModalOpen(true)}
               style={{
@@ -105,7 +97,6 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
                 fontSize: 16,
                 cursor: 'pointer',
                 padding: '4px 8px',
-                pointerEvents: 'auto',
               }}
               aria-label="Dismiss"
             >
@@ -115,11 +106,8 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
         </div>
       )}
 
-      {/* Auth modal */}
       {modalOpen && (
-        <AuthModal
-          onClose={() => setModalOpen(false)}
-        />
+        <AuthModal onClose={() => setModalOpen(false)} />
       )}
     </div>
   )
