@@ -696,8 +696,9 @@ export default function MarketIntel({ symbol }: { symbol?: string }) {
         color: 'var(--text-3)',
         background: 'var(--bg-0)',
       }}>
-        Data from SEC EDGAR, FRED (Federal Reserve), and Finnhub. For informational purposes only.
-        Insider trade data may be delayed up to 15 minutes.
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Insider trading data is sourced from SEC EDGAR Form 4 filings and Finnhub. Economic data from FRED (Federal Reserve). All data is provided for <strong>informational purposes only</strong> and does not constitute investment advice, trading recommendations, or an endorsement of any security. Insider transactions may reflect planned 10b5-1 trades, tax withholdings, or estate planning — not necessarily market sentiment. Data may be delayed. Always verify with official SEC filings before making trading decisions. See our{' '}
+        <a href="/legal/disclaimer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Disclaimer</a>.
       </div>
     </section>
   )
