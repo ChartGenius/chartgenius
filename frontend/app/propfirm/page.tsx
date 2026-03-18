@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { getUserTier } from '../utils/tierAccess'
+import AuthGate from '../components/AuthGate'
 import PersistentNav from '../components/PersistentNav'
 import { IconTarget } from '../components/Icons'
 import {
@@ -1583,6 +1586,7 @@ function DrawdownDisclaimer() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PropFirmPage() {
+  const { user } = useAuth()
   const [accounts, setAccounts]       = useState<PropFirmAccount[]>([])
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState<PropFirmAccount | null>(null)
@@ -1617,6 +1621,24 @@ export default function PropFirmPage() {
   const handleSelect = useCallback((acc: PropFirmAccount) => {
     setSelectedAccount(acc)
   }, [])
+
+  // Auth gating
+  const tier = getUserTier(user)
+  if (tier === 'demo') {
+    return (
+      <AuthGate
+        featureName="Prop Firm Tracker"
+        featureDesc="Track your prop firm account rules, drawdown limits, and daily loss caps. Free account required."
+      >
+        <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-0)' }}>
+          <PersistentNav />
+          <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800 }}>Prop Firm Tracker</h1>
+          </div>
+        </div>
+      </AuthGate>
+    )
+  }
 
   if (!mounted) {
     return (
@@ -1765,6 +1787,11 @@ export default function PropFirmPage() {
           onAdd={handleAdd}
         />
       )}
+      <div style={{ padding: '12px 24px', borderTop: '1px solid var(--border)', marginTop: 8 }}>
+        <p style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center', margin: 0 }}>
+          Calculations are based on published contract specifications and user-entered data. Actual P&amp;L may differ due to commissions, fees, slippage, and market conditions. Always verify with your broker.
+        </p>
+      </div>
     </div>
   )
 }

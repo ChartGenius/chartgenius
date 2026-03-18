@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Cookie Policy — TradVue',
   description: 'Learn about the cookies TradVue uses and how to manage your cookie preferences.',
   alternates: {
-    canonical: 'https://tradvue.com/legal/cookies',
+    canonical: 'https://www.tradvue.com/legal/cookies',
   },
   robots: 'noindex, follow',
 }

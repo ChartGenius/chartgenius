@@ -686,6 +686,188 @@ class FinnhubService {
     const hours = eastern.getHours() + eastern.getMinutes() / 60;
     return day >= 1 && day <= 5 && hours >= 9.5 && hours < 16;
   }
+
+  // ──────────────────────────────────────────
+  // Insider Transactions (Form 4 via Finnhub)
+  // ──────────────────────────────────────────
+
+  /**
+   * Get insider transactions for a symbol.
+   * Cache: 30 minutes
+   */
+  async getInsiderTransactions(symbol) {
+    const upperSymbol = symbol.toUpperCase();
+    const cacheKey = `finnhub:insider_transactions:${upperSymbol}`;
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      if (!this.apiKey) return { symbol: upperSymbol, data: [], source: 'finnhub' };
+
+      try {
+        await externalAPILimiter.canMakeRequest('finnhub', 55, 60000);
+
+        const response = await axios.get(`${FINNHUB_BASE}/stock/insider-transactions`, {
+          params: { symbol: upperSymbol, token: this.apiKey },
+          timeout: 10000
+        });
+
+        const transactions = (response.data?.data || []).map(t => ({
+          symbol: upperSymbol,
+          name: t.name || '',
+          share: t.share || 0,
+          change: t.change || 0,
+          filingDate: t.filingDate || null,
+          transactionDate: t.transactionDate || null,
+          transactionCode: t.transactionCode || '',
+          transactionType: t.transactionCode === 'P' ? 'Buy' :
+                           t.transactionCode === 'S' ? 'Sell' :
+                           t.transactionCode === 'A' ? 'Award' : t.transactionCode || 'Other',
+          value: t.share && t.change ? Math.abs(t.change * (t.share / Math.abs(t.share || 1))) : null,
+          source: 'finnhub'
+        }));
+
+        return { symbol: upperSymbol, data: transactions, source: 'finnhub' };
+      } catch (error) {
+        console.error(`[Finnhub] Insider transactions error for ${upperSymbol}:`, error.message);
+        return { symbol: upperSymbol, data: [], source: 'finnhub', error: error.message };
+      }
+    }, 30 * 60); // 30 min cache
+  }
+
+  // ──────────────────────────────────────────
+  // Earnings Calendar
+  // ──────────────────────────────────────────
+
+  /**
+   * Get earnings calendar for a date range.
+   * Cache: 1 hour
+   */
+  async getEarningsCalendar({ from = null, to = null } = {}) {
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 3600 * 1000);
+    const fromDate = from || today.toISOString().split('T')[0];
+    const toDate = to || nextWeek.toISOString().split('T')[0];
+    const cacheKey = `finnhub:earnings_calendar:${fromDate}:${toDate}`;
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      if (!this.apiKey) return { earningsCalendar: [], source: 'finnhub' };
+
+      try {
+        await externalAPILimiter.canMakeRequest('finnhub', 55, 60000);
+
+        const response = await axios.get(`${FINNHUB_BASE}/calendar/earnings`, {
+          params: { from: fromDate, to: toDate, token: this.apiKey },
+          timeout: 10000
+        });
+
+        const earnings = (response.data?.earningsCalendar || []).map(e => ({
+          symbol: e.symbol || '',
+          date: e.date || '',
+          hour: e.hour || '',
+          epsEstimate: e.epsEstimate || null,
+          epsActual: e.epsActual || null,
+          revenueEstimate: e.revenueEstimate || null,
+          revenueActual: e.revenueActual || null,
+          year: e.year || null,
+          quarter: e.quarter || null,
+          source: 'finnhub'
+        }));
+
+        return { earningsCalendar: earnings, from: fromDate, to: toDate, source: 'finnhub' };
+      } catch (error) {
+        console.error('[Finnhub] Earnings calendar error:', error.message);
+        return { earningsCalendar: [], source: 'finnhub', error: error.message };
+      }
+    }, 60 * 60); // 1 hour cache
+  }
+
+  // ──────────────────────────────────────────
+  // IPO Calendar
+  // ──────────────────────────────────────────
+
+  /**
+   * Get upcoming IPO calendar for a date range.
+   * Cache: 1 hour
+   */
+  async getIPOCalendar({ from = null, to = null } = {}) {
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 3600 * 1000);
+    const fromDate = from || today.toISOString().split('T')[0];
+    const toDate = to || nextWeek.toISOString().split('T')[0];
+    const cacheKey = `finnhub:ipo_calendar:${fromDate}:${toDate}`;
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      if (!this.apiKey) return { ipoCalendar: [], source: 'finnhub' };
+
+      try {
+        await externalAPILimiter.canMakeRequest('finnhub', 55, 60000);
+
+        const response = await axios.get(`${FINNHUB_BASE}/calendar/ipo`, {
+          params: { from: fromDate, to: toDate, token: this.apiKey },
+          timeout: 10000
+        });
+
+        const ipos = (response.data?.ipoCalendar || []).map(ipo => ({
+          symbol: ipo.symbol || '',
+          name: ipo.name || '',
+          date: ipo.date || '',
+          price: ipo.price || null,
+          status: ipo.status || '',
+          numberOfShares: ipo.numberOfShares || null,
+          totalSharesValue: ipo.totalSharesValue || null,
+          exchange: ipo.exchange || '',
+          source: 'finnhub'
+        }));
+
+        return { ipoCalendar: ipos, from: fromDate, to: toDate, source: 'finnhub' };
+      } catch (error) {
+        console.error('[Finnhub] IPO calendar error:', error.message);
+        return { ipoCalendar: [], source: 'finnhub', error: error.message };
+      }
+    }, 60 * 60); // 1 hour cache
+  }
+
+  // ──────────────────────────────────────────
+  // SEC Filings (via Finnhub)
+  // ──────────────────────────────────────────
+
+  /**
+   * Get SEC filings for a symbol via Finnhub.
+   * Cache: 30 minutes
+   */
+  async getSECFilings(symbol) {
+    const upperSymbol = symbol.toUpperCase();
+    const cacheKey = `finnhub:sec_filings:${upperSymbol}`;
+
+    return await cache.cacheAPICall(cacheKey, async () => {
+      if (!this.apiKey) return [];
+
+      try {
+        await externalAPILimiter.canMakeRequest('finnhub', 55, 60000);
+
+        const response = await axios.get(`${FINNHUB_BASE}/stock/filings`, {
+          params: { symbol: upperSymbol, token: this.apiKey },
+          timeout: 10000
+        });
+
+        return (response.data || []).map(f => ({
+          symbol: upperSymbol,
+          accessNumber: f.accessNumber || '',
+          filedDate: f.filedDate || '',
+          acceptedDate: f.acceptedDate || '',
+          reportType: f.form || '',
+          url: f.reportUrl || '',
+          name: f.name || '',
+          source: 'finnhub'
+        }));
+      } catch (error) {
+        console.error(`[Finnhub] SEC filings error for ${upperSymbol}:`, error.message);
+        return [];
+      }
+    }, 30 * 60); // 30 min cache
+  }
+
+
+
 }
 
 module.exports = new FinnhubService();

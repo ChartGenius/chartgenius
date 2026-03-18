@@ -447,6 +447,7 @@ function StockInfoCard({ info, loading }: { info: StockInfo | null; loading: boo
           <img
             src={info.logo}
             alt={info.companyName}
+            loading="lazy"
             style={{ width: 36, height: 36, borderRadius: 8, background: 'white', padding: 2 }}
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />

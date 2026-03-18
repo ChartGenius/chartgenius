@@ -280,7 +280,7 @@ const features = [
   {
     icon: <IconTools />,
     title: '30+ Trading Calculators',
-    desc: 'Options Profit, Futures Risk/Reward, Position Sizing, Risk of Ruin, Compound Growth, Forex Pip, Trade Expectancy, Correlation Matrix, and more — all free, no sign-up.',
+    desc: 'Options Profit, Futures Risk/Reward, Position Sizing, Risk of Ruin, Compound Growth, Forex Pip, Trade Expectancy, Correlation Matrix, and more — free to use, no credit card required.',
     color: 'var(--blue)',
   },
   {
@@ -443,7 +443,7 @@ export default function LandingPage() {
                 fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em',
                 color: 'var(--blue)', background: 'var(--blue-dim)',
                 border: '1px solid rgba(74,158,255,0.25)', padding: '2px 6px', borderRadius: '4px',
-              }}>BETA</span>
+              }}>NEW</span>
             </Link>
 
             {/* Desktop nav links */}
@@ -500,7 +500,7 @@ export default function LandingPage() {
           }} />
 
           <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', position: 'relative' }}>
-            {/* Beta badge */}
+            {/* NEW badge */}
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               background: 'rgba(74,158,255,0.08)', border: '1px solid rgba(74,158,255,0.2)',
@@ -508,7 +508,7 @@ export default function LandingPage() {
               fontSize: '12px', color: 'var(--blue)', fontWeight: 600, letterSpacing: '0.02em',
             }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--blue)', display: 'inline-block', animation: 'lp-pulse 2s ease-in-out infinite' }} />
-              Beta now open — free Pro access during beta
+              Start free — upgrade anytime
             </div>
 
             {/* Hero logo with tagline */}
@@ -771,7 +771,7 @@ export default function LandingPage() {
               gap: '40px',
               marginBottom: '64px',
             }}>
-              <StatCounter value={1200} label="traders in beta" suffix="+" />
+              <StatCounter value={1200} label="traders" suffix="+" />
               <StatCounter value={15000} label="hours of data analyzed daily" suffix="+" />
               <StatCounter value={30} label="built-in calculators" suffix="+" />
               <StatCounter value={10} label="years of AI training data" suffix="+" />
@@ -857,11 +857,11 @@ export default function LandingPage() {
                 Start Free. Scale When You're Ready.
               </h2>
               <p style={{ fontSize: '16px', color: 'var(--text-2)', maxWidth: '500px', margin: '0 auto', lineHeight: 1.6 }}>
-                No credit card. During beta period. All early access users get free Pro through beta.
+                No credit card required. Start with full access free for 3 weeks.
               </p>
             </div>
 
-            {/* Beta offer banner */}
+            {/* Offer banner */}
             <div style={{
               background: 'linear-gradient(135deg, rgba(74,158,255,0.1) 0%, rgba(167,139,250,0.1) 100%)',
               border: '1px solid rgba(74,158,255,0.25)',
@@ -869,7 +869,7 @@ export default function LandingPage() {
               textAlign: 'center', marginBottom: '40px',
               fontSize: '15px', color: 'var(--text-0)', fontWeight: 600,
             }}>
-              Free Pro access for all early beta users. No credit card required. Valid during beta period.
+              Start free. 3-week full trial. Upgrade to Pro for $24/month.
             </div>
 
             {/* Pricing cards */}
@@ -890,7 +890,7 @@ export default function LandingPage() {
                   <div style={{ fontSize: '40px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-0)', lineHeight: 1 }}>
                     Free
                   </div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '6px' }}>Forever</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '6px' }}>No credit card required</div>
                 </div>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, marginBottom: '28px' }}>
                   {pricingFree.map(item => (
@@ -940,7 +940,7 @@ export default function LandingPage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                     <div style={{ fontSize: '40px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-0)', lineHeight: 1 }}>
-                      $29
+                      $24
                     </div>
                     <div style={{ fontSize: '14px', color: 'var(--text-2)' }}>/month</div>
                   </div>
@@ -950,7 +950,7 @@ export default function LandingPage() {
                     borderRadius: '6px', padding: '4px 10px', display: 'inline-block',
                     color: 'var(--blue)', fontWeight: 600,
                   }}>
-                    Free during beta
+                    Save 30% annually
                   </div>
                 </div>
 
@@ -976,10 +976,23 @@ export default function LandingPage() {
                   onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                   onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none'; }}
                 >
-                  Join Beta (Free Pro Access)
+                  Get Started Free
                 </button>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* ── Disclaimer ── */}
+        <section style={{
+          padding: '12px 24px',
+          background: 'rgba(255,255,255,0.02)',
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+        }}>
+          <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: 11, color: 'rgba(180,180,200,0.5)', lineHeight: 1.6 }}>
+              TradVue is a trading journal and analytics tool — not a financial advisor. Nothing on this platform constitutes financial advice, trading recommendations, or guarantees of any kind. Trading involves substantial risk of loss.
+            </p>
           </div>
         </section>
 
@@ -1002,7 +1015,7 @@ export default function LandingPage() {
                 Get Real-Time Market Intelligence
               </h2>
               <p style={{ fontSize: '15px', color: 'var(--text-2)', lineHeight: 1.6 }}>
-                Join traders who react faster. We'll send you beta access + market tips. No spam. Cancel anytime.
+                Join traders who react faster. We'll send you free access + market tips. No spam. Cancel anytime.
               </p>
             </div>
 

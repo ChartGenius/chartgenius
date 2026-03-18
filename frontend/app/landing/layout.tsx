@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   // ── Title & Description ────────────────────────────────────────────────
   title: 'TradVue — Real-Time Market Intelligence for Active Traders',
   description:
-    'AI-powered news feeds, sentiment analysis, and smart alerts. React faster to market moves. Free beta access — no credit card required.',
+    'AI-powered news feeds, sentiment analysis, and smart alerts. React faster to market moves. Free to start — no credit card required.',
 
   // ── Keywords ──────────────────────────────────────────────────────────
   keywords: [
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     site: '@tradvue',
     creator: '@tradvue',
     title: 'TradVue — Real-Time Market Intelligence for Active Traders',
-    description: 'AI-powered news, sentiment analysis, and smart alerts. Free beta access.',
+    description: 'AI-powered news, sentiment analysis, and smart alerts. Free to start.',
     images: ['https://www.tradvue.com/og-twitter.png'],
   },
 
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
 
   // ── Canonical ─────────────────────────────────────────────────────────
   alternates: {
-    canonical: 'https://tradvue.com/landing',
+    canonical: 'https://www.tradvue.com/landing',
   },
 }
 

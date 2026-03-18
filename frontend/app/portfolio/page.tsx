@@ -2244,7 +2244,7 @@ function HoldingsTab({
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         {info?.logo && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={info.logo} alt="" style={{ width: 16, height: 16, borderRadius: 3, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                          <img src={info.logo} alt={`${h.ticker} company logo`} style={{ width: 16, height: 16, borderRadius: 3, objectFit: 'contain' }} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                         )}
                         <div>
                           <div style={{ fontWeight: 700, color: 'var(--text-0)' }}>{h.ticker}</div>
@@ -2378,7 +2378,7 @@ function HoldingsTab({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   {peekInfo.logo && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={peekInfo.logo} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                    <img src={peekInfo.logo} alt={`${peekInfo.companyName} company logo`} style={{ width: 24, height: 24, borderRadius: 4, objectFit: 'contain' }} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                   )}
                   <div>
                     <div style={{ fontWeight: 700 }}>{peekInfo.companyName}</div>
@@ -2594,7 +2594,7 @@ function DividendsTab({
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 {info?.logo && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={info.logo} alt="" style={{ width: 16, height: 16, borderRadius: 2, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  <img src={info.logo} alt={`${ticker} company logo`} style={{ width: 16, height: 16, borderRadius: 2, objectFit: 'contain' }} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 )}
                 <span style={{ fontWeight: 700, fontSize: 13 }}>{ticker}</span>
                 {info?.dividendFrequency && (
@@ -3124,7 +3124,7 @@ function WatchlistTab({
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         {info?.logo && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={info.logo} alt="" style={{ width: 16, height: 16, borderRadius: 2, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                          <img src={info.logo} alt={`${w.ticker} company logo`} style={{ width: 16, height: 16, borderRadius: 2, objectFit: 'contain' }} loading="lazy" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                         )}
                         <div>
                           <div style={{ fontWeight: 700 }}>{w.ticker}</div>

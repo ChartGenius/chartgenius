@@ -107,6 +107,7 @@ const cachePrivate    = (_, res, next) => { res.set('Cache-Control', 'private, n
 try {
   app.use('/api/auth',     cachePrivate, require('./routes/auth'));
   app.use('/api/user',     cachePrivate, require('./routes/userData'));
+  app.use('/api/user',     cachePrivate, require('./routes/userManagement'));
 } catch (e) {
   console.warn('[auth] Auth routes failed to load:', e.message);
   // Fallback: register a stub so users get a clear 503 instead of 404
@@ -142,6 +143,8 @@ app.use('/api/admin',         cachePrivate,   require('./routes/admin'));       
 app.use('/api/announcements', cachePublic30s, require('./routes/announcements'));   // Public announcement banner
 app.use('/api/stripe',        cachePrivate,   require('./routes/stripe'));           // Stripe payment integration
 app.use('/api/push',          cachePrivate,   require('./routes/push'));             // PWA push notification subscriptions
+// Market Intelligence routes (public — no auth required)
+app.use('/api',               require('./routes/marketIntel'));         // FRED, SEC EDGAR, earnings/IPO calendars
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

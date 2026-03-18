@@ -1,5 +1,5 @@
 # robots.txt — TradVue (https://www.tradvue.com)
-# Updated: 2026-03-11
+# Updated: 2026-03-16
 
 User-agent: *
 
@@ -15,6 +15,19 @@ Allow: /stock/
 Allow: /changelog
 Allow: /status
 Allow: /legal/
+Allow: /best-trading-journal
+Allow: /prop-firm-tracker
+Allow: /futures-trading-journal
+Allow: /options-trading-journal
+Allow: /trading-calculators
+Allow: /post-trade-ritual
+Allow: /playbooks
+Allow: /ritual
+Allow: /coach
+Allow: /propfirm
+Allow: /rules
+Allow: /pricing
+Allow: /changelog
 
 # Block authenticated/private app routes
 Disallow: /dashboard
