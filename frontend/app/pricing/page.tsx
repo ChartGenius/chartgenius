@@ -29,6 +29,7 @@ interface PriceOption {
 
 const FEATURES = [
   { icon: '📊', text: 'Unlimited trade journal history' },
+  { icon: '🚫', text: 'Ad-free experience — clean, distraction-free interface' },
   { icon: '☁️', text: 'Cloud auto-sync across all devices' },
   { icon: '📥', text: 'Full CSV import/export — no date restrictions' },
   { icon: '🧠', text: 'Advanced analytics & reports' },
@@ -231,6 +232,7 @@ export default function PricingPage() {
 
 function CompareTable() {
   const rows = [
+    { feature: 'Advertisements', free: 'Ad-supported', pro: '✓ Ad-free' },
     { feature: 'Trade journal', free: '30-day window', pro: 'Unlimited history' },
     { feature: 'CSV import', free: 'Last 30 days only', pro: 'Any date range' },
     { feature: 'CSV export', free: 'Last 30 days only', pro: 'Full export' },

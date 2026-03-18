@@ -286,6 +286,7 @@ export default function BestTradingJournalPage() {
             </thead>
             <tbody>
               {[
+                ['Ad-Free Experience', '✓ Pro', 'N/A'],
                 ['AI Trade Analysis', '✓', '✗'],
                 ['30+ Calculators', '✓', '✗'],
                 ['Prop Firm Sync', '✓', '✗'],
@@ -437,6 +438,7 @@ export default function BestTradingJournalPage() {
               price: '$24/month',
               features: [
                 'Everything in Free',
+                'Ad-free experience',
                 'AI trade analysis',
                 'Prop firm sync',
                 'Advanced patterns',

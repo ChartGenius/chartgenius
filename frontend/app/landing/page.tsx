@@ -376,6 +376,7 @@ export default function LandingPage() {
   ]
 
   const pricingPro = [
+    'Ad-free experience — no distractions',
     'Real-time news (0-second delay)',
     'AI sentiment analysis (live)',
     'Unlimited custom alerts',
