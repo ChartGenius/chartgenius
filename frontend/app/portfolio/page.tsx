@@ -1095,8 +1095,11 @@ export default function PortfolioPage() {
   const { token: cloudToken, user, loading: authLoading } = useAuth()
 
   // Auth gating — tier check (used throughout component, never causes early return)
+  // Check localStorage token directly to avoid race condition — if a token exists,
+  // the user IS logged in even if useAuth() hasn't hydrated yet
+  const hasStoredToken = typeof window !== 'undefined' && !!localStorage.getItem('cg_token')
   const tier = getUserTier(user)
-  const isDemo = tier === 'demo'
+  const isDemo = tier === 'demo' && !hasStoredToken && !authLoading
 
   // Demo holdings data — injected into real state when isDemo (prices as of Mar 17, 2026)
   // AAPL: $0.26/qtr → $1.04 annual → 0.41% yield at $254.23

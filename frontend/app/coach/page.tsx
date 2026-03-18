@@ -449,7 +449,7 @@ function PastSummaryAccordion({ summary, thresholdLevel }: {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function CoachPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { settings, openSettings } = useSettings()
   const [currentSummary, setCurrentSummary] = useState<WeeklySummary | null>(null)
   const [pastSummaries, setPastSummaries] = useState<WeeklySummary[]>([])
@@ -459,7 +459,8 @@ export default function CoachPage() {
   const [authModalOpen, setAuthModalOpen] = useState(false)
 
   const tier = getUserTier(user)
-  const isDemo = tier === 'demo'
+  const hasStoredToken = typeof window !== 'undefined' && !!localStorage.getItem('cg_token')
+  const isDemo = tier === 'demo' && !hasStoredToken && !authLoading
 
   // Sample data for demo mode — matches demo journal trades (9 trades, Mar 10-14 2026)
   // win rate 88.9%, net P&L +$3,610, avg R 1.47

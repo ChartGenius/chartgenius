@@ -1151,9 +1151,10 @@ const btnGhost: React.CSSProperties = {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function RitualPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const tier = getUserTier(user)
-  const isDemo = tier === 'demo'
+  const hasStoredToken = typeof window !== "undefined" && !!localStorage.getItem("cg_token")
+  const isDemo = tier === "demo" && !hasStoredToken && !authLoading
   const [entries, setEntries] = useState<RitualEntry[]>([])
   const [streak, setStreak] = useState<StreakData>({ currentStreak: 0, longestStreak: 0, lastCompletedDate: '', milestones: [] })
   const [todayEntry, setTodayEntry] = useState<RitualEntry | undefined>(undefined)

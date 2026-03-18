@@ -433,7 +433,7 @@ function ViolationRow({ v, onAck }: { v: RuleViolation; onAck: (id: string) => v
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function RulesPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [rules, setRules] = useState<TradingRule[]>([])
   const [violations, setViolations] = useState<RuleViolation[]>([])
   const [showAddModal, setShowAddModal] = useState(false)
@@ -531,7 +531,9 @@ export default function RulesPage() {
 
   // Auth gating
   const tier = getUserTier(user)
-  if (tier === 'demo') {
+  const hasStoredToken = typeof window !== "undefined" && !!localStorage.getItem("cg_token")
+  const isDemo = tier === "demo" && !hasStoredToken && !authLoading
+  if (isDemo) {
     const DEMO_RULES_DATA = [
       {
         id: 'demo-r1', name: 'Max 3 Trades Per Day', type: 'max_trades_per_day' as TradingRule['type'],

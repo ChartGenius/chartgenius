@@ -1641,7 +1641,7 @@ const DEMO_PROP_ACCOUNTS: PropFirmAccount[] = [
 ]
 
 export default function PropFirmPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [accounts, setAccounts]       = useState<PropFirmAccount[]>([])
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState<PropFirmAccount | null>(null)
@@ -1649,7 +1649,8 @@ export default function PropFirmPage() {
   const [authModalOpenProp, setAuthModalOpenProp] = useState(false)
 
   const tier = getUserTier(user)
-  const isDemo = tier === 'demo'
+  const hasStoredToken = typeof window !== 'undefined' && !!localStorage.getItem('cg_token')
+  const isDemo = tier === 'demo' && !hasStoredToken && !authLoading
 
   // Load from localStorage on mount (or inject demo data)
   useEffect(() => {

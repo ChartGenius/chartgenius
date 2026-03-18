@@ -3521,7 +3521,10 @@ function JournalPageInner() {
 
   // Auth gating — tier check (never causes early return; isDemo propagates to write ops)
   const tier = getUserTier(user)
-  const isDemo = tier === 'demo'
+  // Check localStorage token directly to avoid race condition — if a token exists,
+  // the user IS logged in even if useAuth() hasn't hydrated yet
+  const hasStoredToken = typeof window !== 'undefined' && !!localStorage.getItem('cg_token')
+  const isDemo = tier === 'demo' && !hasStoredToken && !authLoading
 
   // Demo trades — injected into real state when isDemo (prices verified Mar 2026)
   const DEMO_TRADES: Trade[] = [
