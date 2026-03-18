@@ -3505,7 +3505,7 @@ function JournalPageInner() {
   // Pre-fill from URL params (from watchlist +LOG button)
   const [prefillParams, setPrefillParams] = useState<{ symbol?: string; price?: string; asset?: string } | null>(null)
 
-  const { token, user } = useAuth()
+  const { token, user, loading: authLoading } = useAuth()
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const [upgradeFeatureName, setUpgradeFeatureName] = useState('')
   const [upgradeFeatureDesc, setUpgradeFeatureDesc] = useState('')
@@ -3537,6 +3537,9 @@ function JournalPageInner() {
   ]
 
   useEffect(() => {
+    // Wait for auth to finish loading before deciding demo vs real
+    if (authLoading) return
+
     if (isDemo) {
       setTrades(DEMO_TRADES)
       initialLoadDone.current = true
@@ -3559,7 +3562,8 @@ function JournalPageInner() {
         window.history.replaceState({}, '', '/journal')
       }
     } catch {}
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading])
 
   // Initial cloud sync when token becomes available (or on first load if already logged in)
   useEffect(() => {

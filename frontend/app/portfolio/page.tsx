@@ -1092,7 +1092,7 @@ function PortfolioExportButton() {
 // ─── Portfolio Page ───────────────────────────────────────────────────────────
 
 export default function PortfolioPage() {
-  const { token: cloudToken, user } = useAuth()
+  const { token: cloudToken, user, loading: authLoading } = useAuth()
 
   // Auth gating — tier check (used throughout component, never causes early return)
   const tier = getUserTier(user)
@@ -1160,6 +1160,9 @@ export default function PortfolioPage() {
   // ─── Check auth and load data ─────────────────────────────────────────────
 
   useEffect(() => {
+    // Wait for auth to finish loading before deciding demo vs real
+    if (authLoading) return
+
     const token = getAuthToken()
     const loggedIn = !!token
     setIsLoggedIn(loggedIn)
@@ -1181,7 +1184,7 @@ export default function PortfolioPage() {
     setPortfolioSettings(loadLS('cg_portfolio_settings', DEFAULT_SETTINGS))
     setDataLoaded(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [authLoading])
 
   // Check if localStorage has data to import (show banner after login loads with empty API)
   useEffect(() => {
