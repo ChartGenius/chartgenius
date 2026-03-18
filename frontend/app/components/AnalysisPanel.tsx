@@ -784,7 +784,9 @@ export default function AnalysisPanel({ wlQuotes, tickerQuotes, calendarEvents, 
         <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 8, paddingLeft: 4 }}>
           SEC EDGAR · FRED · Finnhub
         </div>
-        <MarketIntel />
+        <div style={{ maxHeight: 480, overflowY: 'auto' }}>
+          <MarketIntel />
+        </div>
       </Card>
 
       {/* ── Disclaimer ────────────────────────────────────────────────────── */}

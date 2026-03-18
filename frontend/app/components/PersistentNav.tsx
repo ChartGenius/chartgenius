@@ -66,7 +66,7 @@ const NAV_ITEMS: Array<{ label: string; href: string; icon?: React.ReactNode; au
   { label: 'AI Coach',  href: '/coach',   icon: <NavIconCoach /> },
   { label: 'Rules',     href: '/rules',   icon: <NavIconRules /> },
   { label: 'Help',      href: '/help' },
-  { label: '⚡ Upgrade', href: '/pricing', icon: <NavIconUpgrade /> },
+  { label: 'Upgrade', href: '/pricing', icon: <NavIconUpgrade /> },
   { label: 'Account',   href: '/account', icon: <NavIconAccount />, authOnly: true },
 ]
 

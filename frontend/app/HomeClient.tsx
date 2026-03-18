@@ -721,7 +721,10 @@ export default function HomeClient() {
           <a href="/portfolio" className={`nav-item${activeNav === 'Portfolio' ? ' active' : ''}`} style={{ textDecoration: 'none' }}>Portfolio</a>
           <a href="/tools"     className={`nav-item${activeNav === 'Tools'     ? ' active' : ''}`} style={{ textDecoration: 'none' }}>Tools</a>
           <a href="/journal"   className={`nav-item${activeNav === 'Journal'   ? ' active' : ''}`} style={{ textDecoration: 'none' }}>Journal</a>
-          <a href="/pricing"   className="nav-item" style={{ textDecoration: 'none', color: 'var(--purple)', fontWeight: 600 }}>⚡ Upgrade</a>
+          <a href="/pricing"   className="nav-item" style={{ textDecoration: 'none', color: 'var(--purple)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Upgrade
+          </a>
           {/* ── More dropdown ──────────────────────────────────────────────── */}
           <div ref={moreDropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
             <button
@@ -750,8 +753,8 @@ export default function HomeClient() {
                   { label: 'Prop Firm Tracker',  href: '/propfirm' },
                   { label: 'Trade Rules',        href: '/rules' },
                   { label: 'Help',               href: '/help' },
-                  { label: '⚡ Upgrade',          href: '/pricing' },
-                  ...(user ? [{ label: '👤 Account', href: '/account' }] : []),
+                  { label: 'Upgrade',             href: '/pricing' },
+                  ...(user ? [{ label: 'Account', href: '/account' }] : []),
                 ].map(item => (
                   <a
                     key={item.href}
@@ -794,9 +797,9 @@ export default function HomeClient() {
           </OnboardingTooltip>
 
           {user ? (
-            <span className="header-user-email" title={user.email} onClick={() => markChecklistItem('completeProfile')}>
+            <a href="/account" className="header-user-email" title={user.email} style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
               {user.email}
-            </span>
+            </a>
           ) : (
             <OnboardingTooltip id="sign-in-btn" content="Sign in to sync your watchlist across devices" position="bottom" delayMs={6000}>
               <button className="login-btn" onClick={() => setAuthModalOpen(true)}>Sign In</button>

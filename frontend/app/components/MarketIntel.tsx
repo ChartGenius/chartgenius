@@ -223,8 +223,8 @@ function InsiderTradesTab({ symbol }: { symbol?: string }) {
             <th>Ticker</th>
             <th>Insider</th>
             <th>Type</th>
+            <th>Shares</th>
             <th>Date</th>
-            <th>Source</th>
             <th>Details</th>
           </tr>
         </thead>
@@ -251,10 +251,12 @@ function InsiderTradesTab({ symbol }: { symbol?: string }) {
                     {item.transactionType || item.filingType || '—'}
                   </span>
                 </td>
+                <td style={{ whiteSpace: 'nowrap', fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-1)' }}>
+                  {item.shares ? item.shares.toLocaleString() : '—'}
+                </td>
                 <td style={{ whiteSpace: 'nowrap', color: 'var(--text-2)', fontSize: 11 }}>
                   {fmtDate(item.date)}
                 </td>
-                <td style={{ fontSize: 10, color: 'var(--text-3)' }}>{item.source}</td>
                 <td>
                   {item.url ? (
                     <a href={item.url} target="_blank" rel="noopener noreferrer"
