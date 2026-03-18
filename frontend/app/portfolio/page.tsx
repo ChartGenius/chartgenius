@@ -1395,11 +1395,11 @@ export default function PortfolioPage() {
   }, [isLoggedIn])
 
   // Save to localStorage always (cloud sync reads from localStorage)
-  useEffect(() => { if (dataLoaded) saveLS('cg_portfolio_holdings', holdings) }, [holdings, dataLoaded])
-  useEffect(() => { if (dataLoaded) saveLS('cg_portfolio_dividends', dividendOverrides) }, [dividendOverrides, dataLoaded])
-  useEffect(() => { if (dataLoaded) saveLS('cg_portfolio_sold', soldPositions) }, [soldPositions, dataLoaded])
-  useEffect(() => { if (dataLoaded) saveLS('cg_portfolio_watchlist', watchlist) }, [watchlist, dataLoaded])
-  useEffect(() => { saveLS('cg_portfolio_snapshots', snapshots) }, [snapshots])
+  useEffect(() => { if (dataLoaded && !isDemo) saveLS('cg_portfolio_holdings', holdings) }, [holdings, dataLoaded, isDemo])
+  useEffect(() => { if (dataLoaded && !isDemo) saveLS('cg_portfolio_dividends', dividendOverrides) }, [dividendOverrides, dataLoaded, isDemo])
+  useEffect(() => { if (dataLoaded && !isDemo) saveLS('cg_portfolio_sold', soldPositions) }, [soldPositions, dataLoaded, isDemo])
+  useEffect(() => { if (dataLoaded && !isDemo) saveLS('cg_portfolio_watchlist', watchlist) }, [watchlist, dataLoaded, isDemo])
+  useEffect(() => { if (!isDemo) saveLS('cg_portfolio_snapshots', snapshots) }, [snapshots, isDemo])
 
   // ── Cloud sync (cloudSync / cg_token) ─────────────────────────────────────
   // Runs alongside the existing portfolio API sync — additive, non-breaking
