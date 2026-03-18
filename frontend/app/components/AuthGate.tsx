@@ -1,11 +1,12 @@
 'use client'
 
 /**
- * AuthGate.tsx — Inline auth prompt for gated pages
+ * AuthGate.tsx — Demo-friendly auth prompt for gated pages
  *
  * When an unauthenticated user hits a gated page:
- * - Shows page content dimmed/blurred in background
- * - Overlays a clean auth prompt
+ * - Shows FULL demo content (no blur, fully visible)
+ * - Sticky bottom banner nudges them to sign up
+ * - Banner is dismissible — let them explore
  * - Does NOT redirect (keeps URL for bookmarking)
  */
 
@@ -17,133 +18,102 @@ interface AuthGateProps {
   featureName: string
   /** Short description of what the feature does */
   featureDesc?: string
-  /** The blurred/dimmed page content shown behind */
+  /** The demo page content shown in full */
   children: React.ReactNode
 }
 
 export default function AuthGate({ featureName, featureDesc, children }: AuthGateProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh' }}>
-      {/* Blurred background content */}
-      <div
-        aria-hidden="true"
-        style={{
-          filter: 'blur(3px)',
-          opacity: 0.7,
-          pointerEvents: 'none',
-          userSelect: 'none',
-        }}
-      >
+      {/* Demo content — fully visible, read-only */}
+      <div style={{ pointerEvents: 'none', userSelect: 'none' }}>
         {children}
       </div>
 
-      {/* Auth overlay */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 100,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px',
-          background: 'rgba(0, 0, 0, 0.4)',
-          backdropFilter: 'blur(1px)',
-          WebkitBackdropFilter: 'blur(1px)',
-        }}
-      >
+      {/* Sticky bottom CTA banner */}
+      {!bannerDismissed && (
         <div
           style={{
-            background: 'var(--bg-1, #1a1a2e)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 20,
-            padding: '40px 36px',
-            maxWidth: 440,
-            width: '100%',
-            textAlign: 'center',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
-          }}
-        >
-          {/* Icon */}
-          <div style={{
-            width: 56,
-            height: 56,
-            borderRadius: 16,
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.25))',
-            border: '1px solid rgba(99,102,241,0.3)',
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.95), rgba(139,92,246,0.95))',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderTop: '1px solid rgba(255,255,255,0.15)',
+            padding: '14px 24px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 20px',
-            fontSize: 24,
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            gap: 16,
+            flexWrap: 'wrap' as const,
+            boxShadow: '0 -4px 24px rgba(0,0,0,0.3)',
+            pointerEvents: 'auto',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff', flexShrink: 0 }}>
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
             </svg>
+            <span style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>
+              Like what you see? Create a free account to start using {featureName}.
+            </span>
           </div>
-
-          {/* Headline */}
-          <h2 style={{
-            margin: '0 0 10px',
-            fontSize: 22,
-            fontWeight: 800,
-            color: 'var(--text-0, #f9fafb)',
-            letterSpacing: '-0.02em',
-          }}>
-            Start your trading journey
-          </h2>
-
-          <p style={{
-            margin: '0 0 28px',
-            fontSize: 14,
-            color: 'var(--text-2, #9ca3af)',
-            lineHeight: 1.6,
-          }}>
-            {`See what ${featureName} can do for your trading. Create a free account — no credit card required.`}
-          </p>
-
-          {/* CTAs */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
             <button
               onClick={() => setModalOpen(true)}
               style={{
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                background: '#fff',
                 border: 'none',
-                borderRadius: 12,
-                padding: '13px 24px',
-                color: '#fff',
-                fontSize: 15,
+                borderRadius: 8,
+                padding: '8px 20px',
+                color: '#6366f1',
+                fontSize: 13,
                 fontWeight: 700,
                 cursor: 'pointer',
-                letterSpacing: '-0.01em',
+                whiteSpace: 'nowrap' as const,
               }}
             >
-              Create Free Account →
+              Sign Up Free
             </button>
             <button
               onClick={() => setModalOpen(true)}
               style={{
-                background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.18)',
-                borderRadius: 12,
-                padding: '12px 24px',
-                color: 'var(--text-1, #d1d5db)',
-                fontSize: 14,
+                background: 'rgba(255,255,255,0.15)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: 8,
+                padding: '8px 16px',
+                color: '#fff',
+                fontSize: 13,
                 cursor: 'pointer',
+                whiteSpace: 'nowrap' as const,
               }}
             >
               Sign In
             </button>
+            <button
+              onClick={() => setBannerDismissed(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: 16,
+                cursor: 'pointer',
+                padding: '4px 8px',
+                pointerEvents: 'auto',
+              }}
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
           </div>
-
-          <p style={{ marginTop: 20, fontSize: 11, color: 'var(--text-3, #6b7280)' }}>
-            Free accounts include a 3-week full-featured trial · No credit card required
-          </p>
         </div>
-      </div>
+      )}
 
       {/* Auth modal */}
       {modalOpen && (
