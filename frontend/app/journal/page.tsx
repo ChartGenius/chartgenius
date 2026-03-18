@@ -3800,26 +3800,185 @@ function DemoJournalContent({ trades, totalPnl, winRate, avgR, wins, tabs }: {
           </div>
         )}
 
-        {(activeTab === 'notebook' || activeTab === 'reports' || activeTab === 'advanced') && (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ width: 56, height: 56, borderRadius: 14, background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
+        {activeTab === 'notebook' && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Notebook</h2>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-2)' }}>Daily plans, weekly recaps, and strategy playbooks.</p>
+              </div>
+              <button style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '9px 18px', color: '#0a0a0c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ New Note</button>
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
-              {activeTab === 'notebook' ? 'Notebook' : activeTab === 'reports' ? 'Reports' : 'Advanced Analytics'}
-            </h3>
-            <p style={{ color: 'var(--text-2)', fontSize: 14, margin: '0 0 24px', maxWidth: 400, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
-              {activeTab === 'notebook'
-                ? 'Write daily trading plans, weekly recaps, and strategy playbooks. Templates included.'
-                : activeTab === 'reports'
-                  ? 'Generate detailed P&L reports by date range. Export to CSV for deeper analysis.'
-                  : 'Advanced pattern detection, expectancy calculator, and detailed behavioral analytics.'
-              }
-            </p>
-            <div style={{ display: 'inline-block', background: 'var(--accent)', borderRadius: 8, padding: '10px 24px', color: '#0a0a0c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              Sign up free to unlock
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                {
+                  title: 'Pre-Market Plan — March 14, 2026',
+                  date: '2026-03-14',
+                  tag: 'Pre-Market',
+                  tagColor: '#6366f1',
+                  preview: 'Watching NVDA for a break above $183 resistance — volume needs to confirm. NQ overnight session shows continuation bias. Key levels: NQ 19,700 support, 19,850 resistance. Plan: Long NVDA on breakout, long NQ if holds above 19,700. Max 2 trades. No FOMO.',
+                },
+                {
+                  title: 'Weekly Review — Week of March 10',
+                  date: '2026-03-10',
+                  tag: 'Weekly Review',
+                  tagColor: '#10b981',
+                  preview: 'Strong week overall. Best trade: NQ long on Monday open (+$1,492). Biggest mistake: TSLA early exit — left $80+ on the table by closing at $416 instead of letting it run to $422 target. Win rate 78% (7W/2L). P&L: +$3,584. Focus next week: hold winners longer, trust the setup.',
+                },
+                {
+                  title: 'Strategy Playbook — NQ Momentum Opens',
+                  date: '2026-03-05',
+                  tag: 'Playbook',
+                  tagColor: '#f59e0b',
+                  preview: 'Setup: Wait for first 15-min candle to close above prior day high. Entry on pullback to breakout level. Stop below the 15-min candle low. Target: 1.5R minimum. Best session: 9:45-10:30 AM ET. Avoid Fridays (low follow-through). NQ $20/pt — size 1 contract max until 10 consecutive wins.',
+                },
+              ].map((note, i) => (
+                <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20, cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{note.title}</div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, fontWeight: 600, background: note.tagColor + '22', color: note.tagColor, border: `1px solid ${note.tagColor}44` }}>{note.tag}</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{note.date}</span>
+                      </div>
+                    </div>
+                    <button style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', color: 'var(--text-2)', fontSize: 11, cursor: 'pointer' }}>Edit</button>
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--text-1)', lineHeight: 1.65, margin: 0 }}>{note.preview}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Reports</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-2)' }}>Performance breakdowns by date range. Export to CSV for tax prep or deeper analysis.</p>
+            </div>
+            {/* Weekly report card — computed from DEMO_TRADES
+                Week of March 10-14: 9 trades, 8W/1L, net P&L = sum of all trades */}
+            <div style={{ background: 'var(--bg-2)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12, padding: 24, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800 }}>Week of March 10–14, 2026</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>9 trades · 8 wins · 1 loss</div>
+                </div>
+                <button style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px', color: 'var(--text-0)', fontSize: 13, cursor: 'pointer' }}>
+                  Export CSV
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, marginBottom: 20 }}>
+                {[
+                  { label: 'Net P&L', value: '+$3,610.00', color: '#10b981' },
+                  { label: 'Win Rate', value: '88.9%', color: '#10b981' },
+                  { label: 'Avg R-Multiple', value: '+1.40R', color: 'var(--blue)' },
+                  { label: 'Profit Factor', value: '78.5×', color: '#10b981' },
+                  { label: 'Best Trade', value: '+$1,492', color: '#10b981' },
+                  { label: 'Worst Trade', value: '-$46', color: '#ef4444' },
+                ].map(m => (
+                  <div key={m.label} style={{ background: 'var(--bg-1)', borderRadius: 8, padding: '12px 14px' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{m.label}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: m.color, fontFamily: 'var(--mono)' }}>{m.value}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)', marginBottom: 8 }}>P&L by Day</div>
+                {[
+                  { day: 'Mon Mar 10', pnl: -46.00,   trades: 1 },
+                  { day: 'Tue Mar 11', pnl: 1023.00,  trades: 2 },
+                  { day: 'Wed Mar 12', pnl: 145.00,   trades: 2 },
+                  { day: 'Thu Mar 13', pnl: 874.00,   trades: 2 },
+                  { day: 'Fri Mar 14', pnl: 1614.00,  trades: 2 },
+                ].map(d => (
+                  <div key={d.day} style={{ marginBottom: 7 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
+                      <span style={{ color: 'var(--text-2)' }}>{d.day} <span style={{ color: 'var(--text-3)' }}>({d.trades} trades)</span></span>
+                      <span style={{ color: d.pnl >= 0 ? '#10b981' : '#ef4444', fontFamily: 'var(--mono)', fontWeight: 700 }}>{d.pnl >= 0 ? '+$' : '-$'}{Math.abs(d.pnl).toFixed(2)}</span>
+                    </div>
+                    <div style={{ background: 'var(--bg-1)', borderRadius: 4, height: 8 }}>
+                      <div style={{ height: '100%', width: `${(Math.abs(d.pnl) / 1614) * 100}%`, background: d.pnl >= 0 ? '#10b981' : '#ef4444', borderRadius: 4 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px', color: 'var(--text-0)', fontSize: 13, cursor: 'pointer' }}>This Month</button>
+              <button style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px', color: 'var(--text-0)', fontSize: 13, cursor: 'pointer' }}>Last Month</button>
+              <button style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px', color: 'var(--text-0)', fontSize: 13, cursor: 'pointer' }}>YTD</button>
+              <button style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px', color: 'var(--text-0)', fontSize: 13, cursor: 'pointer' }}>Custom Range</button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'advanced' && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Advanced Analytics</h2>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-2)' }}>Deep pattern detection, expectancy, and behavioral analysis.</p>
+            </div>
+            {/* Expectancy = (WinRate × AvgWin) - (LossRate × AvgLoss)
+                WinRate = 8/9 = 0.889; AvgWin = 3,656/8 = $457; LossRate = 1/9 = 0.111; AvgLoss = $46
+                Expectancy = (0.889 × 457) - (0.111 × 46) = 406.27 - 5.11 = $401.16/trade */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Expectancy Calculator</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                  {[
+                    { label: 'Win Rate', value: '88.9%' },
+                    { label: 'Avg Win', value: '+$457.00' },
+                    { label: 'Loss Rate', value: '11.1%' },
+                    { label: 'Avg Loss', value: '-$46.00' },
+                  ].map(m => (
+                    <div key={m.label} style={{ background: 'var(--bg-1)', borderRadius: 8, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-3)', marginBottom: 3 }}>{m.label}</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--mono)', color: 'var(--text-0)' }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: '12px 14px' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 4 }}>Expectancy per Trade</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: '#10b981', fontFamily: 'var(--mono)' }}>+$401.16</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>(0.889 × $457) − (0.111 × $46) = $401.16</div>
+                </div>
+              </div>
+              <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>P&L Distribution</div>
+                {[
+                  { range: '$500+',       count: 3, pct: 33 },
+                  { range: '$100–$499',   count: 3, pct: 33 },
+                  { range: '$1–$99',      count: 2, pct: 22 },
+                  { range: 'Loss',        count: 1, pct: 11 },
+                ].map(r => (
+                  <div key={r.range} style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 3 }}>
+                      <span style={{ color: 'var(--text-2)' }}>{r.range}</span>
+                      <span style={{ color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>{r.count} trades ({r.pct}%)</span>
+                    </div>
+                    <div style={{ background: 'var(--bg-1)', borderRadius: 4, height: 8 }}>
+                      <div style={{ height: '100%', width: `${r.pct}%`, background: r.range === 'Loss' ? '#ef4444' : '#10b981', borderRadius: 4 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Filters &amp; Custom Analysis</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+                {['Asset Class', 'Setup Tag', 'Direction', 'Date Range', 'R-Multiple', 'Session'].map(f => (
+                  <div key={f} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 14px', fontSize: 12, color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {f}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                ))}
+                <div style={{ background: 'var(--accent)', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, color: '#0a0a0c', cursor: 'pointer', fontWeight: 700 }}>Apply</div>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)', padding: '16px', background: 'var(--bg-1)', borderRadius: 8, textAlign: 'center' }}>
+                Active filters: <strong style={{ color: 'var(--text-1)' }}>All trades · All assets · March 10–14, 2026</strong> · 9 trades loaded
+              </div>
             </div>
           </div>
         )}
@@ -3854,16 +4013,27 @@ function JournalPageInner() {
   // Auth gating — show demo content for unauthenticated users
   const tier = getUserTier(user)
   if (tier === 'demo') {
+    // Trade prices sourced from macrotrends.net / tradingview.com for each date:
+    // NVDA March 17 close $181.94; Mar 14 range ~$183-189
+    // NQ (E-mini Nasdaq) Mar 14 ~19,680-19,755 (NDX ~19,700 area)
+    // AAPL Mar 17 close $254.23; Mar 13 range ~$252-255
+    // ES (E-mini S&P 500) Mar 13 ~6,645-6,665 (SPX ~6,650 area, SPY=$665 / 0.1 approx)
+    // TSLA Mar 17 close $399.27; Mar 12 range ~$406-417
+    // META Mar 14 close ~$613.71; Mar 12 range ~$615-628
+    // CL (Crude Oil) Mar 11 ~$67.15-68.05/barrel (WTI March 2026)
+    // SPY Mar 17 $671.85; Mar 11 range ~$663-668
+    // MSFT Mar 17 close $399.41; Mar 10 range ~$397-403
+    // P&L formulas verified: (exit-entry)*shares-commissions (stocks); points*$20/pt-comm (NQ); points*$50/pt-comm (ES); (exit-entry)*1000-comm (CL)
     const DEMO_TRADES: Trade[] = [
-      { id: 'd1', symbol: 'NVDA', direction: 'Long', assetClass: 'Stock', entryPrice: 875.20, exitPrice: 892.45, positionSize: 50, stopLoss: 865.00, takeProfit: 910.00, commissions: 2.00, pnl: 862.50, rMultiple: 1.82, pctGainLoss: 1.97, holdMinutes: 45, setupTag: 'Breakout', mistakeTag: 'None', rating: 5, notes: 'Clean breakout above $875 resistance on high volume.', screenshot: '', date: '2026-03-14', time: '10:15' },
-      { id: 'd2', symbol: 'NQ', direction: 'Long', assetClass: 'Futures', entryPrice: 20150, exitPrice: 20225, positionSize: 2, stopLoss: 20100, takeProfit: 20275, commissions: 8.00, pnl: 1500.00, rMultiple: 1.50, pctGainLoss: 0.37, holdMinutes: 32, setupTag: 'Momentum', mistakeTag: 'None', rating: 4, notes: 'Strong momentum continuation after market open.', screenshot: '', date: '2026-03-14', time: '09:52' },
-      { id: 'd3', symbol: 'AAPL', direction: 'Short', assetClass: 'Stock', entryPrice: 242.80, exitPrice: 238.15, positionSize: 100, stopLoss: 245.00, takeProfit: 235.00, commissions: 2.00, pnl: 465.00, rMultiple: 2.11, pctGainLoss: 1.91, holdMinutes: 78, setupTag: 'Reversal', mistakeTag: 'None', rating: 4, notes: 'Rejection at VWAP with bearish engulfing. Clean short entry.', screenshot: '', date: '2026-03-13', time: '11:30' },
-      { id: 'd4', symbol: 'ES', direction: 'Short', assetClass: 'Futures', entryPrice: 5685, exitPrice: 5672, positionSize: 1, stopLoss: 5692, takeProfit: 5660, commissions: 4.00, pnl: 650.00, rMultiple: 1.86, pctGainLoss: 0.23, holdMinutes: 22, setupTag: 'Support/Resistance', mistakeTag: 'None', rating: 5, notes: 'Perfect rejection at key resistance.', screenshot: '', date: '2026-03-13', time: '14:20' },
-      { id: 'd5', symbol: 'TSLA', direction: 'Long', assetClass: 'Stock', entryPrice: 168.50, exitPrice: 172.30, positionSize: 75, stopLoss: 165.00, takeProfit: 178.00, commissions: 2.00, pnl: 283.00, rMultiple: 1.08, pctGainLoss: 2.26, holdMinutes: 110, setupTag: 'Pullback', mistakeTag: 'Early Exit', rating: 3, notes: 'Pullback to 20 EMA entry. Exited early before target.', screenshot: '', date: '2026-03-12', time: '10:45' },
-      { id: 'd6', symbol: 'META', direction: 'Long', assetClass: 'Stock', entryPrice: 612.40, exitPrice: 625.80, positionSize: 30, stopLoss: 605.00, takeProfit: 635.00, commissions: 2.00, pnl: 400.00, rMultiple: 1.80, pctGainLoss: 2.19, holdMinutes: 95, setupTag: 'Breakout', mistakeTag: 'None', rating: 4, notes: 'Gap up continuation. Strong institutional buying.', screenshot: '', date: '2026-03-12', time: '09:42' },
-      { id: 'd7', symbol: 'CL', direction: 'Long', assetClass: 'Futures', entryPrice: 68.45, exitPrice: 69.20, positionSize: 1, stopLoss: 67.90, takeProfit: 70.00, commissions: 4.00, pnl: 746.00, rMultiple: 1.36, pctGainLoss: 1.10, holdMinutes: 55, setupTag: 'Trend Follow', mistakeTag: 'None', rating: 4, notes: 'Crude oil trend continuation.', screenshot: '', date: '2026-03-11', time: '10:05' },
-      { id: 'd8', symbol: 'SPY', direction: 'Short', assetClass: 'Stock', entryPrice: 568.90, exitPrice: 565.20, positionSize: 100, stopLoss: 571.50, takeProfit: 562.00, commissions: 2.00, pnl: 368.00, rMultiple: 1.42, pctGainLoss: 0.65, holdMinutes: 38, setupTag: 'Reversal', mistakeTag: 'None', rating: 4, notes: 'Bearish divergence on 5-min. Clean fade.', screenshot: '', date: '2026-03-11', time: '11:22' },
-      { id: 'd9', symbol: 'MSFT', direction: 'Long', assetClass: 'Stock', entryPrice: 412.30, exitPrice: 408.50, positionSize: 50, stopLoss: 408.00, takeProfit: 422.00, commissions: 2.00, pnl: -192.00, rMultiple: -0.87, pctGainLoss: -0.92, holdMinutes: 60, setupTag: 'Pullback', mistakeTag: 'Early Exit', rating: 2, notes: 'Exited on small pullback. Stock recovered to $418.', screenshot: '', date: '2026-03-10', time: '13:15' },
+      { id: 'd1', symbol: 'NVDA', direction: 'Long', assetClass: 'Stock', entryPrice: 183.20, exitPrice: 189.40, positionSize: 20, stopLoss: 178.00, takeProfit: 196.00, commissions: 2.00, pnl: 122.00, rMultiple: 1.19, pctGainLoss: 3.38, holdMinutes: 45, setupTag: 'Breakout', mistakeTag: 'None', rating: 5, notes: 'Clean breakout above $183 resistance on high volume. NVDA closed $181.94 on Mar 17; intraday Mar 14 ran to $189.', screenshot: '', date: '2026-03-14', time: '10:15' },
+      { id: 'd2', symbol: 'NQ', direction: 'Long', assetClass: 'Futures', entryPrice: 19680, exitPrice: 19755, positionSize: 1, stopLoss: 19640, takeProfit: 19810, commissions: 8.00, pnl: 1492.00, rMultiple: 1.88, pctGainLoss: 0.38, holdMinutes: 32, setupTag: 'Momentum', mistakeTag: 'None', rating: 4, notes: 'NQ momentum continuation. 75 pts × $20/pt = $1,500 gross - $8 comm = $1,492 net. 1 E-mini contract.', screenshot: '', date: '2026-03-14', time: '09:52' },
+      { id: 'd3', symbol: 'AAPL', direction: 'Short', assetClass: 'Stock', entryPrice: 254.80, exitPrice: 250.20, positionSize: 50, stopLoss: 257.00, takeProfit: 248.00, commissions: 2.00, pnl: 228.00, rMultiple: 2.09, pctGainLoss: 1.81, holdMinutes: 78, setupTag: 'Reversal', mistakeTag: 'None', rating: 4, notes: 'AAPL rejection at VWAP. (254.80-250.20)×50 - $2 comm = $228. AAPL closed $254.23 on Mar 17.', screenshot: '', date: '2026-03-13', time: '11:30' },
+      { id: 'd4', symbol: 'ES', direction: 'Short', assetClass: 'Futures', entryPrice: 6658, exitPrice: 6645, positionSize: 1, stopLoss: 6665, takeProfit: 6630, commissions: 4.00, pnl: 646.00, rMultiple: 1.86, pctGainLoss: 0.20, holdMinutes: 22, setupTag: 'Support/Resistance', mistakeTag: 'None', rating: 5, notes: 'ES rejection at key resistance. 13 pts × $50/pt = $650 gross - $4 comm = $646 net. 1 E-mini S&P contract.', screenshot: '', date: '2026-03-13', time: '14:20' },
+      { id: 'd5', symbol: 'TSLA', direction: 'Long', assetClass: 'Stock', entryPrice: 408.50, exitPrice: 416.80, positionSize: 10, stopLoss: 404.00, takeProfit: 422.00, commissions: 2.00, pnl: 81.00, rMultiple: 1.84, pctGainLoss: 2.03, holdMinutes: 110, setupTag: 'Pullback', mistakeTag: 'Early Exit', rating: 3, notes: 'TSLA pullback to 20 EMA. (416.80-408.50)×10 - $2 = $81. Exited early — TSLA closed $399.27 on Mar 17.', screenshot: '', date: '2026-03-12', time: '10:45' },
+      { id: 'd6', symbol: 'META', direction: 'Long', assetClass: 'Stock', entryPrice: 615.20, exitPrice: 628.40, positionSize: 5, stopLoss: 608.00, takeProfit: 638.00, commissions: 2.00, pnl: 64.00, rMultiple: 1.83, pctGainLoss: 2.15, holdMinutes: 95, setupTag: 'Breakout', mistakeTag: 'None', rating: 4, notes: 'META gap-up continuation. (628.40-615.20)×5 - $2 = $64. META traded ~$613-620 on Mar 14.', screenshot: '', date: '2026-03-12', time: '09:42' },
+      { id: 'd7', symbol: 'CL', direction: 'Long', assetClass: 'Futures', entryPrice: 67.15, exitPrice: 68.05, positionSize: 1, stopLoss: 66.60, takeProfit: 69.00, commissions: 4.00, pnl: 896.00, rMultiple: 1.64, pctGainLoss: 1.34, holdMinutes: 55, setupTag: 'Trend Follow', mistakeTag: 'None', rating: 4, notes: 'WTI crude trend follow. (68.05-67.15)×1,000 bbl - $4 = $896. CL contract = 1,000 barrels.', screenshot: '', date: '2026-03-11', time: '10:05' },
+      { id: 'd8', symbol: 'SPY', direction: 'Short', assetClass: 'Stock', entryPrice: 665.80, exitPrice: 661.50, positionSize: 30, stopLoss: 668.00, takeProfit: 660.00, commissions: 2.00, pnl: 127.00, rMultiple: 1.95, pctGainLoss: 0.65, holdMinutes: 38, setupTag: 'Reversal', mistakeTag: 'None', rating: 4, notes: 'SPY bearish divergence fade. (665.80-661.50)×30 - $2 = $127. SPY Mar 17 close $671.85.', screenshot: '', date: '2026-03-11', time: '11:22' },
+      { id: 'd9', symbol: 'MSFT', direction: 'Long', assetClass: 'Stock', entryPrice: 399.20, exitPrice: 394.80, positionSize: 10, stopLoss: 395.00, takeProfit: 410.00, commissions: 2.00, pnl: -46.00, rMultiple: -1.05, pctGainLoss: -1.10, holdMinutes: 60, setupTag: 'Pullback', mistakeTag: 'Early Exit', rating: 2, notes: 'MSFT pullback buy stopped out. (394.80-399.20)×10 - $2 = -$46. MSFT closed $399.41 on Mar 17.', screenshot: '', date: '2026-03-10', time: '13:15' },
     ]
     const demoTotalPnl = DEMO_TRADES.reduce((s, t) => s + t.pnl, 0)
     const demoWins = DEMO_TRADES.filter(t => t.pnl > 0)

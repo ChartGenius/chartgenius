@@ -1149,7 +1149,7 @@ const btnGhost: React.CSSProperties = {
 // ─── Demo Ritual Content ─────────────────────────────────────────────────────
 
 function DemoRitualContent() {
-  const [activeStep, setActiveStep] = useState(2)
+  const [activeStep, setActiveStep] = useState(3)
 
   const DEMO_STEPS = [
     {
@@ -1322,12 +1322,10 @@ function DemoRitualContent() {
                 </div>
               )}
 
-              {/* Steps 4 and 5 — locked for demo */}
-              {s.num === activeStep && s.num > 3 && (
-                <div style={{ marginLeft: 40 }}>
-                  <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 8, padding: '14px 16px', fontSize: 13, color: 'var(--text-2)' }}>
-                    Sign up to complete this step and build your daily ritual streak.
-                  </div>
+              {/* Steps 4 and 5 — show completed content */}
+              {s.num === activeStep && s.num > 3 && s.done && s.answer && (
+                <div style={{ marginLeft: 40, fontSize: 13, color: 'var(--text-1)', lineHeight: 1.65 }}>
+                  {s.answer}
                 </div>
               )}
             </div>

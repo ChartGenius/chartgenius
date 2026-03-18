@@ -507,13 +507,17 @@ export default function CoachPage() {
   // Auth gating
   const tier = getUserTier(user)
   if (tier === 'demo') {
+    // Metrics computed from DEMO_TRADES (9 trades, Mar 10-14, 2026):
+    // Win rate: 8/9 = 88.9%; Avg hold: (45+32+78+22+110+95+55+38+60)/9 = 59min
+    // Momentum setups (NQ, NVDA, AAPL breakout, META, CL): 100% win rate
+    // Avg R = (1.19+1.88+2.09+1.86+1.84+1.83+1.64+1.95-1.05)/9 = 1.47R
     const DEMO_COACH_METRICS = [
-      { label: 'Win Rate (Momentum)', value: '72%', color: '#10b981' },
-      { label: 'Win Rate (Reversals)', value: '45%', color: '#ef4444' },
-      { label: 'Avg Hold Time', value: '47 min', color: '#6366f1' },
-      { label: 'Best Day', value: 'Tuesday', color: '#10b981' },
-      { label: 'Risk/Reward Avg', value: '1.8R', color: '#6366f1' },
-      { label: 'Trades Analyzed', value: '30', color: 'var(--text-2)' },
+      { label: 'Overall Win Rate', value: '88.9%', color: '#10b981' },
+      { label: 'Momentum Win Rate', value: '100%', color: '#10b981' },
+      { label: 'Avg Hold Time', value: '59 min', color: '#6366f1' },
+      { label: 'Best Day', value: 'Friday', color: '#10b981' },
+      { label: 'Avg R-Multiple', value: '1.47R', color: '#6366f1' },
+      { label: 'Trades Analyzed', value: '9', color: 'var(--text-2)' },
     ]
     return (
       <AuthGate featureName="AI Trade Coach" featureDesc="Get weekly AI-powered insights on your trading patterns. Identify strengths and areas for improvement.">
@@ -549,7 +553,7 @@ export default function CoachPage() {
               {/* Summary paragraph */}
               <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 8, padding: '14px 16px', marginBottom: 14 }}>
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--text-1)', lineHeight: 1.75 }}>
-                  Based on your last <strong>30 trades</strong>, your win rate is <strong style={{ color: '#10b981' }}>72%</strong> on momentum setups vs <strong style={{ color: '#ef4444' }}>45%</strong> on reversals. Consider focusing on momentum plays during high-volatility sessions. Your average hold time of <strong>47 minutes</strong> suggests good patience — but you are exiting too early on your best trades, leaving roughly <strong>0.4R</strong> on the table per winner. Tighten your entry criteria on reversals or drop them entirely.
+                  Based on your last <strong>9 trades</strong> (Mar 10–14, 2026), your win rate is <strong style={{ color: '#10b981' }}>88.9%</strong> (8W/1L) with a net P&L of <strong style={{ color: '#10b981' }}>+$3,610</strong>. Your momentum setups on NQ and AAPL are outperforming — NQ long on Mar 14 returned <strong>1.88R</strong>. One clear pattern: you exit winners early. The TSLA long closed at $416.80 for $81 when your target was $422 (another ~$53 left). Your ES short was perfectly executed. Avoid reversals on volatile opens — the data shows your best edge is breakout/momentum in the first 90 minutes.
                 </p>
               </div>
 
@@ -615,6 +619,25 @@ export default function CoachPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Past Summaries */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 12 }}>Past Analyses</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { period: 'Week of Mar 3–7, 2026', summary: '6 trades, 4W/2L (66.7%). Net P&L: +$842. Best: NVDA long +$183. Lesson: avoid trading after 2 PM on Fridays — both losses came in that window.', pnl: '+$842' },
+                  { period: 'Week of Feb 24–28, 2026', summary: '7 trades, 5W/2L (71.4%). Net P&L: +$1,204. NQ and ES futures dominating the P&L. Stock trades underperforming. Consider shifting allocation.', pnl: '+$1,204' },
+                ].map((s, i) => (
+                  <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700 }}>{s.period}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#10b981', fontFamily: 'monospace' }}>{s.pnl}</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>{s.summary}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div style={{ fontSize: 11, color: 'var(--text-3)', textAlign: 'center' as const, fontStyle: 'italic', marginTop: 8 }}>
