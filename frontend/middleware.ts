@@ -41,7 +41,7 @@ export function middleware(request: NextRequest) {
     // Supabase stores session in cookies named sb-<ref>-auth-token or sb-access-token
     const cookies = request.cookies
     const hasSession = Array.from(cookies.getAll()).some(
-      c => c.name.includes('sb-') && c.name.includes('auth-token') && c.value.length > 20
+      c => c.name.startsWith('sb-') && (c.name.includes('access-token') || c.name.includes('refresh-token') || c.name.includes('auth-token')) && c.value.length > 20
     )
 
     if (!hasSession) {
