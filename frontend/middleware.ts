@@ -13,8 +13,9 @@ import type { NextRequest } from 'next/server'
 // Routes that are NEVER accessible in production (no auth bypass)
 const BLOCKED_PATHS = ['/dashboard', '/ops']
 
-// Routes that require authentication (Supabase session cookie)
-const AUTH_REQUIRED_PATHS = ['/admin']
+// Note: /admin uses client-side auth (localStorage, not cookies) so it cannot
+// be gated at the middleware layer. Protection is handled by the admin page
+// itself: it renders nothing until useAuth() confirms an admin email.
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -36,25 +37,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308)
   }
 
-  // Auth-gated routes — require Supabase session cookie
-  if (AUTH_REQUIRED_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))) {
-    // Supabase stores session in cookies named sb-<ref>-auth-token or sb-access-token
-    const cookies = request.cookies
-    const hasSession = Array.from(cookies.getAll()).some(
-      c => c.name.startsWith('sb-') && (c.name.includes('access-token') || c.name.includes('refresh-token') || c.name.includes('auth-token')) && c.value.length > 20
-    )
-
-    if (!hasSession) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/'
-      url.search = ''
-      return NextResponse.redirect(url, 302)
-    }
-  }
-
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/ops/:path*', '/admin/:path*'],
+  matcher: ['/dashboard/:path*', '/ops/:path*'],
 }
