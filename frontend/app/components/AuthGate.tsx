@@ -30,8 +30,8 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
       <div
         aria-hidden="true"
         style={{
-          filter: 'blur(6px)',
-          opacity: 0.35,
+          filter: 'blur(3px)',
+          opacity: 0.7,
           pointerEvents: 'none',
           userSelect: 'none',
         }}
@@ -49,9 +49,9 @@ export default function AuthGate({ featureName, featureDesc, children }: AuthGat
           alignItems: 'center',
           justifyContent: 'center',
           padding: '20px',
-          background: 'rgba(0, 0, 0, 0.55)',
-          backdropFilter: 'blur(2px)',
-          WebkitBackdropFilter: 'blur(2px)',
+          background: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(1px)',
+          WebkitBackdropFilter: 'blur(1px)',
         }}
       >
         <div
