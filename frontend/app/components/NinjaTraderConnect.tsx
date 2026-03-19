@@ -411,11 +411,11 @@ export default function NinjaTraderConnect({ onClose }: NinjaTraderConnectProps)
 
               <StepCard number={1} title="Download the TradVue Addon">
                 <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
-                  Download the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradVueJournal.cs</strong> NinjaScript addon file from your account.
+                  Download the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradVueJournal.cs</strong> NinjaScript file.
                 </p>
                 <a
-                  href="/downloads/TradVueJournal.zip"
-                  download="TradVueJournal.zip"
+                  href="/downloads/TradVueJournal.cs"
+                  download="TradVueJournal.cs"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -431,16 +431,19 @@ export default function NinjaTraderConnect({ onClose }: NinjaTraderConnectProps)
                   }}
                 >
                   <IconDownload size={14} />
-                  Download TradVueJournal.zip
+                  Download TradVueJournal.cs
                 </a>
               </StepCard>
 
-              <StepCard number={2} title="Import into NinjaTrader 8">
+              <StepCard number={2} title="Copy to NinjaTrader Strategies Folder">
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
-                  In NinjaTrader 8, go to{' '}
-                  <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Tools → Import → NinjaScript Add-On</strong>.
-                  In NinjaTrader 8, go to Tools → Import → NinjaScript Add-On. Select the <code style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 11 }}>TradVueJournal.zip</code> file you downloaded.
-                  NinjaTrader will compile and install the addon automatically.
+                  Copy <code style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 11 }}>TradVueJournal.cs</code> into your NinjaTrader strategies folder:<br />
+                  <code style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: 4, fontSize: 11, display: 'inline-block', marginTop: 6 }}>
+                    Documents\NinjaTrader 8\bin\Custom\Strategies\
+                  </code><br />
+                  <span style={{ fontSize: 12, marginTop: 6, display: 'inline-block' }}>
+                    Then in NinjaTrader, open the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>NinjaScript Editor</strong> (New → NinjaScript Editor) and click <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Compile</strong> (F5). The addon will compile automatically.
+                  </span>
                 </p>
               </StepCard>
 
