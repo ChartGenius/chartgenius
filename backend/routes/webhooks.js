@@ -133,9 +133,28 @@ function parsePayload(body) {
     )).toLowerCase();
 
     if (!ticker || !action) return null;
-    if (!['buy', 'sell'].includes(action)) return null;
+    // NinjaTrader sends 'entry'/'exit' as action; normalize to buy/sell for compatibility
+    const normalizedAction = action === 'entry' ? 'buy' : action === 'exit' ? 'sell' : action;
+    if (!['buy', 'sell', 'entry', 'exit'].includes(action)) return null;
 
-    return { ticker: ticker.toUpperCase(), action, price, quantity, position, raw: parsed };
+    // Extended fields from NinjaTrader addon
+    const entryPrice  = parseFloat(parsed.entry_price) || null;
+    const exitPrice   = parseFloat(parsed.exit_price) || null;
+    const pnl         = parseFloat(parsed.pnl) || null;
+    const direction   = sanitize(parsed.direction || '');
+    const assetClass  = sanitize(parsed.asset_class || '');
+    const orderId     = sanitize(parsed.order_id || '');
+    const source      = sanitize(parsed.source || 'tradingview');
+    const strategy    = sanitize(parsed.strategy || '');
+    const tradeTime   = parsed.time || null;
+
+    return { 
+      ticker: ticker.toUpperCase(), 
+      action: normalizedAction, 
+      price, quantity, position,
+      entryPrice, exitPrice, pnl, direction, assetClass, orderId, source, strategy, tradeTime,
+      raw: parsed 
+    };
   }
 
   // --- Plain-text: "buy AAPL 187.42 100" ---
@@ -180,10 +199,15 @@ function sanitize(str) {
  */
 async function matchAndJournalTrade(supabase, userId, parsed, eventId) {
   try {
-    const { ticker, action, price, quantity } = parsed;
-    const now = new Date().toISOString();
+    const { ticker, action, price, quantity, entryPrice, exitPrice, pnl, direction, assetClass, orderId, source, strategy, tradeTime } = parsed;
+    const now = tradeTime || new Date().toISOString();
+    const isNinjaTrader = source === 'ninjatrader';
 
     if (action === 'buy') {
+      // NinjaTrader sends entry/exit with full data; TradingView sends buy/sell
+      const tradeDirection = direction || 'Long';
+      const tradeAsset = assetClass || 'Stock';
+      
       // Insert a new Long trade (open)
       const { data: inserted, error: insertErr } = await supabase
         .from('webhook_trades')
@@ -191,12 +215,15 @@ async function matchAndJournalTrade(supabase, userId, parsed, eventId) {
           user_id:     userId,
           event_id:    eventId,
           symbol:      ticker,
-          direction:   'Long',
-          asset_class: 'Stock',
-          entry_price: price,
+          direction:   tradeDirection,
+          asset_class: tradeAsset,
+          entry_price: entryPrice || price,
+          exit_price:  exitPrice || null,
           quantity:    quantity || 1,
-          status:      'open',
-          source:      'webhook',
+          strategy:    strategy || null,
+          notes:       isNinjaTrader ? 'Auto-journaled via NinjaTrader' : 'Auto-journaled via TradingView',
+          status:      exitPrice ? 'closed' : 'open',
+          source:      source || 'webhook',
           traded_at:   now,
         })
         .select('id')
@@ -255,19 +282,25 @@ async function matchAndJournalTrade(supabase, userId, parsed, eventId) {
         return { matched: true, tradeId: openLong.id };
 
       } else {
-        // No open Long — insert a new Short trade
+        // No open Long — insert a new Short trade (or NinjaTrader exit with full data)
+        const tradeDirection = direction || 'Short';
+        const tradeAsset = assetClass || 'Stock';
+        
         const { data: inserted, error: insertErr } = await supabase
           .from('webhook_trades')
           .insert({
             user_id:     userId,
             event_id:    eventId,
             symbol:      ticker,
-            direction:   'Short',
-            asset_class: 'Stock',
-            entry_price: price,
+            direction:   tradeDirection,
+            asset_class: tradeAsset,
+            entry_price: entryPrice || price,
+            exit_price:  exitPrice || null,
             quantity:    quantity || 1,
-            status:      'open',
-            source:      'webhook',
+            strategy:    strategy || null,
+            notes:       isNinjaTrader ? 'Auto-journaled via NinjaTrader' : 'Auto-journaled via TradingView',
+            status:      exitPrice ? 'closed' : 'open',
+            source:      source || 'webhook',
             traded_at:   now,
           })
           .select('id')
@@ -425,6 +458,100 @@ receiverRouter.post(
         );
       } catch (err) {
         console.error('[Webhook] Async processing error:', err.message);
+      }
+    });
+  }
+);
+
+// ═════════════════════════════════════════════════════════════════════════════
+// NINJATRADER WEBHOOK RECEIVER: POST /api/webhook/nt/:userToken
+// Same as TradingView route but NO IP allowlist — NinjaTrader runs on the
+// user's local machine so we can't predict their IP. Token IS the auth.
+// Rate limiting still applies (30 req/min per token).
+// ═════════════════════════════════════════════════════════════════════════════
+
+receiverRouter.post(
+  '/nt/:userToken',
+  express.text({ type: '*/*', limit: '10kb' }),
+  async (req, res) => {
+    // No IP allowlist for NinjaTrader — token validation is the auth
+    const sourceIP = getSourceIP(req);
+    const { userToken } = req.params;
+
+    // Rate limit per token
+    if (!checkTokenRateLimit(userToken)) {
+      console.warn(`[Webhook/NT] Rate limit exceeded for token: ${userToken.slice(0, 8)}...`);
+      return res.status(429).json({ error: 'Rate limit exceeded' });
+    }
+
+    // Respond 200 immediately
+    res.status(200).json({ ok: true });
+
+    // Process async (same logic as TV route)
+    setImmediate(async () => {
+      try {
+        const supabase = getServiceClient();
+
+        // Validate token
+        const { data: tokenRow, error: tokenErr } = await supabase
+          .from('webhook_tokens')
+          .select('id, user_id, is_active, trade_count')
+          .eq('token', userToken)
+          .maybeSingle();
+
+        if (tokenErr || !tokenRow || !tokenRow.is_active) {
+          console.warn(`[Webhook/NT] Invalid/inactive token: ${userToken.slice(0, 8)}...`);
+          return;
+        }
+
+        const { id: tokenId, user_id: userId, trade_count } = tokenRow;
+
+        // Parse payload
+        const body = req.body;
+        let parsed = null;
+        let parseErr = null;
+        try {
+          const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
+          parsed = parsePayload(bodyStr);
+        } catch (e) { parseErr = e.message; }
+
+        // Store event
+        const { data: eventRow } = await supabase
+          .from('webhook_events')
+          .insert({
+            token_id:    tokenId,
+            user_id:     userId,
+            source_ip:   sourceIP,
+            raw_payload: { raw: typeof body === 'string' ? body.slice(0, 2000) : body },
+            status:      parsed ? 'received' : 'error',
+            error_message: parsed ? null : (parseErr || 'Failed to parse'),
+          })
+          .select('id')
+          .single();
+
+        if (!parsed || !eventRow) return;
+        const eventId = eventRow.id;
+
+        // Match and journal
+        const { matched, error: matchErr } = await matchAndJournalTrade(supabase, userId, parsed, eventId);
+
+        if (!matched && matchErr) {
+          await supabase.from('webhook_events')
+            .update({ status: 'error', error_message: matchErr })
+            .eq('id', eventId);
+        }
+
+        // Update token stats
+        await supabase.from('webhook_tokens')
+          .update({
+            last_used_at: new Date().toISOString(),
+            trade_count:  matched ? (trade_count || 0) + 1 : (trade_count || 0),
+          })
+          .eq('id', tokenId);
+
+        console.log(`[Webhook/NT] Processed: token=${userToken.slice(0, 8)} ticker=${parsed.ticker} action=${parsed.action} matched=${matched}`);
+      } catch (err) {
+        console.error('[Webhook/NT] Processing error:', err.message);
       }
     });
   }

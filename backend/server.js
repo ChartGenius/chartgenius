@@ -95,6 +95,7 @@ try {
   const { receiverRouter } = require('./routes/webhooks');
   app.use('/api/webhook', receiverRouter);
   console.log('[Webhook] TradingView receiver registered at /api/webhook/tv/:token');
+  console.log('[Webhook] NinjaTrader receiver registered at /api/webhook/nt/:token');
 } catch (e) {
   console.warn('[Webhook] Receiver route failed to load:', e.message);
 }
