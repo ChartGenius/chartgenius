@@ -414,7 +414,7 @@ export default function NinjaTraderConnect({ onClose }: NinjaTraderConnectProps)
                   Download the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradVueJournal.cs</strong> NinjaScript addon file from your account.
                 </p>
                 <a
-                  href="/api/downloads/TradVueJournal.cs"
+                  href="/downloads/TradVueJournal.cs"
                   download="TradVueJournal.cs"
                   style={{
                     display: 'inline-flex',

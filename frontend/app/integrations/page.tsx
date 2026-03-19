@@ -260,7 +260,7 @@ function NinjaTraderSetupSection({ webhookUrl }: { webhookUrl: string | null }) 
 
               {step.hasDownload && (
                 <a
-                  href="/api/downloads/TradVueJournal.cs"
+                  href="/downloads/TradVueJournal.cs"
                   download="TradVueJournal.cs"
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 7,
