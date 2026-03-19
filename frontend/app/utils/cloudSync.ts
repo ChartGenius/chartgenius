@@ -56,8 +56,9 @@ function lsSet<T>(key: string, val: T): void {
 
 // ── Journal keys (matching journal/page.tsx) ──────────────────────────────────
 
-const TRADES_KEY = 'cg_journal_trades'
-const NOTES_KEY  = 'cg_journal_notes'
+const TRADES_KEY    = 'cg_journal_trades'
+const NOTES_KEY     = 'cg_journal_notes'
+const LAST_SYNC_KEY = 'cg_last_sync_at'
 
 // ── Settings key ──────────────────────────────────────────────────────────────
 
@@ -65,14 +66,15 @@ const SETTINGS_KEY = 'cg_settings'
 
 // ── Cloud API calls ───────────────────────────────────────────────────────────
 
-async function cloudGet<T>(token: string, type: string): Promise<T | null> {
+async function cloudGetRaw<T>(token: string, type: string): Promise<{ data: T | null; updated_at: string | null }> {
   try {
     const res = await fetch(`${API_BASE}/api/user/data/${type}`, {
       headers: authHeaders(token),
     })
-    if (!res.ok) return null
+    if (!res.ok) return { data: null, updated_at: null }
     const json = await res.json()
     // Backend returns { type, data: <JSONB>, updated_at }
+    const updated_at: string | null = json.updated_at ?? null
     // The JSONB column may itself be { data: ... } if cloudPut wrapped it.
     // Unwrap both layers to get the actual payload.
     let payload = json.data ?? json[type] ?? json
@@ -80,10 +82,15 @@ async function cloudGet<T>(token: string, type: string): Promise<T | null> {
     if (payload && typeof payload === 'object' && !Array.isArray(payload) && 'data' in payload) {
       payload = payload.data
     }
-    return payload as T
+    return { data: payload as T, updated_at }
   } catch {
-    return null
+    return { data: null, updated_at: null }
   }
+}
+
+async function cloudGet<T>(token: string, type: string): Promise<T | null> {
+  const { data } = await cloudGetRaw<T>(token, type)
+  return data
 }
 
 async function cloudPut(token: string, type: string, data: unknown): Promise<boolean> {
@@ -123,29 +130,56 @@ interface CloudJournalData {
 
 /**
  * Initial sync on login/app load.
- * Strategy:
- *   - If localStorage already has data → local is source of truth, push to cloud.
- *     This ensures deletes propagate: what the user has locally IS the canonical state.
- *   - If localStorage is empty (new device) → pull from cloud.
+ * Strategy (timestamp-based conflict resolution):
+ *   - No local data at all → pull from cloud (new device)
+ *   - No cloud data → push local to cloud (first sync ever)
+ *   - Cloud updated_at > local lastSyncAt → cloud is newer, pull it down
+ *   - Local lastSyncAt >= cloud updated_at → local is current, push to cloud
+ *
+ * This prevents an old device from overwriting newer cloud data.
+ * The debounced sync for ongoing changes is unaffected by this logic.
  */
 export async function initJournalSync(token: string): Promise<void> {
   setStatus('syncing')
   try {
     const localTrades = lsGet<unknown[]>(TRADES_KEY, [])
     const localNotes  = lsGet<unknown[]>(NOTES_KEY,  [])
+    const hasLocalData = localTrades.length > 0 || localNotes.length > 0
 
-    if (localTrades.length > 0 || localNotes.length > 0) {
-      // Local has data — push it to cloud as-is (full replace, not merge)
-      // This propagates deletes: removed trades don't come back from cloud.
-      await cloudPut(token, 'journal', { trades: localTrades, notes: localNotes })
-    } else {
-      // Local is empty (new device or first login) — pull from cloud
-      const cloudData = await cloudGet<CloudJournalData>(token, 'journal')
-      const cloudTrades = cloudData?.trades ?? []
-      const cloudNotes  = cloudData?.notes  ?? []
-      if (cloudTrades.length > 0 || cloudNotes.length > 0) {
+    // Always fetch cloud data so we can compare timestamps
+    const { data: cloudData, updated_at: cloudUpdatedAt } = await cloudGetRaw<CloudJournalData>(token, 'journal')
+    const cloudTrades = cloudData?.trades ?? []
+    const cloudNotes  = cloudData?.notes  ?? []
+    const hasCloudData = cloudTrades.length > 0 || cloudNotes.length > 0
+
+    if (!hasLocalData) {
+      // No local data — pull from cloud regardless of timestamps (new device / fresh install)
+      if (hasCloudData) {
         lsSet(TRADES_KEY, cloudTrades)
         lsSet(NOTES_KEY,  cloudNotes)
+        lsSet(LAST_SYNC_KEY, new Date().toISOString())
+      }
+      // If no cloud data either, nothing to do
+    } else if (!hasCloudData) {
+      // Local has data but cloud is empty — push to cloud (first sync ever)
+      const ok = await cloudPut(token, 'journal', { trades: localTrades, notes: localNotes })
+      if (ok) lsSet(LAST_SYNC_KEY, new Date().toISOString())
+    } else {
+      // Both have data — compare timestamps
+      const lastSyncAt = lsGet<string | null>(LAST_SYNC_KEY, null)
+      const cloudTime = cloudUpdatedAt ? new Date(cloudUpdatedAt).getTime() : 0
+      const localTime = lastSyncAt ? new Date(lastSyncAt).getTime() : 0
+
+      if (cloudTime > localTime) {
+        // Cloud is newer — another device updated it, pull cloud data down
+        lsSet(TRADES_KEY, cloudTrades)
+        lsSet(NOTES_KEY,  cloudNotes)
+        lsSet(LAST_SYNC_KEY, new Date().toISOString())
+      } else {
+        // Local is current (or equal) — push local to cloud
+        // This also propagates deletes: what the user has locally IS canonical.
+        const ok = await cloudPut(token, 'journal', { trades: localTrades, notes: localNotes })
+        if (ok) lsSet(LAST_SYNC_KEY, new Date().toISOString())
       }
     }
 
@@ -164,11 +198,13 @@ export async function forceSyncFromCloud(): Promise<boolean> {
   if (!token) return false
   setStatus('syncing')
   try {
+    // Always pull from cloud regardless of timestamps — this is a manual override
     const cloudData = await cloudGet<CloudJournalData>(token, 'journal')
     const cloudTrades = cloudData?.trades ?? []
     const cloudNotes  = cloudData?.notes  ?? []
     lsSet(TRADES_KEY, cloudTrades)
     lsSet(NOTES_KEY,  cloudNotes)
+    lsSet(LAST_SYNC_KEY, new Date().toISOString())
     setStatus('synced')
     return true
   } catch {
@@ -194,6 +230,7 @@ export function debouncedSyncJournal(trades: unknown[], notes: unknown[]): void 
   _journalTimer = setTimeout(async () => {
     _journalTimer = null
     const ok = await cloudPut(token, 'journal', { trades, notes })
+    if (ok) lsSet(LAST_SYNC_KEY, new Date().toISOString())
     setStatus(ok ? 'synced' : 'error')
   }, 5000)
 }
