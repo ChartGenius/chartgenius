@@ -46,7 +46,7 @@ interface WebhookEvent {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const WEBHOOK_BASE = 'https://tradvue-api.onrender.com/api/webhook/tv'
+const WEBHOOK_BASE = 'https://tradvue-api.onrender.com/api/webhook/nt'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
