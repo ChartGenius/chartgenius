@@ -148,6 +148,7 @@ app.use('/api/stocks',        cachePublic1h,  require('./routes/stocks'));      
 app.use('/api/sentiment',     cachePublic1h,  require('./routes/sentiment'));       // Marketaux sentiment by ticker
 app.use('/api/journal',       cachePrivate,   require('./routes/journal'));         // Journal CSV import & trade management
 app.use('/api/webhooks',      cachePrivate,   (() => { const { managementRouter } = require('./routes/webhooks'); return managementRouter; })());  // Webhook token management
+app.use('/api/webhook-trades', cachePrivate,  (() => { const { tradesRouter } = require('./routes/webhooks'); return tradesRouter; })());      // Webhook trades feed
 app.use('/api/backup',        cachePrivate,   require('./routes/backup'));          // Data export/backup/restore
 app.use('/api/feedback',                      require('./routes/feedback'));        // User feedback & bug reports
 app.use('/api/support',                       require('./routes/support'));          // AI support chatbot

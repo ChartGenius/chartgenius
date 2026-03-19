@@ -122,6 +122,9 @@ interface Trade {
   strategyType?: 'single' | 'vertical_spread' | 'iron_condor' | 'strangle' | 'straddle' | 'butterfly' | 'covered_call' | 'cash_secured_put' | 'calendar_spread' | 'custom'
   greeks?: OptionGreeks
   legs?: OptionLeg[]           // for multi-leg strategies
+
+  // ── Source tracking ───────────────────────────────────────────────────────
+  source?: string              // 'webhook' for auto-imported trades
 }
 
 interface Note {
@@ -1968,7 +1971,12 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                     title={locked ? 'Upgrade to Pro to view this trade' : undefined}
                   >
                     <td style={{ padding: '10px 12px' }}>{t.date}</td>
-                    <td style={{ padding: '10px 12px', fontWeight: 700, fontFamily: 'var(--mono)', color: BLUE }}>{locked ? '••••' : t.symbol}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, fontFamily: 'var(--mono)', color: BLUE }}>
+                      {locked ? '••••' : t.symbol}
+                      {!locked && t.source === 'webhook' && (
+                        <span title="Auto-imported via TradingView webhook" style={{ marginLeft: 4, fontSize: 10, color: 'var(--accent)', verticalAlign: 'middle' }}>&#9889;</span>
+                      )}
+                    </td>
                     <td style={{ padding: '10px 12px', color: t.direction === 'Long' ? GREEN : RED }}>{locked ? '—' : t.direction}</td>
                     <td style={{ padding: '10px 12px', color: 'var(--text-2)' }}>{locked ? '—' : t.assetClass}</td>
                     <td style={{ padding: '10px 12px', fontFamily: 'var(--mono)' }}>{locked ? '••••' : `$${fmt2(t.entryPrice)}`}</td>
@@ -3595,6 +3603,72 @@ function JournalPageInner() {
     prevNotesRef.current  = notes
     debouncedSyncJournal(trades, notes)
   }, [trades, notes, token])
+
+  // Webhook trades polling — fetch trades auto-journaled via TradingView webhooks
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://tradvue-api.onrender.com'
+  useEffect(() => {
+    if (!token || isDemo) return
+
+    async function fetchWebhookTrades() {
+      try {
+        const res = await fetch(`${API_BASE}/api/webhook-trades`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) return
+        const data = await res.json()
+
+        if (data.trades?.length > 0) {
+          setTrades(prev => {
+            const existingWebhookIds = new Set(prev.filter(t => t.source === 'webhook').map(t => t.id))
+            const newWebhookTrades: Trade[] = data.trades
+              .filter((t: Record<string, unknown>) => !existingWebhookIds.has(`wh_${t.id}`))
+              .map((t: Record<string, unknown>) => ({
+                id: `wh_${t.id}`,
+                date: (t.traded_at as string)?.split('T')[0] || new Date().toISOString().split('T')[0],
+                time: (t.traded_at as string)?.split('T')[1]?.slice(0, 8) || '',
+                symbol: t.symbol as string,
+                assetClass: (t.asset_class as AssetClass) || 'Stock',
+                direction: t.direction as Direction,
+                entryPrice: parseFloat(t.entry_price as string) || 0,
+                exitPrice: t.exit_price ? parseFloat(t.exit_price as string) : 0,
+                positionSize: parseFloat(t.quantity as string) || 1,
+                stopLoss: 0,
+                takeProfit: 0,
+                commissions: 0,
+                pnl: t.exit_price && t.entry_price
+                  ? Math.round(
+                      (parseFloat(t.exit_price as string) - parseFloat(t.entry_price as string)) *
+                      (parseFloat(t.quantity as string) || 1) *
+                      (t.direction === 'Short' ? -1 : 1) * 100
+                    ) / 100
+                  : 0,
+                rMultiple: 0,
+                pctGainLoss: 0,
+                holdMinutes: 0,
+                setupTag: (t.strategy as string) || '',
+                mistakeTag: 'None',
+                rating: 3,
+                notes: (t.notes as string) || 'Auto-journaled via TradingView',
+                screenshot: '',
+                source: 'webhook',
+              } as Trade))
+
+            if (newWebhookTrades.length === 0) return prev
+            const merged = [...newWebhookTrades, ...prev]
+            saveTrades(merged)
+            return merged
+          })
+        }
+      } catch {
+        // Silent fail — webhook trades are best-effort
+      }
+    }
+
+    fetchWebhookTrades()
+    const interval = setInterval(fetchWebhookTrades, 30000)
+    return () => clearInterval(interval)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, isDemo])
 
   const handleImportTrades = (importedTrades: Record<string, unknown>[]) => {
     // Apply date filter for free-tier post-trial users

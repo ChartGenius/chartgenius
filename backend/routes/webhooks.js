@@ -4,6 +4,7 @@
  * Two route groups:
  *   POST /api/webhook/tv/:userToken   — Public receiver (no auth, IP-allowlisted)
  *   GET/POST/DELETE /api/webhooks/*   — Management routes (requireAuth)
+ *   GET /api/webhook-trades           — Returns user's webhook trades (requireAuth)
  *
  * Security model:
  *   - IP allowlist enforced FIRST — only TradingView IPs + localhost accepted
@@ -26,6 +27,7 @@ const xss = require('xss');
 
 const receiverRouter    = express.Router();   // mounted at /api/webhook
 const managementRouter  = express.Router();   // mounted at /api/webhooks (with requireAuth)
+const tradesRouter      = express.Router();   // mounted at /api/webhook-trades (with requireAuth)
 
 // ── TradingView IP Allowlist ──────────────────────────────────────────────────
 // Source: https://www.tradingview.com/support/solutions/43000529348/
@@ -164,193 +166,130 @@ function sanitize(str) {
 
 // ── Trade Matching ────────────────────────────────────────────────────────────
 /**
- * Async trade matching against the user's journal data.
+ * Inserts a trade into the webhook_trades table.
  *
- * Journal data is stored as a JSON blob in the user_data table under
- * data_type = 'journal'.  The blob is an object whose values are arrays
- * of trade objects:
+ * Rules:
+ *   buy  action → INSERT direction='Long', status='open'
+ *   sell action → check for open Long in webhook_trades:
+ *                 if found → UPDATE with exit_price, status='closed'
+ *                 if not   → INSERT direction='Short', status='open'
  *
- *   { [someKey]: [ { id, symbol, direction, entryPrice, exitPrice, ... }, ... ] }
+ * Every alert creates or updates exactly one trade record. No "ignored" logic.
  *
- * Matching rules:
- *   buy  + no open long  for ticker  → new LONG entry
- *   sell + open long     for ticker  → close trade (set exitPrice/exitTime)
- *   sell + no open short for ticker  → new SHORT entry
- *   buy  + open short    for ticker  → close trade
- *
- * Returns the matched/created trade id (integer index or generated) or null.
+ * Returns { matched: true, tradeId } on success, { matched: false, error } on failure.
  */
 async function matchAndJournalTrade(supabase, userId, parsed, eventId) {
   try {
-    // Fetch current journal data
-    const { data: row, error: fetchErr } = await supabase
-      .from('user_data')
-      .select('data')
-      .eq('user_id', userId)
-      .eq('data_type', 'journal')
-      .maybeSingle();
-
-    if (fetchErr) {
-      console.error('[Webhook] Journal fetch error:', fetchErr.message);
-      return { matched: false, error: fetchErr.message };
-    }
-
-    // Journal data is nested: { trades: [...] } or array at top-level
-    const journalData = row?.data || {};
-    const trades = Array.isArray(journalData.trades)
-      ? journalData.trades
-      : Array.isArray(journalData)
-        ? journalData
-        : [];
-
-    const { ticker, action, price, quantity, position } = parsed;
+    const { ticker, action, price, quantity } = parsed;
     const now = new Date().toISOString();
-    const today = now.split('T')[0];
-
-    // --- Find open trade for this ticker ---
-    // An open trade has no exitPrice
-    const openIdx = trades.findIndex(
-      t => t.symbol === ticker && (!t.exitPrice || t.exitPrice === 0 || t.exitPrice === null)
-    );
-    const openTrade = openIdx >= 0 ? trades[openIdx] : null;
-
-    let updatedTrades = [...trades];
-    let tradeId = null;
-    let matchType = 'ignored';
-
-    // Determine expected direction from position hint (if provided by strategy)
-    const isLong  = position === 'long'  || action === 'buy';
-    const isShort = position === 'short' || (action === 'sell' && !openTrade);
 
     if (action === 'buy') {
-      if (openTrade && openTrade.direction === 'Short') {
-        // Close an existing SHORT trade
-        updatedTrades[openIdx] = {
-          ...openTrade,
-          exitPrice: price || openTrade.exitPrice,
-          exitTime:  now,
-          pnl: price && openTrade.entryPrice
-            ? Math.round(((openTrade.entryPrice - price) * (quantity || openTrade.positionSize || 1)) * 100) / 100
-            : openTrade.pnl || 0,
-          status: 'closed',
-          source: 'webhook',
-        };
-        tradeId  = openTrade.id || openIdx;
-        matchType = 'matched';
-      } else if (!openTrade) {
-        // New LONG entry
-        const newTrade = {
-          id:           `wh_${eventId}_${Date.now()}`,
-          date:         today,
-          time:         now.split('T')[1].slice(0, 8),
-          symbol:       ticker,
-          assetClass:   'Stock',
-          direction:    'Long',
-          entryPrice:   price || 0,
-          exitPrice:    null,
-          positionSize: quantity || 1,
-          stopLoss:     0,
-          takeProfit:   0,
-          commissions:  0,
-          pnl:          0,
-          rMultiple:    0,
-          pctGainLoss:  0,
-          holdMinutes:  0,
-          setupTag:     '',
-          notes:        `Auto-journaled via TradingView webhook`,
-          status:       'open',
-          source:       'webhook',
-        };
-        updatedTrades.push(newTrade);
-        tradeId   = newTrade.id;
-        matchType = 'matched';
-      }
-      // else: buy + open long = add-on (not handled, ignored)
-    } else if (action === 'sell') {
-      if (openTrade && openTrade.direction === 'Long') {
-        // Close an existing LONG trade
-        const entryPx = openTrade.entryPrice || 0;
-        const exitPx  = price || 0;
-        const qty     = quantity || openTrade.positionSize || 1;
-        updatedTrades[openIdx] = {
-          ...openTrade,
-          exitPrice:   exitPx,
-          exitTime:    now,
-          pnl:         Math.round(((exitPx - entryPx) * qty) * 100) / 100,
-          pctGainLoss: entryPx ? Math.round(((exitPx - entryPx) / entryPx) * 10000) / 100 : 0,
-          status:      'closed',
+      // Insert a new Long trade (open)
+      const { data: inserted, error: insertErr } = await supabase
+        .from('webhook_trades')
+        .insert({
+          user_id:     userId,
+          event_id:    eventId,
+          symbol:      ticker,
+          direction:   'Long',
+          asset_class: 'Stock',
+          entry_price: price,
+          quantity:    quantity || 1,
+          status:      'open',
           source:      'webhook',
-        };
-        tradeId   = openTrade.id || openIdx;
-        matchType = 'matched';
-      } else if (!openTrade) {
-        // New SHORT entry
-        const newTrade = {
-          id:           `wh_${eventId}_${Date.now()}`,
-          date:         today,
-          time:         now.split('T')[1].slice(0, 8),
-          symbol:       ticker,
-          assetClass:   'Stock',
-          direction:    'Short',
-          entryPrice:   price || 0,
-          exitPrice:    null,
-          positionSize: quantity || 1,
-          stopLoss:     0,
-          takeProfit:   0,
-          commissions:  0,
-          pnl:          0,
-          rMultiple:    0,
-          pctGainLoss:  0,
-          holdMinutes:  0,
-          setupTag:     '',
-          notes:        `Auto-journaled via TradingView webhook`,
-          status:       'open',
-          source:       'webhook',
-        };
-        updatedTrades.push(newTrade);
-        tradeId   = newTrade.id;
-        matchType = 'matched';
+          traded_at:   now,
+        })
+        .select('id')
+        .single();
+
+      if (insertErr) {
+        console.error('[Webhook] Insert Long trade error:', insertErr.message);
+        return { matched: false, error: insertErr.message };
       }
-      // else: sell + open short = add-on (ignored)
+
+      // Update event
+      await supabase
+        .from('webhook_events')
+        .update({ status: 'matched', trade_id: inserted.id })
+        .eq('id', eventId);
+
+      return { matched: true, tradeId: inserted.id };
+
+    } else if (action === 'sell') {
+      // Check for an open Long for this symbol
+      const { data: openLong } = await supabase
+        .from('webhook_trades')
+        .select('id, entry_price, quantity')
+        .eq('user_id', userId)
+        .eq('symbol', ticker)
+        .eq('direction', 'Long')
+        .eq('status', 'open')
+        .order('traded_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (openLong) {
+        // Close the existing Long
+        const entryPx = parseFloat(openLong.entry_price) || 0;
+        const exitPx  = price || 0;
+        const qty     = parseFloat(openLong.quantity) || 1;
+
+        const { error: updateErr } = await supabase
+          .from('webhook_trades')
+          .update({
+            exit_price: price,
+            status:     'closed',
+          })
+          .eq('id', openLong.id);
+
+        if (updateErr) {
+          console.error('[Webhook] Close Long trade error:', updateErr.message);
+          return { matched: false, error: updateErr.message };
+        }
+
+        await supabase
+          .from('webhook_events')
+          .update({ status: 'matched', trade_id: openLong.id })
+          .eq('id', eventId);
+
+        return { matched: true, tradeId: openLong.id };
+
+      } else {
+        // No open Long — insert a new Short trade
+        const { data: inserted, error: insertErr } = await supabase
+          .from('webhook_trades')
+          .insert({
+            user_id:     userId,
+            event_id:    eventId,
+            symbol:      ticker,
+            direction:   'Short',
+            asset_class: 'Stock',
+            entry_price: price,
+            quantity:    quantity || 1,
+            status:      'open',
+            source:      'webhook',
+            traded_at:   now,
+          })
+          .select('id')
+          .single();
+
+        if (insertErr) {
+          console.error('[Webhook] Insert Short trade error:', insertErr.message);
+          return { matched: false, error: insertErr.message };
+        }
+
+        await supabase
+          .from('webhook_events')
+          .update({ status: 'matched', trade_id: inserted.id })
+          .eq('id', eventId);
+
+        return { matched: true, tradeId: inserted.id };
+      }
     }
 
-    if (matchType === 'ignored') {
-      return { matched: false, tradeId: null };
-    }
+    // Should never reach here given parser validation
+    return { matched: false, error: 'Unknown action' };
 
-    // Save updated journal back
-    const updatedJournal = Array.isArray(journalData)
-      ? updatedTrades
-      : { ...journalData, trades: updatedTrades };
-
-    const { error: saveErr } = await supabase
-      .from('user_data')
-      .upsert(
-        { user_id: userId, data_type: 'journal', data: updatedJournal, updated_at: now },
-        { onConflict: 'user_id,data_type' }
-      );
-
-    if (saveErr) {
-      console.error('[Webhook] Journal save error:', saveErr.message);
-      return { matched: false, error: saveErr.message };
-    }
-
-    // Update event record with matched status and trade_id
-    await supabase
-      .from('webhook_events')
-      .update({ status: 'matched', trade_id: typeof tradeId === 'number' ? tradeId : null })
-      .eq('id', eventId);
-
-    // Increment token trade_count
-    await supabase.rpc('increment_webhook_trade_count', { event_id: eventId }).catch(() => {
-      // RPC may not exist yet — fallback manual update
-      supabase
-        .from('webhook_tokens')
-        .select('id, trade_count')
-        .then(({ data }) => {/* best-effort */});
-    });
-
-    return { matched: true, tradeId };
   } catch (err) {
     console.error('[Webhook] Trade matching error:', err.message);
     return { matched: false, error: err.message };
@@ -391,7 +330,7 @@ receiverRouter.post(
         // 4a. Validate token
         const { data: tokenRow, error: tokenErr } = await supabase
           .from('webhook_tokens')
-          .select('id, user_id, is_active')
+          .select('id, user_id, is_active, trade_count')
           .eq('token', userToken)
           .maybeSingle();
 
@@ -405,7 +344,7 @@ receiverRouter.post(
           return;
         }
 
-        const { id: tokenId, user_id: userId } = tokenRow;
+        const { id: tokenId, user_id: userId, trade_count } = tokenRow;
 
         // 4b. Parse payload
         const body   = req.body;
@@ -458,13 +397,7 @@ receiverRouter.post(
 
         const eventId = eventRow.id;
 
-        // 4d. Update token last_used_at
-        await supabase
-          .from('webhook_tokens')
-          .update({ last_used_at: new Date().toISOString() })
-          .eq('id', tokenId);
-
-        // 4e. Attempt trade matching
+        // 4d. Attempt trade matching
         const { matched, error: matchErr } = await matchAndJournalTrade(
           supabase, userId, parsed, eventId
         );
@@ -474,33 +407,16 @@ receiverRouter.post(
             .from('webhook_events')
             .update({ status: 'error', error_message: matchErr })
             .eq('id', eventId);
-        } else if (!matched) {
-          await supabase
-            .from('webhook_events')
-            .update({ status: 'ignored' })
-            .eq('id', eventId);
         }
 
-        // 4f. Increment trade_count on token
-        if (matched) {
-          await supabase
-            .from('webhook_tokens')
-            .update({ trade_count: supabase.rpc ? undefined : undefined }) // handled below
-            .eq('id', tokenId);
-
-          // Use raw SQL increment via RPC (if available) or SELECT+UPDATE
-          const { data: tkData } = await supabase
-            .from('webhook_tokens')
-            .select('trade_count')
-            .eq('id', tokenId)
-            .single();
-          if (tkData) {
-            await supabase
-              .from('webhook_tokens')
-              .update({ trade_count: (tkData.trade_count || 0) + 1 })
-              .eq('id', tokenId);
-          }
-        }
+        // 4e. Update token last_used_at and trade_count
+        await supabase
+          .from('webhook_tokens')
+          .update({
+            last_used_at: new Date().toISOString(),
+            trade_count:  matched ? (trade_count || 0) + 1 : (trade_count || 0),
+          })
+          .eq('id', tokenId);
 
         console.log(
           `[Webhook] Processed: token=${userToken.slice(0, 8)} ` +
@@ -513,6 +429,33 @@ receiverRouter.post(
     });
   }
 );
+
+// ═════════════════════════════════════════════════════════════════════════════
+// WEBHOOK TRADES: GET /api/webhook-trades
+// ═════════════════════════════════════════════════════════════════════════════
+
+tradesRouter.get('/', requireAuth, async (req, res) => {
+  try {
+    const supabase = getServiceClient();
+
+    const { data, error } = await supabase
+      .from('webhook_trades')
+      .select('id, symbol, direction, asset_class, entry_price, exit_price, quantity, strategy, notes, status, source, traded_at, created_at')
+      .eq('user_id', req.user.id)
+      .order('traded_at', { ascending: false })
+      .limit(500);
+
+    if (error) {
+      console.error('[Webhook Trades] Fetch error:', error.message);
+      return res.status(500).json({ error: 'Failed to fetch webhook trades' });
+    }
+
+    res.json({ trades: data || [], total: (data || []).length });
+  } catch (err) {
+    console.error('[Webhook Trades] Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // ═════════════════════════════════════════════════════════════════════════════
 // MANAGEMENT ROUTES (all require requireAuth — mounted at /api/webhooks)
@@ -762,4 +705,4 @@ managementRouter.post('/test', requireAuth, async (req, res) => {
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
-module.exports = { receiverRouter, managementRouter };
+module.exports = { receiverRouter, managementRouter, tradesRouter };
