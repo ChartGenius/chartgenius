@@ -1,29 +1,22 @@
 // TradVue Auto-Journal for NinjaTrader 8
 // 
-// This strategy addon sends ALL real trade executions on your account to TradVue.
-// It subscribes to account-level execution events, so it captures every fill —
-// whether from Chart Trader, manual orders, other strategies, or DOM.
+// Sends ALL account trade executions to your TradVue journal automatically.
+// Captures every fill — Chart Trader, manual orders, DOM, other strategies.
 //
 // Installation:
 //   1. Copy this file to: Documents\NinjaTrader 8\bin\Custom\Strategies\
 //   2. Open NinjaScript Editor → Compile (F5)
 //   3. Add "TradVueJournal" strategy to any chart
 //   4. Set the WebhookUrl parameter to your TradVue webhook URL
-//   5. Enable the strategy — ALL account fills auto-journal from this point
+//   5. Enable the strategy — all fills auto-journal from this point
 //
 // Security:
-//   - This addon ONLY SENDS data (outbound HTTP POST)
-//   - It CANNOT place, modify, or cancel any orders
-//   - It CANNOT access your account balance or broker credentials
-//   - It reads only execution data that NinjaTrader provides on fills
-//
-// Data sent per execution:
-//   - Symbol, price, quantity, direction (Long/Short), time
-//   - Order ID (for matching entries to exits)
-//   - NO account numbers, NO credentials, NO balance info
+//   - ONLY SENDS data (outbound HTTP POST). Cannot place/modify/cancel orders.
+//   - Cannot access account balance or broker credentials.
 
 #region Using declarations
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.ComponentModel;
@@ -44,12 +37,11 @@ namespace NinjaTrader.NinjaScript.Strategies
         {
             if (State == State.SetDefaults)
             {
-                Description = "TradVue Auto-Journal — sends ALL account trade executions to your TradVue account";
+                Description = "TradVue Auto-Journal — sends all account executions to TradVue";
                 Name = "TradVueJournal";
                 Calculate = Calculate.OnBarClose;
                 IsOverlay = true;
                 
-                // User-configurable parameters
                 WebhookUrl = "https://tradvue-api.onrender.com/api/webhook/nt/YOUR_TOKEN_HERE";
                 SendEntries = true;
                 SendExits = true;
@@ -57,112 +49,111 @@ namespace NinjaTrader.NinjaScript.Strategies
             }
             else if (State == State.DataLoaded)
             {
-                // Subscribe to account-level execution events
-                // This captures ALL fills on the account, not just this strategy's orders
-                if (Account != null)
+                // Subscribe to account-level execution events to capture ALL fills
+                acct = Account;
+                if (acct != null)
                 {
-                    acct = Account;
-                    acct.ExecutionUpdate += OnAccountExecutionUpdate;
-                    
+                    acct.ExecutionUpdate += OnExecUpdate;
                     if (LogToOutput)
-                        Print("[TradVue] Subscribed to account execution updates for: " + acct.Name);
+                        Print("[TradVue] Listening for executions on account: " + acct.Name);
                 }
             }
             else if (State == State.Terminated)
             {
-                // Unsubscribe to prevent memory leaks
                 if (acct != null)
                 {
-                    acct.ExecutionUpdate -= OnAccountExecutionUpdate;
-                    
+                    acct.ExecutionUpdate -= OnExecUpdate;
                     if (LogToOutput)
-                        Print("[TradVue] Unsubscribed from account execution updates");
+                        Print("[TradVue] Stopped listening");
                 }
             }
         }
         
         protected override void OnBarUpdate()
         {
-            // No bar processing needed — we listen to account events only
+            // No bar processing — we only listen to account execution events
         }
         
-        private void OnAccountExecutionUpdate(object sender, ExecutionEventArgs e)
+        // Event signature from NT8 docs: (object sender, ExecutionEventArgs e)
+        // ExecutionEventArgs provides: e.Execution, e.Quantity, e.Price
+        // Execution provides: .Instrument, .MarketPosition, .Name, .Order, .OrderId, .Price, .Quantity, .Time
+        private void OnExecUpdate(object sender, ExecutionEventArgs e)
         {
-            if (e.Execution == null) return;
-            
-            var execution = e.Execution;
-            var order = execution.Order;
-            
-            // Only process if we have order info and it's filled
-            if (order != null && order.OrderState != OrderState.Filled && order.OrderState != OrderState.PartFilled) return;
-            
-            // Determine direction from the order action
-            string action = "";
-            string direction = "";
-            
-            // Buy/SellShort = entries, Sell/BuyToCover = exits
-            // But OrderAction isn't always reliable per NT support.
-            // Use a simpler heuristic: check execution.MarketPosition
-            if (execution.MarketPosition == MarketPosition.Long)
+            try
             {
-                action = "entry";
-                direction = "Long";
+                var exec = e.Execution;
+                if (exec == null) return;
+                
+                // Determine direction from execution's MarketPosition
+                // MarketPosition.Long = bought (entry long or cover short)
+                // MarketPosition.Short = sold (entry short or exit long)
+                string direction = "";
+                string action = "";
+                
+                if (exec.MarketPosition == MarketPosition.Long)
+                {
+                    direction = "Long";
+                    action = "entry";
+                }
+                else if (exec.MarketPosition == MarketPosition.Short)
+                {
+                    direction = "Short";
+                    action = "entry";
+                }
+                else
+                {
+                    direction = "Flat";
+                    action = "exit";
+                }
+                
+                if (action == "entry" && !SendEntries) return;
+                if (action == "exit" && !SendExits) return;
+                
+                string symbol = exec.Instrument.MasterInstrument.Name;
+                double price = exec.Price;
+                int qty = exec.Quantity;
+                DateTime time = exec.Time;
+                string orderId = exec.OrderId ?? "";
+                
+                string assetClass = "Stock";
+                if (exec.Instrument.MasterInstrument.InstrumentType == InstrumentType.Future)
+                    assetClass = "Futures";
+                else if (exec.Instrument.MasterInstrument.InstrumentType == InstrumentType.Forex)
+                    assetClass = "Forex";
+                
+                string json = string.Format(
+                    "{{" +
+                    "\"ticker\":\"{0}\"," +
+                    "\"action\":\"{1}\"," +
+                    "\"direction\":\"{2}\"," +
+                    "\"price\":{3}," +
+                    "\"qty\":{4}," +
+                    "\"asset_class\":\"{5}\"," +
+                    "\"order_id\":\"{6}\"," +
+                    "\"time\":\"{7}\"," +
+                    "\"source\":\"ninjatrader\"" +
+                    "}}",
+                    symbol,
+                    action,
+                    direction,
+                    price.ToString("F6"),
+                    qty,
+                    assetClass,
+                    orderId,
+                    time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                );
+                
+                SendAsync(json, symbol, action, direction, price, qty);
             }
-            else if (execution.MarketPosition == MarketPosition.Short)
+            catch (Exception ex)
             {
-                action = "entry";
-                direction = "Short";
+                if (LogToOutput)
+                    Print("[TradVue] Error processing execution: " + ex.Message);
             }
-            else
-            {
-                action = "exit";
-                direction = "Flat";
-            }
-            
-            if (action == "entry" && !SendEntries) return;
-            if (action == "exit" && !SendExits) return;
-            
-            double price = execution.Price;
-            int quantity = execution.Quantity;
-            DateTime time = execution.Time;
-            string symbol = execution.Instrument.MasterInstrument.Name;
-            string orderId = order != null ? order.OrderId : "";
-            
-            string assetClass = execution.Instrument.MasterInstrument.InstrumentType == InstrumentType.Future 
-                ? "Futures" 
-                : execution.Instrument.MasterInstrument.InstrumentType == InstrumentType.Forex 
-                    ? "Forex" 
-                    : "Stock";
-            
-            // Build JSON payload
-            string json = string.Format(
-                "{{" +
-                "\"ticker\":\"{0}\"," +
-                "\"action\":\"{1}\"," +
-                "\"direction\":\"{2}\"," +
-                "\"price\":{3}," +
-                "\"qty\":{4}," +
-                "\"asset_class\":\"{5}\"," +
-                "\"order_id\":\"{6}\"," +
-                "\"time\":\"{7}\"," +
-                "\"source\":\"ninjatrader\"" +
-                "}}",
-                symbol,
-                action,
-                direction,
-                price.ToString("F6"),
-                quantity,
-                assetClass,
-                orderId ?? "",
-                time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
-            );
-            
-            // Send async — don't block the execution thread
-            SendWebhookAsync(json, symbol, action, direction, price, quantity, time);
         }
         
-        private async void SendWebhookAsync(string json, string symbol, string action,
-            string direction, double price, int qty, DateTime time)
+        private async void SendAsync(string json, string symbol, string action,
+            string direction, double price, int qty)
         {
             try
             {
@@ -173,41 +164,42 @@ namespace NinjaTrader.NinjaScript.Strategies
                 {
                     if (response.IsSuccessStatusCode)
                     {
-                        Print(string.Format("[TradVue] {0} {1} {2} {3}x @ {4:F2} — sent OK", 
+                        Print(string.Format("[TradVue] {0} {1} {2} {3}x @ {4:F2} — sent OK",
                             action.ToUpper(), direction, symbol, qty, price));
                     }
                     else
                     {
-                        Print(string.Format("[TradVue] ERROR {0}: {1}", 
-                            (int)response.StatusCode, await response.Content.ReadAsStringAsync()));
+                        string body = await response.Content.ReadAsStringAsync();
+                        Print(string.Format("[TradVue] ERROR {0}: {1}",
+                            (int)response.StatusCode, body));
                     }
                 }
             }
             catch (Exception ex)
             {
                 if (LogToOutput)
-                    Print(string.Format("[TradVue] Send failed: {0}", ex.Message));
+                    Print("[TradVue] Send failed: " + ex.Message);
             }
         }
 
         #region Properties
         [NinjaScriptProperty]
-        [Display(Name = "Webhook URL", Description = "Your TradVue webhook URL (from Integrations page)", 
+        [Display(Name = "Webhook URL", Description = "Your TradVue webhook URL (from Integrations page)",
             Order = 1, GroupName = "TradVue Settings")]
         public string WebhookUrl { get; set; }
 
         [NinjaScriptProperty]
-        [Display(Name = "Send Entries", Description = "Send entry fills to TradVue", 
+        [Display(Name = "Send Entries", Description = "Send entry fills to TradVue",
             Order = 2, GroupName = "TradVue Settings")]
         public bool SendEntries { get; set; }
 
         [NinjaScriptProperty]
-        [Display(Name = "Send Exits", Description = "Send exit fills to TradVue", 
+        [Display(Name = "Send Exits", Description = "Send exit fills to TradVue",
             Order = 3, GroupName = "TradVue Settings")]
         public bool SendExits { get; set; }
 
         [NinjaScriptProperty]
-        [Display(Name = "Log to Output", Description = "Show send confirmations in NinjaTrader Output window", 
+        [Display(Name = "Log to Output", Description = "Show confirmations in NinjaTrader Output window",
             Order = 4, GroupName = "TradVue Settings")]
         public bool LogToOutput { get; set; }
         #endregion
