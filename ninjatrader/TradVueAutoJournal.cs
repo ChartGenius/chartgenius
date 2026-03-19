@@ -4,15 +4,15 @@
 // and posts them to your TradVue webhook automatically.
 //
 // WHY INDICATOR (not Strategy):
-//   A Strategy only sees its own orders via OnExecutionUpdate. Since TradVueJournal
+//   A Strategy only sees its own orders via OnExecutionUpdate. Since TradVueAutoJournal
 //   never places orders, that event never fires. An Indicator can subscribe to
 //   Account.ExecutionUpdate at the account level, which receives every fill from
 //   every source — exactly what we need.
 //
 // INSTALLATION:
-//   1. In NinjaTrader: Tools → Import → NinjaScript Add-On → select TradVueJournal.cs
+//   1. In NinjaTrader: Tools → Import → NinjaScript Add-On → select TradVueAutoJournal.cs
 //   2. After import, add the indicator to any chart:
-//      Chart → right-click → Indicators → TradVueJournal
+//      Chart → right-click → Indicators → TradVueAutoJournal
 //   3. Set WebhookUrl to your TradVue URL (from the Integrations page)
 //   4. Optionally set AccountName (leave blank to monitor ALL accounts)
 //   5. Click OK — all fills auto-journal from this point on

@@ -411,7 +411,7 @@ export default function NinjaTraderConnect({ onClose }: NinjaTraderConnectProps)
 
               <StepCard number={1} title="Download the TradVue Addon">
                 <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
-                  Download the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradVueJournal.cs</strong> NinjaScript file.
+                  Download the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradVueAutoJournal.cs</strong> NinjaScript file.
                 </p>
                 <a
                   href="/downloads/TradVueAutoJournal.zip"
@@ -438,7 +438,7 @@ export default function NinjaTraderConnect({ onClose }: NinjaTraderConnectProps)
               <StepCard number={2} title="Import the Indicator into NinjaTrader">
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
                   In NinjaTrader, go to <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Tools → Import → NinjaScript Add-On</strong> and select the downloaded{' '}
-                  <code style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 11 }}>TradVueJournal.cs</code> file.
+                  <code style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 11 }}>TradVueAutoJournal.cs</code> file.
                   NinjaTrader will compile and install it automatically as an <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Indicator</strong>.<br />
                   <span style={{ fontSize: 12, marginTop: 6, display: 'inline-block' }}>
                     (Using an Indicator — not a Strategy — lets it capture fills from <em>all</em> sources: manual orders, Chart Trader, ATM, SuperDOM, and other strategies.)
@@ -449,8 +449,8 @@ export default function NinjaTraderConnect({ onClose }: NinjaTraderConnectProps)
               <StepCard number={3} title="Configure Your Webhook URL">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
-                    Add <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradVueJournal</strong> to any chart
-                    (right-click chart → Indicators → select TradVueJournal).
+                    Add <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradVueAutoJournal</strong> to any chart
+                    (right-click chart → Indicators → select TradVueAutoJournal).
                     Set the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>WebhookUrl</strong> parameter to:
                   </p>
                   {webhookUrl ? (
