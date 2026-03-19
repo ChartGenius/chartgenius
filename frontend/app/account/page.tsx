@@ -16,6 +16,8 @@
  */
 
 import { useEffect, useState, Suspense } from 'react'
+import dynamic from 'next/dynamic'
+const TradingViewConnect = dynamic(() => import('../components/TradingViewConnect'), { ssr: false })
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '../context/AuthContext'
@@ -108,6 +110,8 @@ function AccountPageInner() {
   const canceled = searchParams.get('canceled')
 
   const [sub, setSub] = useState<SubscriptionStatus | null>(null)
+  const [showTVConnect, setShowTVConnect] = useState(false)
+  const [tvConnected, setTvConnected] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
   const [portalLoading, setPortalLoading] = useState(false)
   const [portalError, setPortalError] = useState<string | null>(null)
@@ -136,6 +140,20 @@ function AccountPageInner() {
       .catch(err => console.error('[Account] Failed to load subscription:', err))
       .finally(() => setLoading(false))
   }, [token, authLoading])
+
+  // Check TradingView connection status
+  useEffect(() => {
+    if (!token) return
+    fetch(API_BASE + '/api/webhooks/tokens', {
+      headers: { Authorization: 'Bearer ' + token },
+    })
+      .then(r => r.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : (data.tokens ?? [])
+        setTvConnected(list.some((t: { is_active: boolean }) => t.is_active))
+      })
+      .catch(() => setTvConnected(false))
+  }, [token])
 
   // Clean up URL params after showing banners
   useEffect(() => {
@@ -492,6 +510,55 @@ Delete My Account
           </div>
         </SectionCard>
 
+        {/* ── TradingView Integration ───────────────────────────────────────── */}
+        <SectionCard title="TradingView Integration">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-0, #f9fafb)', marginBottom: 4 }}>
+                Auto-import trades from TradingView alerts
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: tvConnected === true ? 'var(--green, #10b981)' : tvConnected === false ? 'var(--text-3, #6b7280)' : 'var(--text-3, #6b7280)',
+                  boxShadow: tvConnected === true ? '0 0 6px rgba(16,185,129,0.5)' : 'none',
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontSize: 13, color: tvConnected === true ? 'var(--green, #10b981)' : 'var(--text-2, #9ca3af)' }}>
+                  {tvConnected === null ? 'Checking...' : tvConnected ? 'Connected' : 'Not connected'}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowTVConnect(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                background: 'transparent',
+                border: '1px solid rgba(74,158,255,0.45)',
+                borderRadius: 10,
+                padding: '9px 18px',
+                color: 'var(--blue, #4a9eff)',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              {tvConnected ? 'Manage Connection' : 'Connect TradingView'}
+            </button>
+          </div>
+          <p style={{ margin: '12px 0 0', fontSize: 12, color: 'var(--text-3, #6b7280)', lineHeight: 1.6 }}>
+            When connected, your TradingView alerts automatically create trade entries in your journal. No manual logging needed.
+          </p>
+        </SectionCard>
+
         {/* ── Notifications ─────────────────────────────────────────────────── */}
         <SectionCard title="Notifications">
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
@@ -666,6 +733,24 @@ Delete My Account
             </div>
           </div>
         </div>
+      )}
+
+      {showTVConnect && (
+        <TradingViewConnect
+          onClose={() => {
+            setShowTVConnect(false)
+            // Refresh status
+            if (token) {
+              fetch(API_BASE + '/api/webhooks/tokens', { headers: { Authorization: 'Bearer ' + token } })
+                .then(r => r.json())
+                .then(data => {
+                  const list = Array.isArray(data) ? data : (data.tokens ?? [])
+                  setTvConnected(list.some((t: { is_active: boolean }) => t.is_active))
+                })
+                .catch(() => {})
+            }
+          }}
+        />
       )}
     </div>
   )
