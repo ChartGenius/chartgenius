@@ -33,7 +33,7 @@ import { loadPlaybooks, initPlaybooks, type Playbook, CATEGORY_COLORS, CATEGORY_
 import { DEFAULT_PLAYBOOKS } from '../utils/playbookDefaults'
 import dynamic from 'next/dynamic'
 const AuthModal = dynamic(() => import('../components/AuthModal'), { ssr: false })
-const TradingViewConnect = dynamic(() => import('../components/TradingViewConnect'), { ssr: false })
+const NinjaTraderConnect = dynamic(() => import('../components/NinjaTraderConnect'), { ssr: false })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -3510,7 +3510,7 @@ function JournalPageInner() {
   const [notes, setNotes] = useState<Note[]>([])
   const [showImportModal, setShowImportModal] = useState(false)
   const [showBackupImport, setShowBackupImport] = useState(false)
-  const [showTVConnect, setShowTVConnect] = useState(false)
+  const [showNTConnect, setShowNTConnect] = useState(false)
   const [customTags, setCustomTags] = useState<TagDefinition[]>([])
   // Pre-fill from URL params (from watchlist +LOG button)
   const [prefillParams, setPrefillParams] = useState<{ symbol?: string; price?: string; asset?: string } | null>(null)
@@ -3648,7 +3648,7 @@ function JournalPageInner() {
                 setupTag: (t.strategy as string) || '',
                 mistakeTag: 'None',
                 rating: 3,
-                notes: (t.notes as string) || 'Auto-journaled via TradingView',
+                notes: (t.notes as string) || 'Auto-journaled via NinjaTrader',
                 screenshot: '',
                 source: 'webhook',
               } as Trade))
@@ -3768,14 +3768,14 @@ function JournalPageInner() {
           </button>
           {!isDemo && (
             <button
-              onClick={() => setShowTVConnect(true)}
+              onClick={() => setShowNTConnect(true)}
               className="btn btn-secondary btn-sm"
-              style={{ color: 'var(--blue, #4a9eff)', borderColor: 'rgba(74,158,255,0.45)' }}
+              style={{ color: '#a78bfa', borderColor: 'rgba(139,92,246,0.45)' }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5 }}>
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                <path d="M3 3l18 18M3 21l18-18" /><rect x="2" y="2" width="20" height="20" rx="4" />
               </svg>
-              Connect TradingView
+              Setup NinjaTrader
             </button>
           )}
         </div>
@@ -3891,7 +3891,7 @@ function JournalPageInner() {
         variant="upgrade"
       />
       {authModalOpenJournal && <AuthModal onClose={() => setAuthModalOpenJournal(false)} />}
-      {showTVConnect && <TradingViewConnect onClose={() => setShowTVConnect(false)} />}
+      {showNTConnect && <NinjaTraderConnect onClose={() => setShowNTConnect(false)} />}
     </div>
   )
 
