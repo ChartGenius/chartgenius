@@ -758,8 +758,8 @@ export default function IntegrationsPage() {
           </div>
           <div style={{ marginLeft: 'auto' }}>
             <Badge
-              label={tokens.some(t => t.is_active) ? '🟢 Connected' : '⚪ Not connected'}
-              color={tokens.some(t => t.is_active) ? 'green' : 'gray'}
+              label={tokens.some(t => t.is_active) ? '🟡 Token active — awaiting first trade' : '⚪ Not set up'}
+              color={tokens.some(t => t.is_active) ? 'amber' : 'gray'}
             />
           </div>
         </div>

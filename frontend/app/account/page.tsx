@@ -522,12 +522,12 @@ Delete My Account
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: ntConnected === true ? 'var(--green, #10b981)' : ntConnected === false ? 'var(--text-3, #6b7280)' : 'var(--text-3, #6b7280)',
-                  boxShadow: ntConnected === true ? '0 0 6px rgba(16,185,129,0.5)' : 'none',
+                  background: ntConnected === true ? 'var(--amber, #f59e0b)' : 'var(--text-3, #6b7280)',
+                  boxShadow: 'none',
                   flexShrink: 0,
                 }} />
-                <span style={{ fontSize: 13, color: ntConnected === true ? 'var(--green, #10b981)' : 'var(--text-2, #9ca3af)' }}>
-                  {ntConnected === null ? 'Checking...' : ntConnected ? 'Connected' : 'Not connected'}
+                <span style={{ fontSize: 13, color: ntConnected === true ? 'var(--amber, #f59e0b)' : 'var(--text-2, #9ca3af)' }}>
+                  {ntConnected === null ? 'Checking...' : ntConnected ? 'Token active — awaiting first trade' : 'Not set up'}
                 </span>
               </div>
             </div>
