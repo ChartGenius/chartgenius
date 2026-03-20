@@ -364,7 +364,7 @@ async function apiGet<T>(path: string): Promise<T | null> {
         }
         return null
       }
-      if (!r.ok) return null
+      if (!r.ok) { console.error("[apiGet] " + path + " failed: " + r.status); return null }
       return await r.json()
     } catch { return null }
   }
@@ -389,7 +389,7 @@ async function apiPost<T>(path: string, body: unknown): Promise<T | null> {
         }
         return null
       }
-      if (!r.ok) return null
+      if (!r.ok) { const t = await r.text().catch(() => ""); console.error("[apiPost] " + path + " failed: " + r.status + " " + t.slice(0,200)); return null }
       return await r.json()
     } catch { return null }
   }
@@ -1403,8 +1403,8 @@ export default function PortfolioPage() {
       saveLS('cg_price_alerts', [...loadLS<PriceAlert[]>('cg_price_alerts', []), res.alert])
       return res.alert
     }
-    console.warn('[PriceAlert] API failed, falling back to localStorage')
-    // API failed, fallback to localStorage
+    console.warn('[PriceAlert] API failed, falling back to localStorage. Token present:', !!getAuthToken())
+    // API failed, fallback to localStorage (alert will only exist locally, not monitored by server)
     const fallbackAlert: PriceAlert = {
       id: uid(), symbol, target_price, direction, triggered: false, created_at: new Date().toISOString()
     }
