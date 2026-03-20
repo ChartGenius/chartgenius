@@ -5595,6 +5595,26 @@ function AlertsTab({
                 onChange={e => setForm(f => ({ ...f, targetPrice: e.target.value }))}
                 placeholder={currentPrice ? `e.g. ${(currentPrice * 1.05).toFixed(2)}` : '0.00'}
               />
+              {(() => {
+                const tp = parseFloat(form.targetPrice)
+                if (!isNaN(tp) && tp > 0 && currentPrice) {
+                  const pct = ((tp - currentPrice) / currentPrice) * 100
+                  const warn = form.direction === 'above' && tp <= currentPrice
+                    ? '⚠ Target is at or below current price'
+                    : form.direction === 'below' && tp >= currentPrice
+                    ? '⚠ Target is at or above current price'
+                    : null
+                  return (
+                    <div style={{ fontSize: 10, marginTop: 4 }}>
+                      <span style={{ color: 'var(--text-3)' }}>
+                        {(pct >= 0 ? '+' : '') + pct.toFixed(2)}% from current
+                      </span>
+                      {warn && <div style={{ color: 'var(--yellow)', marginTop: 2 }}>{warn}</div>}
+                    </div>
+                  )
+                }
+                return null
+              })()}
             </div>
           </div>
           {formError && <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 8 }}>{formError}</div>}
@@ -5729,6 +5749,26 @@ function AlertsTab({
           </div>
         </div>
       )}
+
+      {/* Disclaimer */}
+      <div style={{
+        marginTop: 28,
+        padding: '10px 14px',
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 8,
+      }}>
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-3)', lineHeight: 1.65 }}>
+          ⚠️ <strong style={{ color: 'var(--text-2)' }}>Disclaimer:</strong>{' '}
+          Price alerts are informational only and not financial advice.
+          Prices are delayed and may not reflect real-time market conditions.
+          TradVue is not responsible for missed or delayed alerts.
+          Alerts depend on market availability and server uptime.
+          This is not a recommendation to buy or sell any security.
+          Manage notification preferences in{' '}
+          <a href="/account" style={{ color: 'var(--accent)' }}>Account Settings</a>.
+        </p>
+      </div>
     </div>
   )
 }

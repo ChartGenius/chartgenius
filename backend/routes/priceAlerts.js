@@ -1,36 +1,94 @@
 /**
  * Price Alerts Routes
  *
- * GET    /api/alerts/price         — List user's price alerts
- * POST   /api/alerts/price         — Create a price alert
- * DELETE /api/alerts/price/:id     — Delete a price alert
- * POST   /api/alerts/price/check   — Internal: check all alerts against current prices
+ * GET    /api/alerts/price                — List user's price alerts
+ * POST   /api/alerts/price                — Create a price alert
+ * DELETE /api/alerts/price/:id            — Delete a price alert
+ * POST   /api/alerts/price/check          — Internal: check all alerts (admin/service only)
+ * GET    /api/alerts/price/prefs          — Get notification prefs for current user
+ * PUT    /api/alerts/price/prefs          — Update notification prefs for current user
+ * GET    /api/alerts/price/unsubscribe    — One-click email unsubscribe (no auth, token-based)
  */
 
+'use strict';
+
 const express = require('express');
-const router = express.Router();
-const db = require('../services/db');
+const router  = express.Router();
+const db      = require('../services/db');
 const { requireAuth } = require('../middleware/auth');
+const {
+  sendPriceAlertNotifications,
+  validateUnsubToken,
+  PREFS_DEFAULTS,
+} = require('../services/priceAlertNotifier');
+const { createClient } = require('@supabase/supabase-js');
+
+function getSupabase() {
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY
+  );
+}
 
 // ── Admin/service-role guard ──────────────────────────────────────────────────
-// Used to protect internal-only endpoints from regular authenticated users.
-// Accepts either:
-//   (a) A valid JWT whose app_metadata.role === 'admin'
-//   (b) An internal service secret via X-Internal-Secret header
 function requireAdmin(req, res, next) {
-  // Option (b): internal service key
   const internalSecret = process.env.INTERNAL_SERVICE_SECRET;
   if (internalSecret && req.headers['x-internal-secret'] === internalSecret) {
     return next();
   }
-  // Option (a): admin role via JWT (req.user populated by requireAuth above)
-  if (req.user && req.user.appRole === 'admin') {
-    return next();
-  }
+  if (req.user && req.user.appRole === 'admin') return next();
   return res.status(403).json({ error: 'Admin access required' });
 }
 
-// All price alert routes require auth
+// ─── GET /api/alerts/price/unsubscribe  (PUBLIC — no auth, token-based) ───────
+// Must be registered BEFORE router.use(requireAuth) so it doesn't require login.
+
+router.get('/unsubscribe', async (req, res) => {
+  const { token } = req.query;
+  const userId = validateUnsubToken(token);
+
+  if (!userId) {
+    return res.status(400).send(`<!DOCTYPE html>
+<html><body style="font-family:system-ui;text-align:center;padding:60px;background:#111827;color:#f9fafb;">
+<h2>Invalid or expired link</h2>
+<p style="color:#9ca3af;">This unsubscribe link is invalid. Please manage notifications from your <a href="/account" style="color:#6366f1;">account settings</a>.</p>
+</body></html>`);
+  }
+
+  try {
+    const supabase = getSupabase();
+
+    // Try price_alert_prefs first
+    const { error: upsertErr } = await supabase
+      .from('price_alert_prefs')
+      .upsert({
+        user_id:       userId,
+        email_enabled: false,
+        updated_at:    new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    // Also update alert_subscriptions for consistency
+    await supabase
+      .from('alert_subscriptions')
+      .update({ email_enabled: false, updated_at: new Date().toISOString() })
+      .eq('user_id', userId);
+
+    if (upsertErr) throw new Error(upsertErr.message);
+
+    console.log(`[PriceAlerts] User ${userId} unsubscribed from email alerts`);
+
+    return res.send(`<!DOCTYPE html>
+<html><body style="font-family:system-ui;text-align:center;padding:60px;background:#111827;color:#f9fafb;">
+<h2 style="color:#4ade80;">✓ Unsubscribed</h2>
+<p style="color:#9ca3af;">You've been unsubscribed from price alert emails. You can re-enable them in your <a href="/account" style="color:#6366f1;">account settings</a>.</p>
+</body></html>`);
+  } catch (e) {
+    console.error('[PriceAlerts] unsubscribe error:', e.message);
+    return res.status(500).send('An error occurred. Please try again or contact support@tradvue.com.');
+  }
+});
+
+// All other routes require auth
 router.use(requireAuth);
 
 // ─── GET /api/alerts/price ────────────────────────────────────────────────────
@@ -60,7 +118,6 @@ router.post('/', async (req, res) => {
     if (!['above', 'below'].includes(direction)) {
       return res.status(400).json({ error: 'direction must be "above" or "below"' });
     }
-
     const price = parseFloat(target_price);
     if (isNaN(price) || price <= 0) {
       return res.status(400).json({ error: 'target_price must be a positive number' });
@@ -88,9 +145,7 @@ router.delete('/:id', async (req, res) => {
       `DELETE FROM price_alerts WHERE id = $1 AND user_id = $2`,
       [req.params.id, req.user.id]
     );
-    if (rowCount === 0) {
-      return res.status(404).json({ error: 'Alert not found' });
-    }
+    if (rowCount === 0) return res.status(404).json({ error: 'Alert not found' });
     res.json({ ok: true });
   } catch (e) {
     console.error('[PriceAlerts] DELETE error:', e.message);
@@ -98,9 +153,60 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// ─── GET /api/alerts/price/prefs ─────────────────────────────────────────────
+
+router.get('/prefs', async (req, res) => {
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase
+      .from('price_alert_prefs')
+      .select('email_enabled, push_price_alerts')
+      .eq('user_id', req.user.id)
+      .maybeSingle();
+
+    res.json({
+      prefs: {
+        email_enabled:     data?.email_enabled     ?? PREFS_DEFAULTS.email_enabled,
+        push_price_alerts: data?.push_price_alerts ?? PREFS_DEFAULTS.push_price_alerts,
+      }
+    });
+  } catch (e) {
+    console.error('[PriceAlerts] GET /prefs error:', e.message);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ─── PUT /api/alerts/price/prefs ─────────────────────────────────────────────
+
+router.put('/prefs', async (req, res) => {
+  try {
+    const { email_enabled, push_price_alerts } = req.body;
+
+    // Explicit boolean validation
+    const emailOpt = typeof email_enabled     === 'boolean' ? email_enabled     : PREFS_DEFAULTS.email_enabled;
+    const pushOpt  = typeof push_price_alerts === 'boolean' ? push_price_alerts : PREFS_DEFAULTS.push_price_alerts;
+
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from('price_alert_prefs')
+      .upsert({
+        user_id:           req.user.id,
+        email_enabled:     emailOpt,
+        push_price_alerts: pushOpt,
+        updated_at:        new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    if (error) throw new Error(error.message);
+
+    console.log(`[PriceAlerts] Prefs updated for ${req.user.id}: email=${emailOpt} push=${pushOpt}`);
+    res.json({ ok: true, prefs: { email_enabled: emailOpt, push_price_alerts: pushOpt } });
+  } catch (e) {
+    console.error('[PriceAlerts] PUT /prefs error:', e.message);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
 // ─── POST /api/alerts/price/check ────────────────────────────────────────────
-// Internal endpoint — restricted to admin/service role only.
-// Regular authenticated users are rejected with 403.
 
 router.post('/check', requireAdmin, async (req, res) => {
   try {
@@ -112,20 +218,18 @@ router.post('/check', requireAdmin, async (req, res) => {
   }
 });
 
-// ─── Internal: check prices ───────────────────────────────────────────────────
+// ─── checkAndTriggerAlerts ────────────────────────────────────────────────────
 
 async function checkAndTriggerAlerts() {
   try {
-    // Get all active, non-triggered alerts
     const { rows: alerts } = await db.query(
       `SELECT * FROM price_alerts WHERE triggered = FALSE AND is_active = TRUE`
     );
-
     if (!alerts.length) return 0;
 
-    // Group by symbol to minimize API calls
+    // Batch fetch prices — group by symbol to minimise API calls
     const symbols = [...new Set(alerts.map(a => a.symbol))];
-    const prices = {};
+    const prices  = {};
 
     for (const symbol of symbols) {
       try {
@@ -136,14 +240,13 @@ async function checkAndTriggerAlerts() {
         if (resp.ok) {
           const data = await resp.json();
           const meta = data?.chart?.result?.[0]?.meta;
-          if (meta?.regularMarketPrice) {
-            prices[symbol] = meta.regularMarketPrice;
-          }
+          if (meta?.regularMarketPrice) prices[symbol] = meta.regularMarketPrice;
         }
       } catch { /* skip symbol */ }
     }
 
-    let triggered = 0;
+    // Determine which alerts trigger
+    const toTrigger = [];
     for (const alert of alerts) {
       const price = prices[alert.symbol];
       if (price == null) continue;
@@ -152,19 +255,27 @@ async function checkAndTriggerAlerts() {
         (alert.direction === 'above' && price >= alert.target_price) ||
         (alert.direction === 'below' && price <= alert.target_price);
 
-      if (shouldTrigger) {
-        await db.query(
-          `UPDATE price_alerts SET triggered = TRUE, is_active = FALSE, triggered_at = NOW() WHERE id = $1`,
-          [alert.id]
-        );
-        triggered++;
-      }
+      if (shouldTrigger) toTrigger.push({ ...alert, currentPrice: price });
     }
 
-    if (triggered > 0) {
-      console.log(`[PriceAlerts] Triggered ${triggered} price alert(s)`);
-    }
-    return triggered;
+    if (!toTrigger.length) return 0;
+
+    // Mark triggered in DB
+    const ids = toTrigger.map(a => a.id);
+    await db.query(
+      `UPDATE price_alerts SET triggered = TRUE, is_active = FALSE, triggered_at = NOW()
+       WHERE id = ANY($1)`,
+      [ids]
+    );
+
+    console.log(`[PriceAlerts] Triggered ${toTrigger.length} price alert(s): ${toTrigger.map(a => a.symbol).join(', ')}`);
+
+    // Fire all notifications (push + email + SSE) — non-blocking, errors logged internally
+    sendPriceAlertNotifications(toTrigger).catch(err => {
+      console.error('[PriceAlerts] sendPriceAlertNotifications error:', err.message);
+    });
+
+    return toTrigger.length;
   } catch (e) {
     console.error('[PriceAlerts] checkAndTriggerAlerts error:', e.message);
     return 0;

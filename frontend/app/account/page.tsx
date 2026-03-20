@@ -15,7 +15,7 @@
  *   ?canceled=true    — user cancelled checkout (show cancellation note)
  */
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 const NinjaTraderConnect = dynamic(() => import('../components/NinjaTraderConnect'), { ssr: false })
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -98,6 +98,54 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
   )
 }
 
+function ToggleRow({ label, description, checked, disabled = false, onChange }: {
+  label: string
+  description: string
+  checked: boolean
+  disabled?: boolean
+  onChange: () => void
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 14 }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: disabled ? 'var(--text-3)' : 'var(--text-0)', marginBottom: 3 }}>
+          {label}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5 }}>{description}</div>
+      </div>
+      <button
+        onClick={disabled ? undefined : onChange}
+        aria-pressed={checked}
+        aria-label={label}
+        disabled={disabled}
+        style={{
+          flexShrink: 0,
+          width: 44,
+          height: 24,
+          borderRadius: 12,
+          border: 'none',
+          background: checked && !disabled ? '#6366f1' : 'rgba(255,255,255,0.10)',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          position: 'relative',
+          opacity: disabled ? 0.45 : 1,
+          transition: 'background 0.2s',
+        }}
+      >
+        <span style={{
+          position: 'absolute',
+          top: 3,
+          left: checked && !disabled ? 23 : 3,
+          width: 18,
+          height: 18,
+          borderRadius: '50%',
+          background: '#fff',
+          transition: 'left 0.2s',
+        }} />
+      </button>
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 function AccountPageInner() {
@@ -115,6 +163,11 @@ function AccountPageInner() {
   const [loading, setLoading] = useState(true)
   const [portalLoading, setPortalLoading] = useState(false)
   const [portalError, setPortalError] = useState<string | null>(null)
+
+  // Price alert notification prefs (loaded from API, defaults both OFF)
+  const [alertPrefs, setAlertPrefs] = useState({ email_enabled: false, push_price_alerts: false })
+  const [alertPrefsLoading, setAlertPrefsLoading] = useState(false)
+  const [alertPrefsSaved, setAlertPrefsSaved] = useState(false)
 
   // Export state
   const [exporting, setExporting] = useState(false)
@@ -153,6 +206,39 @@ function AccountPageInner() {
         setNtConnected(list.some((t: { is_active: boolean }) => t.is_active))
       })
       .catch(() => setNtConnected(false))
+  }, [token])
+
+  // Load price alert notification prefs
+  useEffect(() => {
+    if (!token) return
+    setAlertPrefsLoading(true)
+    fetch(`${API_BASE}/api/alerts/price/prefs`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.prefs) setAlertPrefs({
+          email_enabled:     data.prefs.email_enabled     ?? false,
+          push_price_alerts: data.prefs.push_price_alerts ?? false,
+        })
+      })
+      .catch(() => {})
+      .finally(() => setAlertPrefsLoading(false))
+  }, [token])
+
+  // Save price alert prefs
+  const saveAlertPrefs = useCallback(async (next: { email_enabled: boolean; push_price_alerts: boolean }) => {
+    if (!token) return
+    setAlertPrefs(next)
+    try {
+      await fetch(`${API_BASE}/api/alerts/price/prefs`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(next),
+      })
+      setAlertPrefsSaved(true)
+      setTimeout(() => setAlertPrefsSaved(false), 2500)
+    } catch {}
   }, [token])
 
   // Clean up URL params after showing banners
@@ -561,63 +647,99 @@ Delete My Account
 
         {/* ── Notifications ─────────────────────────────────────────────────── */}
         <SectionCard title="Notifications">
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-0)', marginBottom: 4 }}>
-                Push Notifications
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
-                {settings.notificationPermission === 'denied'
-                  ? 'Blocked by browser — update in browser settings'
-                  : settings.notificationsEnabled
-                  ? 'Enabled — you\'ll receive alerts for price movements'
-                  : 'Click to enable push alerts'
-                }
-              </div>
-            </div>
-            <button
-              onClick={async () => {
-                if (settings.notificationPermission === 'denied') return
-                if (!settings.notificationsEnabled || settings.notificationPermission === 'default') {
-                  await requestNotifications()
-                } else {
-                  setNotificationsEnabled(false)
-                }
-              }}
-              disabled={settings.notificationPermission === 'denied'}
-              aria-pressed={settings.notificationsEnabled}
-              aria-label="Toggle push notifications"
-              style={{
-                flexShrink: 0,
-                width: 44,
-                height: 24,
-                borderRadius: 12,
-                border: 'none',
-                background: settings.notificationsEnabled ? '#6366f1' : 'rgba(255,255,255,0.12)',
-                cursor: settings.notificationPermission === 'denied' ? 'not-allowed' : 'pointer',
-                position: 'relative',
-                opacity: settings.notificationPermission === 'denied' ? 0.5 : 1,
-                transition: 'background 0.2s',
-              }}
-            >
-              <span style={{
-                position: 'absolute',
-                top: 3,
-                left: settings.notificationsEnabled ? 23 : 3,
-                width: 18,
-                height: 18,
-                borderRadius: '50%',
-                background: '#fff',
-                transition: 'left 0.2s',
-              }} />
-            </button>
+
+          {/* Browser push permission (master switch) */}
+          <ToggleRow
+            label="Enable Push Notifications (browser)"
+            description={
+              settings.notificationPermission === 'denied'
+                ? 'Blocked in browser settings — update there to re-enable'
+                : settings.notificationsEnabled
+                ? 'Browser push is enabled'
+                : 'Grant permission to receive push notifications'
+            }
+            checked={settings.notificationsEnabled}
+            disabled={settings.notificationPermission === 'denied'}
+            onChange={async () => {
+              if (settings.notificationPermission === 'denied') return
+              if (!settings.notificationsEnabled || settings.notificationPermission === 'default') {
+                await requestNotifications()
+              } else {
+                setNotificationsEnabled(false)
+              }
+            }}
+          />
+
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '16px 0' }} />
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 12 }}>
+            Price Alert Notifications
           </div>
-          <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 12 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 14px', lineHeight: 1.6 }}>
+            Both options are <strong style={{ color: 'var(--text-2)' }}>off by default</strong>. You must explicitly opt in.
+            Only ticker, direction, and price are included — never balances or P&amp;L.
+          </p>
+
+          {alertPrefsLoading ? (
+            <div style={{ fontSize: 13, color: 'var(--text-3)', padding: '8px 0' }}>Loading preferences…</div>
+          ) : (
+            <>
+              <ToggleRow
+                label="Push notifications for price alerts"
+                description={
+                  !settings.notificationsEnabled
+                    ? 'Enable browser push (above) first'
+                    : alertPrefs.push_price_alerts
+                    ? 'You\'ll receive a push when a price alert triggers'
+                    : 'Off — won\'t send push for price alerts'
+                }
+                checked={alertPrefs.push_price_alerts}
+                disabled={!settings.notificationsEnabled}
+                onChange={() => saveAlertPrefs({ ...alertPrefs, push_price_alerts: !alertPrefs.push_price_alerts })}
+              />
+
+              <ToggleRow
+                label="Email me when a price alert triggers"
+                description={
+                  !user?.email
+                    ? 'No email address on your account'
+                    : alertPrefs.email_enabled
+                    ? `Alerts will be sent to ${user.email}`
+                    : 'Off — won\'t send emails for price alerts'
+                }
+                checked={alertPrefs.email_enabled}
+                disabled={!user?.email}
+                onChange={() => saveAlertPrefs({ ...alertPrefs, email_enabled: !alertPrefs.email_enabled })}
+              />
+            </>
+          )}
+
+          {alertPrefsSaved && (
+            <div style={{ fontSize: 12, color: '#4ade80', marginTop: 8 }}>✓ Preferences saved</div>
+          )}
+
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '16px 0' }} />
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 12 }}>
+            Daily Ritual Reminder
+          </div>
+
+          <ToggleRow
+            label="Push notification for daily ritual reminder"
+            description="Fires at 4:05 PM ET on market days — prompts you to log today's trades"
+            checked={settings.notificationsEnabled}
+            disabled={settings.notificationPermission === 'denied'}
+            onChange={async () => {
+              if (settings.notificationPermission === 'denied') return
+              if (!settings.notificationsEnabled || settings.notificationPermission === 'default') {
+                await requestNotifications()
+              } else {
+                setNotificationsEnabled(false)
+              }
+            }}
+          />
+
+          <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 14 }}>
             You can also manage notifications in{' '}
-            <button
-              onClick={openSettings}
-              style={{ background: 'none', border: 'none', color: 'var(--accent, #6366f1)', cursor: 'pointer', fontSize: 12, padding: 0 }}
-            >
+            <button onClick={openSettings} style={{ background: 'none', border: 'none', color: 'var(--accent, #6366f1)', cursor: 'pointer', fontSize: 12, padding: 0 }}>
               Settings
             </button>.
           </p>
