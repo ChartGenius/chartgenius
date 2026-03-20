@@ -5644,7 +5644,17 @@ function AlertsTab({
     setShowForm(false)
   }
 
-  const activeAlerts = priceAlerts.filter(a => !a.triggered)
+  const activeAlerts = priceAlerts.filter(a => !a.triggered).sort((a, b) => {
+    // Sort by % distance to target (closest first)
+    const curA = stockInfos[a.symbol]?.currentPrice
+    const curB = stockInfos[b.symbol]?.currentPrice
+    if (!curA && !curB) return 0
+    if (!curA) return 1
+    if (!curB) return -1
+    const pctA = Math.abs((a.target_price - curA) / curA)
+    const pctB = Math.abs((b.target_price - curB) / curB)
+    return pctA - pctB
+  })
   const triggeredAlerts = priceAlerts.filter(a => a.triggered)
 
   const dirIcon = (dir: 'above' | 'below') => dir === 'above'

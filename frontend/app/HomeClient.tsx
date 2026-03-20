@@ -178,7 +178,16 @@ function PriceAlertsWidget({ onCreateAlert }: { onCreateAlert: () => void }) {
     }
   }
 
-  const active    = alerts.filter(a => !a.triggered)
+  const active    = alerts.filter(a => !a.triggered).sort((a, b) => {
+    const curA = liveQuotes[a.symbol]
+    const curB = liveQuotes[b.symbol]
+    if (!curA && !curB) return 0
+    if (!curA) return 1
+    if (!curB) return -1
+    const pctA = Math.abs((a.target_price - curA) / curA)
+    const pctB = Math.abs((b.target_price - curB) / curB)
+    return pctA - pctB
+  })
   const triggered = alerts.filter(a => a.triggered)
   const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
