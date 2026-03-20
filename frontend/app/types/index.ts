@@ -10,7 +10,7 @@ export interface Quote {
   open: number
   prevClose: number
   timestamp: string
-  source: 'finnhub' | 'mock'
+  source: 'finnhub' | 'alpaca' | 'mock'
 }
 
 export interface CalendarEvent {

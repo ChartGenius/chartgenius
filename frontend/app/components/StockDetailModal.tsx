@@ -178,7 +178,7 @@ export default function StockDetailModal({
                   {quote.change >= 0 ? '+' : ''}{fmt(quote.change)} ({fmtPct(quote.changePct)})
                 </span>
                 <span className="stock-modal-source">
-                  {quote.source === 'finnhub' ? '● LIVE' : '○ MOCK'}
+                  {quote.source && quote.source !== 'mock' ? '● LIVE' : '○ DELAYED'}
                 </span>
               </>
             )}
