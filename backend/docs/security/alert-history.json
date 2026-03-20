@@ -382,5 +382,11 @@
     "type": "monitor",
     "result": "clean",
     "details": "✅ PASS: All 4 checks clean. 0 failed logins in last 30 min, 0 brute force attempts (3+ from same IP), 0 successful logins from suspicious IPs, 0 unusual activity volume — TradVue activity log secure."
+  },
+  {
+    "date": "2026-03-20T18:05:27.026Z",
+    "type": "monitor",
+    "result": "clean",
+    "details": "✅ PASS: All 4 checks clean. 1 failed login from 76.108.47.115 (below 3+ threshold), 0 brute force attempts (3+ from same IP), 2 successful logins from same IP (activity but low fail rate), 2 logins + 1 failed login total in last 30 min — TradVue activity log secure."
   }
 ]

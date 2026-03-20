@@ -270,10 +270,12 @@ async function checkAndTriggerAlerts() {
       const price = prices[alert.symbol];
       if (price == null) continue;
 
+      const targetNum = parseFloat(alert.target_price);
       const shouldTrigger =
-        (alert.direction === 'above' && price >= alert.target_price) ||
-        (alert.direction === 'below' && price <= alert.target_price);
+        (alert.direction === 'above' && price >= targetNum) ||
+        (alert.direction === 'below' && price <= targetNum);
 
+      console.log(`[PriceAlerts] Check: ${alert.symbol} ${alert.direction} $${targetNum} | current: $${price} | trigger: ${shouldTrigger}`);
       if (shouldTrigger) toTrigger.push({ ...alert, currentPrice: price });
     }
 
