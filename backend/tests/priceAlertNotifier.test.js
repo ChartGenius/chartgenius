@@ -79,7 +79,7 @@ describe('buildPushPayload()', () => {
 
 describe('buildEmailHtml()', () => {
   const alert = { symbol: 'MSFT', direction: 'above', target_price: 400.0 };
-  const unsubUrl = 'https://app.tradvue.com/api/alerts/price/unsubscribe?token=abc123';
+  const unsubUrl = 'https://www.tradvue.com/api/alerts/price/unsubscribe?token=abc123';
 
   test('contains ticker, direction, target and current price', () => {
     const html = buildEmailHtml(alert, 401.25, unsubUrl);
@@ -116,7 +116,7 @@ describe('buildBatchEmailHtml()', () => {
     { alert: { symbol: 'AAPL', direction: 'above', target_price: 185 }, currentPrice: 185.5 },
     { alert: { symbol: 'TSLA', direction: 'below', target_price: 200 }, currentPrice: 195 },
   ];
-  const unsubUrl = 'https://app.tradvue.com/api/alerts/price/unsubscribe?token=xyz';
+  const unsubUrl = 'https://www.tradvue.com/api/alerts/price/unsubscribe?token=xyz';
 
   test('contains all tickers', () => {
     const html = buildBatchEmailHtml(batch, unsubUrl);

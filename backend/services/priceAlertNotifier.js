@@ -218,7 +218,7 @@ function buildEmailHtml(alert, currentPrice, unsubUrl) {
       </tr>
     </table>
 
-    <a href="https://app.tradvue.com/portfolio?tab=alerts"
+    <a href="https://www.tradvue.com/portfolio?tab=alerts"
        style="display:inline-block;background:#6366f1;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">
       View Alerts →
     </a>
@@ -270,7 +270,7 @@ function buildBatchEmailHtml(items, unsubUrl) {
       <tbody>${rows}</tbody>
     </table>
 
-    <a href="https://app.tradvue.com/portfolio?tab=alerts"
+    <a href="https://www.tradvue.com/portfolio?tab=alerts"
        style="display:inline-block;margin-top:20px;background:#6366f1;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">
       View All Alerts →
     </a>
@@ -486,7 +486,7 @@ async function sendEmailForUser(userId, alerts, prefs, supabase) {
     return;
   }
 
-  const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://app.tradvue.com';
+  const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://www.tradvue.com';
   const unsubToken = generateUnsubToken(userId);
   const unsubUrl = `${appUrl}/api/alerts/price/unsubscribe?token=${unsubToken}`;
 
