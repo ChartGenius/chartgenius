@@ -71,6 +71,141 @@ function saveWlCache(data: Record<string, Quote>): void {
   } catch {}
 }
 
+// ─── PriceAlertsWidget — reads from localStorage cg_price_alerts ──────────────
+
+interface PriceAlertEntry {
+  id: string
+  symbol: string
+  target_price: number
+  direction: 'above' | 'below'
+  triggered: boolean
+  triggered_at?: string
+  created_at: string
+}
+
+function PriceAlertsWidget({ onCreateAlert }: { onCreateAlert: () => void }) {
+  const [alerts, setAlerts] = useState<PriceAlertEntry[]>([])
+
+  // Load and keep in sync with localStorage
+  useEffect(() => {
+    const load = () => {
+      try {
+        const raw = localStorage.getItem('cg_price_alerts')
+        setAlerts(raw ? JSON.parse(raw) : [])
+      } catch { setAlerts([]) }
+    }
+    load()
+    // Poll every 2 seconds to pick up changes from portfolio page
+    const id = setInterval(load, 2000)
+    return () => clearInterval(id)
+  }, [])
+
+  const deleteAlert = (id: string) => {
+    try {
+      const updated = alerts.filter(a => a.id !== id)
+      localStorage.setItem('cg_price_alerts', JSON.stringify(updated))
+      setAlerts(updated)
+    } catch {}
+  }
+
+  const active = alerts.filter(a => !a.triggered)
+  const triggered = alerts.filter(a => a.triggered)
+
+  const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  return (
+    <div style={{ overflowY: 'auto', maxHeight: '100%', padding: '10px 12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-2)' }}>
+          PRICE ALERTS {active.length > 0 && <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 9, marginLeft: 4 }}>{active.length}</span>}
+        </span>
+        <button
+          onClick={onCreateAlert}
+          style={{ fontSize: 10, color: 'var(--accent)', cursor: 'pointer', padding: '3px 8px', border: '1px solid var(--accent)', borderRadius: 4, background: 'transparent', display: 'flex', alignItems: 'center', gap: 4 }}
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Alert
+        </button>
+      </div>
+
+      {alerts.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '30px 16px', color: 'var(--text-3)' }}>
+          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 4 }}>No price alerts set</div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)' }}>Create alerts in Portfolio → Alerts tab</div>
+          <button
+            onClick={onCreateAlert}
+            style={{ marginTop: 10, fontSize: 11, color: 'var(--accent)', cursor: 'pointer', padding: '5px 12px', border: '1px solid var(--accent)', borderRadius: 5, background: 'transparent' }}
+          >
+            Go to Portfolio Alerts
+          </button>
+        </div>
+      )}
+
+      {active.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 6 }}>ACTIVE ({active.length})</div>
+          {active.map(a => (
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 10px', marginBottom: 5 }}>
+              <div style={{ color: a.direction === 'above' ? 'var(--green)' : 'var(--red)', flexShrink: 0 }}>
+                {a.direction === 'above'
+                  ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                }
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-0)' }}>{a.symbol}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>
+                  {a.direction === 'above' ? 'Above' : 'Below'} <span style={{ color: 'var(--text-1)', fontFamily: 'monospace' }}>${fmt(a.target_price)}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => deleteAlert(a.id)}
+                style={{ color: 'var(--text-3)', cursor: 'pointer', padding: '2px', border: 'none', background: 'none', borderRadius: 3, display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--red)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)' }}
+                title="Delete alert"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {triggered.length > 0 && (
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 6 }}>TRIGGERED ({triggered.length})</div>
+          {triggered.map(a => (
+            <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-2)', border: '1px solid rgba(0,192,106,0.25)', borderRadius: 6, padding: '8px 10px', marginBottom: 5, opacity: 0.75 }}>
+              <div style={{ color: 'var(--green)', flexShrink: 0 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-1)' }}>{a.symbol}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-3)' }}>
+                  Triggered · ${fmt(a.target_price)}
+                </div>
+              </div>
+              <button
+                onClick={() => deleteAlert(a.id)}
+                style={{ color: 'var(--text-3)', cursor: 'pointer', padding: '2px', border: 'none', background: 'none', borderRadius: 3, display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--red)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)' }}
+                title="Delete alert"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 export default function HomeClient() {
@@ -923,7 +1058,7 @@ export default function HomeClient() {
                 newsCategory={newsCategory}
                 newsArticleCount={newsArticleCount}
                 newsSymbolFilter={newsSymbolFilter}
-                showAlerts={showAlerts}
+                showAlerts={false}
                 activeNav={activeNav}
                 hasRealTickerData={hasRealTickerData}
                 gainers={gainers}
@@ -990,26 +1125,9 @@ export default function HomeClient() {
               </button>
             </div>
 
-            {/* Alerts view */}
+            {/* Alerts view — reads from same localStorage as Portfolio Alerts tab */}
             {showAlerts && (
-              <>
-                {marketAlerts.length === 0 && (
-                  <AlertsEmpty onCreateAlert={() => {
-                    if (!token) { setAuthModalOpen(true); return }
-                    window.location.href = '/portfolio?tab=alerts'
-                  }} />
-                )}
-                <AlertFeed
-                  alerts={marketAlerts}
-                  isConnected={alertConnected}
-                  prefs={alertPrefs}
-                  onUpdatePrefs={(p) => { updateAlertPrefs(p); showToast('Alert preferences updated', 'success') }}
-                  onMarkAllRead={markAlertsRead}
-                  onDismiss={dismissAlert}
-                  onClearAll={clearAllAlerts}
-                  onRefresh={refreshAlerts}
-                />
-              </>
+              <PriceAlertsWidget onCreateAlert={() => window.location.href = '/portfolio?tab=alerts'} />
             )}
 
             {/* Calendar */}

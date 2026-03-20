@@ -1399,9 +1399,16 @@ export default function PortfolioPage() {
     const res = await apiPost<{ alert: PriceAlert }>('/api/alerts/price', { symbol, target_price, direction })
     if (res?.alert) {
       setPriceAlerts(prev => [res.alert, ...prev])
+      saveLS('cg_price_alerts', [...loadLS<PriceAlert[]>('cg_price_alerts', []), res.alert])
       return res.alert
     }
-    return null
+    // API failed, fallback to localStorage
+    const fallbackAlert: PriceAlert = {
+      id: uid(), symbol, target_price, direction, triggered: false, created_at: new Date().toISOString()
+    }
+    setPriceAlerts(prev => [fallbackAlert, ...prev])
+    saveLS('cg_price_alerts', [...loadLS<PriceAlert[]>('cg_price_alerts', []), fallbackAlert])
+    return fallbackAlert
   }, [isLoggedIn])
 
   const deletePriceAlert = useCallback(async (id: string) => {
@@ -1412,6 +1419,7 @@ export default function PortfolioPage() {
     }
     await apiDelete(`/api/alerts/price/${id}`)
     setPriceAlerts(prev => prev.filter(a => a.id !== id))
+    saveLS('cg_price_alerts', loadLS<PriceAlert[]>('cg_price_alerts', []).filter((a: PriceAlert) => a.id !== id))
   }, [isLoggedIn])
 
   // Save to localStorage always (cloud sync reads from localStorage)
