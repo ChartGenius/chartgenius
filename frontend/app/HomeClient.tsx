@@ -129,6 +129,7 @@ function PriceAlertsWidget({ onCreateAlert }: { onCreateAlert: () => void }) {
         for (const sym of symbols) {
           const q = batch[sym]
           if (q?.price) quotes[sym] = q.price
+          else if (q?.current) quotes[sym] = q.current
         }
         setLiveQuotes(quotes)
       }
