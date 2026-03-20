@@ -123,17 +123,19 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'target_price must be a positive number' });
     }
 
+    console.log('[PriceAlerts] Creating alert:', { userId: req.user.id, symbol: symbol.toUpperCase(), price, direction });
     const { rows } = await db.query(
       `INSERT INTO price_alerts (user_id, symbol, target_price, direction)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
       [req.user.id, symbol.toUpperCase(), price, direction]
     );
+    console.log('[PriceAlerts] Created:', rows[0]?.id);
 
     res.json({ alert: rows[0] });
   } catch (e) {
-    console.error('[PriceAlerts] POST error:', e.message);
-    res.status(500).json({ error: 'Internal error' });
+    console.error('[PriceAlerts] POST error:', e.message, e.stack);
+    res.status(500).json({ error: 'Internal error', detail: e.message });
   }
 });
 
