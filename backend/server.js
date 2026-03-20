@@ -137,12 +137,12 @@ app.use('/api/market-data',   require('./routes/marketData'));      // Finnhub-b
 app.use('/api/feed/news',     cachePublic2m,  require('./routes/aggregatedNews')); // RSS + NewsAPI aggregated feed
 app.use('/api/calendar',      cachePublic2m,  require('./routes/calendar'));        // Economic calendar (2m to avoid stale date issues)
 app.use('/api/waitlist',      cachePrivate,   require('./routes/waitlist'));        // Landing page waitlist
+app.use('/api/alerts/price',  cachePrivate,   require('./routes/priceAlerts'));    // User price alerts (must be BEFORE /api/alerts)
 app.use('/api/alerts',        cachePrivate,   require('./routes/alerts'));          // Real-time market alerts + SSE
 app.use('/api/crypto',        cachePublic30s, require('./routes/crypto'));          // CoinGecko crypto prices & trending
 app.use('/api/market-movers', cachePublic2m,  require('./routes/marketMovers'));   // High-impact news scanner
 app.use('/api/stock-info',    cachePublic30s, require('./routes/stockInfo'));       // Comprehensive stock info (Finnhub + Yahoo)
 app.use('/api/portfolio',     cachePrivate,   require('./routes/portfolio'));       // Portfolio persistence (Supabase)
-app.use('/api/alerts/price',  cachePrivate,   require('./routes/priceAlerts'));    // User price alerts
 app.use('/api/tools',         cachePublic2m,  require('./routes/tools'));           // Trading tools (screener, fear-greed, gas, correlation)
 app.use('/api/dashboard',     cachePrivate,   require('./routes/dashboard'));       // CEO dashboard persistence
 app.use('/api/stocks',        cachePublic1h,  require('./routes/stocks'));          // Analyst ratings + stock scoring
