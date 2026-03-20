@@ -5670,6 +5670,23 @@ function AlertsTab({
         </button>
       </div>
 
+      {/* Notification Settings link */}
+      <div style={{ marginBottom: 12 }}>
+        <a
+          href="/account#notifications"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            fontSize: 11, color: 'var(--text-3)', textDecoration: 'none',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-3)' }}
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Notification Settings
+        </a>
+      </div>
+
       {/* Inline form */}
       {showForm && (
         <div style={{ background: 'var(--bg-2)', border: '1px solid var(--accent)', borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
@@ -5747,6 +5764,17 @@ function AlertsTab({
             <button onClick={() => { setShowForm(false); setFormError('') }} style={{ background: 'var(--bg-3)', color: 'var(--text-2)', padding: '8px 16px', borderRadius: 5, fontSize: 12, cursor: 'pointer', border: '1px solid var(--border)' }}>
               Cancel
             </button>
+          </div>
+          <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-3)', lineHeight: 1.6 }}>
+            To receive push or email notifications when alerts trigger, enable them in{' '}
+            <a
+              href="/account#notifications"
+              style={{ color: 'var(--text-3)', textDecoration: 'underline', transition: 'color 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--accent)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-3)' }}
+            >
+              Notification Settings
+            </a>.
           </div>
         </div>
       )}
