@@ -6,6 +6,7 @@ import {
   IconArrowLeft, IconAlert, IconDownload, IconBriefcase,
   IconChart, IconFolder, IconDollar, IconEye, IconEyeOff, IconReceiptTax,
   IconPackage, IconLightbulb, IconSave, IconFile, IconCheck, IconTrendingUp,
+  IconBell, IconPlus,
 } from '../components/Icons'
 import Link from 'next/link'
 import PersistentNav from '../components/PersistentNav'
@@ -1116,7 +1117,7 @@ export default function PortfolioPage() {
     { id: 'demo-v', ticker: 'V', company: 'Visa Inc.', shares: 25, avgCost: 270.40, buyDate: '2025-08-01', sector: 'Information Technology', annualDividend: 2.68, divOverrideAnnual: undefined, totalDividendsReceived: 33.50 },
     { id: 'demo-ko', ticker: 'KO', company: 'Coca-Cola Co.', shares: 150, avgCost: 60.20, buyDate: '2025-04-15', sector: 'Consumer Staples', annualDividend: 2.12, divOverrideAnnual: undefined, totalDividendsReceived: 318.00 },
   ]
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'holdings' | 'dividends' | 'drip' | 'sold' | 'watchlist' | 'tax'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'holdings' | 'dividends' | 'drip' | 'sold' | 'alerts' | 'tax'>('dashboard')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
   const [showImportBanner, setShowImportBanner] = useState(false)
@@ -1154,6 +1155,7 @@ export default function PortfolioPage() {
   // Price alerts
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>([])
   const [alertNotifications, setAlertNotifications] = useState<PriceAlert[]>([])
+  const [alertPrefill, setAlertPrefill] = useState<{ symbol: string; currentPrice: number } | null>(null)
 
   // Portfolio settings (DRIP, allocation targets, home currency)
   const [portfolioSettings, setPortfolioSettings] = useState<PortfolioSettings>(DEFAULT_SETTINGS)
@@ -1185,9 +1187,21 @@ export default function PortfolioPage() {
     setWatchlist(loadLS('cg_portfolio_watchlist', []))
     setSnapshots(loadLS('cg_portfolio_snapshots', []))
     setPortfolioSettings(loadLS('cg_portfolio_settings', DEFAULT_SETTINGS))
+    setPriceAlerts(loadLS('cg_price_alerts', []))
     setDataLoaded(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user])
+
+
+  // Read ?tab= query param to set initial tab (e.g. /portfolio?tab=alerts)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tab = params.get('tab')
+      if (tab === 'alerts') setActiveTab('alerts')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Check if localStorage has data to import (show banner after login loads with empty API)
   useEffect(() => {
@@ -1595,7 +1609,7 @@ export default function PortfolioPage() {
     { id: 'dividends', label: 'Dividends', Icon: IconDollar },
     { id: 'drip',      label: 'DRIP',      Icon: IconTrendingUp },
     { id: 'sold',      label: 'Sold',      Icon: IconCheck },
-    { id: 'watchlist', label: 'Watchlist', Icon: IconEye },
+    { id: 'alerts',    label: 'Price Alerts', Icon: IconBell },
     { id: 'tax',       label: 'Tax',       Icon: IconReceiptTax },
   ]
 
@@ -1655,7 +1669,7 @@ export default function PortfolioPage() {
       {holdings.length === 0 && watchlist.length === 0 && (
         <div style={{ background: 'rgba(74,158,255,0.06)', borderBottom: '1px solid rgba(74,158,255,0.15)', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: 'var(--text-2)' }}>
           <span style={{ color: 'var(--accent)', display: 'flex' }}><IconLightbulb size={16} /></span>
-          <span><strong style={{ color: 'var(--text-1)' }}>New here?</strong> Start in the <strong style={{ color: 'var(--text-1)' }}>Holdings</strong> tab to add positions, or <strong style={{ color: 'var(--text-1)' }}>Watchlist</strong> tab to track stocks you&apos;re considering. Dashboard will populate automatically.</span>
+          <span><strong style={{ color: 'var(--text-1)' }}>New here?</strong> Start in the <strong style={{ color: 'var(--text-1)' }}>Holdings</strong> tab to add positions, or <strong style={{ color: 'var(--text-1)' }}>Price Alerts</strong> tab to set price notifications.</span>
         </div>
       )}
 
@@ -1716,6 +1730,7 @@ export default function PortfolioPage() {
             isLoggedIn={isLoggedIn}
             persistHolding={persistHolding} deleteHoldingAPI={deleteHoldingAPI}
             onSellPosition={(h) => { setSellFromHolding({ holding: h }); setActiveTab('sold') }}
+            onSetAlert={(symbol, currentPrice) => { setAlertPrefill({ symbol, currentPrice }); setActiveTab('alerts') }}
             priceAlerts={priceAlerts} addPriceAlert={addPriceAlert} deletePriceAlert={deletePriceAlert}
             portfolioSettings={portfolioSettings} toggleDRIP={toggleDRIP}
             privacyMode={privacyMode}
@@ -1751,11 +1766,11 @@ export default function PortfolioPage() {
             isDemo={isDemo} onDemoAction={() => setAuthModalOpen(true)}
           />
         )}
-        {activeTab === 'watchlist' && (
-          <WatchlistTab
-            watchlist={watchlist} setWatchlist={setWatchlist} stockInfos={stockInfos}
-            persistWatchlistItem={persistWatchlistItem} deleteWatchlistAPI={deleteWatchlistAPI}
+        {activeTab === 'alerts' && (
+          <AlertsTab
             priceAlerts={priceAlerts} addPriceAlert={addPriceAlert} deletePriceAlert={deletePriceAlert}
+            stockInfos={stockInfos}
+            prefill={alertPrefill} onPrefillConsumed={() => setAlertPrefill(null)}
             isDemo={isDemo} onDemoAction={() => setAuthModalOpen(true)}
           />
         )}
@@ -1830,7 +1845,7 @@ function DashboardTab({
   savePortfolioSettings: (s: PortfolioSettings) => Promise<void>;
   exchangeRates: ExchangeRates | null;
   privacyMode?: boolean;
-  setActiveTab: (tab: 'dashboard' | 'holdings' | 'dividends' | 'drip' | 'sold' | 'watchlist' | 'tax') => void;
+  setActiveTab: (tab: 'dashboard' | 'holdings' | 'dividends' | 'drip' | 'sold' | 'alerts' | 'tax') => void;
 })
 {
   const [dashAuthOpen, setDashAuthOpen] = useState(false)
@@ -1855,7 +1870,7 @@ function DashboardTab({
             { Icon: IconFolder,      title: 'Holdings',  tabId: 'holdings'  as const, desc: 'Track shares, avg cost, P&L, and allocation % for every position.' },
             { Icon: IconDollar,      title: 'Dividends', tabId: 'dividends' as const, desc: 'Automatic dividend tracking from history. Override any value.' },
             { Icon: IconCheck,       title: 'Sold',      tabId: 'sold'      as const, desc: 'Record and review your closed positions and realized gains/losses.' },
-            { Icon: IconEye,         title: 'Watchlist', tabId: 'watchlist' as const, desc: 'Monitor stocks you\'re watching with price alerts and target prices.' },
+            { Icon: IconBell,        title: 'Price Alerts', tabId: 'alerts' as const, desc: 'Set price alerts for any ticker. Get notified when a stock hits your target.' },
             { Icon: IconReceiptTax,  title: 'Tax',       tabId: 'tax'       as const, desc: 'Estimate realized gains, short vs long-term, and tax impact.' },
           ].map(f => (
             <div
@@ -2007,7 +2022,7 @@ type HoldingEnriched = Holding & {
 
 function HoldingsTab({
   holdings, setHoldings, holdingsEnriched, totalMarketValue, stockInfos,
-  isLoggedIn, persistHolding, deleteHoldingAPI, onSellPosition,
+  isLoggedIn, persistHolding, deleteHoldingAPI, onSellPosition, onSetAlert,
   priceAlerts, addPriceAlert, deletePriceAlert, portfolioSettings, toggleDRIP, privacyMode = false,
   isDemo = false, onDemoAction,
 }: {
@@ -2020,6 +2035,7 @@ function HoldingsTab({
   persistHolding: (h: Holding) => Promise<void>
   deleteHoldingAPI: (ticker: string) => Promise<void>
   onSellPosition: (h: HoldingEnriched) => void
+  onSetAlert: (symbol: string, currentPrice: number) => void
   priceAlerts: PriceAlert[]
   addPriceAlert: (symbol: string, target_price: number, direction: 'above' | 'below') => Promise<PriceAlert | null>
   deletePriceAlert: (id: string) => Promise<void>
@@ -2362,7 +2378,7 @@ function HoldingsTab({
                         <button onClick={isDemo ? onDemoAction : () => openEdit(h)} style={{ fontSize: 9.5, color: 'var(--accent)', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>Edit</button>
                         <button onClick={isDemo ? onDemoAction : () => openAddShares(h)} style={{ fontSize: 9.5, color: 'var(--green)', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>+Shares</button>
                         <button onClick={isDemo ? onDemoAction : () => onSellPosition(h)} style={{ fontSize: 9.5, color: 'var(--yellow)', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>Sell</button>
-                        <button onClick={isDemo ? onDemoAction : () => openAlertModal(h.ticker, h.currentPrice)} style={{ fontSize: 9.5, color: '#f59e0b', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>Alert</button>
+                        <button onClick={isDemo ? onDemoAction : () => onSetAlert(h.ticker, h.currentPrice)} style={{ fontSize: 9.5, color: '#f59e0b', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>🔔 Alert</button>
                         <button
                           onClick={isDemo ? onDemoAction : () => toggleDRIP(h.ticker, !portfolioSettings.dripEnabled[h.ticker])}
                           title={portfolioSettings.dripEnabled[h.ticker] ? 'DRIP enabled — click to disable' : 'Enable DRIP'}
@@ -5427,6 +5443,284 @@ function DRIPTab({
       <div style={{ fontSize: 10, color: 'var(--text-3)', padding: '12px 0', borderTop: '1px solid var(--border)', fontStyle: 'italic' }}>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>DRIP projections are estimates for illustrative purposes only. Actual results depend on price fluctuations, dividend changes, taxes, and transaction costs. Assumes constant dividend yield over time. Not financial or investment advice. Consult a qualified financial professional.
       </div>
+    </div>
+  )
+}
+
+// ─── Tab: Alerts (Price Alerts) ───────────────────────────────────────────────
+
+function AlertsTab({
+  priceAlerts, addPriceAlert, deletePriceAlert, stockInfos,
+  prefill, onPrefillConsumed,
+  isDemo = false, onDemoAction,
+}: {
+  priceAlerts: PriceAlert[]
+  addPriceAlert: (symbol: string, target_price: number, direction: 'above' | 'below') => Promise<PriceAlert | null>
+  deletePriceAlert: (id: string) => Promise<void>
+  stockInfos: Record<string, StockInfo>
+  prefill: { symbol: string; currentPrice: number } | null
+  onPrefillConsumed: () => void
+  isDemo?: boolean
+  onDemoAction?: () => void
+}) {
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ symbol: '', direction: 'above' as 'above' | 'below', targetPrice: '' })
+  const [formError, setFormError] = useState('')
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null)
+  const [fetchingPrice, setFetchingPrice] = useState(false)
+  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Handle prefill (e.g. from Holdings Alert button)
+  useEffect(() => {
+    if (prefill) {
+      setForm({ symbol: prefill.symbol, direction: 'above', targetPrice: '' })
+      setCurrentPrice(prefill.currentPrice)
+      setShowForm(true)
+      setFormError('')
+      onPrefillConsumed()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefill])
+
+  // Fetch current price when symbol changes
+  const handleSymbolChange = (val: string) => {
+    const upper = val.toUpperCase()
+    setForm(f => ({ ...f, symbol: upper }))
+    setCurrentPrice(null)
+    if (debRef.current) clearTimeout(debRef.current)
+    if (upper.length < 1) return
+    // Check stockInfos cache first
+    if (stockInfos[upper]?.currentPrice) {
+      setCurrentPrice(stockInfos[upper].currentPrice!)
+      return
+    }
+    debRef.current = setTimeout(async () => {
+      setFetchingPrice(true)
+      const data = await apiFetchSafe<StockInfo>(`${API_BASE}/api/stock-info/${upper}`)
+      if (data?.currentPrice) setCurrentPrice(data.currentPrice)
+      setFetchingPrice(false)
+    }, 600)
+  }
+
+  const handleSubmit = async () => {
+    const symbol = form.symbol.trim().toUpperCase()
+    if (!symbol) { setFormError('Ticker is required'); return }
+    const price = parseFloat(form.targetPrice)
+    if (isNaN(price) || price <= 0) { setFormError('Enter a valid target price'); return }
+    await addPriceAlert(symbol, price, form.direction)
+    setForm({ symbol: '', direction: 'above', targetPrice: '' })
+    setCurrentPrice(null)
+    setFormError('')
+    setShowForm(false)
+  }
+
+  const activeAlerts = priceAlerts.filter(a => !a.triggered)
+  const triggeredAlerts = priceAlerts.filter(a => a.triggered)
+
+  const dirIcon = (dir: 'above' | 'below') => dir === 'above'
+    ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+
+  return (
+    <div>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>
+            {activeAlerts.length} active alert{activeAlerts.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+        <button
+          onClick={isDemo ? onDemoAction : () => { setForm({ symbol: '', direction: 'above', targetPrice: '' }); setCurrentPrice(null); setFormError(''); setShowForm(true) }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--accent)', color: '#fff', padding: '7px 14px', borderRadius: 5, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Alert
+        </button>
+      </div>
+
+      {/* Inline form */}
+      {showForm && (
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--accent)', borderRadius: 10, padding: '16px 20px', marginBottom: 20 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-1)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Create Price Alert
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={labelStyle}>Ticker *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  style={{ ...inputStyle, paddingRight: fetchingPrice ? 28 : undefined }}
+                  value={form.symbol}
+                  onChange={e => handleSymbolChange(e.target.value)}
+                  placeholder="e.g. AAPL"
+                  autoFocus
+                />
+                {fetchingPrice && <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: 'var(--text-3)' }}>↻</span>}
+              </div>
+              {currentPrice && (
+                <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>
+                  Current: <strong style={{ color: 'var(--text-1)', fontFamily: 'var(--mono)' }}>${fmt(currentPrice)}</strong>
+                </div>
+              )}
+            </div>
+            <div>
+              <label style={labelStyle}>Direction</label>
+              <select
+                style={inputStyle}
+                value={form.direction}
+                onChange={e => setForm(f => ({ ...f, direction: e.target.value as 'above' | 'below' }))}
+              >
+                <option value="above">↑ Price goes Above</option>
+                <option value="below">↓ Price goes Below</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Target Price *</label>
+              <input
+                style={inputStyle}
+                type="number"
+                step="0.01"
+                value={form.targetPrice}
+                onChange={e => setForm(f => ({ ...f, targetPrice: e.target.value }))}
+                placeholder={currentPrice ? `e.g. ${(currentPrice * 1.05).toFixed(2)}` : '0.00'}
+              />
+            </div>
+          </div>
+          {formError && <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 8 }}>{formError}</div>}
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            <button onClick={handleSubmit} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: 5, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+              Create Alert
+            </button>
+            <button onClick={() => { setShowForm(false); setFormError('') }} style={{ background: 'var(--bg-3)', color: 'var(--text-2)', padding: '8px 16px', borderRadius: 5, fontSize: 12, cursor: 'pointer', border: '1px solid var(--border)' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state */}
+      {priceAlerts.length === 0 && !showForm && (
+        <div style={{ textAlign: 'center', padding: '60px 20px', border: '1px dashed var(--border)', borderRadius: 12 }}>
+          <div style={{ margin: '0 auto 16px', width: 52, height: 52, borderRadius: '50%', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-1)', marginBottom: 8 }}>No price alerts yet</div>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', maxWidth: 400, margin: '0 auto 20px', lineHeight: 1.65 }}>
+            Set alerts for any ticker — you&apos;ll be notified when the price crosses your target. Use the <strong style={{ color: 'var(--text-1)' }}>Alert</strong> button on any holding for quick setup.
+          </div>
+          <button
+            onClick={isDemo ? onDemoAction : () => { setShowForm(true) }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--accent)', color: '#fff', padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Your First Alert
+          </button>
+        </div>
+      )}
+
+      {/* Active alerts */}
+      {activeAlerts.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 10 }}>ACTIVE</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {activeAlerts.map(a => {
+              const info = stockInfos[a.symbol]
+              const curPrice = info?.currentPrice
+              return (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px' }}>
+                  {/* Direction icon */}
+                  <div style={{ color: a.direction === 'above' ? 'var(--green)' : 'var(--red)', flexShrink: 0 }}>
+                    {dirIcon(a.direction)}
+                  </div>
+                  {/* Ticker + company */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-0)' }}>{a.symbol}</span>
+                      {info?.companyName && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{info.companyName}</span>}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>
+                      Alert when price goes{' '}
+                      <span style={{ color: a.direction === 'above' ? 'var(--green)' : 'var(--red)', fontWeight: 600 }}>
+                        {a.direction}
+                      </span>{' '}
+                      <span style={{ color: 'var(--text-1)', fontFamily: 'var(--mono)', fontWeight: 600 }}>${fmt(a.target_price)}</span>
+                    </div>
+                  </div>
+                  {/* Current price */}
+                  <div style={{ textAlign: 'right', fontSize: 11, flexShrink: 0 }}>
+                    <div style={{ color: 'var(--text-3)', fontSize: 9.5, marginBottom: 1 }}>CURRENT</div>
+                    <div style={{ fontFamily: 'var(--mono)', color: 'var(--text-1)' }}>{curPrice ? `$${fmt(curPrice)}` : '—'}</div>
+                  </div>
+                  {/* Created date */}
+                  <div style={{ textAlign: 'right', fontSize: 10, color: 'var(--text-3)', flexShrink: 0, minWidth: 70 }}>
+                    {a.created_at ? new Date(a.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' }) : ''}
+                  </div>
+                  {/* Delete */}
+                  <button
+                    onClick={() => deletePriceAlert(a.id)}
+                    title="Delete alert"
+                    style={{ color: 'var(--text-3)', cursor: 'pointer', padding: '4px', borderRadius: 4, border: '1px solid transparent', background: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--red)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--red)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent' }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Triggered alerts */}
+      {triggeredAlerts.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 10 }}>TRIGGERED</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {triggeredAlerts.map(a => {
+              const info = stockInfos[a.symbol]
+              const curPrice = info?.currentPrice
+              return (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-2)', border: '1px solid rgba(0,192,106,0.25)', borderRadius: 8, padding: '10px 14px', opacity: 0.75 }}>
+                  {/* Checkmark */}
+                  <div style={{ color: 'var(--green)', flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  {/* Ticker */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-1)' }}>{a.symbol}</span>
+                      <span style={{ fontSize: 10, background: 'rgba(0,192,106,0.15)', color: 'var(--green)', padding: '1px 6px', borderRadius: 10 }}>Triggered</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                      Was {a.direction} ${fmt(a.target_price)}
+                      {a.triggered_at && <> · {new Date(a.triggered_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</>}
+                    </div>
+                  </div>
+                  {/* Current price */}
+                  <div style={{ textAlign: 'right', fontSize: 11, flexShrink: 0 }}>
+                    <div style={{ color: 'var(--text-3)', fontSize: 9.5, marginBottom: 1 }}>CURRENT</div>
+                    <div style={{ fontFamily: 'var(--mono)', color: 'var(--text-1)' }}>{curPrice ? `$${fmt(curPrice)}` : '—'}</div>
+                  </div>
+                  {/* Delete */}
+                  <button
+                    onClick={() => deletePriceAlert(a.id)}
+                    title="Delete alert"
+                    style={{ color: 'var(--text-3)', cursor: 'pointer', padding: '4px', borderRadius: 4, border: '1px solid transparent', background: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--red)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--red)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent' }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

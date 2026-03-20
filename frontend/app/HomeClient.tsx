@@ -996,7 +996,7 @@ export default function HomeClient() {
                 {marketAlerts.length === 0 && (
                   <AlertsEmpty onCreateAlert={() => {
                     if (!token) { setAuthModalOpen(true); return }
-                    window.location.href = '/portfolio#alerts'
+                    window.location.href = '/portfolio?tab=alerts'
                   }} />
                 )}
                 <AlertFeed
