@@ -70,6 +70,20 @@ const DISMISSED_WEBHOOKS_KEY  = 'cg_dismissed_webhook_ids'
 const PRIVACY_KEY             = 'pf_privacy'
 const JOURNAL_DEFAULTS_PREFIX = 'cg_journal_defaults_'
 
+// ── Additional keys synced as part of journal payload ─────────────────────────
+const CUSTOM_TAGS_KEY      = 'cg_journal_custom_tags'
+const RITUAL_ENTRIES_KEY   = 'cg_ritual_entries'
+const RITUAL_STREAK_KEY    = 'cg_ritual_streak'
+const RULE_COP_KEY         = 'cg_rule_cop'
+const PLAYBOOKS_KEY        = 'cg_playbooks'
+const COACH_SUMMARIES_KEY  = 'cg_coach_summaries'
+const CUSTOM_TICKERS_KEY   = 'cg_ticker'
+const TICKER_PREFS_KEY     = 'cg_ticker_prefs'
+const ALERT_PREFS_KEY      = 'cg_alert_prefs'
+
+// ── Price alerts key (bundled into settings payload) ──────────────────────────
+const PRICE_ALERTS_KEY = 'cg_price_alerts'
+
 /** Collect all cg_journal_defaults_* keys into { AssetClass: {...}, ... } */
 function getJournalDefaults(): Record<string, unknown> {
   const result: Record<string, unknown> = {}
@@ -143,6 +157,17 @@ interface CloudJournalData {
   journalDefaults?: Record<string, unknown>
   dismissedWebhookIds?: unknown[]
   privacyMode?: string
+  // NEW fields — 10 additional keys bundled into journal payload
+  customTags?: unknown
+  ritualEntries?: unknown
+  ritualStreak?: unknown
+  ruleCop?: unknown
+  playbooks?: unknown
+  coachSummaries?: unknown
+  dashboardWatchlist?: unknown[]
+  customTickers?: unknown
+  tickerPrefs?: unknown
+  alertPrefs?: unknown
 }
 
 /**
@@ -171,6 +196,18 @@ export async function initJournalSync(token: string): Promise<void> {
       if (cloudData.privacyMode != null && cloudData.privacyMode !== '') {
         try { localStorage.setItem(PRIVACY_KEY, cloudData.privacyMode) } catch {}
       }
+      // NEW: restore additional keys — only if cloud has non-null/non-empty data (backward compat)
+      if (cloudData.customTags != null) lsSet(CUSTOM_TAGS_KEY, cloudData.customTags)
+      if (cloudData.ritualEntries != null) lsSet(RITUAL_ENTRIES_KEY, cloudData.ritualEntries)
+      if (cloudData.ritualStreak != null) lsSet(RITUAL_STREAK_KEY, cloudData.ritualStreak)
+      if (cloudData.ruleCop != null) lsSet(RULE_COP_KEY, cloudData.ruleCop)
+      if (cloudData.playbooks != null) lsSet(PLAYBOOKS_KEY, cloudData.playbooks)
+      if (cloudData.coachSummaries != null) lsSet(COACH_SUMMARIES_KEY, cloudData.coachSummaries)
+      if (cloudData.dashboardWatchlist && cloudData.dashboardWatchlist.length > 0)
+        lsSet(WATCHLIST_KEY, cloudData.dashboardWatchlist)
+      if (cloudData.customTickers != null) lsSet(CUSTOM_TICKERS_KEY, cloudData.customTickers)
+      if (cloudData.tickerPrefs != null) lsSet(TICKER_PREFS_KEY, cloudData.tickerPrefs)
+      if (cloudData.alertPrefs != null) lsSet(ALERT_PREFS_KEY, cloudData.alertPrefs)
     }
     setStatus('synced')
   } catch {
@@ -205,6 +242,18 @@ export async function forceSyncFromCloud(): Promise<boolean> {
       if (cloudData.privacyMode != null && cloudData.privacyMode !== '') {
         try { localStorage.setItem(PRIVACY_KEY, cloudData.privacyMode) } catch {}
       }
+      // NEW: restore additional keys — only if cloud has non-null/non-empty data (backward compat)
+      if (cloudData.customTags != null) lsSet(CUSTOM_TAGS_KEY, cloudData.customTags)
+      if (cloudData.ritualEntries != null) lsSet(RITUAL_ENTRIES_KEY, cloudData.ritualEntries)
+      if (cloudData.ritualStreak != null) lsSet(RITUAL_STREAK_KEY, cloudData.ritualStreak)
+      if (cloudData.ruleCop != null) lsSet(RULE_COP_KEY, cloudData.ruleCop)
+      if (cloudData.playbooks != null) lsSet(PLAYBOOKS_KEY, cloudData.playbooks)
+      if (cloudData.coachSummaries != null) lsSet(COACH_SUMMARIES_KEY, cloudData.coachSummaries)
+      if (cloudData.dashboardWatchlist && cloudData.dashboardWatchlist.length > 0)
+        lsSet(WATCHLIST_KEY, cloudData.dashboardWatchlist)
+      if (cloudData.customTickers != null) lsSet(CUSTOM_TICKERS_KEY, cloudData.customTickers)
+      if (cloudData.tickerPrefs != null) lsSet(TICKER_PREFS_KEY, cloudData.tickerPrefs)
+      if (cloudData.alertPrefs != null) lsSet(ALERT_PREFS_KEY, cloudData.alertPrefs)
     }
     setStatus('synced')
     return true
@@ -221,6 +270,14 @@ export async function forceSyncFromCloud(): Promise<boolean> {
 let _journalTimer: ReturnType<typeof setTimeout> | null = null
 
 export function debouncedSyncJournal(trades: unknown[], notes: unknown[], templates?: unknown[]): void {
+  // ── All localStorage keys synced to cloud via this function ──────────────
+  // cg_journal_trades, cg_journal_notes, cg_note_templates,
+  // cg_propfirm_accounts, cg_journal_defaults_*, cg_dismissed_webhook_ids,
+  // pf_privacy,
+  // cg_journal_custom_tags, cg_ritual_entries, cg_ritual_streak,
+  // cg_rule_cop, cg_playbooks, cg_coach_summaries,
+  // cg_wl, cg_ticker, cg_ticker_prefs, cg_alert_prefs
+  // ─────────────────────────────────────────────────────────────────────────
   const token = getToken()
   if (!token) {
     setStatus('local-only')
@@ -240,6 +297,17 @@ export function debouncedSyncJournal(trades: unknown[], notes: unknown[], templa
     const dismissedWebhookIds = lsGet<unknown[]>(DISMISSED_WEBHOOKS_KEY, [])
     let privacyMode: string | null = null
     try { privacyMode = localStorage.getItem(PRIVACY_KEY) } catch {}
+    // NEW: collect additional keys
+    const customTags         = lsGet<unknown>(CUSTOM_TAGS_KEY, null)
+    const ritualEntries      = lsGet<unknown>(RITUAL_ENTRIES_KEY, null)
+    const ritualStreak       = lsGet<unknown>(RITUAL_STREAK_KEY, null)
+    const ruleCop            = lsGet<unknown>(RULE_COP_KEY, null)
+    const playbooks          = lsGet<unknown>(PLAYBOOKS_KEY, null)
+    const coachSummaries     = lsGet<unknown>(COACH_SUMMARIES_KEY, null)
+    const dashboardWatchlist = lsGet<unknown[]>(WATCHLIST_KEY, [])
+    const customTickers      = lsGet<unknown>(CUSTOM_TICKERS_KEY, null)
+    const tickerPrefs        = lsGet<unknown>(TICKER_PREFS_KEY, null)
+    const alertPrefs         = lsGet<unknown>(ALERT_PREFS_KEY, null)
     const ok = await cloudPut(token, 'journal', {
       trades,
       notes,
@@ -248,6 +316,17 @@ export function debouncedSyncJournal(trades: unknown[], notes: unknown[], templa
       journalDefaults,
       dismissedWebhookIds,
       ...(privacyMode != null ? { privacyMode } : {}),
+      // NEW fields
+      ...(customTags != null ? { customTags } : {}),
+      ...(ritualEntries != null ? { ritualEntries } : {}),
+      ...(ritualStreak != null ? { ritualStreak } : {}),
+      ...(ruleCop != null ? { ruleCop } : {}),
+      ...(playbooks != null ? { playbooks } : {}),
+      ...(coachSummaries != null ? { coachSummaries } : {}),
+      ...(dashboardWatchlist.length > 0 ? { dashboardWatchlist } : {}),
+      ...(customTickers != null ? { customTickers } : {}),
+      ...(tickerPrefs != null ? { tickerPrefs } : {}),
+      ...(alertPrefs != null ? { alertPrefs } : {}),
     })
     setStatus(ok ? 'synced' : 'error')
   }, 1500)
@@ -261,7 +340,7 @@ export function debouncedSyncJournal(trades: unknown[], notes: unknown[], templa
  */
 export async function initSettingsSync(token: string): Promise<void> {
   try {
-    const cloudSettings = await cloudGet<Record<string, unknown>>(token, 'settings')
+    const cloudSettings = await cloudGet<Record<string, unknown> & { priceAlerts?: unknown }>(token, 'settings')
     const localSettings = lsGet<Record<string, unknown>>(SETTINGS_KEY, {})
 
     if (cloudSettings && Object.keys(cloudSettings).length > 0 && Object.keys(localSettings).length === 0) {
@@ -270,6 +349,11 @@ export async function initSettingsSync(token: string): Promise<void> {
       await cloudPut(token, 'settings', localSettings)
     }
     // Both have settings → keep local (user's current preferences win)
+
+    // Restore price alerts backup — only if cloud has data (backward compat)
+    if (cloudSettings?.priceAlerts != null) {
+      lsSet(PRICE_ALERTS_KEY, cloudSettings.priceAlerts)
+    }
   } catch {
     // Fail silently
   }
@@ -283,7 +367,12 @@ export function debouncedSyncSettings(settings: Record<string, unknown>): void {
   if (_settingsTimer) clearTimeout(_settingsTimer)
   _settingsTimer = setTimeout(async () => {
     _settingsTimer = null
-    await cloudPut(token, 'settings', settings)
+    // Bundle price alerts as backup into settings payload
+    const priceAlerts = lsGet<unknown>(PRICE_ALERTS_KEY, null)
+    await cloudPut(token, 'settings', {
+      ...settings,
+      ...(priceAlerts != null ? { priceAlerts } : {}),
+    })
   }, 1500)
 }
 
