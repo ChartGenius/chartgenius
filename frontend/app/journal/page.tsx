@@ -126,6 +126,10 @@ interface Trade {
   greeks?: OptionGreeks
   legs?: OptionLeg[]           // for multi-leg strategies
 
+  // ── Multi-level SL/TP (optional, backward compatible) ─────────────────────
+  stopLevels?: { price: number; qty: number }[]    // first level = initial risk
+  targetLevels?: { price: number; qty: number }[]  // for scale-out targets
+
   // ── Source tracking ───────────────────────────────────────────────────────
   source?: string              // 'webhook' for auto-imported trades
 }
@@ -1064,8 +1068,10 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
     stopLoss: string; takeProfit: string;
     rating: number; setupTag: string; mistakeTag: string; notes: string;
     screenshot: string; propFirmAccountId: string;
-    tags_setup_types: string[]; tags_mistakes: string[]
-  }>({ stopLoss: '', takeProfit: '', rating: 3, setupTag: '', mistakeTag: 'None', notes: '', screenshot: '', propFirmAccountId: '', tags_setup_types: [], tags_mistakes: [] })
+    tags_setup_types: string[]; tags_mistakes: string[];
+    stopLevels: { price: number; qty: number }[];
+    targetLevels: { price: number; qty: number }[];
+  }>({ stopLoss: '', takeProfit: '', rating: 3, setupTag: '', mistakeTag: 'None', notes: '', screenshot: '', propFirmAccountId: '', tags_setup_types: [], tags_mistakes: [], stopLevels: [], targetLevels: [] })
   const [savedNoticeTradeId, setSavedNoticeTradeId] = useState<string | null>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [filterAsset, setFilterAsset] = useState('All')
@@ -1278,6 +1284,16 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
 
   const openExpandedRow = (t: Trade) => {
     setExpandedTradeId(t.id)
+    // Build stopLevels: use stored levels, or fall back to single stopLoss
+    const stopLevels: { price: number; qty: number }[] =
+      t.stopLevels && t.stopLevels.length > 0
+        ? t.stopLevels
+        : t.stopLoss ? [{ price: t.stopLoss, qty: t.positionSize }] : []
+    // Build targetLevels: use stored levels, or fall back to single takeProfit
+    const targetLevels: { price: number; qty: number }[] =
+      t.targetLevels && t.targetLevels.length > 0
+        ? t.targetLevels
+        : t.takeProfit ? [{ price: t.takeProfit, qty: t.positionSize }] : []
     setExpandedEditForm({
       stopLoss: t.stopLoss ? String(t.stopLoss) : '',
       takeProfit: t.takeProfit ? String(t.takeProfit) : '',
@@ -1289,6 +1305,8 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
       propFirmAccountId: t.propFirmAccountId || '',
       tags_setup_types: t.tags_setup_types || (t.setupTag ? [t.setupTag] : []),
       tags_mistakes: t.tags_mistakes || (t.mistakeTag && t.mistakeTag !== 'None' ? [t.mistakeTag] : []),
+      stopLevels,
+      targetLevels,
     })
   }
 
@@ -1298,40 +1316,28 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
       // debounced auto-save
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
       autoSaveTimer.current = setTimeout(() => {
-        setTrades(
-          trades.map((t: Trade) => {
-            if (t.id !== tradeId) return t
-            return {
-              ...t,
-              stopLoss: parseFloat(next.stopLoss) || 0,
-              takeProfit: parseFloat(next.takeProfit) || 0,
-              rating: next.rating,
-              setupTag: next.setupTag,
-              mistakeTag: next.mistakeTag,
-              notes: next.notes,
-              screenshot: next.screenshot,
-              propFirmAccountId: next.propFirmAccountId || undefined,
-              tags_setup_types: next.tags_setup_types,
-              tags_mistakes: next.tags_mistakes,
-            }
-          })
-        )
-        const updated = trades.map((t: Trade) => {
-          if (t.id !== tradeId) return t
-          return {
-            ...t,
-            stopLoss: parseFloat(next.stopLoss) || 0,
-            takeProfit: parseFloat(next.takeProfit) || 0,
-            rating: next.rating,
-            setupTag: next.setupTag,
-            mistakeTag: next.mistakeTag,
-            notes: next.notes,
-            screenshot: next.screenshot,
-            propFirmAccountId: next.propFirmAccountId || undefined,
-            tags_setup_types: next.tags_setup_types,
-            tags_mistakes: next.tags_mistakes,
-          }
+        // Sync scalar stopLoss/takeProfit from first level for backward compat
+        const firstSl = next.stopLevels && next.stopLevels.length > 0 ? next.stopLevels[0].price : parseFloat(next.stopLoss) || 0
+        const firstTp = next.targetLevels && next.targetLevels.length > 0 ? next.targetLevels[0].price : parseFloat(next.takeProfit) || 0
+        const applyPatch = (t: Trade) => ({
+          ...t,
+          stopLoss: firstSl,
+          takeProfit: firstTp,
+          stopLevels: next.stopLevels,
+          targetLevels: next.targetLevels,
+          rating: next.rating,
+          setupTag: next.setupTag,
+          mistakeTag: next.mistakeTag,
+          notes: next.notes,
+          screenshot: next.screenshot,
+          propFirmAccountId: next.propFirmAccountId || undefined,
+          tags_setup_types: next.tags_setup_types,
+          tags_mistakes: next.tags_mistakes,
         })
+        setTrades(
+          trades.map((t: Trade) => t.id !== tradeId ? t : applyPatch(t))
+        )
+        const updated = trades.map((t: Trade) => t.id !== tradeId ? t : applyPatch(t))
         saveTrades(updated)
         debouncedSyncJournal(updated, [])
         setSavedNoticeTradeId(tradeId)
@@ -2149,30 +2155,46 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                         {/* ── Expanded Trade Row — 3-column edit panel ── */}
                         {(() => {
                           const ef = expandedEditForm
-                          // R-Multiple auto-calculation
-                          const sl = parseFloat(ef.stopLoss) || 0
-                          const tp = parseFloat(ef.takeProfit) || 0
+                          // ── Multi-level R calculations ──
+                          // Use first stopLevel as initial risk; weighted avg of targetLevels for RR
+                          const firstSl = ef.stopLevels && ef.stopLevels.length > 0
+                            ? ef.stopLevels[0].price
+                            : parseFloat(ef.stopLoss) || 0
                           const rMultipleCalc = (() => {
-                            if (!sl || sl === t.entryPrice) return '—'
-                            const riskPerShare = Math.abs(t.entryPrice - sl)
+                            if (!firstSl || firstSl === t.entryPrice) return '—'
+                            const riskPerShare = Math.abs(t.entryPrice - firstSl)
                             if (riskPerShare === 0) return '—'
-                            let reward: number
-                            if (t.direction === 'Long') {
-                              reward = t.exitPrice - t.entryPrice
-                            } else {
-                              reward = t.entryPrice - t.exitPrice
-                            }
+                            const reward = t.direction === 'Long'
+                              ? t.exitPrice - t.entryPrice
+                              : t.entryPrice - t.exitPrice
                             const r = reward / riskPerShare
                             return isFinite(r) ? `${r.toFixed(2)}R` : '—'
                           })()
                           const rrCalc = (() => {
-                            if (!sl || sl === t.entryPrice || !tp) return '—'
-                            const risk = Math.abs(t.entryPrice - sl)
-                            const reward = Math.abs(tp - t.entryPrice)
-                            if (risk === 0) return '—'
-                            const rr = reward / risk
+                            if (!firstSl || firstSl === t.entryPrice) return '—'
+                            const initialRisk = Math.abs(t.entryPrice - firstSl)
+                            if (initialRisk === 0) return '—'
+                            // Weighted average of target levels
+                            const tls = ef.targetLevels && ef.targetLevels.length > 0 ? ef.targetLevels : []
+                            if (tls.length === 0) {
+                              // Fall back to single TP
+                              const tp = parseFloat(ef.takeProfit) || 0
+                              if (!tp) return '—'
+                              const reward = Math.abs(tp - t.entryPrice)
+                              const rr = reward / initialRisk
+                              return isFinite(rr) ? `1:${rr.toFixed(2)}` : '—'
+                            }
+                            const totalQty = tls.reduce((s, l) => s + l.qty, 0)
+                            if (totalQty === 0) return '—'
+                            const weightedReturn = tls.reduce((s, l) => s + Math.abs(l.price - t.entryPrice) * l.qty, 0) / totalQty
+                            const rr = weightedReturn / initialRisk
                             return isFinite(rr) ? `1:${rr.toFixed(2)}` : '—'
                           })()
+                          // Legacy scalars (used in places that still read ef.stopLoss / ef.takeProfit)
+                          const sl = firstSl
+                          const tp = ef.targetLevels && ef.targetLevels.length > 0
+                            ? ef.targetLevels[0].price
+                            : parseFloat(ef.takeProfit) || 0
                           // Hold time
                           const holdTimeStr = (() => {
                             if (!t.date || !t.time || !t.exitPrice) return '—'
@@ -2212,34 +2234,121 @@ function TabTradeLog({ trades, setTrades, customTags, onAddCustomTag, prefill, c
                                 {/* ── Column 1: Risk Management ── */}
                                 <div>
                                   <div style={colLabel}><IconShield size={12} />Risk Management</div>
+
+                                  {/* ── Stop Levels ── */}
                                   <div style={{ marginBottom: 12 }}>
-                                    <div style={fldLabel}><IconShield size={11} />Stop Loss</div>
-                                    <input
-                                      type="number"
-                                      value={ef.stopLoss}
-                                      onChange={e => applyExpandedEdit(t.id, { stopLoss: e.target.value })}
-                                      placeholder="e.g. 145.00"
-                                      step="any"
-                                      style={isWebhook ? roSx : inputSx}
-                                    />
+                                    <div style={{ ...fldLabel, marginBottom: 6, justifyContent: 'space-between' }}>
+                                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                        Stop Levels
+                                        <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 400 }}>(first = initial risk)</span>
+                                      </span>
+                                    </div>
+                                    {(ef.stopLevels || []).map((sl, idx) => (
+                                      <div key={idx} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
+                                        <input
+                                          type="number"
+                                          value={sl.price || ''}
+                                          onChange={e => {
+                                            const updated = ef.stopLevels!.map((l, i) => i === idx ? { ...l, price: parseFloat(e.target.value) || 0 } : l)
+                                            applyExpandedEdit(t.id, { stopLevels: updated, stopLoss: String(updated[0]?.price || '') })
+                                          }}
+                                          placeholder="Price"
+                                          step="any"
+                                          title={idx === 0 ? 'Initial stop — used for R-multiple' : `SL${idx + 1} price`}
+                                          style={{ ...inputSx, flex: 2, padding: '7px 8px', fontSize: 12, background: idx === 0 ? 'rgba(239,68,68,0.07)' : 'var(--bg-1)' }}
+                                        />
+                                        <input
+                                          type="number"
+                                          value={sl.qty || ''}
+                                          onChange={e => {
+                                            const updated = ef.stopLevels!.map((l, i) => i === idx ? { ...l, qty: parseFloat(e.target.value) || 0 } : l)
+                                            applyExpandedEdit(t.id, { stopLevels: updated })
+                                          }}
+                                          placeholder="Qty"
+                                          step="any"
+                                          style={{ ...inputSx, flex: 1, padding: '7px 8px', fontSize: 12 }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updated = ef.stopLevels!.filter((_, i) => i !== idx)
+                                            applyExpandedEdit(t.id, { stopLevels: updated, stopLoss: String(updated[0]?.price || '') })
+                                          }}
+                                          style={{ background: 'none', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 5, color: 'var(--red)', cursor: 'pointer', fontSize: 11, padding: '3px 6px', flexShrink: 0 }}
+                                        >✕</button>
+                                      </div>
+                                    ))}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newLevel = { price: 0, qty: t.positionSize }
+                                        const updated = [...(ef.stopLevels || []), newLevel]
+                                        applyExpandedEdit(t.id, { stopLevels: updated })
+                                      }}
+                                      style={{ background: 'none', border: '1px dashed rgba(239,68,68,0.35)', borderRadius: 6, padding: '4px 10px', color: 'var(--red)', fontSize: 11, cursor: 'pointer', width: '100%', marginTop: 2 }}
+                                    >+ Add Stop Level</button>
                                   </div>
+
+                                  {/* ── Target Levels ── */}
                                   <div style={{ marginBottom: 12 }}>
-                                    <div style={fldLabel}><IconTrendingUp size={11} />Take Profit</div>
-                                    <input
-                                      type="number"
-                                      value={ef.takeProfit}
-                                      onChange={e => applyExpandedEdit(t.id, { takeProfit: e.target.value })}
-                                      placeholder="e.g. 165.00"
-                                      step="any"
-                                      style={isWebhook ? roSx : inputSx}
-                                    />
+                                    <div style={{ ...fldLabel, marginBottom: 6 }}>
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                                      Target Levels
+                                    </div>
+                                    {(ef.targetLevels || []).map((tl, idx) => (
+                                      <div key={idx} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
+                                        <span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 700, minWidth: 24, textAlign: 'center' }}>TP{idx + 1}</span>
+                                        <input
+                                          type="number"
+                                          value={tl.price || ''}
+                                          onChange={e => {
+                                            const updated = ef.targetLevels!.map((l, i) => i === idx ? { ...l, price: parseFloat(e.target.value) || 0 } : l)
+                                            applyExpandedEdit(t.id, { targetLevels: updated, takeProfit: String(updated[0]?.price || '') })
+                                          }}
+                                          placeholder="Price"
+                                          step="any"
+                                          style={{ ...inputSx, flex: 2, padding: '7px 8px', fontSize: 12 }}
+                                        />
+                                        <input
+                                          type="number"
+                                          value={tl.qty || ''}
+                                          onChange={e => {
+                                            const updated = ef.targetLevels!.map((l, i) => i === idx ? { ...l, qty: parseFloat(e.target.value) || 0 } : l)
+                                            applyExpandedEdit(t.id, { targetLevels: updated })
+                                          }}
+                                          placeholder="Qty"
+                                          step="any"
+                                          style={{ ...inputSx, flex: 1, padding: '7px 8px', fontSize: 12 }}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const updated = ef.targetLevels!.filter((_, i) => i !== idx)
+                                            applyExpandedEdit(t.id, { targetLevels: updated, takeProfit: String(updated[0]?.price || '') })
+                                          }}
+                                          style={{ background: 'none', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 5, color: 'var(--green)', cursor: 'pointer', fontSize: 11, padding: '3px 6px', flexShrink: 0 }}
+                                        >✕</button>
+                                      </div>
+                                    ))}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newLevel = { price: 0, qty: t.positionSize }
+                                        const updated = [...(ef.targetLevels || []), newLevel]
+                                        applyExpandedEdit(t.id, { targetLevels: updated })
+                                      }}
+                                      style={{ background: 'none', border: '1px dashed rgba(34,197,94,0.35)', borderRadius: 6, padding: '4px 10px', color: 'var(--green)', fontSize: 11, cursor: 'pointer', width: '100%', marginTop: 2 }}
+                                    >+ Add Target Level</button>
                                   </div>
-                                  <div style={{ marginBottom: 12 }}>
-                                    <div style={fldLabel}>R-Multiple</div>
+
+                                  {/* ── Computed metrics ── */}
+                                  <div style={{ marginBottom: 10 }}>
+                                    <div style={fldLabel}>R-Multiple <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 400 }}>(actual)</span></div>
                                     <input type="text" value={rMultipleCalc} readOnly style={roSx} />
                                   </div>
-                                  <div style={{ marginBottom: 12 }}>
-                                    <div style={fldLabel}>Risk / Reward</div>
+                                  <div style={{ marginBottom: 10 }}>
+                                    <div style={fldLabel}>Planned R:R <span style={{ fontSize: 9, color: 'var(--text-3)', fontWeight: 400 }}>(weighted avg)</span></div>
                                     <input type="text" value={rrCalc} readOnly style={roSx} />
                                   </div>
                                   <div>
