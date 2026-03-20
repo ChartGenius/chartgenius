@@ -62,8 +62,9 @@ function lsSet<T>(key: string, val: T): void {
 
 // ── Journal keys (matching journal/page.tsx) ──────────────────────────────────
 
-const TRADES_KEY   = 'cg_journal_trades'
-const NOTES_KEY    = 'cg_journal_notes'
+const TRADES_KEY     = 'cg_journal_trades'
+const NOTES_KEY      = 'cg_journal_notes'
+const TEMPLATES_KEY  = 'cg_note_templates'
 
 // ── Settings key ──────────────────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ async function cloudPut(token: string, type: string, data: unknown): Promise<boo
 interface CloudJournalData {
   trades?: unknown[]
   notes?: unknown[]
+  templates?: unknown[]
 }
 
 /**
@@ -121,10 +123,12 @@ export async function initJournalSync(token: string): Promise<void> {
   try {
     const cloudData = await cloudGet<CloudJournalData>(token, 'journal')
     if (cloudData) {
-      const cloudTrades = cloudData.trades ?? []
-      const cloudNotes  = cloudData.notes  ?? []
-      lsSet(TRADES_KEY, cloudTrades)
-      lsSet(NOTES_KEY,  cloudNotes)
+      const cloudTrades     = cloudData.trades     ?? []
+      const cloudNotes      = cloudData.notes      ?? []
+      const cloudTemplates  = cloudData.templates  ?? []
+      lsSet(TRADES_KEY,    cloudTrades)
+      lsSet(NOTES_KEY,     cloudNotes)
+      if (cloudTemplates.length > 0) lsSet(TEMPLATES_KEY, cloudTemplates)
     }
     setStatus('synced')
   } catch {
@@ -143,10 +147,12 @@ export async function forceSyncFromCloud(): Promise<boolean> {
   try {
     const cloudData = await cloudGet<CloudJournalData>(token, 'journal')
     if (cloudData) {
-      const cloudTrades = cloudData.trades ?? []
-      const cloudNotes  = cloudData.notes  ?? []
-      lsSet(TRADES_KEY, cloudTrades)
-      lsSet(NOTES_KEY,  cloudNotes)
+      const cloudTrades     = cloudData.trades     ?? []
+      const cloudNotes      = cloudData.notes      ?? []
+      const cloudTemplates  = cloudData.templates  ?? []
+      lsSet(TRADES_KEY,    cloudTrades)
+      lsSet(NOTES_KEY,     cloudNotes)
+      if (cloudTemplates.length > 0) lsSet(TEMPLATES_KEY, cloudTemplates)
     }
     setStatus('synced')
     return true
@@ -162,7 +168,7 @@ export async function forceSyncFromCloud(): Promise<boolean> {
  */
 let _journalTimer: ReturnType<typeof setTimeout> | null = null
 
-export function debouncedSyncJournal(trades: unknown[], notes: unknown[]): void {
+export function debouncedSyncJournal(trades: unknown[], notes: unknown[], templates?: unknown[]): void {
   const token = getToken()
   if (!token) {
     setStatus('local-only')
@@ -172,7 +178,12 @@ export function debouncedSyncJournal(trades: unknown[], notes: unknown[]): void 
   setStatus('syncing')
   _journalTimer = setTimeout(async () => {
     _journalTimer = null
-    const ok = await cloudPut(token, 'journal', { trades, notes })
+    // Always include templates in the payload (read from localStorage if not passed)
+    let tpls = templates
+    if (tpls === undefined) {
+      try { tpls = JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '[]') } catch { tpls = [] }
+    }
+    const ok = await cloudPut(token, 'journal', { trades, notes, templates: tpls })
     setStatus(ok ? 'synced' : 'error')
   }, 1500)
 }

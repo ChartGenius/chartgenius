@@ -143,6 +143,13 @@ interface Note {
   updatedAt: string
 }
 
+interface NoteTemplate {
+  id: string
+  name: string
+  content: string
+  createdAt: string
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const SETUP_TAGS = [
@@ -285,8 +292,9 @@ function detectAssetClass(symbol: string): AssetClass | null {
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
 
-const TRADES_KEY = 'cg_journal_trades' // cg_ = legacy prefix from ChartGenius era (now TradVue); kept to avoid breaking existing user data
-const NOTES_KEY  = 'cg_journal_notes'  // cg_ = legacy prefix from ChartGenius era (now TradVue); kept to avoid breaking existing user data
+const TRADES_KEY     = 'cg_journal_trades'    // cg_ = legacy prefix from ChartGenius era (now TradVue); kept to avoid breaking existing user data
+const NOTES_KEY      = 'cg_journal_notes'     // cg_ = legacy prefix from ChartGenius era (now TradVue); kept to avoid breaking existing user data
+const TEMPLATES_KEY  = 'cg_note_templates'
 const DISMISSED_WEBHOOK_KEY = 'cg_dismissed_webhook_ids'
 
 function getDismissedWebhookIds(): Set<string> {
@@ -322,6 +330,17 @@ function loadNotes(): Note[] {
 
 function saveNotes(notes: Note[]) {
   localStorage.setItem(NOTES_KEY, JSON.stringify(notes))
+}
+
+function loadNoteTemplates(): NoteTemplate[] {
+  try {
+    const raw = localStorage.getItem(TEMPLATES_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function saveNoteTemplates(templates: NoteTemplate[]) {
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates))
 }
 
 function uid() {
@@ -3389,8 +3408,12 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [showTemplates, setShowTemplates] = useState(false)
+  const [customTemplates, setCustomTemplates] = useState<NoteTemplate[]>(() => loadNoteTemplates())
+  const [showManageTemplates, setShowManageTemplates] = useState(false)
+  const [renamingTemplateId, setRenamingTemplateId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   const selectNote = (note: Note) => {
     setSelectedId(note.id)
@@ -3399,15 +3422,21 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
     setEditing(false)
   }
 
-  const newNote = (templateKey?: keyof typeof NOTE_TEMPLATES) => {
-    const content = templateKey
-      ? NOTE_TEMPLATES[templateKey].replace('{{date}}', today).replace('{{name}}', 'My Strategy')
-      : ''
+  const newNote = (templateKey?: keyof typeof NOTE_TEMPLATES, customTemplate?: NoteTemplate) => {
+    let noteContent = ''
+    let noteTitle = 'Untitled Note'
+    if (templateKey) {
+      noteContent = NOTE_TEMPLATES[templateKey].replace(/\{\{date\}\}/g, today).replace('{{name}}', 'My Strategy')
+      noteTitle = templateKey
+    } else if (customTemplate) {
+      noteContent = customTemplate.content.replace(/\{\{date\}\}/g, today)
+      noteTitle = customTemplate.name
+    }
     const note: Note = {
       id: uid(),
-      title: templateKey || 'Untitled Note',
-      content,
-      template: templateKey || 'blank',
+      title: noteTitle,
+      content: noteContent,
+      template: templateKey || (customTemplate ? customTemplate.id : 'blank'),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -3438,7 +3467,61 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
     if (selectedId === id) { setSelectedId(null); setTitle(''); setContent('') }
   }
 
+  const saveAsTemplate = () => {
+    const defaultName = title || 'My Template'
+    const templateName = window.prompt('Template name:', defaultName)
+    if (!templateName) return
+    const tpl: NoteTemplate = {
+      id: uid(),
+      name: templateName.trim(),
+      content,
+      createdAt: new Date().toISOString(),
+    }
+    const updated = [...customTemplates, tpl]
+    setCustomTemplates(updated)
+    saveNoteTemplates(updated)
+  }
+
+  const deleteCustomTemplate = (id: string) => {
+    if (!confirm('Delete this template?')) return
+    const updated = customTemplates.filter(t => t.id !== id)
+    setCustomTemplates(updated)
+    saveNoteTemplates(updated)
+  }
+
+  const startRename = (tpl: NoteTemplate) => {
+    setRenamingTemplateId(tpl.id)
+    setRenameValue(tpl.name)
+  }
+
+  const commitRename = () => {
+    if (!renamingTemplateId) return
+    const updated = customTemplates.map(t =>
+      t.id === renamingTemplateId ? { ...t, name: renameValue.trim() || t.name } : t
+    )
+    setCustomTemplates(updated)
+    saveNoteTemplates(updated)
+    setRenamingTemplateId(null)
+    setRenameValue('')
+  }
+
   const selected = notes.find(n => n.id === selectedId)
+
+  // SVG icons for this component
+  const IconSaveTemplate = () => (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M13 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5l-3-3z" />
+      <path d="M13 5H9V2" />
+      <path d="M5 8h6M5 11h4" />
+    </svg>
+  )
+
+  const IconCustomTemplate = () => (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="12" height="12" rx="1.5" />
+      <path d="M5 5h6M5 8h6M5 11h3" />
+    </svg>
+  )
 
   return (
     <div>
@@ -3446,6 +3529,79 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
         title="Notebook"
         sub="Your trading plan workspace. Use templates to build trading plans, strategy playbooks, and weekly recaps."
       />
+
+      {/* Manage Templates Modal */}
+      {showManageTemplates && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: 'var(--bg-0)', border: '1px solid var(--border)', borderRadius: 12,
+            padding: 24, width: 480, maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-0)' }}>My Templates</h3>
+              <button
+                onClick={() => { setShowManageTemplates(false); setRenamingTemplateId(null) }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-2)', cursor: 'pointer', fontSize: 18 }}
+              >✕</button>
+            </div>
+            {customTemplates.length === 0 ? (
+              <div style={{ color: 'var(--text-2)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>
+                No custom templates yet. Open a note and click "Save as Template" to create one.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {customTemplates.map(tpl => (
+                  <div key={tpl.id} style={{
+                    background: 'var(--bg-1)', border: '1px solid var(--border)',
+                    borderRadius: 8, padding: '10px 12px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {renamingTemplateId === tpl.id ? (
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <input
+                            value={renameValue}
+                            onChange={e => setRenameValue(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenamingTemplateId(null) }}
+                            autoFocus
+                            style={{ ...inputSx, fontSize: 12, padding: '4px 8px', flex: 1 }}
+                          />
+                          <button onClick={commitRename} style={{ background: 'var(--accent)', border: 'none', borderRadius: 6, padding: '4px 10px', color: '#0a0a0c', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+                          <button onClick={() => setRenamingTemplateId(null)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', color: 'var(--text-2)', fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-0)', marginBottom: 2 }}>{tpl.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {tpl.content.slice(0, 60)}{tpl.content.length > 60 ? '…' : ''}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {renamingTemplateId !== tpl.id && (
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button
+                          onClick={() => startRename(tpl)}
+                          title="Rename"
+                          style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', color: 'var(--text-1)', fontSize: 11, cursor: 'pointer' }}
+                        >✎</button>
+                        <button
+                          onClick={() => deleteCustomTemplate(tpl.id)}
+                          title="Delete"
+                          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', color: '#ef4444', fontSize: 11, cursor: 'pointer' }}
+                        >✕</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="journal-notebook-grid">
         {/* Sidebar */}
@@ -3461,7 +3617,8 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
 
           {showTemplates && (
             <Card style={{ marginBottom: 12, padding: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-2)', marginBottom: 8, textTransform: 'uppercase' }}>Templates</div>
+              {/* Built-in templates */}
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Built-in</div>
               {(Object.keys(NOTE_TEMPLATES) as Array<keyof typeof NOTE_TEMPLATES>).map(key => (
                 <button
                   key={key}
@@ -3487,11 +3644,49 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
                   display: 'block', width: '100%', textAlign: 'left',
                   background: 'var(--bg-1)', border: '1px solid var(--border)',
                   borderRadius: 6, padding: '8px 10px', color: 'var(--text-2)',
-                  fontSize: 12, cursor: 'pointer',
+                  fontSize: 12, cursor: 'pointer', marginBottom: 8,
                 }}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconPencil size={12} />Blank Note</span>
               </button>
+
+              {/* My Templates section */}
+              {customTemplates.length > 0 && (
+                <>
+                  <div style={{ borderTop: '1px solid var(--border)', margin: '6px 0 8px' }} />
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>My Templates</div>
+                  {customTemplates.map(tpl => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => newNote(undefined, tpl)}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left',
+                        background: 'var(--bg-1)', border: '1px solid var(--border)',
+                        borderRadius: 6, padding: '8px 10px', color: 'var(--text-0)',
+                        fontSize: 12, cursor: 'pointer', marginBottom: 6,
+                      }}
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <IconCustomTemplate />
+                        {tpl.name}
+                      </span>
+                    </button>
+                  ))}
+                </>
+              )}
+
+              {/* Manage templates link */}
+              <div style={{ borderTop: '1px solid var(--border)', marginTop: 6, paddingTop: 8 }}>
+                <button
+                  onClick={() => { setShowManageTemplates(true); setShowTemplates(false) }}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: 11, cursor: 'pointer', padding: 0 }}
+                >
+                  ⚙ Manage Templates
+                </button>
+                <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 4 }}>
+                  Use <code style={{ background: 'var(--bg-0)', padding: '1px 4px', borderRadius: 3 }}>{'{{date}}'}</code> to auto-insert today&apos;s date
+                </div>
+              </div>
             </Card>
           )}
 
@@ -3544,9 +3739,21 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
                     placeholder="Note title..."
                   />
                   <RichTextEditor value={content} onChange={setContent} />
-                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                     <button onClick={saveNote} style={{ background: GREEN, border: 'none', borderRadius: 8, padding: '8px 20px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                       ✓ Save
+                    </button>
+                    <button
+                      onClick={saveAsTemplate}
+                      title="Save current content as a reusable template"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        background: 'var(--bg-1)', border: '1px solid var(--border)',
+                        borderRadius: 8, padding: '8px 14px', color: 'var(--text-1)',
+                        fontSize: 12, cursor: 'pointer',
+                      }}
+                    >
+                      <IconSaveTemplate /> Save as Template
                     </button>
                     <button onClick={() => { setEditing(false); if (selected) { setTitle(selected.title); setContent(selected.content) } }}
                       style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 20px', color: 'var(--text-0)', fontSize: 13, cursor: 'pointer' }}>
@@ -3559,6 +3766,18 @@ function TabNotebook({ notes, setNotes }: { notes: Note[]; setNotes: (n: Note[])
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                     <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--text-0)' }}>{selected?.title}</h2>
                     <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={saveAsTemplate}
+                        title="Save as reusable template"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                          background: 'var(--bg-1)', border: '1px solid var(--border)',
+                          borderRadius: 8, padding: '6px 12px', color: 'var(--text-1)',
+                          fontSize: 11, cursor: 'pointer',
+                        }}
+                      >
+                        <IconSaveTemplate /> Save as Template
+                      </button>
                       <button onClick={() => setEditing(true)} style={{ background: BLUE, border: 'none', borderRadius: 8, padding: '6px 16px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                         ✎ Edit
                       </button>
