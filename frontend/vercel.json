@@ -3,17 +3,29 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install",
-  "regions": ["iad1"],
+  "regions": [
+    "iad1"
+  ],
   "redirects": [
     {
       "source": "/(.*)",
-      "has": [{ "type": "host", "value": "chartgenius.io" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "chartgenius.io"
+        }
+      ],
       "destination": "https://www.tradvue.com/$1",
       "permanent": true
     },
     {
       "source": "/(.*)",
-      "has": [{ "type": "host", "value": "www.chartgenius.io" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "www.chartgenius.io"
+        }
+      ],
       "destination": "https://www.tradvue.com/$1",
       "permanent": true
     }
@@ -36,7 +48,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://tradvue-api.onrender.com https://www.google-analytics.com; frame-src https://s.tradingview.com https://www.tradingview.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://tradvue-api.onrender.com https://www.google-analytics.com https://open.er-api.com; frame-src https://s.tradingview.com https://www.tradingview.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
         }
       ]
     }
