@@ -83,7 +83,7 @@ class MarketauxService {
         }
         return [];
       }
-    }, 15 * 60); // 15-minute cache
+    }, 60 * 60); // 1-hour cache
   }
 
   // ──────────────────────────────────────────
