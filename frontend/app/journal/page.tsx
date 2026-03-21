@@ -4096,8 +4096,13 @@ function JournalPageInner() {
   }, [authLoading, user])
 
   // Initial cloud sync when token becomes available (or on first load if already logged in)
+  // Reset sync flag when token changes (logout → login cycle)
   useEffect(() => {
-    if (!token || initialSyncDone.current) return
+    if (!token) {
+      initialSyncDone.current = false  // Reset on logout so next login triggers sync
+      return
+    }
+    if (initialSyncDone.current) return
     initialSyncDone.current = true
     initJournalSync(token).then(() => {
       // Re-load from localStorage after sync (cloud may have updated local data)
