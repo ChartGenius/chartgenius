@@ -9,61 +9,45 @@
  *   - Selling shares does NOT touch historical log entries
  *   - DRIP reinvestment updates portfolio_holdings.shares
  *   - backfill() is idempotent (ON CONFLICT DO NOTHING for confirmed entries)
+ *
+ * NOTE: Migrated from db.query (direct Postgres/IPv6) to Supabase REST
+ * (HTTPS/IPv4) to fix intermittent connectivity issues on Render.
  */
 
-const db = require('./db');
+const { createClient } = require('@supabase/supabase-js');
 const { getStockInfo } = require('./stockInfo');
 
-/**
- * Get all dividend log entries for a user (optionally filtered by symbol).
- */
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 async function getLog(userId, { symbol = null } = {}) {
-  if (symbol) {
-    const { rows } = await db.query(
-      `SELECT * FROM portfolio_dividend_log
-       WHERE user_id = $1 AND symbol = $2
-       ORDER BY payment_date DESC`,
-      [userId, symbol.toUpperCase()]
-    );
-    return rows;
-  }
-  const { rows } = await db.query(
-    `SELECT * FROM portfolio_dividend_log
-     WHERE user_id = $1
-     ORDER BY payment_date DESC`,
-    [userId]
-  );
-  return rows;
+  const supabase = getSupabase();
+  let query = supabase
+    .from('portfolio_dividend_log')
+    .select('*')
+    .eq('user_id', userId)
+    .order('payment_date', { ascending: false });
+  if (symbol) query = query.eq('symbol', symbol.toUpperCase());
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data || [];
 }
 
-/**
- * Get total dividends received for a symbol within a date range.
- * Used by sold positions to show total dividends earned during hold period.
- */
 async function getTotalForSymbol(userId, symbol, { fromDate = null, toDate = null } = {}) {
-  let query = `SELECT COALESCE(SUM(total_received), 0) AS total
-               FROM portfolio_dividend_log
-               WHERE user_id = $1 AND symbol = $2`;
-  const params = [userId, symbol.toUpperCase()];
-
-  if (fromDate) {
-    params.push(fromDate);
-    query += ` AND payment_date >= $${params.length}`;
-  }
-  if (toDate) {
-    params.push(toDate);
-    query += ` AND payment_date <= $${params.length}`;
-  }
-
-  const { rows } = await db.query(query, params);
-  return parseFloat(rows[0].total);
+  const supabase = getSupabase();
+  let query = supabase
+    .from('portfolio_dividend_log')
+    .select('total_received')
+    .eq('user_id', userId)
+    .eq('symbol', symbol.toUpperCase());
+  if (fromDate) query = query.gte('payment_date', fromDate);
+  if (toDate) query = query.lte('payment_date', toDate);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data || []).reduce((sum, row) => sum + parseFloat(row.total_received || 0), 0);
 }
 
-/**
- * Upsert a single dividend log entry.
- * If entry exists and is_confirmed = true, skip update (immutable).
- * If entry exists and not confirmed, update it (auto recalculation).
- */
 async function upsertEntry(userId, entry) {
   const {
     symbol,
@@ -80,121 +64,115 @@ async function upsertEntry(userId, entry) {
     notes = null,
   } = entry;
 
-  const { rows } = await db.query(
-    `INSERT INTO portfolio_dividend_log
-       (user_id, symbol, payment_date, ex_date, dividend_per_share, shares_held,
-        total_received, source, is_confirmed, drip_reinvested, drip_shares_added,
-        drip_price, notes)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-     ON CONFLICT (user_id, symbol, payment_date) DO UPDATE SET
-       ex_date = EXCLUDED.ex_date,
-       dividend_per_share = EXCLUDED.dividend_per_share,
-       shares_held = EXCLUDED.shares_held,
-       total_received = EXCLUDED.total_received,
-       source = EXCLUDED.source,
-       drip_reinvested = EXCLUDED.drip_reinvested,
-       drip_shares_added = EXCLUDED.drip_shares_added,
-       drip_price = EXCLUDED.drip_price,
-       notes = COALESCE(EXCLUDED.notes, portfolio_dividend_log.notes),
-       updated_at = NOW()
-     WHERE portfolio_dividend_log.is_confirmed = false
-     RETURNING *`,
-    [userId, symbol.toUpperCase(), payment_date, ex_date, dividend_per_share, shares_held,
-     total_received, source, is_confirmed, drip_reinvested, drip_shares_added, drip_price, notes]
-  );
+  const supabase = getSupabase();
 
-  // If rows is empty, the entry was confirmed (skipped update)
-  if (rows.length === 0) {
-    const { rows: existing } = await db.query(
-      `SELECT * FROM portfolio_dividend_log WHERE user_id = $1 AND symbol = $2 AND payment_date = $3`,
-      [userId, symbol.toUpperCase(), payment_date]
-    );
-    return { entry: existing[0], skipped: true };
+  // Check if confirmed entry exists first (immutable)
+  const { data: existing, error: checkErr } = await supabase
+    .from('portfolio_dividend_log')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('symbol', symbol.toUpperCase())
+    .eq('payment_date', payment_date)
+    .maybeSingle();
+
+  if (checkErr) throw new Error(checkErr.message);
+
+  if (existing && existing.is_confirmed) {
+    return { entry: existing, skipped: true };
   }
 
-  return { entry: rows[0], skipped: false };
+  const payload = {
+    user_id: userId,
+    symbol: symbol.toUpperCase(),
+    payment_date,
+    ex_date,
+    dividend_per_share,
+    shares_held,
+    total_received,
+    source,
+    is_confirmed,
+    drip_reinvested,
+    drip_shares_added,
+    drip_price,
+    notes,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from('portfolio_dividend_log')
+    .upsert(payload, { onConflict: 'user_id,symbol,payment_date' })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return { entry: data, skipped: false };
 }
 
-/**
- * Update a single entry (user-initiated edit).
- * Sets source = 'manual', is_confirmed = true.
- */
 async function updateEntry(userId, entryId, updates) {
   const allowedFields = ['shares_held', 'total_received', 'notes', 'dividend_per_share'];
-  const setClauses = [];
-  const params = [userId, entryId];
-
+  const payload = { source: 'manual', is_confirmed: true, updated_at: new Date().toISOString() };
   for (const field of allowedFields) {
-    if (updates[field] !== undefined) {
-      params.push(updates[field]);
-      setClauses.push(`${field} = $${params.length}`);
-    }
+    if (updates[field] !== undefined) payload[field] = updates[field];
   }
+  if (Object.keys(payload).length === 3) throw new Error('No valid fields to update');
 
-  if (setClauses.length === 0) throw new Error('No valid fields to update');
+  const { data, error } = await getSupabase()
+    .from('portfolio_dividend_log')
+    .update(payload)
+    .eq('id', entryId)
+    .eq('user_id', userId)
+    .select()
+    .maybeSingle();
 
-  // User edit always marks as manual + confirmed
-  setClauses.push(`source = 'manual'`);
-  setClauses.push(`is_confirmed = true`);
-  setClauses.push(`updated_at = NOW()`);
-
-  const { rows } = await db.query(
-    `UPDATE portfolio_dividend_log
-     SET ${setClauses.join(', ')}
-     WHERE user_id = $1 AND id = $2
-     RETURNING *`,
-    params
-  );
-
-  if (!rows.length) throw new Error('Entry not found or unauthorized');
-  return rows[0];
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Entry not found or unauthorized');
+  return data;
 }
 
-/**
- * Confirm an entry (mark is_confirmed = true without changing values).
- */
 async function confirmEntry(userId, entryId) {
-  const { rows } = await db.query(
-    `UPDATE portfolio_dividend_log
-     SET is_confirmed = true, updated_at = NOW()
-     WHERE user_id = $1 AND id = $2
-     RETURNING *`,
-    [userId, entryId]
-  );
-  if (!rows.length) throw new Error('Entry not found or unauthorized');
-  return rows[0];
+  const { data, error } = await getSupabase()
+    .from('portfolio_dividend_log')
+    .update({ is_confirmed: true, updated_at: new Date().toISOString() })
+    .eq('id', entryId)
+    .eq('user_id', userId)
+    .select()
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Entry not found or unauthorized');
+  return data;
 }
 
-/**
- * Delete an entry (only non-confirmed entries).
- */
 async function deleteEntry(userId, entryId) {
-  const { rows } = await db.query(
-    `DELETE FROM portfolio_dividend_log
-     WHERE user_id = $1 AND id = $2 AND is_confirmed = false
-     RETURNING id`,
-    [userId, entryId]
-  );
-  if (!rows.length) {
-    throw new Error('Entry not found, unauthorized, or already confirmed (cannot delete confirmed entries)');
-  }
-  return rows[0];
+  const supabase = getSupabase();
+  // Only non-confirmed entries can be deleted
+  const { data: existing, error: checkErr } = await supabase
+    .from('portfolio_dividend_log')
+    .select('id, is_confirmed')
+    .eq('id', entryId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (checkErr) throw new Error(checkErr.message);
+  if (!existing) throw new Error('Entry not found or unauthorized');
+  if (existing.is_confirmed) throw new Error('Cannot delete confirmed entries');
+
+  const { data, error } = await supabase
+    .from('portfolio_dividend_log')
+    .delete()
+    .eq('id', entryId)
+    .eq('user_id', userId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data;
 }
 
-/**
- * Backfill dividend history for a holding.
- *
- * Fetches dividend history from Yahoo Finance (via getStockInfo),
- * filters to payments after buy_date, and inserts into the log.
- *
- * Skips entries that are already confirmed (is_confirmed = true).
- * Returns summary: { inserted, skipped, errors }
- */
 async function backfill(userId, { symbol, shares, buy_date, drip_enabled = false }) {
   const upperSymbol = symbol.toUpperCase();
   const buyDate = buy_date ? new Date(buy_date) : null;
 
-  // Fetch dividend history
   let stockInfo;
   try {
     stockInfo = await getStockInfo(upperSymbol);
@@ -213,20 +191,15 @@ async function backfill(userId, { symbol, shares, buy_date, drip_enabled = false
     };
   }
 
-  // Sort chronologically for DRIP compounding
   const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
-
   let currentShares = parseFloat(shares);
   let inserted = 0;
   let skipped = 0;
   let errors = 0;
 
   for (const div of sorted) {
-    // Skip dividends before buy date
     if (buyDate && new Date(div.date) <= buyDate) continue;
-
     const totalReceived = parseFloat((div.amount * currentShares).toFixed(4));
-
     try {
       const result = await upsertEntry(userId, {
         symbol: upperSymbol,
@@ -237,17 +210,8 @@ async function backfill(userId, { symbol, shares, buy_date, drip_enabled = false
         source: 'auto',
         is_confirmed: false,
       });
-
-      if (result.skipped) {
-        skipped++;
-      } else {
-        inserted++;
-      }
-
-      // DRIP: add reinvested shares (we don't have price at ex-date in this pass,
-      // so DRIP compounding uses the next payment's share count if DRIP enabled)
-      // Full historical DRIP price calculation would require Alpaca historical data
-      // For backfill: mark drip_reinvested but don't update shares (user reviews)
+      if (result.skipped) skipped++;
+      else inserted++;
     } catch (err) {
       console.error(`[DividendLog] Error inserting ${upperSymbol} ${div.date}:`, err.message);
       errors++;
@@ -257,26 +221,30 @@ async function backfill(userId, { symbol, shares, buy_date, drip_enabled = false
   return { symbol: upperSymbol, inserted, skipped, errors, totalDividends: sorted.length };
 }
 
-/**
- * Backfill all holdings for a user.
- * Called on sync/login for users who don't have log entries yet.
- */
 async function backfillAllHoldings(userId) {
-  const { rows: holdings } = await db.query(
-    `SELECT symbol, shares, buy_date, drip_enabled FROM portfolio_holdings WHERE user_id = $1`,
-    [userId]
-  );
+  const supabase = getSupabase();
+  const { data: holdings, error } = await supabase
+    .from('portfolio_holdings')
+    .select('symbol,shares,buy_date,drip_enabled')
+    .eq('user_id', userId);
+
+  if (error) throw new Error(error.message);
 
   const results = [];
-  for (const holding of holdings) {
-    // Check if this symbol already has entries
-    const { rows: existing } = await db.query(
-      `SELECT COUNT(*) as cnt FROM portfolio_dividend_log WHERE user_id = $1 AND symbol = $2`,
-      [userId, holding.symbol]
-    );
-    const hasEntries = parseInt(existing[0].cnt) > 0;
-    if (hasEntries) {
-      results.push({ symbol: holding.symbol, status: 'already_populated', count: existing[0].cnt });
+  for (const holding of (holdings || [])) {
+    const { count, error: cntErr } = await supabase
+      .from('portfolio_dividend_log')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('symbol', holding.symbol);
+
+    if (cntErr) {
+      results.push({ symbol: holding.symbol, status: 'error', error: cntErr.message });
+      continue;
+    }
+
+    if (count > 0) {
+      results.push({ symbol: holding.symbol, status: 'already_populated', count });
       continue;
     }
 
@@ -296,21 +264,17 @@ async function backfillAllHoldings(userId) {
   return results;
 }
 
-/**
- * Process DRIP for a dividend log entry.
- * Updates the entry with drip details and adds shares to the holding.
- *
- * @param {number} userId
- * @param {number} entryId - ID in portfolio_dividend_log
- * @param {number} priceAtPayment - Stock price on payment date
- */
 async function processDRIP(userId, entryId, priceAtPayment) {
-  // Get the entry
-  const { rows: entries } = await db.query(
-    `SELECT * FROM portfolio_dividend_log WHERE id = $1 AND user_id = $2`,
-    [entryId, userId]
-  );
-  if (!entries.length) throw new Error('Entry not found');
+  const supabase = getSupabase();
+  const { data: entries, error: fetchErr } = await supabase
+    .from('portfolio_dividend_log')
+    .select('*')
+    .eq('id', entryId)
+    .eq('user_id', userId)
+    .limit(1);
+
+  if (fetchErr) throw new Error(fetchErr.message);
+  if (!entries || entries.length === 0) throw new Error('Entry not found');
 
   const entry = entries[0];
   if (entry.drip_reinvested) throw new Error('DRIP already processed for this entry');
@@ -318,28 +282,39 @@ async function processDRIP(userId, entryId, priceAtPayment) {
 
   const dripSharesAdded = parseFloat((entry.total_received / priceAtPayment).toFixed(6));
 
-  // Update the log entry
-  await db.query(
-    `UPDATE portfolio_dividend_log
-     SET drip_reinvested = true, drip_shares_added = $1, drip_price = $2, updated_at = NOW()
-     WHERE id = $3 AND user_id = $4`,
-    [dripSharesAdded, priceAtPayment, entryId, userId]
-  );
+  const { error: updateLogErr } = await supabase
+    .from('portfolio_dividend_log')
+    .update({ drip_reinvested: true, drip_shares_added: dripSharesAdded, drip_price: priceAtPayment, updated_at: new Date().toISOString() })
+    .eq('id', entryId)
+    .eq('user_id', userId);
+
+  if (updateLogErr) throw new Error(updateLogErr.message);
 
   // Add shares to the holding
-  await db.query(
-    `UPDATE portfolio_holdings
-     SET shares = shares + $1, updated_at = NOW()
-     WHERE user_id = $2 AND symbol = $3`,
-    [dripSharesAdded, userId, entry.symbol]
-  );
+  const { data: holding, error: holdingErr } = await supabase
+    .from('portfolio_holdings')
+    .select('shares')
+    .eq('user_id', userId)
+    .eq('symbol', entry.symbol)
+    .maybeSingle();
+
+  if (holdingErr) throw new Error(holdingErr.message);
+
+  if (holding) {
+    const { error: updateHoldingErr } = await supabase
+      .from('portfolio_holdings')
+      .update({ shares: parseFloat(holding.shares) + dripSharesAdded, updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('symbol', entry.symbol);
+    if (updateHoldingErr) throw new Error(updateHoldingErr.message);
+  }
 
   return {
     symbol: entry.symbol,
     dripSharesAdded,
     priceAtPayment,
     totalReceived: entry.total_received,
-    newShares: null, // caller can query holdings for new total
+    newShares: null,
   };
 }
 

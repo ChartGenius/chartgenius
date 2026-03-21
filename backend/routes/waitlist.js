@@ -3,35 +3,18 @@
  *
  * POST /api/waitlist  - Sign up for early access
  * GET  /api/waitlist  - Admin: list signups (protected by admin key)
+ *
+ * NOTE: Migrated from db.query (direct Postgres/IPv6) to Supabase REST
+ * (HTTPS/IPv4) to fix intermittent connectivity issues on Render.
  */
 
 const express = require('express');
 const router = express.Router();
-const db = require('../services/db');
+const { createClient } = require('@supabase/supabase-js');
 
-// ── Ensure table exists (idempotent) ──────────────────────────────────────
-async function ensureTable() {
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS waitlist (
-      id              SERIAL PRIMARY KEY,
-      email           TEXT NOT NULL UNIQUE,
-      first_name      TEXT,
-      trade_type      TEXT,
-      experience      TEXT,
-      wants_telegram  BOOLEAN DEFAULT FALSE,
-      wants_discord   BOOLEAN DEFAULT FALSE,
-      ip_address      TEXT,
-      created_at      TIMESTAMPTZ DEFAULT NOW()
-    )
-  `);
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
-
-// Delay table creation to avoid crashing during Railway healthcheck
-setTimeout(() => {
-  ensureTable().catch(err =>
-    console.error('[waitlist] table init error:', err.message)
-  );
-}, 10000);
 
 // ── POST /api/waitlist ────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
@@ -44,7 +27,6 @@ router.post('/', async (req, res) => {
     wants_discord  = false,
   } = req.body;
 
-  // Basic validation
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ error: 'Email is required.' });
   }
@@ -56,31 +38,33 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const result = await db.query(
-      `INSERT INTO waitlist (email, first_name, trade_type, experience, wants_telegram, wants_discord, ip_address)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       ON CONFLICT (email) DO NOTHING
-       RETURNING id, created_at`,
-      [
-        emailTrimmed,
-        first_name?.trim() || null,
-        trade_type || null,
-        experience || null,
-        !!wants_telegram,
-        !!wants_discord,
-        req.ip || null,
-      ]
-    );
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('waitlist')
+      .upsert(
+        {
+          email: emailTrimmed,
+          first_name: first_name?.trim() || null,
+          trade_type: trade_type || null,
+          experience: experience || null,
+          wants_telegram: !!wants_telegram,
+          wants_discord: !!wants_discord,
+          ip_address: req.ip || null,
+        },
+        { onConflict: 'email', ignoreDuplicates: true }
+      )
+      .select('id,created_at');
 
-    if (result.rows.length === 0) {
-      // Email already exists — treat as success (don't leak info)
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
       return res.json({ success: true, already_registered: true });
     }
 
     return res.json({
       success: true,
       already_registered: false,
-      id: result.rows[0].id,
+      id: data[0].id,
     });
   } catch (err) {
     console.error('[waitlist] insert error:', err.message);
@@ -96,14 +80,14 @@ router.get('/', async (req, res) => {
   }
 
   try {
-    const result = await db.query(
-      `SELECT id, email, first_name, trade_type, experience,
-              wants_telegram, wants_discord, created_at
-       FROM waitlist
-       ORDER BY created_at DESC
-       LIMIT 500`
-    );
-    return res.json({ count: result.rows.length, signups: result.rows });
+    const { data, error } = await getSupabase()
+      .from('waitlist')
+      .select('id,email,first_name,trade_type,experience,wants_telegram,wants_discord,created_at')
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) throw error;
+    return res.json({ count: (data || []).length, signups: data || [] });
   } catch (err) {
     console.error('[waitlist] fetch error:', err.message);
     return res.status(500).json({ error: 'Failed to fetch waitlist.' });

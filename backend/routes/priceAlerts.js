@@ -14,7 +14,6 @@
 
 const express = require('express');
 const router  = express.Router();
-const db      = require('../services/db');
 const { requireAuth } = require('../middleware/auth');
 const {
   sendPriceAlertNotifications,

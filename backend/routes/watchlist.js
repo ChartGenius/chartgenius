@@ -1,20 +1,26 @@
 /**
- * Watchlist Routes — PostgreSQL + Live Finnhub prices
+ * Watchlist Routes — Supabase REST + Live Finnhub prices
  *
  * GET    /api/watchlist              - User's watchlist with live prices
  * POST   /api/watchlist              - Add instrument to watchlist
  * PUT    /api/watchlist/:id/alerts   - Update price alert thresholds
  * DELETE /api/watchlist/:id          - Remove from watchlist
  * GET    /api/watchlist/performance  - P&L summary
+ *
+ * NOTE: Migrated from db.query (direct Postgres/IPv6) to Supabase REST
+ * (HTTPS/IPv4) to fix intermittent connectivity issues on Render.
  */
 
 const express = require('express');
 const router = express.Router();
-const db = require('../services/db');
+const { createClient } = require('@supabase/supabase-js');
 const finnhub = require('../services/finnhub');
 const { requireAuth } = require('../middleware/auth');
 
-// Helper: map DB instrument + quote into enriched item
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 function enrichItem(dbItem, quote) {
   const currentPrice = quote?.current || 0;
   return {
@@ -49,25 +55,28 @@ function enrichItem(dbItem, quote) {
 // ──────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { rows } = await db.query(
-      `SELECT w.id, w.alert_threshold_up, w.alert_threshold_down, w.notes, w.created_at,
-              i.symbol, i.name, i.type, i.exchange
-       FROM watchlists w
-       JOIN instruments i ON i.id = w.instrument_id
-       WHERE w.user_id = $1
-       ORDER BY w.created_at DESC`,
-      [req.user.id]
-    );
+    const supabase = getSupabase();
+    const { data: rows, error } = await supabase
+      .from('watchlists')
+      .select('id,alert_threshold_up,alert_threshold_down,notes,created_at,purchase_price,instruments(symbol,name,type,exchange)')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
 
-    if (rows.length === 0) {
-      return res.json({ watchlist: [], total_items: 0 });
-    }
+    if (error) throw new Error(error.message);
+    if (!rows || rows.length === 0) return res.json({ watchlist: [], total_items: 0 });
 
-    // Fetch live quotes for all symbols in one batch
-    const symbols = [...new Set(rows.map(r => r.symbol))];
+    // Flatten joined instrument data
+    const flatRows = rows.map(r => ({
+      ...r,
+      symbol: r.instruments?.symbol,
+      name: r.instruments?.name,
+      type: r.instruments?.type,
+      exchange: r.instruments?.exchange,
+    }));
+
+    const symbols = [...new Set(flatRows.map(r => r.symbol))];
     const quotes = await finnhub.getBatchQuotes(symbols);
-
-    const enriched = rows.map(row => enrichItem(row, quotes[row.symbol.toUpperCase()]));
+    const enriched = flatRows.map(row => enrichItem(row, quotes[row.symbol?.toUpperCase()]));
 
     res.json({ watchlist: enriched, total_items: enriched.length });
   } catch (error) {
@@ -82,61 +91,62 @@ router.get('/', requireAuth, async (req, res) => {
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { symbol, alert_threshold_up, alert_threshold_down, purchase_price, notes } = req.body;
+    if (!symbol) return res.status(400).json({ error: 'Symbol is required' });
 
-    if (!symbol) {
-      return res.status(400).json({ error: 'Symbol is required' });
-    }
+    const supabase = getSupabase();
 
-    // Find instrument in DB
-    const { rows: instruments } = await db.query(
-      'SELECT * FROM instruments WHERE UPPER(symbol) = $1 AND active = true',
-      [symbol.toUpperCase()]
-    );
+    // Find instrument
+    const { data: instruments, error: instrErr } = await supabase
+      .from('instruments')
+      .select('*')
+      .eq('symbol', symbol.toUpperCase())
+      .eq('active', true);
 
-    if (instruments.length === 0) {
+    if (instrErr) throw new Error(instrErr.message);
+    if (!instruments || instruments.length === 0) {
       return res.status(404).json({ error: `Instrument '${symbol}' not found` });
     }
     const instrument = instruments[0];
 
     // Check duplicate
-    const { rows: existing } = await db.query(
-      'SELECT id FROM watchlists WHERE user_id = $1 AND instrument_id = $2',
-      [req.user.id, instrument.id]
-    );
-    if (existing.length > 0) {
+    const { data: existing, error: dupErr } = await supabase
+      .from('watchlists')
+      .select('id')
+      .eq('user_id', req.user.id)
+      .eq('instrument_id', instrument.id);
+
+    if (dupErr) throw new Error(dupErr.message);
+    if (existing && existing.length > 0) {
       return res.status(409).json({ error: 'Instrument already in watchlist' });
     }
 
     // Free tier limit
     if (req.user.subscription_tier === 'free') {
-      const { rows: countRows } = await db.query(
-        'SELECT COUNT(*) FROM watchlists WHERE user_id = $1',
-        [req.user.id]
-      );
-      if (parseInt(countRows[0].count) >= 10) {
-        return res.status(403).json({
-          error: 'Free tier limited to 10 watchlist items. Upgrade to add more.',
-        });
+      const { count, error: cntErr } = await supabase
+        .from('watchlists')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', req.user.id);
+      if (cntErr) throw new Error(cntErr.message);
+      if ((count || 0) >= 10) {
+        return res.status(403).json({ error: 'Free tier limited to 10 watchlist items. Upgrade to add more.' });
       }
     }
 
-    // Insert
-    const { rows } = await db.query(
-      `INSERT INTO watchlists (user_id, instrument_id, alert_threshold_up, alert_threshold_down, notes, created_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
-       RETURNING *`,
-      [
-        req.user.id,
-        instrument.id,
-        alert_threshold_up || null,
-        alert_threshold_down || null,
-        notes || null,
-      ]
-    );
+    const { data: rows, error: insertErr } = await supabase
+      .from('watchlists')
+      .insert({
+        user_id: req.user.id,
+        instrument_id: instrument.id,
+        alert_threshold_up: alert_threshold_up || null,
+        alert_threshold_down: alert_threshold_down || null,
+        notes: notes || null,
+      })
+      .select();
 
-    const quote = await finnhub.getQuote(instrument.symbol);
+    if (insertErr) throw new Error(insertErr.message);
     const watchlistRow = rows[0];
 
+    const quote = await finnhub.getQuote(instrument.symbol);
     res.status(201).json({
       message: 'Added to watchlist',
       item: enrichItem(
@@ -169,25 +179,19 @@ router.put('/:id/alerts', requireAuth, async (req, res) => {
     const { id } = req.params;
     const { alert_threshold_up, alert_threshold_down } = req.body;
 
-    const { rows } = await db.query(
-      `UPDATE watchlists
-       SET alert_threshold_up = COALESCE($1, alert_threshold_up),
-           alert_threshold_down = COALESCE($2, alert_threshold_down)
-       WHERE id = $3 AND user_id = $4
-       RETURNING *`,
-      [
-        alert_threshold_up ?? null,
-        alert_threshold_down ?? null,
-        parseInt(id),
-        req.user.id,
-      ]
-    );
+    const { data, error } = await getSupabase()
+      .from('watchlists')
+      .update({
+        ...(alert_threshold_up !== undefined ? { alert_threshold_up } : {}),
+        ...(alert_threshold_down !== undefined ? { alert_threshold_down } : {}),
+      })
+      .eq('id', parseInt(id))
+      .eq('user_id', req.user.id)
+      .select();
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Watchlist item not found' });
-    }
-
-    res.json({ message: 'Alert thresholds updated', item: rows[0] });
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) return res.status(404).json({ error: 'Watchlist item not found' });
+    res.json({ message: 'Alert thresholds updated', item: data[0] });
   } catch (error) {
     console.error('[Watchlist] PUT alerts error:', error);
     res.status(500).json({ error: 'Failed to update alert thresholds' });
@@ -200,17 +204,16 @@ router.put('/:id/alerts', requireAuth, async (req, res) => {
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const { data, error } = await getSupabase()
+      .from('watchlists')
+      .delete()
+      .eq('id', parseInt(id))
+      .eq('user_id', req.user.id)
+      .select();
 
-    const { rows } = await db.query(
-      'DELETE FROM watchlists WHERE id = $1 AND user_id = $2 RETURNING *',
-      [parseInt(id), req.user.id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Watchlist item not found' });
-    }
-
-    res.json({ message: 'Removed from watchlist', removed_id: rows[0].id });
+    if (error) throw new Error(error.message);
+    if (!data || data.length === 0) return res.status(404).json({ error: 'Watchlist item not found' });
+    res.json({ message: 'Removed from watchlist', removed_id: data[0].id });
   } catch (error) {
     console.error('[Watchlist] DELETE error:', error);
     res.status(500).json({ error: 'Failed to remove item from watchlist' });
@@ -222,38 +225,34 @@ router.delete('/:id', requireAuth, async (req, res) => {
 // ──────────────────────────────────────────
 router.get('/performance', requireAuth, async (req, res) => {
   try {
-    // Must define this route BEFORE /:id — Express matches in order.
-    // (OK here since 'performance' won't match a numeric id pattern from the other routes.)
-    const { rows } = await db.query(
-      `SELECT w.id, w.alert_threshold_up, w.alert_threshold_down, w.notes, w.created_at,
-              i.symbol, i.name, i.type, i.exchange
-       FROM watchlists w
-       JOIN instruments i ON i.id = w.instrument_id
-       WHERE w.user_id = $1`,
-      [req.user.id]
-    );
+    const { data: rows, error } = await getSupabase()
+      .from('watchlists')
+      .select('id,alert_threshold_up,alert_threshold_down,notes,created_at,purchase_price,instruments(symbol,name,type,exchange)')
+      .eq('user_id', req.user.id);
 
-    if (rows.length === 0) {
-      return res.json({ summary: { total_items: 0 }, items: [] });
-    }
+    if (error) throw new Error(error.message);
+    if (!rows || rows.length === 0) return res.json({ summary: { total_items: 0 }, items: [] });
 
-    const symbols = [...new Set(rows.map(r => r.symbol))];
+    const flatRows = rows.map(r => ({
+      ...r,
+      symbol: r.instruments?.symbol,
+      name: r.instruments?.name,
+      type: r.instruments?.type,
+      exchange: r.instruments?.exchange,
+    }));
+
+    const symbols = [...new Set(flatRows.map(r => r.symbol))];
     const quotes = await finnhub.getBatchQuotes(symbols);
 
     let totalInvestment = 0;
     let totalCurrentValue = 0;
     const items = [];
 
-    rows.forEach(row => {
-      const quote = quotes[row.symbol.toUpperCase()];
+    flatRows.forEach(row => {
+      const quote = quotes[row.symbol?.toUpperCase()];
       const currentPrice = quote?.current || 0;
       const purchasePrice = row.purchase_price ? parseFloat(row.purchase_price) : null;
-
-      if (purchasePrice) {
-        totalInvestment += purchasePrice;
-        totalCurrentValue += currentPrice;
-      }
-
+      if (purchasePrice) { totalInvestment += purchasePrice; totalCurrentValue += currentPrice; }
       items.push({
         symbol: row.symbol,
         name: row.name,
@@ -269,7 +268,6 @@ router.get('/performance', requireAuth, async (req, res) => {
     });
 
     const totalChange = totalCurrentValue - totalInvestment;
-
     res.json({
       summary: {
         total_items: rows.length,
@@ -277,10 +275,9 @@ router.get('/performance', requireAuth, async (req, res) => {
         total_investment: parseFloat(totalInvestment.toFixed(2)),
         total_current_value: parseFloat(totalCurrentValue.toFixed(2)),
         total_change: parseFloat(totalChange.toFixed(2)),
-        total_change_percent:
-          totalInvestment > 0
-            ? parseFloat(((totalChange / totalInvestment) * 100).toFixed(2))
-            : 0,
+        total_change_percent: totalInvestment > 0
+          ? parseFloat(((totalChange / totalInvestment) * 100).toFixed(2))
+          : 0,
       },
       items,
     });

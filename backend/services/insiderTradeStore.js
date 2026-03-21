@@ -4,17 +4,23 @@
  * Rolling 90-day window: records older than 90 days are pruned after every
  * ingestion cycle to keep the table small (~5,000–10,000 rows, ~5MB max).
  *
- * Every record has a traceable source for liability:
- *   - filing_url:        direct link to the SEC Form 4 XML file
- *   - accession_number:  SEC unique filing identifier (e.g. 0001628280-26-019134)
- *   - cik:               SEC Central Index Key for the company
- *   - source:            'SEC EDGAR' | 'Finnhub'
- *   - source_api:        'EFTS' | 'Finnhub'
+ * NOTE: Migrated from db.query (direct Postgres/IPv6) to Supabase REST
+ * (HTTPS/IPv4) to fix intermittent connectivity issues on Render.
+ *
+ * EXCEPTION: ensureTable() still uses db.query because DDL (CREATE TABLE,
+ * CREATE INDEX, ALTER TABLE) is not supported via Supabase REST/JS client.
+ * ensureTable() is called only during local setup / migrations, not on
+ * production request paths.
  */
 
 'use strict';
 
-const db = require('./db');
+const { createClient } = require('@supabase/supabase-js');
+const db = require('./db'); // kept only for DDL in ensureTable()
+
+function getSupabase() {
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
 
 // ─── Table Bootstrap ──────────────────────────────────────────────────────────
 
@@ -46,7 +52,6 @@ async function ensureTable() {
   await db.query(`CREATE INDEX IF NOT EXISTS idx_insider_trades_date ON insider_trades(filing_date DESC)`);
   await db.query(`CREATE INDEX IF NOT EXISTS idx_insider_trades_type ON insider_trades(transaction_type)`);
 
-  // RLS: public read — SEC filings are public data, no user-level access control needed
   try {
     await db.query(`ALTER TABLE insider_trades ENABLE ROW LEVEL SECURITY`);
     await db.query(`
@@ -62,7 +67,6 @@ async function ensureTable() {
       $$
     `);
   } catch (err) {
-    // Non-fatal: may fail if running as non-superuser
     console.warn('[InsiderTradeStore] RLS setup skipped (non-fatal):', err.message);
   }
 
@@ -71,20 +75,22 @@ async function ensureTable() {
 
 // ─── 90-Day Pruning ───────────────────────────────────────────────────────────
 
-/**
- * Delete records older than 90 days.
- * Called after every ingestion cycle to keep the table within ~5MB.
- * Estimated max rows: ~10,000 * 500 bytes = 5MB.
- */
 async function pruneOldRecords() {
   try {
-    const result = await db.query(
-      `DELETE FROM insider_trades WHERE filing_date < NOW() - INTERVAL '90 days'`
-    );
-    if (result.rowCount > 0) {
-      console.log(`[InsiderTradeStore] Pruned ${result.rowCount} records older than 90 days`);
+    const cutoff = new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString().split('T')[0];
+    const { error, count } = await getSupabase()
+      .from('insider_trades')
+      .delete({ count: 'exact' })
+      .lt('filing_date', cutoff);
+
+    if (error) {
+      console.warn('[InsiderTradeStore] Prune error (non-fatal):', error.message);
+      return 0;
     }
-    return result.rowCount;
+    if (count > 0) {
+      console.log(`[InsiderTradeStore] Pruned ${count} records older than 90 days`);
+    }
+    return count || 0;
   } catch (err) {
     console.warn('[InsiderTradeStore] Prune error (non-fatal):', err.message);
     return 0;
@@ -95,11 +101,10 @@ async function pruneOldRecords() {
 
 function _extractAccessionFromUrl(url) {
   if (!url) return null;
-  // Pattern: /Archives/edgar/data/{cik}/{18-digit-accession}/{filename}
   const m = url.match(/\/Archives\/edgar\/data\/\d+\/(\d{18})\//);
   if (!m) return null;
-  const raw = m[1]; // e.g. "000162828026019134"
-  return `${raw.slice(0, 10)}-${raw.slice(10, 12)}-${raw.slice(12)}`; // "0001628280-26-019134"
+  const raw = m[1];
+  return `${raw.slice(0, 10)}-${raw.slice(10, 12)}-${raw.slice(12)}`;
 }
 
 function _extractCikFromUrl(url) {
@@ -110,11 +115,6 @@ function _extractCikFromUrl(url) {
 
 // ─── Ingestion: EDGAR ─────────────────────────────────────────────────────────
 
-/**
- * Ingest EDGAR Form 4 trades into the database.
- * Requires: ticker, insider_name, filing_date, transaction_type.
- * Uses ON CONFLICT DO NOTHING — no overwrites, no duplicates.
- */
 async function ingestFromEdgar(trades) {
   if (!trades || trades.length === 0) return { inserted: 0, skipped: 0 };
 
@@ -127,16 +127,12 @@ async function ingestFromEdgar(trades) {
     const filingDate = trade.date || null;
     const transactionType = (trade.transactionType || '').trim();
 
-    if (!ticker || !insiderName || !filingDate || !transactionType) {
-      skipped++;
-      continue;
-    }
+    if (!ticker || !insiderName || !filingDate || !transactionType) { skipped++; continue; }
 
     const filingUrl = trade.filingUrl || null;
     const accessionNumber = _extractAccessionFromUrl(filingUrl);
     const cik = _extractCikFromUrl(filingUrl);
 
-    // Calculate transaction_value from shares × price if missing
     let computedTransactionValue = trade.transactionValue || null;
     if (computedTransactionValue == null) {
       const s = trade.shares != null ? parseFloat(trade.shares) : null;
@@ -147,33 +143,36 @@ async function ingestFromEdgar(trades) {
     }
 
     try {
-      const result = await db.query(
-        `INSERT INTO insider_trades (
-          ticker, company_name, insider_name, officer_title,
-          transaction_type, shares, price_per_share, transaction_value,
-          holdings_after, filing_date, filing_url, accession_number,
-          cik, source, source_api
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'SEC EDGAR','EFTS')
-        ON CONFLICT (ticker, insider_name, filing_date, transaction_type, shares)
-        DO NOTHING`,
-        [
-          ticker,
-          trade.companyName || null,
-          insiderName,
-          trade.officerTitle || null,
-          transactionType,
-          trade.shares || null,
-          trade.pricePerShare || null,
-          computedTransactionValue,
-          trade.holdingsAfter || null,
-          filingDate,
-          filingUrl,
-          accessionNumber,
-          cik,
-        ]
-      );
-      if (result.rowCount > 0) inserted++;
-      else skipped++;
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('insider_trades')
+        .upsert(
+          {
+            ticker,
+            company_name: trade.companyName || null,
+            insider_name: insiderName,
+            officer_title: trade.officerTitle || null,
+            transaction_type: transactionType,
+            shares: trade.shares || null,
+            price_per_share: trade.pricePerShare || null,
+            transaction_value: computedTransactionValue,
+            holdings_after: trade.holdingsAfter || null,
+            filing_date: filingDate,
+            filing_url: filingUrl,
+            accession_number: accessionNumber,
+            cik,
+            source: 'SEC EDGAR',
+            source_api: 'EFTS',
+          },
+          { onConflict: 'ticker,insider_name,filing_date,transaction_type,shares', ignoreDuplicates: true }
+        );
+
+      if (error) {
+        console.warn('[InsiderTradeStore] EDGAR insert error:', error.message, { ticker, insiderName, filingDate });
+        skipped++;
+      } else {
+        inserted++;
+      }
     } catch (err) {
       console.warn('[InsiderTradeStore] EDGAR insert error:', err.message, { ticker, insiderName, filingDate });
       skipped++;
@@ -186,11 +185,6 @@ async function ingestFromEdgar(trades) {
 
 // ─── Ingestion: Finnhub ───────────────────────────────────────────────────────
 
-/**
- * Ingest Finnhub trades into the database.
- * Finnhub has less data: no filing_url, no accession_number, no officer_title.
- * If a matching EDGAR record already exists, skip the Finnhub duplicate.
- */
 async function ingestFromFinnhub(trades) {
   if (!trades || trades.length === 0) return { inserted: 0, skipped: 0 };
 
@@ -203,50 +197,59 @@ async function ingestFromFinnhub(trades) {
     const filingDate = trade.date || null;
     const transactionType = (trade.transactionType || '').trim();
 
-    if (!ticker || !insiderName || !filingDate || !transactionType) {
-      skipped++;
-      continue;
-    }
+    if (!ticker || !insiderName || !filingDate || !transactionType) { skipped++; continue; }
 
     try {
-      // Prefer EDGAR — skip if a richer record already covers this trade
-      const existing = await db.query(
-        `SELECT id FROM insider_trades
-         WHERE ticker = $1
-           AND LOWER(insider_name) = LOWER($2)
-           AND filing_date = $3
-           AND LOWER(transaction_type) = LOWER($4)
-           AND source = 'SEC EDGAR'
-         LIMIT 1`,
-        [ticker, insiderName, filingDate, transactionType]
-      );
+      const supabase = getSupabase();
 
-      if (existing.rows.length > 0) {
+      // Prefer EDGAR — skip if a richer record already covers this trade
+      const { data: existing, error: checkErr } = await supabase
+        .from('insider_trades')
+        .select('id')
+        .eq('ticker', ticker)
+        .ilike('insider_name', insiderName)
+        .eq('filing_date', filingDate)
+        .ilike('transaction_type', transactionType)
+        .eq('source', 'SEC EDGAR')
+        .limit(1);
+
+      if (checkErr) {
+        console.warn('[InsiderTradeStore] Finnhub check error:', checkErr.message);
         skipped++;
         continue;
       }
 
-      const result = await db.query(
-        `INSERT INTO insider_trades (
-          ticker, company_name, insider_name, officer_title,
-          transaction_type, shares, price_per_share, transaction_value,
-          holdings_after, filing_date, filing_url, accession_number,
-          cik, source, source_api
-        ) VALUES ($1,$2,$3,NULL,$4,$5,NULL,NULL,NULL,$6,$7,NULL,NULL,'Finnhub','Finnhub')
-        ON CONFLICT (ticker, insider_name, filing_date, transaction_type, shares)
-        DO NOTHING`,
-        [
-          ticker,
-          trade.companyName || null,
-          insiderName,
-          transactionType,
-          trade.shares || null,
-          filingDate,
-          trade.filingUrl || null,
-        ]
-      );
-      if (result.rowCount > 0) inserted++;
-      else skipped++;
+      if (existing && existing.length > 0) { skipped++; continue; }
+
+      const { error } = await supabase
+        .from('insider_trades')
+        .upsert(
+          {
+            ticker,
+            company_name: trade.companyName || null,
+            insider_name: insiderName,
+            officer_title: null,
+            transaction_type: transactionType,
+            shares: trade.shares || null,
+            price_per_share: null,
+            transaction_value: null,
+            holdings_after: null,
+            filing_date: filingDate,
+            filing_url: trade.filingUrl || null,
+            accession_number: null,
+            cik: null,
+            source: 'Finnhub',
+            source_api: 'Finnhub',
+          },
+          { onConflict: 'ticker,insider_name,filing_date,transaction_type,shares', ignoreDuplicates: true }
+        );
+
+      if (error) {
+        console.warn('[InsiderTradeStore] Finnhub insert error:', error.message, { ticker, insiderName, filingDate });
+        skipped++;
+      } else {
+        inserted++;
+      }
     } catch (err) {
       console.warn('[InsiderTradeStore] Finnhub insert error:', err.message, { ticker, insiderName, filingDate });
       skipped++;
@@ -259,10 +262,6 @@ async function ingestFromFinnhub(trades) {
 
 // ─── Full Ingestion Cycle ─────────────────────────────────────────────────────
 
-/**
- * Run a full ingestion cycle: ingest EDGAR + Finnhub, then prune old records.
- * Call this after every successful fetch.
- */
 async function runIngestionCycle(edgarTrades, finnhubTrades) {
   const edgarResult = await ingestFromEdgar(edgarTrades);
   const finnhubResult = await ingestFromFinnhub(finnhubTrades);
@@ -272,106 +271,92 @@ async function runIngestionCycle(edgarTrades, finnhubTrades) {
 
 // ─── Query: Paginated Records ─────────────────────────────────────────────────
 
-/**
- * Query persisted insider trades with pagination and filters.
- * All date filters are capped at 90 days — the storage window.
- *
- * @param {Object} opts
- * @param {number} opts.page    - 1-indexed page number (default 1)
- * @param {number} opts.limit   - Records per page, max 200 (default 50)
- * @param {string} opts.from    - Start date YYYY-MM-DD (max 90 days ago)
- * @param {string} opts.to      - End date YYYY-MM-DD
- * @param {string} opts.symbol  - Filter by ticker
- * @param {string} opts.type    - Filter by transaction_type (buy/sell/award/gift)
- * @param {string} opts.source  - Filter by source (edgar/finnhub)
- * @returns {{ data, total, sources }}
- */
 async function queryTrades({ page = 1, limit = 50, from, to, symbol, type, source } = {}) {
   const safeLimit = Math.min(Math.max(1, parseInt(limit, 10) || 50), 200);
   const safePage = Math.max(1, parseInt(page, 10) || 1);
   const offset = (safePage - 1) * safeLimit;
 
-  // Hard floor: never return data older than 90 days
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString().split('T')[0];
   const effectiveFrom = from && from > ninetyDaysAgo ? from : ninetyDaysAgo;
 
-  const conditions = [`filing_date >= $1`];
-  const params = [effectiveFrom];
-  let idx = 2;
+  const supabase = getSupabase();
 
-  if (to) {
-    conditions.push(`filing_date <= $${idx++}`);
-    params.push(to);
-  }
+  // Build count query
+  let countQuery = supabase
+    .from('insider_trades')
+    .select('*', { count: 'exact', head: true })
+    .gte('filing_date', effectiveFrom);
 
+  // Build data query
+  let dataQuery = supabase
+    .from('insider_trades')
+    .select('id,ticker,company_name,insider_name,officer_title,transaction_type,shares,price_per_share,transaction_value,holdings_after,filing_date,filing_url,accession_number,cik,source,source_api,created_at')
+    .gte('filing_date', effectiveFrom)
+    .order('filing_date', { ascending: false })
+    .order('id', { ascending: false })
+    .range(offset, offset + safeLimit - 1);
+
+  if (to) { countQuery = countQuery.lte('filing_date', to); dataQuery = dataQuery.lte('filing_date', to); }
   if (symbol) {
-    conditions.push(`ticker = $${idx++}`);
-    params.push(symbol.toUpperCase().trim());
+    const s = symbol.toUpperCase().trim();
+    countQuery = countQuery.eq('ticker', s);
+    dataQuery = dataQuery.eq('ticker', s);
   }
-
   if (type) {
     const t = type.toLowerCase();
     if (t === 'buy') {
-      conditions.push(`(LOWER(transaction_type) LIKE '%buy%' OR LOWER(transaction_type) LIKE '%purchase%')`);
+      countQuery = countQuery.or('transaction_type.ilike.%buy%,transaction_type.ilike.%purchase%');
+      dataQuery = dataQuery.or('transaction_type.ilike.%buy%,transaction_type.ilike.%purchase%');
     } else if (t === 'sell') {
-      conditions.push(`(LOWER(transaction_type) LIKE '%sell%' OR LOWER(transaction_type) LIKE '%sale%')`);
+      countQuery = countQuery.or('transaction_type.ilike.%sell%,transaction_type.ilike.%sale%');
+      dataQuery = dataQuery.or('transaction_type.ilike.%sell%,transaction_type.ilike.%sale%');
     } else if (t === 'award') {
-      conditions.push(`LOWER(transaction_type) LIKE '%award%'`);
+      countQuery = countQuery.ilike('transaction_type', '%award%');
+      dataQuery = dataQuery.ilike('transaction_type', '%award%');
     } else if (t === 'gift') {
-      conditions.push(`LOWER(transaction_type) LIKE '%gift%'`);
+      countQuery = countQuery.ilike('transaction_type', '%gift%');
+      dataQuery = dataQuery.ilike('transaction_type', '%gift%');
     } else {
-      conditions.push(`LOWER(transaction_type) = LOWER($${idx++})`);
-      params.push(type);
+      countQuery = countQuery.ilike('transaction_type', type);
+      dataQuery = dataQuery.ilike('transaction_type', type);
+    }
+  }
+  if (source) {
+    const s = source.toLowerCase();
+    if (s === 'edgar') { countQuery = countQuery.eq('source', 'SEC EDGAR'); dataQuery = dataQuery.eq('source', 'SEC EDGAR'); }
+    else if (s === 'finnhub') { countQuery = countQuery.eq('source', 'Finnhub'); dataQuery = dataQuery.eq('source', 'Finnhub'); }
+  }
+
+  const [countResult, dataResult, sourceResult] = await Promise.all([
+    countQuery,
+    dataQuery,
+    supabase.from('insider_trades').select('source'),
+  ]);
+
+  if (countResult.error) throw new Error(countResult.error.message);
+  if (dataResult.error) throw new Error(dataResult.error.message);
+
+  const total = countResult.count || 0;
+
+  // Source breakdown
+  const sources = { edgar: 0, finnhub: 0 };
+  if (sourceResult.data) {
+    for (const row of sourceResult.data) {
+      if (row.source === 'SEC EDGAR') sources.edgar++;
+      else if (row.source === 'Finnhub') sources.finnhub++;
     }
   }
 
-  if (source) {
-    const s = source.toLowerCase();
-    if (s === 'edgar') conditions.push(`source = 'SEC EDGAR'`);
-    else if (s === 'finnhub') conditions.push(`source = 'Finnhub'`);
-  }
-
-  const where = `WHERE ${conditions.join(' AND ')}`;
-
-  const countResult = await db.query(
-    `SELECT COUNT(*) as total FROM insider_trades ${where}`,
-    params
-  );
-  const total = parseInt(countResult.rows[0].total, 10);
-
-  const dataResult = await db.query(
-    `SELECT
-      id, ticker, company_name, insider_name, officer_title,
-      transaction_type, shares, price_per_share, transaction_value,
-      holdings_after, filing_date, filing_url, accession_number,
-      cik, source, source_api, created_at
-    FROM insider_trades
-    ${where}
-    ORDER BY filing_date DESC, id DESC
-    LIMIT $${idx++} OFFSET $${idx++}`,
-    [...params, safeLimit, offset]
-  );
-
-  // Source breakdown totals (across entire table, not just current filter)
-  const sourceResult = await db.query(
-    `SELECT source, COUNT(*) as cnt FROM insider_trades GROUP BY source`
-  );
-  const sources = { edgar: 0, finnhub: 0 };
-  for (const row of sourceResult.rows) {
-    if (row.source === 'SEC EDGAR') sources.edgar = parseInt(row.cnt, 10);
-    else if (row.source === 'Finnhub') sources.finnhub = parseInt(row.cnt, 10);
-  }
-
-  return { data: dataResult.rows, total, sources };
+  return { data: dataResult.data || [], total, sources };
 }
 
-/**
- * Return total record count. Used to detect first-run (empty table).
- */
 async function getRecordCount() {
   try {
-    const result = await db.query('SELECT COUNT(*) as cnt FROM insider_trades');
-    return parseInt(result.rows[0].cnt, 10);
+    const { count, error } = await getSupabase()
+      .from('insider_trades')
+      .select('*', { count: 'exact', head: true });
+    if (error) return 0;
+    return count || 0;
   } catch (err) {
     return 0;
   }
