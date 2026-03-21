@@ -30,7 +30,7 @@ const FAQ_DATA: FAQCategory[] = [
       },
       {
         question: 'How do I import trades from my broker?',
-        answer: "Click 'Import CSV' at the top of the Journal page. We support Robinhood, Fidelity, Schwab, Webull, Tastytrade, E*TRADE, IBKR, and TradeStation formats.",
+        answer: "Two ways: (1) NinjaTrader 8 webhook (best for futures) — go to Integrations, download the TradVueAutoJournal addon, and trades auto-journal in real time. (2) CSV Import — click 'Import CSV' in the Journal. Supported formats: Robinhood, IBKR / Interactive Brokers, and Generic (download the template from the import dialog).",
       },
       {
         question: 'How do I log a futures trade?',
@@ -39,6 +39,24 @@ const FAQ_DATA: FAQCategory[] = [
       {
         question: 'How do I log an options trade?',
         answer: "Select 'Options' as the asset type, then fill in strike price, expiration, premium, and strategy type.",
+      },
+    ],
+  },
+  {
+    id: 'ninjatrader',
+    label: 'NinjaTrader Setup',
+    items: [
+      {
+        question: 'How do I connect NinjaTrader 8?',
+        answer: 'Go to Integrations in the navigation. Click "Setup NinjaTrader." Download TradVueAutoJournal.zip, import it into NinjaTrader 8 via Tools → Import → NinjaScript Add-On, then paste your unique Webhook URL into the indicator settings on any chart.',
+      },
+      {
+        question: "The addon is installed but no trades are showing",
+        answer: "Open the NinjaTrader Output window (Control Center → New → Output Window). You should see [TradVue] ENTRY/EXIT messages when you trade. If nothing shows: (1) make sure the indicator is on an active chart, (2) check Webhook URL uses /nt/ not /tv/, (3) confirm 'Send Entries' and 'Send Exits' are both enabled in the indicator settings.",
+      },
+      {
+        question: "What data does the addon send?",
+        answer: "Symbol, direction (Long/Short), entry price, exit price, quantity, P&L, and timestamp. It does NOT send your account balance, credentials, or broker login info. The connection is one-way (NT → TradVue only) and read-only.",
       },
     ],
   },
@@ -60,7 +78,25 @@ const FAQ_DATA: FAQCategory[] = [
       },
       {
         question: "Why don't the numbers match my firm's dashboard?",
-        answer: "TradVue tracks drawdown from closed trades only. Your firm tracks intraday drawdown on open positions in real-time. Always use your firm's dashboard as the official source.",
+        answer: "TradVue calculates drawdown from closed trades only. Your prop firm tracks intraday drawdown on open positions in real time. This is normal — always use your firm's official dashboard as the authoritative source for your funded account standing.",
+      },
+    ],
+  },
+  {
+    id: 'pricealerts',
+    label: 'Price Alerts',
+    items: [
+      {
+        question: 'How do I set a price alert?',
+        answer: "Click the bell icon on any ticker in the Dashboard or Portfolio. Set the direction (above/below) and your target price. Free accounts can have up to 3 active alerts. Pro accounts get unlimited alerts.",
+      },
+      {
+        question: "I'm not getting email notifications",
+        answer: "Email alerts are off by default. Go to Account → Notification Settings and enable 'Email me when a price alert triggers.' Check your spam folder too. Triggered alerts are one-time — once they fire, they expire.",
+      },
+      {
+        question: "My alert triggered but I missed it",
+        answer: "Check the Alerts panel on the dashboard for a history of triggered alerts. Alerts fire once when the price crosses your target. If you need ongoing monitoring, set a new alert after the old one triggers.",
       },
     ],
   },
@@ -98,11 +134,15 @@ const FAQ_DATA: FAQCategory[] = [
     items: [
       {
         question: "Why don't I see any insights?",
-        answer: 'The AI Coach requires a minimum number of trades to generate insights. Log 5 trades for basic stats, 10 for pattern detection, 20 for full analysis, 50 for high-confidence insights.',
+        answer: 'The AI Coach needs trade history to analyze. Log 5 trades for basic stats, 10 for pattern detection, 20 for full analysis, 50 for high-confidence insights. Make sure to add setup tags and mistake tags — the coach uses those for pattern breakdown.',
+      },
+      {
+        question: 'Is the AI Coach a chatbot or LLM?',
+        answer: 'No. The AI Coach is a statistical analysis engine — it runs calculations on your actual trade log (win rate by setup, P&L by time of day, mistake costs, etc.). It is not a large language model and does not generate free-form text or market predictions. Everything runs on your own data.',
       },
       {
         question: 'Is my data sent anywhere?',
-        answer: 'No. All analysis runs 100% in your browser. Your trade data never leaves your device.',
+        answer: 'All AI Coach analysis runs on your trade data stored in your account. Your journal data is never sold or shared. See our Privacy Policy for full details.',
       },
     ],
   },
@@ -176,7 +216,7 @@ const FAQ_DATA: FAQCategory[] = [
       },
       {
         question: 'Charts not showing',
-        answer: 'Make sure JavaScript is enabled and ad blockers are disabled. TradingView charts require both.',
+        answer: "TradVue uses TradingView charts for price display. Make sure JavaScript is enabled and ad blockers are disabled — ad blockers often block the TradingView embed. Note: TradingView is used for viewing charts only, not for trade imports (use the NinjaTrader addon or CSV import for that).",
       },
       {
         question: 'Lost my data',

@@ -42,7 +42,7 @@ const GETTING_STARTED_STEPS = [
     step: 3,
     Icon: IconBook,
     title: 'Log Your First Trade',
-    desc: 'Head to the Journal and click "+ New Trade." Fill in your entry/exit prices, position size, and stop loss. P&L and R-Multiple are calculated for you. Add a setup tag to unlock analytics.',
+    desc: 'Head to the Journal and click "+ New Trade." Or connect NinjaTrader 8 via the Integrations page to auto-journal every futures trade — no manual entry needed. Add a setup tag to unlock analytics.',
     href: '/journal',
     linkLabel: 'Open Journal',
   },
@@ -106,6 +106,10 @@ const FAQ_DATA: {
         a: 'TradVue is a browser-based trading platform and research toolkit. It combines a real-time market dashboard, trading journal with analytics, portfolio tracker, financial tools (calculators, screener), news feed, and economic calendar — all in one place. No download required.',
       },
       {
+        q: 'How do I connect NinjaTrader 8?',
+        a: 'Go to Integrations (in the nav) and click "Setup NinjaTrader." Download the TradVueAutoJournal.zip addon, import it into NinjaTrader 8 via Tools → Import → NinjaScript Add-On, then paste your unique Webhook URL into the indicator settings. Every trade you execute will automatically appear in your TradVue journal within 30 seconds. Works with NinjaTrader 8.1+, and is compatible with Tradovate, Rithmic, and CQG connections.',
+      },
+      {
         q: 'Is TradVue free?',
         a: 'TradVue has three access levels. (1) No Account: Dashboard, news, economic calendar, 30+ calculators, and watchlist are free to use with no account required. (2) Free Account: Create a free account (no credit card) for a 3-week full trial of all Pro features, then a limited free tier with a 30-day view window. (3) Pro: $24/month (or $16.80/month billed annually) — everything unlimited.',
       },
@@ -158,7 +162,15 @@ const FAQ_DATA: {
     questions: [
       {
         q: 'How do alerts work?',
-        a: 'Set a price alert by clicking the bell icon on any ticker. Choose "above" or "below" a price, and we\'ll notify you via email or in-app when it hits. Upgrade to Pro for SMS and webhook alerts.',
+        a: 'Go to the Dashboard or Portfolio, click the bell icon on any ticker, and set a target price "above" or "below". When the price hits, you get an email notification (opt in under Account → Notification Settings). In-app alerts show in the alerts panel. Free accounts get 3 active alerts; Pro gets unlimited.',
+      },
+      {
+        q: 'How do price alert notifications work?',
+        a: 'When a price alert triggers, TradVue sends an email to your registered address — but only if you have email alerts turned on. Go to Account → Notification Settings and enable "Email me when a price alert triggers." It\'s off by default, so make sure you opt in. You can also enable push notifications if you\'re using the platform in a browser that supports them.',
+      },
+      {
+        q: 'How does webhook auto-journaling work?',
+        a: 'Webhook auto-journaling lets NinjaTrader 8 (or any compatible platform) send trade data directly to your TradVue journal when you execute a trade. No manual entry needed. Each user gets a unique, private Webhook URL from the Integrations page. The NinjaTrader addon reads your executed trades and POSTs them to this URL. Symbol, direction (Long/Short), entry price, exit price, quantity, P&L, and timestamp are captured. Your account credentials and balance are never sent.',
       },
       {
         q: 'What data sources do you use?',
@@ -219,6 +231,10 @@ const FAQ_DATA: {
         a: 'TradVue pulls data from Finnhub (stock quotes, fundamentals), CoinGecko (crypto), ForexFactory (economic calendar), NewsAPI (news feed), Yahoo Finance (supplemental), and RSS feeds from major financial publishers. See the Data Sources section below for full details.',
       },
       {
+        q: 'How does cloud sync work?',
+        a: 'Cloud sync automatically saves your journal, portfolio, and settings to your TradVue account database so you can access them from any device. It\'s available during your 3-week free trial and with an active Pro subscription. Without a Pro account, data is stored in your browser\'s local storage — meaning it\'s tied to that specific browser/device. To sync across devices, upgrade to Pro. You can always export a JSON backup from the Journal or Portfolio page regardless of plan.',
+      },
+      {
         q: 'Can I export my data?',
         a: 'Yes — you can export everything as JSON or CSV. In the Journal, click the Export button to download your trade log. In the Portfolio, use the Export button for holdings and watchlist. JSON exports can be re-imported to restore your data.',
       },
@@ -229,6 +245,10 @@ const FAQ_DATA: {
     category: 'Technical',
     Icon: IconWrench,
     questions: [
+      {
+        q: 'My NinjaTrader webhook isn\'t sending trades — how do I troubleshoot?',
+        a: 'Check these in order: (1) Open the NinjaTrader Output window (Control Center → New → Output Window) — you should see "[TradVue] ENTRY..." messages when a trade fires. (2) If the Output window is blank, make sure the TradVueAutoJournal indicator is added to an active chart and enabled. (3) If you see a 403 error, verify the Webhook URL uses /nt/ not /tv/. (4) If P&L shows $0, check that both "Send Entries" and "Send Exits" are enabled in indicator settings. (5) If you see duplicate trades, set the Account Name parameter to your specific account number (e.g. Sim101). (6) If exits aren\'t recording, wait 30 seconds — the poller updates exits automatically.',
+      },
       {
         q: 'Why is some data delayed?',
         a: 'Free API tiers from some data providers include a 15-minute delay on certain data streams. Real-time quotes from Finnhub are available during trading hours, but some supplemental sources (extended hours, certain market indices) may lag. We display delay notices where applicable.',
@@ -247,7 +267,7 @@ const FAQ_DATA: {
       },
       {
         q: "Why aren't my alerts working?",
-        a: 'Make sure alerts are enabled in Settings. Check your email spam folder and add tradvue@alerts.com to your contacts. Verify the alert rule is set correctly.',
+        a: 'Make sure email alerts are enabled: go to Account → Notification Settings and turn on "Email me when a price alert triggers" (it\'s off by default). Check your spam folder. Make sure the alert is still active and hasn\'t triggered already — triggered alerts are one-time by default. Free accounts are limited to 3 active alerts; you may have hit the limit.',
       },
       {
         q: "I can't log in. What should I do?",
@@ -279,6 +299,14 @@ const FAQ_DATA: {
       {
         q: 'How much historical data is available?',
         a: 'Free users get 1 year of chart history. Pro users get 2 years. All users can view company fundamentals and news archives going back 5 years.',
+      },
+      {
+        q: 'How does the AI Coach work?',
+        a: 'The AI Coach analyzes your trade log using statistical methods — win rate by setup, P&L by time of day, average R-multiple by mistake tag, streak patterns, and more. It is NOT a large language model (LLM) or chatbot. It does not generate free-form text responses or predictions. All analysis runs on your actual logged trades and stays in your browser. The more consistently you tag your trades, the more useful the insights become. A minimum of 5 trades is needed for basic stats; 20+ trades unlocks full pattern analysis.',
+      },
+      {
+        q: 'What is the Prop Firm Tracker?',
+        a: 'The Prop Firm Tracker helps you monitor your standing on funded account challenges and live funded accounts. Add your account (firm, account size, rules), then link trades from your journal to that account. TradVue tracks your daily drawdown, trailing drawdown, P&L progress toward the profit target, and rule violations. Note: TradVue tracks closed trade P&L only — your firm\'s dashboard tracks intraday (open position) drawdown in real time. Always use your firm\'s official dashboard as the authoritative source.',
       },
     ],
   },
@@ -346,6 +374,10 @@ const FAQ_DATA: {
         q: 'How accurate are the dividend calculations?',
         a: 'Dividend data is pulled from historical payment records. Projected annual income is estimated from the most recent dividend rate × share count. Always verify against your broker statements — forward dividends can change.',
       },
+      {
+        q: 'How does dividend tracking work?',
+        a: 'TradVue has two dividend systems: (1) The Dividend Log — a database-backed, immutable record of actual dividend payments received on your holdings. This is what shows up in your Portfolio totals and is accurate even after you partially sell a position. (2) The DRIP Planner (under Tools) — a forward-looking projection tool that simulates how reinvesting dividends compounds your income over time at a given yield. The log is for tracking what you\'ve earned; the DRIP planner is for modeling future scenarios.',
+      },
     ],
   },
   {
@@ -359,7 +391,7 @@ const FAQ_DATA: {
       },
       {
         q: 'Can I import trades from my broker?',
-        a: 'Yes — CSV import supports three formats: Robinhood (exported from the app or website), IBKR / Interactive Brokers (trade confirmations), and a Generic format (download the template from the import dialog). Most brokers that export CSV can be mapped to the Generic format.',
+        a: 'Yes. Two ways: (1) NinjaTrader 8 webhook — the preferred method for futures traders. Set up the TradVueAutoJournal addon from the Integrations page and every trade auto-journals in real time. (2) CSV import — supports Robinhood, IBKR / Interactive Brokers, and a Generic format (download the template from the import dialog). Most brokers that export CSV can be mapped to the Generic format.',
       },
       {
         q: 'What analytics are available?',

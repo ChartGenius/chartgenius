@@ -1,11 +1,12 @@
 'use client'
 
 /**
- * /integrations — NinjaTrader 8 Setup & Webhook Management
+ * /integrations — Multi-integration setup (NinjaTrader 8 & TradingView)
  *
  * Sections:
- *   Header — Title, subtitle, compatibility badge
- *   1. Step-by-Step Install Guide (numbered accordion, 5 steps)
+ *   Header — Title, subtitle
+ *   Connection Selector — Two tabs: NinjaTrader 8 (default) or TradingView
+ *   1. Step-by-Step Install Guide (accordion, 5 steps)
  *   2. What Gets Captured (info box)
  *   3. Troubleshooting (collapsible)
  *   4. Security & Privacy
@@ -48,9 +49,12 @@ interface WebhookEvent {
   created_at: string
 }
 
+type IntegrationType = 'nt' | 'tv'
+
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const WEBHOOK_BASE = 'https://tradvue-api.onrender.com/api/webhook/nt'
+const WEBHOOK_BASE_NT = 'https://tradvue-api.onrender.com/api/webhook/nt'
+const WEBHOOK_BASE_TV = 'https://tradvue-api.onrender.com/api/webhook/tv'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -229,10 +233,56 @@ function Code({ children }: { children: React.ReactNode }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Step-by-Step Install Guide
+// Connection Type Selector
 // ══════════════════════════════════════════════════════════════════════════════
 
-function InstallGuide({ webhookUrl, tokens, loading, onGenerate, generating }: {
+function ConnectionTypeSelector({ selected, onChange }: { selected: IntegrationType; onChange: (type: IntegrationType) => void }) {
+  const options: { type: IntegrationType; title: string; icon: string; desc: string }[] = [
+    {
+      type: 'nt',
+      title: 'NinjaTrader 8',
+      icon: '🖥',
+      desc: 'Auto-journal every futures trade. Real broker fills, zero manual entry.',
+    },
+    {
+      type: 'tv',
+      title: 'TradingView',
+      icon: '📊',
+      desc: 'Auto-journal strategy signals. Works with any Pine Script strategy.',
+    },
+  ]
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12, marginBottom: 32 }}>
+      {options.map(opt => (
+        <button
+          key={opt.type}
+          onClick={() => onChange(opt.type)}
+          style={{
+            display: 'flex', flexDirection: 'column', gap: 12,
+            padding: '20px 16px',
+            background: selected === opt.type ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)',
+            border: selected === opt.type ? '2px solid rgba(139,92,246,0.5)' : '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 12,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            textAlign: 'left',
+          }}
+        >
+          <div style={{ fontSize: 24 }}>{opt.icon}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-0)' }}>{opt.title}</div>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>{opt.desc}</div>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NinjaTrader Install Guide
+// ══════════════════════════════════════════════════════════════════════════════
+
+function NinjaTraderInstallGuide({ webhookUrl, tokens, loading, onGenerate, generating }: {
   webhookUrl: string | null;
   tokens: WebhookToken[];
   loading: boolean;
@@ -441,6 +491,279 @@ function InstallGuide({ webhookUrl, tokens, loading, onGenerate, generating }: {
   )
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// TradingView Setup Guide
+// ══════════════════════════════════════════════════════════════════════════════
+
+function TradingViewInstallGuide({ webhookUrl, tokens, loading, onGenerate, generating }: {
+  webhookUrl: string | null;
+  tokens: WebhookToken[];
+  loading: boolean;
+  onGenerate: () => void;
+  generating: boolean;
+}) {
+  const copyText = useCopyText()
+  const [openStep, setOpenStep] = useState<number | null>(1)
+
+  const tvTemplateJson = `{
+  "ticker": "{{ticker}}",
+  "action": "{{strategy.order.action}}",
+  "price": {{strategy.order.price}},
+  "qty": {{strategy.order.contracts}},
+  "position_size": {{strategy.position_size}},
+  "order_id": "{{strategy.order.id}}",
+  "time": "{{timenow}}",
+  "source": "tradingview"
+}`
+
+  const steps = [
+    {
+      n: 1,
+      title: 'Get Your Webhook URL',
+      content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={bodyText}>
+            Your webhook URL is how TradingView sends strategy signals to TradVue. Generate one below and copy it for the next step.
+          </p>
+          {loading ? (
+            <div style={{ color: 'var(--text-2)', fontSize: 13 }}>Loading…</div>
+          ) : !webhookUrl ? (
+            <div>
+              <p style={{ ...bodyText, marginBottom: 12 }}>No webhook URL yet. Generate one to get started.</p>
+              <button onClick={onGenerate} disabled={generating} style={{
+                padding: '11px 22px',
+                background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)',
+                border: 'none', borderRadius: 10, color: '#fff',
+                fontSize: 13, fontWeight: 700, cursor: generating ? 'wait' : 'pointer',
+              }}>
+                {generating ? 'Generating…' : '⚡ Generate Webhook URL'}
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '0 0 8px' }}>Your TradingView webhook URL:</p>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+                background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 8, padding: '10px 12px',
+              }}>
+                <code style={{ flex: 1, fontSize: 11, color: '#a78bfa', fontFamily: 'monospace', wordBreak: 'break-all', minWidth: 0 }}>
+                  {webhookUrl}
+                </code>
+                <button onClick={() => copyText(webhookUrl, 'Webhook URL copied!')} style={{
+                  flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '6px 12px',
+                  background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)',
+                  border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                }}>
+                  <IconCopy /> Copy
+                </button>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '8px 0 0' }}>
+                Keep this URL private. Same token works for both NinjaTrader and TradingView.
+              </p>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      n: 2,
+      title: 'Add Webhook Message Template',
+      content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={bodyText}>
+            Copy this JSON template. You&apos;ll paste it into TradingView&apos;s alert message field in the next step.
+          </p>
+          <div style={{
+            background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 8, padding: '12px',
+            fontFamily: 'monospace', fontSize: 11, color: '#a78bfa',
+            overflowX: 'auto', lineHeight: 1.6, position: 'relative',
+          }}>
+            {tvTemplateJson.split('\n').map((line, i) => (
+              <div key={i}>{line}</div>
+            ))}
+          </div>
+          <button onClick={() => copyText(tvTemplateJson, 'Template copied!')} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            padding: '8px 16px',
+            background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)',
+            border: 'none', borderRadius: 8, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          }}>
+            <IconCopy /> Copy Template
+          </button>
+        </div>
+      ),
+    },
+    {
+      n: 3,
+      title: 'Create Alert in TradingView',
+      content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={instructionRow}>
+            <span style={stepDot}>1</span>
+            <span style={bodyText}>In TradingView: right-click on your strategy → <strong style={highlight}>Add Alert</strong></span>
+          </div>
+          <div style={instructionRow}>
+            <span style={stepDot}>2</span>
+            <span style={bodyText}>Set the condition to your strategy (e.g., <Code>Long Entry Signal</Code>)</span>
+          </div>
+          <div style={instructionRow}>
+            <span style={stepDot}>3</span>
+            <span style={bodyText}>Check <strong style={highlight}>&quot;Webhook URL&quot;</strong> and paste your URL from Step 1</span>
+          </div>
+          <div style={instructionRow}>
+            <span style={stepDot}>4</span>
+            <span style={bodyText}>In the <strong style={highlight}>&quot;Message&quot;</strong> field, paste the template from Step 2</span>
+          </div>
+          <div style={instructionRow}>
+            <span style={stepDot}>5</span>
+            <span style={bodyText}>Set frequency to <strong style={highlight}>&quot;Once Per Bar Close&quot;</strong> or <strong style={highlight}>&quot;Once Per Bar&quot;</strong></span>
+          </div>
+          <div style={{
+            marginTop: 10, padding: '10px 14px',
+            background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)',
+            borderRadius: 8, fontSize: 12, color: '#a78bfa', lineHeight: 1.6,
+          }}>
+            <strong>💡 Tip:</strong> You can create multiple alerts for different signals (entry, exit, position sizing, etc.)
+          </div>
+        </div>
+      ),
+    },
+    {
+      n: 4,
+      title: 'Test Your Alert',
+      content: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={instructionRow}>
+            <span style={{ fontSize: 18 }}>1️⃣</span>
+            <span style={bodyText}>Run your strategy in <strong style={highlight}>paper trading mode</strong> or wait for a live signal</span>
+          </div>
+          <div style={instructionRow}>
+            <span style={{ fontSize: 18 }}>2️⃣</span>
+            <span style={bodyText}>Check the <strong style={highlight}}>Events Log</strong> below to see incoming webhook data</span>
+          </div>
+          <div style={instructionRow}>
+            <span style={{ fontSize: 18 }}>3️⃣</span>
+            <span style={bodyText}>Your signals will appear in your TradVue Journal once matched</span>
+          </div>
+          <div style={{ ...instructionRow, background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '12px 16px' }}>
+            <span style={{ fontSize: 18 }}>🎉</span>
+            <span style={{ ...bodyText, color: '#4ade80', fontWeight: 600 }}>That&apos;s it — strategy signals auto-journal from now on</span>
+          </div>
+        </div>
+      ),
+    },
+  ]
+
+  return (
+    <>
+      <SectionCard title="4-Step Setup Guide">
+        {steps.map(step => (
+          <div key={step.n} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <button
+              onClick={() => setOpenStep(openStep === step.n ? null : step.n)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                padding: '16px 0', background: 'none', border: 'none',
+                cursor: 'pointer', textAlign: 'left',
+              }}
+            >
+              <span style={{
+                flexShrink: 0, width: 30, height: 30, borderRadius: '50%',
+                background: openStep === step.n ? 'rgba(139,92,246,0.3)' : 'rgba(139,92,246,0.12)',
+                border: `1px solid ${openStep === step.n ? 'rgba(139,92,246,0.6)' : 'rgba(139,92,246,0.3)'}`,
+                color: '#a78bfa', fontSize: 13, fontWeight: 800,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s',
+              }}>
+                {step.n}
+              </span>
+              <span style={{ flex: 1, fontSize: 15, fontWeight: 700, color: 'var(--text-0, #f9fafb)' }}>
+                {step.title}
+              </span>
+              <span style={{ color: 'var(--text-3)', flexShrink: 0 }}>
+                <IconChevron open={openStep === step.n} />
+              </span>
+            </button>
+
+            {openStep === step.n && (
+              <div style={{ padding: '0 0 20px 44px' }}>
+                {step.content}
+              </div>
+            )}
+          </div>
+        ))}
+      </SectionCard>
+
+      <SectionCard title="Pine Script Templates" subtitle="Example strategies to get started with TradingView webhooks.">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[
+            {
+              name: 'Moving Average Crossover',
+              file: 'tv_ma_crossover.pine',
+              desc: 'Simple strategy: buy on fast MA > slow MA, sell on crossunder',
+            },
+            {
+              name: 'RSI Momentum Strategy',
+              file: 'tv_rsi_strategy.pine',
+              desc: 'Momentum-based strategy using RSI with overbought/oversold levels',
+            },
+            {
+              name: 'Manual Webhook Template',
+              file: 'tv_manual_webhook.pine',
+              desc: 'Base template for building your own strategy with webhook functionality',
+            },
+          ].map(tmpl => (
+            <div key={tmpl.file} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '12px 14px',
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: 10,
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)', marginBottom: 2 }}>{tmpl.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-3)' }}>{tmpl.desc}</div>
+              </div>
+              <a
+                href={`/downloads/${tmpl.file}`}
+                download={tmpl.file}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '7px 14px',
+                  background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)',
+                  border: 'none', borderRadius: 8, color: '#fff', fontSize: 12, fontWeight: 700,
+                  cursor: 'pointer', textDecoration: 'none', whiteSpace: 'nowrap', marginLeft: 12,
+                }}
+              >
+                <IconDownload /> Download
+              </a>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      <div style={{
+        background: 'rgba(234,179,8,0.08)',
+        border: '1px solid rgba(234,179,8,0.2)',
+        borderRadius: 14,
+        padding: '16px 18px',
+        marginBottom: 20,
+      }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#fbbf24', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          ⚠️ Requirements
+        </h3>
+        <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: 'var(--text-2)', lineHeight: 1.7 }}>
+          <li>TradingView <strong>Essential+</strong> plan or higher (~$15/month) — free plans don&apos;t support webhooks</li>
+          <li>Works with stocks, forex, crypto — any instrument on TradingView</li>
+          <li>Strategy must use alertable outputs (buy/sell signals)</li>
+        </ul>
+      </div>
+    </>
+  )
+}
+
 // ── Inline styles ──────────────────────────────────────────────────────────────
 
 const bodyText: React.CSSProperties = {
@@ -465,10 +788,34 @@ const stepDot: React.CSSProperties = {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// What Gets Captured
+// What Gets Captured (shared)
 // ══════════════════════════════════════════════════════════════════════════════
 
-function WhatGetsCaptured() {
+function WhatGetsCaptured({ type }: { type: IntegrationType }) {
+  const content = type === 'nt' ? {
+    title: 'NinjaTrader Captures Real Broker Fills',
+    items: [
+      'Symbol (e.g. ES, NQ, MES, CL)',
+      'Direction — Long or Short',
+      'Entry price & exit price',
+      'Quantity',
+      'P&L (with futures multiplier)',
+      'Timestamp',
+      'Real broker fills — not paper trading',
+    ],
+  } : {
+    title: 'TradingView Captures Strategy Signals',
+    items: [
+      'Strategy signal time & price',
+      'Ticker/instrument name',
+      'Entry & exit direction',
+      'Position size',
+      'Order ID from strategy',
+      'Great for paper trading & backtesting',
+      'Perfect for strategy monitoring',
+    ],
+  }
+
   return (
     <div style={{
       background: 'rgba(139,92,246,0.06)',
@@ -478,17 +825,10 @@ function WhatGetsCaptured() {
       marginBottom: 20,
     }}>
       <h3 style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', margin: '0 0 14px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-        📊 What Gets Captured
+        📊 {content.title}
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8, marginBottom: 14 }}>
-        {[
-          'Symbol (e.g. ES, NQ, MES, CL)',
-          'Direction — Long or Short',
-          'Entry price & exit price',
-          'Quantity',
-          'P&L (with futures multiplier)',
-          'Timestamp',
-        ].map(item => (
+        {content.items.map(item => (
           <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-2)' }}>
             <span style={{ color: '#4ade80' }}>✓</span>
             <span>{item}</span>
@@ -500,7 +840,7 @@ function WhatGetsCaptured() {
         background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
         borderRadius: 8, fontSize: 12, color: '#4ade80', fontWeight: 600,
       }}>
-        🔒 We NEVER see your account number, balance, or broker credentials
+        🔒 We NEVER see your account credentials, balances, or broker/exchange API keys
       </div>
     </div>
   )
@@ -510,10 +850,10 @@ function WhatGetsCaptured() {
 // Troubleshooting (collapsible)
 // ══════════════════════════════════════════════════════════════════════════════
 
-function Troubleshooting() {
+function Troubleshooting({ type }: { type: IntegrationType }) {
   const [open, setOpen] = useState(false)
 
-  const items = [
+  const items = type === 'nt' ? [
     {
       problem: 'Output window shows nothing',
       fix: 'Make sure the indicator is added to a chart and is enabled (check Enabled in indicator settings)',
@@ -533,6 +873,27 @@ function Troubleshooting() {
     {
       problem: 'Trades show but no exit',
       fix: 'Wait 30 seconds — the poller updates exits automatically once the exit fill is received',
+    },
+  ] : [
+    {
+      problem: 'Alert not firing',
+      fix: 'Make sure your strategy has clear buy/sell signals and the alert condition is set correctly',
+    },
+    {
+      problem: 'Webhook URL rejected (403)',
+      fix: 'Check that you&apos;re using the /tv/ URL (not /nt/) and that TradingView can reach our servers',
+    },
+    {
+      problem: 'Signals not appearing in journal',
+      fix: 'Check the Events Log for errors. The signal must match a trade pattern (entry + exit).',
+    },
+    {
+      problem: 'Wrong price or quantity',
+      fix: 'Verify your template fields ({{strategy.order.price}}, {{strategy.order.contracts}}, etc.) are correct for your strategy',
+    },
+    {
+      problem: 'Too many false signals',
+      fix: 'Refine your strategy condition or increase the alert frequency (e.g., "Once Per Bar Close")',
     },
   ]
 
@@ -592,7 +953,7 @@ function Troubleshooting() {
 // Security & Privacy
 // ══════════════════════════════════════════════════════════════════════════════
 
-function SecuritySection() {
+function SecuritySection({ type }: { type: IntegrationType }) {
   return (
     <div style={{
       background: 'rgba(255,255,255,0.02)',
@@ -618,10 +979,12 @@ function SecuritySection() {
         ))}
       </div>
       <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0, lineHeight: 1.6 }}>
-        TradVue is not affiliated with NinjaTrader LLC. This integration is provided as-is. The addon is read-only — it cannot place, modify, or cancel orders.
+        {type === 'nt'
+          ? 'TradVue is not affiliated with NinjaTrader LLC. This integration is provided as-is. The addon is read-only — it cannot place, modify, or cancel orders.'
+          : 'TradVue is not affiliated with TradingView Inc. Webhooks are IP-restricted to TradingView\'s servers for security.'}
       </p>
       <p style={{ fontSize: 12, color: 'var(--text-2)', margin: '10px 0 0', lineHeight: 1.6 }}>
-        🔌 You can disconnect NinjaTrader anytime from your{' '}
+        🔌 You can disconnect {type === 'nt' ? 'NinjaTrader' : 'TradingView'} anytime from your{' '}
         <a href="/account" style={{ color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>Account Settings</a>
         {' '}page.
       </p>
@@ -633,20 +996,21 @@ function SecuritySection() {
 // Webhook URL Section
 // ══════════════════════════════════════════════════════════════════════════════
 
-function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, generating }: {
+function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, generating, type }: {
   tokens: WebhookToken[]; loading: boolean; onGenerate: () => void;
-  onRotate: (id: number) => void; onDelete: (id: number) => void; generating: boolean;
+  onRotate: (id: number) => void; onDelete: (id: number) => void; generating: boolean; type: IntegrationType;
 }) {
   const copyText = useCopyText()
   const [rotateConfirm, setRotateConfirm] = useState<number | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
   const primaryToken = tokens.find(t => t.is_active) || tokens[0]
-  const webhookUrl = primaryToken ? `${WEBHOOK_BASE}/${primaryToken.token}` : null
+  const webhookBase = type === 'nt' ? WEBHOOK_BASE_NT : WEBHOOK_BASE_TV
+  const webhookUrl = primaryToken ? `${webhookBase}/${primaryToken.token}` : null
 
   function getStatus(tk: WebhookToken) {
     if (!tk.is_active) return { icon: '🔴', label: 'Disabled' }
-    if (!tk.last_used_at) return { icon: '🟡', label: 'Active — no trades yet' }
+    if (!tk.last_used_at) return { icon: '🟡', label: 'Active — no data yet' }
     return { icon: '🟢', label: `Active · Last event ${timeAgo(tk.last_used_at)}` }
   }
 
@@ -657,7 +1021,7 @@ function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, ge
   )
 
   return (
-    <SectionCard title="Your Webhook URL" subtitle="Paste this URL into the NinjaTrader indicator's Webhook URL parameter.">
+    <SectionCard title="Your Webhook URL" subtitle={type === 'nt' ? 'Paste this URL into the NinjaTrader indicator\'s Webhook URL parameter.' : 'Use this URL in your TradingView alert webhook settings.'}>
       {!primaryToken ? (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 16 }}>
@@ -714,7 +1078,7 @@ function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, ge
                 background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)',
                 borderRadius: 8, fontSize: 13, color: '#fbbf24',
               }}>
-                <span>⚠️ This will break the NinjaTrader connection. Sure?</span>
+                <span>⚠️ This will break the {type === 'nt' ? 'NinjaTrader' : 'TradingView'} connection. Sure?</span>
                 <button onClick={() => { onRotate(primaryToken.id); setRotateConfirm(null) }} style={{
                   padding: '4px 12px', background: 'rgba(234,179,8,0.2)', border: '1px solid rgba(234,179,8,0.4)',
                   borderRadius: 6, color: '#fbbf24', fontSize: 12, fontWeight: 700, cursor: 'pointer',
@@ -737,7 +1101,7 @@ function WebhookURLSection({ tokens, loading, onGenerate, onRotate, onDelete, ge
                 background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
                 borderRadius: 8, fontSize: 13, color: '#f87171',
               }}>
-                <span>Delete this token? You&apos;ll need to reconfigure NinjaTrader.</span>
+                <span>Delete this token? You&apos;ll need to reconfigure {type === 'nt' ? 'NinjaTrader' : 'TradingView'}.</span>
                 <button onClick={() => { onDelete(primaryToken.id); setDeleteConfirm(null) }} style={{
                   padding: '4px 12px', background: 'rgba(248,113,113,0.15)', border: '1px solid rgba(248,113,113,0.4)',
                   borderRadius: 6, color: '#f87171', fontSize: 12, fontWeight: 700, cursor: 'pointer',
@@ -810,7 +1174,7 @@ function EventsSection({ token, refreshKey }: { token: string; refreshKey: numbe
   }
 
   return (
-    <SectionCard title="Recent Events" subtitle="Last 50 webhook events received from NinjaTrader. Refreshes every 30 seconds.">
+    <SectionCard title="Recent Events" subtitle="Last 50 webhook events received. Refreshes every 30 seconds.">
       {loading ? (
         <div style={{ color: 'var(--text-2)', fontSize: 14 }}>Loading events…</div>
       ) : error ? (
@@ -818,7 +1182,7 @@ function EventsSection({ token, refreshKey }: { token: string; refreshKey: numbe
       ) : events.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-2)', fontSize: 14 }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📭</div>
-          <p style={{ margin: 0 }}>No events yet. Complete the setup above and place a trade — it&apos;ll appear here within seconds.</p>
+          <p style={{ margin: 0 }}>No events yet. Complete the setup above and configure your integration — it&apos;ll appear here within seconds.</p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -893,7 +1257,7 @@ function TokenManagementSection({ tokens, onDelete, onGenerate, generating }: {
               {tk.last_used_at ? timeAgo(tk.last_used_at) : 'Never used'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-2)', whiteSpace: 'nowrap' }}>
-              {tk.trade_count} trade{tk.trade_count !== 1 ? 's' : ''}
+              {tk.trade_count} event{tk.trade_count !== 1 ? 's' : ''}
             </div>
             <Badge label={tk.is_active ? '🟢 Active' : '🔴 Inactive'} color={tk.is_active ? 'green' : 'red'} />
             {deleteConfirm === tk.id ? (
@@ -940,6 +1304,7 @@ export default function IntegrationsPage() {
   const [tokensLoading, setTokensLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
+  const [integrationType, setIntegrationType] = useState<IntegrationType>('nt')
 
   const fetchTokens = useCallback(async () => {
     if (!token) return
@@ -970,7 +1335,7 @@ export default function IntegrationsPage() {
       const res = await fetch(`${API_BASE}/api/webhooks/tokens`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ label: 'NinjaTrader' }),
+        body: JSON.stringify({ label: integrationType === 'nt' ? 'NinjaTrader' : 'TradingView' }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to generate token')
@@ -992,7 +1357,7 @@ export default function IntegrationsPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to rotate token')
-      showToast('Webhook URL rotated! Update your NinjaTrader indicator settings.', 'warning', 6000)
+      showToast('Webhook URL rotated! Update your integration settings.', 'warning', 6000)
       await fetchTokens()
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Failed to rotate token', 'error')
@@ -1017,7 +1382,8 @@ export default function IntegrationsPage() {
   }
 
   const primaryToken = tokens.find(t => t.is_active) || tokens[0]
-  const webhookUrl = primaryToken ? `${WEBHOOK_BASE}/${primaryToken.token}` : null
+  const webhookBase = integrationType === 'nt' ? WEBHOOK_BASE_NT : WEBHOOK_BASE_TV
+  const webhookUrl = primaryToken ? `${webhookBase}/${primaryToken.token}` : null
 
   if (authLoading) {
     return (
@@ -1054,23 +1420,18 @@ export default function IntegrationsPage() {
         {/* ── Header ── */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 30 }}>📊</span>
+            <span style={{ fontSize: 30 }}>🔗</span>
             <h1 style={{ fontSize: 30, fontWeight: 900, color: 'var(--text-0)', letterSpacing: '-0.03em', margin: 0 }}>
-              Connect NinjaTrader 8
+              Integrations
             </h1>
           </div>
           <p style={{ fontSize: 16, color: 'var(--text-2)', margin: '0 0 14px', lineHeight: 1.5 }}>
-            Auto-journal every futures trade. No manual entry needed.
+            Connect your trading platform to auto-journal trades in real-time.
           </p>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '6px 12px',
-            background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)',
-            borderRadius: 20, fontSize: 12, color: '#a78bfa',
-          }}>
-            ✓ Works with all NinjaTrader 8 connections — NinjaTrader, Tradovate, Rithmic, CQG
-          </div>
         </div>
+
+        {/* ── Connection Type Selector ── */}
+        <ConnectionTypeSelector selected={integrationType} onChange={setIntegrationType} />
 
         {/* ── Connection status pill ── */}
         <div style={{
@@ -1078,31 +1439,51 @@ export default function IntegrationsPage() {
           background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 10, marginBottom: 24,
         }}>
-          <span style={{ fontSize: 20 }}>🖥</span>
+          <span style={{ fontSize: 20 }}>{integrationType === 'nt' ? '🖥' : '📊'}</span>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>NinjaTrader 8</div>
-            <div style={{ fontSize: 12, color: 'var(--text-3)' }}>TradVue Addon — Real-time trade sync</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>
+              {integrationType === 'nt' ? 'NinjaTrader 8' : 'TradingView'}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+              {integrationType === 'nt' ? 'TradVue Addon — Real-time trade sync' : 'Webhook alerts — Strategy signal sync'}
+            </div>
           </div>
           <div style={{ marginLeft: 'auto' }}>
             <Badge
-              label={tokens.some(t => t.is_active && t.last_used_at) ? '🟢 Connected & active' : tokens.some(t => t.is_active) ? '🟡 Token ready — awaiting first trade' : '⚪ Not configured'}
+              label={tokens.some(t => t.is_active && t.last_used_at) ? '🟢 Connected & active' : tokens.some(t => t.is_active) ? '🟡 Token ready — awaiting first' : '⚪ Not configured'}
               color={tokens.some(t => t.is_active && t.last_used_at) ? 'green' : tokens.some(t => t.is_active) ? 'yellow' : 'gray'}
             />
           </div>
         </div>
 
-        {/* ── Main content ── */}
-        <InstallGuide
-          webhookUrl={webhookUrl}
-          tokens={tokens}
-          loading={tokensLoading}
-          onGenerate={handleGenerate}
-          generating={generating}
-        />
-
-        <WhatGetsCaptured />
-        <Troubleshooting />
-        <SecuritySection />
+        {/* ── Main content based on type ── */}
+        {integrationType === 'nt' ? (
+          <>
+            <NinjaTraderInstallGuide
+              webhookUrl={webhookUrl}
+              tokens={tokens}
+              loading={tokensLoading}
+              onGenerate={handleGenerate}
+              generating={generating}
+            />
+            <WhatGetsCaptured type="nt" />
+            <Troubleshooting type="nt" />
+            <SecuritySection type="nt" />
+          </>
+        ) : (
+          <>
+            <TradingViewInstallGuide
+              webhookUrl={webhookUrl}
+              tokens={tokens}
+              loading={tokensLoading}
+              onGenerate={handleGenerate}
+              generating={generating}
+            />
+            <WhatGetsCaptured type="tv" />
+            <Troubleshooting type="tv" />
+            <SecuritySection type="tv" />
+          </>
+        )}
 
         <WebhookURLSection
           tokens={tokens}
@@ -1111,6 +1492,7 @@ export default function IntegrationsPage() {
           onRotate={handleRotate}
           onDelete={handleDelete}
           generating={generating}
+          type={integrationType}
         />
 
         <EventsSection token={token} refreshKey={eventsRefreshKey} />
