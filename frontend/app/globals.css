@@ -1170,7 +1170,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
   gap: 2px;
   flex: 1;
-  overflow-x: auto;
+  overflow: visible;
 }
 .apn-items::-webkit-scrollbar { height: 0; }
 
