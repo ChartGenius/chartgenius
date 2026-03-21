@@ -2688,17 +2688,24 @@ function BackfillAllButton({ onDividendLogUpdate, existingEntries }: {
 }) {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+  const [noDataTickers, setNoDataTickers] = useState<string[]>([])
 
   const handleBackfill = async () => {
     setLoading(true)
     setDone(false)
+    setNoDataTickers([])
     try {
-      await backfillAllDividends()
+      const { results } = await backfillAllDividends()
       // Re-fetch the full log after backfill
       const refreshed = await getDividendLog()
       onDividendLogUpdate?.(refreshed)
       setDone(true)
-      setTimeout(() => setDone(false), 3000)
+      setTimeout(() => setDone(false), 5000)
+      // Surface tickers with no dividend data (likely delisted or non-dividend payers)
+      const noData = (results || [])
+        .filter(r => r.inserted === 0 && r.skipped === 0 && r.errors === 0)
+        .map(r => r.symbol)
+      if (noData.length > 0) setNoDataTickers(noData)
     } catch (err) {
       console.error('[BackfillAll] Failed:', err)
     } finally {
@@ -2707,17 +2714,25 @@ function BackfillAllButton({ onDividendLogUpdate, existingEntries }: {
   }
 
   return (
-    <button
-      onClick={handleBackfill}
-      disabled={loading}
-      style={{
-        fontSize: 10, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-        padding: '4px 10px', borderRadius: 4, border: '1px solid currentColor',
-        background: 'transparent', color: 'inherit', whiteSpace: 'nowrap', opacity: loading ? 0.6 : 1,
-      }}
-    >
-      {loading ? 'Backfilling…' : done ? '✓ Done' : 'Backfill All'}
-    </button>
+    <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+      <button
+        onClick={handleBackfill}
+        disabled={loading}
+        style={{
+          fontSize: 10, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+          padding: '4px 10px', borderRadius: 4, border: '1px solid currentColor',
+          background: 'transparent', color: 'inherit', whiteSpace: 'nowrap', opacity: loading ? 0.6 : 1,
+        }}
+      >
+        {loading ? 'Backfilling…' : done ? '✓ Done' : 'Backfill All'}
+      </button>
+      {noDataTickers.length > 0 && (
+        <div style={{ fontSize: 10, color: 'var(--text-2)', maxWidth: 260, lineHeight: 1.4 }}>
+          ⚠️ No dividend data for: <strong>{noDataTickers.join(', ')}</strong>
+          {' '}— {noDataTickers.length === 1 ? 'this ticker may be' : 'these tickers may be'} delisted or non-dividend-paying.
+        </div>
+      )}
+    </div>
   )
 }
 

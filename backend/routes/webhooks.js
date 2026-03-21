@@ -649,6 +649,8 @@ receiverRouter.post(
   express.text({ type: '*/*', limit: '10kb' }),
   async (req, res) => {
     // No IP allowlist for NinjaTrader — token validation is the auth
+    // Unlike TradingView (3s timeout), NinjaTrader has no timeout constraint,
+    // so we validate the token BEFORE responding. Invalid tokens get 401.
     const sourceIP = getSourceIP(req);
     const { userToken } = req.params;
 
@@ -658,52 +660,84 @@ receiverRouter.post(
       return res.status(429).json({ error: 'Rate limit exceeded' });
     }
 
-    // Respond 200 immediately
+    // ── Token validation BEFORE responding ─────────────────────────────────
+    // (NinjaTrader has no 3-second timeout constraint, unlike TradingView)
+    let supabase;
+    let tokenRow;
+    try {
+      supabase = getServiceClient();
+      const { data, error: tokenErr } = await supabase
+        .from('webhook_tokens')
+        .select('id, user_id, is_active, trade_count')
+        .eq('token', userToken)
+        .maybeSingle();
+
+      if (tokenErr || !data) {
+        console.warn(`[Webhook/NT] Invalid token: ${userToken.slice(0, 8)}...`);
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+
+      if (!data.is_active) {
+        console.warn(`[Webhook/NT] Inactive token: ${userToken.slice(0, 8)}...`);
+        return res.status(401).json({ error: 'Token is inactive' });
+      }
+
+      tokenRow = data;
+    } catch (err) {
+      console.error('[Webhook/NT] Token validation error:', err.message);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+
+    const { id: tokenId, user_id: userId, trade_count } = tokenRow;
+
+    // ── Parse payload ───────────────────────────────────────────────────────
+    const body = req.body;
+    let parsed = null;
+    let parseErr = null;
+    try {
+      const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
+      parsed = parsePayload(bodyStr);
+    } catch (e) { parseErr = e.message; }
+
+    if (!parsed) {
+      // Store raw event with error status, still respond 400 so NT knows
+      try {
+        await supabase.from('webhook_events').insert({
+          token_id:      tokenId,
+          user_id:       userId,
+          source_ip:     sourceIP,
+          raw_payload:   { raw: typeof body === 'string' ? body.slice(0, 2000) : body },
+          status:        'error',
+          error_message: parseErr || 'Failed to parse payload',
+        });
+      } catch (_) {}
+      console.warn(`[Webhook/NT] Parse failed for token ${userToken.slice(0, 8)}...`);
+      return res.status(400).json({ error: 'Invalid payload format' });
+    }
+
+    // ── Token is valid — respond 200 now, process trade async ─────────────
     res.status(200).json({ ok: true });
 
-    // Process async (same logic as TV route)
     setImmediate(async () => {
       try {
-        const supabase = getServiceClient();
-
-        // Validate token
-        const { data: tokenRow, error: tokenErr } = await supabase
-          .from('webhook_tokens')
-          .select('id, user_id, is_active, trade_count')
-          .eq('token', userToken)
-          .maybeSingle();
-
-        if (tokenErr || !tokenRow || !tokenRow.is_active) {
-          console.warn(`[Webhook/NT] Invalid/inactive token: ${userToken.slice(0, 8)}...`);
-          return;
-        }
-
-        const { id: tokenId, user_id: userId, trade_count } = tokenRow;
-
-        // Parse payload
-        const body = req.body;
-        let parsed = null;
-        let parseErr = null;
-        try {
-          const bodyStr = typeof body === 'string' ? body : JSON.stringify(body);
-          parsed = parsePayload(bodyStr);
-        } catch (e) { parseErr = e.message; }
-
         // Store event
         const { data: eventRow } = await supabase
           .from('webhook_events')
           .insert({
-            token_id:    tokenId,
-            user_id:     userId,
-            source_ip:   sourceIP,
-            raw_payload: { raw: typeof body === 'string' ? body.slice(0, 2000) : body },
-            status:      parsed ? 'received' : 'error',
-            error_message: parsed ? null : (parseErr || 'Failed to parse'),
+            token_id:        tokenId,
+            user_id:         userId,
+            source_ip:       sourceIP,
+            raw_payload:     { raw: typeof body === 'string' ? body.slice(0, 2000) : body },
+            parsed_ticker:   parsed.ticker,
+            parsed_action:   parsed.action,
+            parsed_price:    parsed.price,
+            parsed_quantity: parsed.quantity,
+            status:          'received',
           })
           .select('id')
           .single();
 
-        if (!parsed || !eventRow) return;
+        if (!eventRow) return;
         const eventId = eventRow.id;
 
         // Match and journal

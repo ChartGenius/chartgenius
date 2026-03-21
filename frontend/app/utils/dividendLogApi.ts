@@ -19,6 +19,10 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
+    // Surface a clear message for 404s from dividend backfill (likely delisted ticker)
+    if (res.status === 404 && path.includes('dividend')) {
+      throw new Error('No dividend data available — this ticker may be delisted');
+    }
     throw new Error(err.error || `HTTP ${res.status}`);
   }
   return res.json();

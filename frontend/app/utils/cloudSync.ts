@@ -270,13 +270,24 @@ export async function forceSyncFromCloud(): Promise<boolean> {
 let _journalTimer: ReturnType<typeof setTimeout> | null = null
 
 export function debouncedSyncJournal(trades: unknown[], notes: unknown[], templates?: unknown[]): void {
-  // ── All localStorage keys synced to cloud via this function ──────────────
-  // cg_journal_trades, cg_journal_notes, cg_note_templates,
-  // cg_propfirm_accounts, cg_journal_defaults_*, cg_dismissed_webhook_ids,
-  // pf_privacy,
-  // cg_journal_custom_tags, cg_ritual_entries, cg_ritual_streak,
-  // cg_rule_cop, cg_playbooks, cg_coach_summaries,
-  // cg_wl, cg_ticker, cg_ticker_prefs, cg_alert_prefs
+  // ── All localStorage keys synced to cloud via this function (17 keys) ──────
+  // 1.  cg_journal_trades
+  // 2.  cg_journal_notes
+  // 3.  cg_note_templates
+  // 4.  cg_propfirm_accounts
+  // 5.  cg_journal_defaults_*  (dynamic prefix, stored as one payload)
+  // 6.  cg_dismissed_webhook_ids
+  // 7.  pf_privacy
+  // 8.  cg_journal_custom_tags
+  // 9.  cg_ritual_entries
+  // 10. cg_ritual_streak
+  // 11. cg_rule_cop
+  // 12. cg_playbooks
+  // 13. cg_coach_summaries
+  // 14. cg_wl              (dashboard watchlist, bundled as dashboardWatchlist)
+  // 15. cg_ticker          (custom tickers)
+  // 16. cg_ticker_prefs
+  // 17. cg_alert_prefs
   // ─────────────────────────────────────────────────────────────────────────
   const token = getToken()
   if (!token) {

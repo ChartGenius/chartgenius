@@ -4,18 +4,20 @@ import type { NextRequest } from 'next/server'
 /**
  * Middleware — runs at the edge BEFORE any page renders.
  *
- * - /dashboard and /ops: fully blocked in production (internal agent tools)
- * - /admin: requires valid Supabase session cookie — unauthenticated users
- *   get redirected to / before any HTML is served. The client-side email
- *   allowlist remains as a secondary check for authorized admin emails.
+ * - /dashboard, /ops, /admin: fully blocked in production (internal tools).
+ *   These pages use localStorage-based auth (no cookies) so true server-side
+ *   auth is not possible at the edge. Blocking the routes entirely in
+ *   production prevents any HTML from being served to unauthenticated users.
+ *   Admins access these pages in development (localhost) where the block is
+ *   lifted, or via a separate admin-only deployment.
+ *
+ * Client-side guards remain as a defence-in-depth secondary layer:
+ *   - Spinner shown until useAuth() resolves
+ *   - Returns null + router.replace('/') if not admin
  */
 
 // Routes that are NEVER accessible in production (no auth bypass)
-const BLOCKED_PATHS = ['/dashboard', '/ops']
-
-// Note: /admin uses client-side auth (localStorage, not cookies) so it cannot
-// be gated at the middleware layer. Protection is handled by the admin page
-// itself: it renders nothing until useAuth() confirms an admin email.
+const BLOCKED_PATHS = ['/dashboard', '/ops', '/admin']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -41,5 +43,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/ops/:path*'],
+  matcher: ['/dashboard/:path*', '/ops/:path*', '/admin/:path*', '/admin'],
 }
