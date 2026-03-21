@@ -3054,6 +3054,28 @@ function DividendsTab({
         })}
       </div>
 
+      {/* Projected vs Historical clarification banner */}
+      <div style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 6, padding: '10px 14px', marginBottom: 12, fontSize: 11 }}>
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontWeight: 700, fontSize: 11, color: 'var(--green)', marginBottom: 3 }}>📜 DIVIDEND LEDGER (Historical Facts)</div>
+            <div style={{ fontSize: 10, color: 'var(--text-2)', lineHeight: 1.6 }}>
+              The table below shows <strong>actual dividends received</strong> — permanent, immutable records.
+              Each entry stores the exact shares you held at payment time.
+              <strong style={{ color: 'var(--green)' }}> Selling shares NEVER changes these records.</strong>
+            </div>
+          </div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontWeight: 700, fontSize: 11, color: 'var(--accent)', marginBottom: 3 }}>📈 PROJECTED INCOME (Estimates)</div>
+            <div style={{ fontSize: 10, color: 'var(--text-2)', lineHeight: 1.6 }}>
+              The "PROJECTED/yr" figures in the cards above are <strong>forward-looking estimates</strong> based on your
+              <em> current</em> share count and dividend rate. These update when you buy or sell.
+              See the DRIP tab for detailed projections.
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Legend */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 10, color: 'var(--text-3)', marginBottom: 12 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
