@@ -241,13 +241,13 @@ function ConnectionTypeSelector({ selected, onChange }: { selected: IntegrationT
     {
       type: 'nt',
       title: 'NinjaTrader 8',
-      icon: '🖥',
+      icon: 'nt',
       desc: 'Auto-journal every futures trade. Real broker fills, zero manual entry.',
     },
     {
       type: 'tv',
       title: 'TradingView',
-      icon: '📊',
+      icon: 'tv',
       desc: 'Auto-journal strategy signals. Works with any Pine Script strategy.',
     },
   ]
@@ -825,7 +825,7 @@ function WhatGetsCaptured({ type }: { type: IntegrationType }) {
       marginBottom: 20,
     }}>
       <h3 style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', margin: '0 0 14px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-        📊 {content.title}
+        {content.title}
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8, marginBottom: 14 }}>
         {content.items.map(item => (
@@ -1439,7 +1439,7 @@ export default function IntegrationsPage() {
           background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 10, marginBottom: 24,
         }}>
-          <span style={{ fontSize: 20 }}>{integrationType === 'nt' ? '🖥' : '📊'}</span>
+          
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>
               {integrationType === 'nt' ? 'NinjaTrader 8' : 'TradingView'}

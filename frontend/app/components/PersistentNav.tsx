@@ -302,6 +302,9 @@ function NavInner() {
     { label: 'Journal', href: '/journal', icon: <IconJournal /> },
     { label: 'Playbooks', href: '/playbooks', icon: <IconPlaybooks /> },
     { label: 'Prop Firm', href: '/propfirm', icon: <IconPropFirm /> },
+    { label: '', href: '', divider: true },
+    { label: 'Rules', href: '/rules', icon: <IconRules /> },
+    { label: 'Ritual', href: '/ritual', icon: <IconRitual /> },
   ]
 
   // Analysis dropdown items
@@ -318,10 +321,8 @@ function NavInner() {
       { label: user.email, href: '/account', icon: <IconAccount /> },
       { label: '', href: '', divider: true },
     ] : []),
-    { label: 'Rules', href: '/rules', icon: <IconRules /> },
-    { label: 'Ritual', href: '/ritual', icon: <IconRitual /> },
     { label: 'Integrations', href: '/integrations', icon: <IconIntegrations /> },
-    { label: 'Settings', href: '/settings', icon: <IconSettings /> },
+    { label: 'Account', href: '/account', icon: <IconSettings /> },
     { label: 'Help', href: '/help', icon: <IconHelp /> },
     { label: '', href: '', divider: true },
     { label: 'Upgrade to Pro', href: '/pricing', icon: <IconUpgrade /> },
@@ -349,7 +350,7 @@ function NavInner() {
     { label: 'Rules', href: '/rules', icon: <IconRules /> },
     { label: 'Ritual', href: '/ritual', icon: <IconRitual /> },
     { label: 'Integrations', href: '/integrations', icon: <IconIntegrations /> },
-    { label: 'Settings', href: '/settings', icon: <IconSettings /> },
+    { label: 'Account', href: '/account', icon: <IconSettings /> },
     { label: 'Help', href: '/help', icon: <IconHelp /> },
     { label: 'Upgrade to Pro', href: '/pricing', icon: <IconUpgrade /> },
   ]
