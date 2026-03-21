@@ -121,7 +121,7 @@ function parsePayload(body) {
     const ticker   = sanitize(parsed.ticker || parsed.symbol || parsed.sym || '');
     const action   = sanitize((parsed.action || parsed.side || parsed.direction || '')).toLowerCase();
     const price    = parseFloat(parsed.price || parsed.fill_price || 0) || null;
-    const quantity = parseFloat(parsed.quantity || parsed.qty || parsed.size || 0) || null;
+    const quantity = parseFloat(parsed.quantity || parsed.qty || parsed.contracts || parsed.size || 0) || null;
     const position = sanitize((
       parsed.position ||
       parsed.strategy?.market_position ||
@@ -129,10 +129,18 @@ function parsePayload(body) {
       ''
     )).toLowerCase();
 
-    if (!ticker || !action) return null;
+    // Pine Script alert_message format: {"message":"entry_long"/"exit_short"/etc}
+    // When action is absent but message contains direction cue, derive action from message
+    let derivedAction = action;
+    if (!derivedAction && parsed.message) {
+      const msg = String(parsed.message).toLowerCase();
+      if (msg.includes('entry') || msg.includes('buy') || msg.includes('long')) derivedAction = 'buy';
+      else if (msg.includes('exit') || msg.includes('sell') || msg.includes('short')) derivedAction = 'sell';
+    }
+    if (!ticker || !derivedAction) return null;
     // NinjaTrader sends 'entry'/'exit' as action; normalize to buy/sell for compatibility
-    const normalizedAction = action === 'entry' ? 'buy' : action === 'exit' ? 'sell' : action;
-    if (!['buy', 'sell', 'entry', 'exit'].includes(action)) return null;
+    const normalizedAction = derivedAction === 'entry' ? 'buy' : derivedAction === 'exit' ? 'sell' : derivedAction;
+    if (!['buy', 'sell', 'entry', 'exit'].includes(derivedAction)) return null;
 
     // Extended fields from NinjaTrader addon
     const entryPrice  = parseFloat(parsed.entry_price) || null;
@@ -396,7 +404,7 @@ async function _matchAndJournalTrade(supabase, userId, parsed, eventId) {
                 quantity:    closeQty,
                 pnl:         tradePnl !== null ? Math.round(tradePnl * 100) / 100 : null,
                 strategy:    strategy || null,
-                notes:       'Auto-journaled via NinjaTrader (partial close)',
+                notes:       isNinjaTrader ? 'Auto-journaled via NinjaTrader (partial close)' : 'Auto-journaled via TradingView (partial close)',
                 status:      'closed',
                 source:      source || 'webhook',
                 traded_at:   now,
@@ -1040,4 +1048,4 @@ managementRouter.post('/test', requireAuth, async (req, res) => {
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
-module.exports = { receiverRouter, managementRouter, tradesRouter, _matchAndJournalTrade, matchAndJournalTrade };
+module.exports = { receiverRouter, managementRouter, tradesRouter, _matchAndJournalTrade, matchAndJournalTrade, parsePayload };

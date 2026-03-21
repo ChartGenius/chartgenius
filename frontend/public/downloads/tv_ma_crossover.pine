@@ -1,0 +1,57 @@
+// @version=5
+// TradVue Auto-Journal — Simple MA Crossover Strategy
+// Compatible with TradVue TradingView webhook integration
+//
+// SETUP:
+// 1. Open this script in TradingView's Pine Script editor
+// 2. In the strategy's "Alerts" tab, create an alert with:
+//    - Condition: "MA Crossover Strategy: Order fills only"  
+//    - Message: (leave blank — uses alert() function below)
+//    - Webhook URL: https://chartgenius.io/api/webhook/tv/YOUR_TOKEN_HERE
+// 3. Replace YOUR_TOKEN_HERE with your TradVue webhook token
+
+strategy(
+  title        = "MA Crossover — TradVue Auto-Journal",
+  overlay      = true,
+  default_qty_type  = strategy.fixed,
+  default_qty_value = 100
+)
+
+// ── Inputs ────────────────────────────────────────────────────────────────────
+fastLen   = input.int(9,  "Fast MA Length", minval=1)
+slowLen   = input.int(21, "Slow MA Length", minval=1)
+
+// ── Indicators ────────────────────────────────────────────────────────────────
+fastMA = ta.sma(close, fastLen)
+slowMA = ta.sma(close, slowLen)
+
+plot(fastMA, "Fast MA", color=color.blue)
+plot(slowMA, "Slow MA", color=color.orange)
+
+// ── Signals ───────────────────────────────────────────────────────────────────
+longCondition  = ta.crossover(fastMA, slowMA)
+shortCondition = ta.crossunder(fastMA, slowMA)
+
+// ── Webhook message format ───────────────────────────────────────────────────
+// TradingView resolves these placeholders when the alert fires:
+//   {{ticker}}                  → e.g. "AAPL"
+//   {{strategy.order.action}}   → "buy" or "sell"
+//   {{strategy.order.price}}    → fill price
+//   {{strategy.order.contracts}}→ quantity
+//   {{strategy.position_size}}  → current position
+//   {{strategy.order.id}}       → order label
+//   {{timenow}}                 → Unix timestamp
+
+webhookMsg = '{"ticker":"{{ticker}}","action":"{{strategy.order.action}}","price":{{strategy.order.price}},"qty":{{strategy.order.contracts}},"position_size":{{strategy.position_size}},"order_id":"{{strategy.order.id}}","time":"{{timenow}}","source":"tradingview"}'
+
+// ── Entry ─────────────────────────────────────────────────────────────────────
+if longCondition
+    strategy.entry("Long", strategy.long, alert_message=webhookMsg)
+
+if shortCondition
+    strategy.close("Long", alert_message=webhookMsg)
+    strategy.entry("Short", strategy.short, alert_message=webhookMsg)
+
+// ── Exit ──────────────────────────────────────────────────────────────────────
+if longCondition
+    strategy.close("Short", alert_message=webhookMsg)

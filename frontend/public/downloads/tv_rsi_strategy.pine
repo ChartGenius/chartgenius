@@ -1,0 +1,52 @@
+// @version=5
+// TradVue Auto-Journal — RSI Overbought/Oversold Strategy
+// Compatible with TradVue TradingView webhook integration
+//
+// SETUP:
+// 1. Open this script in TradingView's Pine Script editor
+// 2. Create an alert on this strategy with:
+//    - Condition: "RSI Strategy: Order fills only"
+//    - Webhook URL: https://chartgenius.io/api/webhook/tv/YOUR_TOKEN_HERE
+// 3. Replace YOUR_TOKEN_HERE with your TradVue webhook token
+
+strategy(
+  title             = "RSI Overbought/Oversold — TradVue Auto-Journal",
+  overlay           = false,
+  default_qty_type  = strategy.fixed,
+  default_qty_value = 100
+)
+
+// ── Inputs ────────────────────────────────────────────────────────────────────
+rsiLen        = input.int(14, "RSI Length", minval=2)
+oversold      = input.int(30, "Oversold Level",   minval=1,  maxval=49)
+overbought    = input.int(70, "Overbought Level",  minval=51, maxval=99)
+
+// ── Indicators ────────────────────────────────────────────────────────────────
+rsiVal = ta.rsi(close, rsiLen)
+
+plot(rsiVal,        "RSI",         color=color.purple)
+hline(overbought,   "Overbought",  color=color.red,   linestyle=hline.style_dashed)
+hline(50,           "Midline",     color=color.gray,  linestyle=hline.style_dotted)
+hline(oversold,     "Oversold",    color=color.green, linestyle=hline.style_dashed)
+
+// ── Signals ───────────────────────────────────────────────────────────────────
+longEntry  = ta.crossover(rsiVal, oversold)
+longExit   = ta.crossunder(rsiVal, 50) or ta.crossunder(rsiVal, overbought)
+shortEntry = ta.crossunder(rsiVal, overbought)
+shortExit  = ta.crossover(rsiVal, 50) or ta.crossover(rsiVal, oversold)
+
+// ── Webhook message ───────────────────────────────────────────────────────────
+webhookMsg = '{"ticker":"{{ticker}}","action":"{{strategy.order.action}}","price":{{strategy.order.price}},"qty":{{strategy.order.contracts}},"position_size":{{strategy.position_size}},"order_id":"{{strategy.order.id}}","time":"{{timenow}}","source":"tradingview"}'
+
+// ── Strategy orders ───────────────────────────────────────────────────────────
+if longEntry
+    strategy.entry("Long", strategy.long, alert_message=webhookMsg)
+
+if longExit
+    strategy.close("Long", alert_message=webhookMsg)
+
+if shortEntry
+    strategy.entry("Short", strategy.short, alert_message=webhookMsg)
+
+if shortExit
+    strategy.close("Short", alert_message=webhookMsg)

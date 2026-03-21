@@ -1,0 +1,47 @@
+// @version=5
+// TradVue Auto-Journal — Manual Signal Template
+//
+// Add this to ANY existing Pine Script strategy to fire TradVue webhooks.
+// Just copy the alertcondition/strategy.entry calls and paste into your script.
+//
+// SETUP:
+// 1. Copy the webhookMsg variable and the strategy.entry/close lines into your script
+// 2. Create an alert in TradingView:
+//    - Condition: "Order fills only" (or your signal)
+//    - Webhook URL: https://chartgenius.io/api/webhook/tv/YOUR_TOKEN_HERE
+// 3. Replace YOUR_TOKEN_HERE with your TradVue webhook token
+//
+// ── COPY THIS BLOCK INTO YOUR STRATEGY ──────────────────────────────────────
+// 
+// // TradVue webhook payload — TradingView resolves placeholders at alert time
+// webhookMsg = '{"ticker":"{{ticker}}","action":"{{strategy.order.action}}","price":{{strategy.order.price}},"qty":{{strategy.order.contracts}},"position_size":{{strategy.position_size}},"order_id":"{{strategy.order.id}}","time":"{{timenow}}","source":"tradingview"}'
+//
+// // Then add alert_message=webhookMsg to every strategy.entry/close call:
+// strategy.entry("Long",  strategy.long,  alert_message=webhookMsg)
+// strategy.entry("Short", strategy.short, alert_message=webhookMsg)
+// strategy.close("Long",  alert_message=webhookMsg)
+// strategy.close("Short", alert_message=webhookMsg)
+//
+// ────────────────────────────────────────────────────────────────────────────
+
+// Working example: manual buy/sell buttons using plotshape
+indicator("TradVue Manual Signal Template", overlay=true)
+
+// ── Inputs ────────────────────────────────────────────────────────────────────
+showLabels = input.bool(true, "Show Entry/Exit Labels")
+
+// ── Simple signal placeholders (replace with your own logic) ─────────────────
+buySignal  = ta.crossover(close,  ta.sma(close, 20))
+sellSignal = ta.crossunder(close, ta.sma(close, 20))
+
+// ── Visuals ───────────────────────────────────────────────────────────────────
+plotshape(showLabels and buySignal,  style=shape.labelup,   location=location.belowbar, color=color.green, text="B", textcolor=color.white)
+plotshape(showLabels and sellSignal, style=shape.labeldown, location=location.abovebar, color=color.red,   text="S", textcolor=color.white)
+
+// ── Webhook alert conditions ──────────────────────────────────────────────────
+// Attach these in TradingView's alert dialog with your webhook URL
+webhookBuy  = '{"ticker":"{{ticker}}","action":"buy","price":{{close}},"qty":1,"source":"tradingview","time":"{{timenow}}"}'
+webhookSell = '{"ticker":"{{ticker}}","action":"sell","price":{{close}},"qty":1,"source":"tradingview","time":"{{timenow}}"}'
+
+alertcondition(buySignal,  "TradVue Buy Signal",  webhookBuy)
+alertcondition(sellSignal, "TradVue Sell Signal", webhookSell)
