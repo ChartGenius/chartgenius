@@ -16,6 +16,16 @@ import { initPortfolioSync, debouncedSyncPortfolio } from '../utils/cloudSync'
 import { getUserTier, canAccessFeature } from '../utils/tierAccess'
 import AuthGate from '../components/AuthGate'
 import { sanitizeCSVField } from '../utils/brokerParsers'
+import {
+  getDividendLog,
+  backfillAllDividends,
+  buildDividendCellFromLog,
+  getTotalsBySymbol,
+  updateDividendEntry,
+  confirmDividendEntry,
+  deleteDividendEntry,
+  type DividendLogEntry,
+} from '../utils/dividendLogApi'
 
 const AuthModal = dynamic(() => import('../components/AuthModal'), { ssr: false })
 const UpgradePromptDynamic = dynamic(() => import('../components/UpgradePrompt'), { ssr: false })
@@ -1141,6 +1151,9 @@ export default function PortfolioPage() {
   const [holdings, setHoldings] = useState<Holding[]>([])
   const [dividendOverrides, setDividendOverrides] = useState<DividendCell>({})
   const [soldPositions, setSoldPositions] = useState<SoldPosition[]>([])
+  // Dividend log (persistent ledger — replaces ephemeral recalculation)
+  const [dividendLogEntries, setDividendLogEntries] = useState<DividendLogEntry[]>([])
+  const [dividendLogLoaded, setDividendLogLoaded] = useState(false)
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([])
   const [snapshots, setSnapshots] = useState<MonthlySnapshot[]>([])
 
@@ -1221,6 +1234,15 @@ export default function PortfolioPage() {
       apiGet<{ overrides: DividendCell }>('/api/portfolio/dividends'),
       apiGet<{ settings: PortfolioSettings }>('/api/portfolio/settings'),
     ])
+    // Load dividend log (non-blocking — don't fail if table doesn't exist yet)
+    try {
+      const logEntries = await getDividendLog()
+      setDividendLogEntries(logEntries)
+      setDividendLogLoaded(true)
+    } catch (err) {
+      console.warn('[Portfolio] Dividend log not available yet:', err)
+      setDividendLogLoaded(false)
+    }
 
     if (holdingsRes?.holdings) {
       setHoldings(holdingsRes.holdings.map((h) => ({
@@ -1315,6 +1337,7 @@ export default function PortfolioPage() {
       annual_dividend: h.annualDividend || 0,
       div_override_annual: h.divOverrideAnnual ?? null,
       notes: h.notes ?? null,
+      drip_enabled: h.dripEnabled ?? false,
     })
   }, [isLoggedIn, holdings])
 
@@ -1495,11 +1518,20 @@ export default function PortfolioPage() {
 
   // ─── Dividend calculations ────────────────────────────────────────────────
 
-  const autoCalculatedDividends = useMemo<DividendCell>(() => {
+  // Live recalculated dividends (fallback when log is empty or not loaded)
+  // ⚠ IMPORTANT: This is a rough ESTIMATE using current share count.
+  // Historical accuracy requires the dividend log (DB-backed, immutable records).
+  // If the holding has sell transactions, we skip recalculation to avoid
+  // retroactively adjusting past dividend amounts — which corrupts P&L and tax data.
+  const liveCalculatedDividends = useMemo<DividendCell>(() => {
     const result: DividendCell = {}
     holdings.forEach(h => {
       const info = stockInfos[h.ticker]
       if (!info?.dividendHistory?.length) return
+      // If this holding has sell transactions, we cannot reliably recalculate
+      // historical dividends from the current share count. Skip to avoid corruption.
+      const hasSells = h.transactions?.some(t => t.type === 'sell')
+      if (hasSells) return
       const buyDate = h.buyDate ? new Date(h.buyDate) : null
       info.dividendHistory.forEach(div => {
         const divDate = new Date(div.date)
@@ -1508,11 +1540,33 @@ export default function PortfolioPage() {
         const mi = divDate.getMonth()
         if (!YEARS.includes(yr)) return
         const key = `${yr}-${mi}-${h.ticker}`
+        // Use current shares as proxy for historical shares (estimate only).
+        // Dividend log entries use the actual shares_held at payment time.
         result[key] = parseFloat(((result[key] || 0) + div.amount * h.shares).toFixed(4))
       })
     })
     return result
   }, [holdings, stockInfos])
+
+  // Dividend log cell map (persistent — from database, survives sells/page refreshes)
+  const dividendLogCell = useMemo<DividendCell>(() => {
+    if (!dividendLogLoaded || dividendLogEntries.length === 0) return {}
+    return buildDividendCellFromLog(dividendLogEntries)
+  }, [dividendLogEntries, dividendLogLoaded])
+
+  // Primary source: log data when available, live recalculation as fallback
+  const autoCalculatedDividends = useMemo<DividendCell>(() => {
+    if (dividendLogLoaded && Object.keys(dividendLogCell).length > 0) {
+      return dividendLogCell
+    }
+    return liveCalculatedDividends
+  }, [dividendLogLoaded, dividendLogCell, liveCalculatedDividends])
+
+  // Total dividends per symbol (for enriched holdings — uses log when available)
+  const logTotalsBySymbol = useMemo<Record<string, number>>(() => {
+    if (!dividendLogLoaded || dividendLogEntries.length === 0) return {}
+    return getTotalsBySymbol(dividendLogEntries)
+  }, [dividendLogEntries, dividendLogLoaded])
 
   const effectiveDividendData = useMemo<DividendCell>(() => {
     const result = { ...autoCalculatedDividends }
@@ -1521,13 +1575,26 @@ export default function PortfolioPage() {
   }, [autoCalculatedDividends, dividendOverrides])
 
   const getAutoTotalDividends = useCallback((h: Holding): number => {
+    // RULE: Dividend log = historical facts. Immutable. Never recalculated.
+    // The dividend log (DB-backed) stores the actual total_received at payment time.
+    // Fallback to live recalculation ONLY when log is unavailable AND no sells have occurred.
+    if (dividendLogLoaded && logTotalsBySymbol[h.ticker] != null) {
+      // ✓ Using immutable dividend log — safe even after partial sells
+      return logTotalsBySymbol[h.ticker]
+    }
     const info = stockInfos[h.ticker]
     if (!info?.dividendHistory?.length) return h.totalDividendsReceived || 0
+    // If the holding has sell transactions, we must NOT recalculate using current shares
+    // because that would retroactively reduce historical dividend amounts (the core bug).
+    // Use the stored totalDividendsReceived as the best available frozen value.
+    const hasSells = h.transactions?.some(t => t.type === 'sell')
+    if (hasSells) return h.totalDividendsReceived || 0
+    // No sells: estimate from dividend history using current (= original) share count
     const buyDate = h.buyDate ? new Date(h.buyDate) : null
     return info.dividendHistory
       .filter(div => !buyDate || new Date(div.date) > buyDate)
       .reduce((sum, div) => sum + div.amount * h.shares, 0)
-  }, [stockInfos])
+  }, [stockInfos, dividendLogLoaded, logTotalsBySymbol])
 
   // Effective annual dividend per share (user override wins over API)
   const getEffectiveAnnualDiv = useCallback((h: Holding): number => {
@@ -1757,6 +1824,9 @@ export default function PortfolioPage() {
             updateHoldingDivOverride={(ticker, val) => {
               setHoldings(prev => prev.map(h => h.ticker === ticker ? { ...h, divOverrideAnnual: val } : h))
             }}
+            dividendLogEntries={dividendLogEntries}
+            dividendLogLoaded={dividendLogLoaded}
+            onDividendLogUpdate={setDividendLogEntries}
             isDemo={isDemo} onDemoAction={() => setAuthModalOpen(true)}
           />
         )}
@@ -1776,6 +1846,7 @@ export default function PortfolioPage() {
             holdings={holdings}
             holdingsEnriched={holdingsEnriched}
             stockInfos={stockInfos}
+            logTotalsBySymbol={logTotalsBySymbol}
             onSellRecorded={async (ticker, sharesSold, salePrice, saleDate) => {
               // Find the holding and reduce shares (or remove if fully sold)
               const existing = holdings.find(h => h.ticker === ticker)
@@ -2414,7 +2485,17 @@ function HoldingsTab({
                         <button onClick={isDemo ? onDemoAction : () => onSellPosition(h)} style={{ fontSize: 9.5, color: 'var(--yellow)', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>Sell</button>
                         <button onClick={isDemo ? onDemoAction : () => onSetAlert(h.ticker, h.currentPrice)} style={{ fontSize: 9.5, color: '#f59e0b', cursor: 'pointer', padding: '2px 5px', border: '1px solid var(--border)', borderRadius: 3 }}>🔔 Alert</button>
                         <button
-                          onClick={isDemo ? onDemoAction : () => toggleDRIP(h.ticker, !portfolioSettings.dripEnabled[h.ticker])}
+                          onClick={isDemo ? onDemoAction : async () => {
+                            const newVal = !portfolioSettings.dripEnabled[h.ticker]
+                            await toggleDRIP(h.ticker, newVal)
+                            // Also persist drip_enabled on the holding record itself
+                            const baseHolding = holdings.find(x => x.ticker === h.ticker)
+                            if (baseHolding) {
+                              const updated = { ...baseHolding, dripEnabled: newVal }
+                              setHoldings(prev => prev.map(x => x.ticker === h.ticker ? updated : x))
+                              await persistHolding(updated)
+                            }
+                          }}
                           title={portfolioSettings.dripEnabled[h.ticker] ? 'DRIP enabled — click to disable' : 'Enable DRIP'}
                           style={{ fontSize: 9.5, color: portfolioSettings.dripEnabled[h.ticker] ? 'var(--green)' : 'var(--text-3)', cursor: 'pointer', padding: '2px 5px', border: `1px solid ${portfolioSettings.dripEnabled[h.ticker] ? 'var(--green)' : 'var(--border)'}`, borderRadius: 3 }}
                         >DRIP</button>
@@ -2601,9 +2682,49 @@ function HoldingsTab({
 
 // ─── Tab 3: Dividends ─────────────────────────────────────────────────────────
 
+function BackfillAllButton({ onDividendLogUpdate, existingEntries }: {
+  onDividendLogUpdate?: (entries: DividendLogEntry[]) => void
+  existingEntries?: DividendLogEntry[]
+}) {
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const handleBackfill = async () => {
+    setLoading(true)
+    setDone(false)
+    try {
+      await backfillAllDividends()
+      // Re-fetch the full log after backfill
+      const refreshed = await getDividendLog()
+      onDividendLogUpdate?.(refreshed)
+      setDone(true)
+      setTimeout(() => setDone(false), 3000)
+    } catch (err) {
+      console.error('[BackfillAll] Failed:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleBackfill}
+      disabled={loading}
+      style={{
+        fontSize: 10, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+        padding: '4px 10px', borderRadius: 4, border: '1px solid currentColor',
+        background: 'transparent', color: 'inherit', whiteSpace: 'nowrap', opacity: loading ? 0.6 : 1,
+      }}
+    >
+      {loading ? 'Backfilling…' : done ? '✓ Done' : 'Backfill All'}
+    </button>
+  )
+}
+
 function DividendsTab({
   holdings, effectiveDividendData, autoCalculatedDividends, dividendOverrides,
   setDividendOverrides, stockInfos, persistDivOverride, updateHoldingDivOverride,
+  dividendLogEntries = [], dividendLogLoaded = false, onDividendLogUpdate,
   isDemo = false, onDemoAction,
 }: {
   holdings: Holding[]
@@ -2614,6 +2735,9 @@ function DividendsTab({
   stockInfos: Record<string, StockInfo>
   persistDivOverride: (key: string, amount: number | null) => Promise<void>
   updateHoldingDivOverride: (ticker: string, val: number | undefined) => void
+  dividendLogEntries?: DividendLogEntry[]
+  dividendLogLoaded?: boolean
+  onDividendLogUpdate?: (entries: DividendLogEntry[]) => void
   isDemo?: boolean
   onDemoAction?: () => void
 }) {
@@ -2624,22 +2748,85 @@ function DividendsTab({
   const [editingDivOverride, setEditingDivOverride] = useState<string | null>(null) // ticker
   const [divOverrideVal, setDivOverrideVal] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  // Log entry editing
+  const [editingLogEntry, setEditingLogEntry] = useState<DividendLogEntry | null>(null)
+  const [logEditShares, setLogEditShares] = useState('')
+  const [logEditSaving, setLogEditSaving] = useState(false)
 
   useEffect(() => { if (editingKey && inputRef.current) inputRef.current.focus() }, [editingKey])
+
+  // Map log entries by key for quick lookup
+  const logEntriesByKey = useMemo(() => {
+    const map: Record<string, DividendLogEntry[]> = {}
+    for (const entry of dividendLogEntries) {
+      const date = new Date(entry.payment_date)
+      const yr = date.getFullYear()
+      const mi = date.getMonth()
+      const key = `${yr}-${mi}-${entry.symbol}`
+      if (!map[key]) map[key] = []
+      map[key].push(entry)
+    }
+    return map
+  }, [dividendLogEntries])
+
+  const unconfirmedCount = dividendLogEntries.filter(e => !e.is_confirmed).length
 
   const startEdit = (key: string) => { setEditingKey(key); setEditVal(String(effectiveDividendData[key] || '')) }
 
   const commitEdit = async (key: string) => {
     const val = parseFloat(editVal)
     const amount = isNaN(val) ? 0 : val
-    setDividendOverrides(prev => ({ ...prev, [key]: amount }))
-    await persistDivOverride(key, amount)
+    // If we have a log entry for this cell, update it in the log
+    const logEntries = logEntriesByKey[key]
+    if (dividendLogLoaded && logEntries?.length) {
+      try {
+        const entry = logEntries[0]
+        // Update total_received in the log (manual edit)
+        const updated = await updateDividendEntry(entry.id, { total_received: amount })
+        onDividendLogUpdate?.(dividendLogEntries.map(e => e.id === updated.id ? updated : e))
+      } catch (err) {
+        console.error('[DividendsTab] Failed to update log entry:', err)
+      }
+    } else {
+      // Fallback to override system
+      setDividendOverrides(prev => ({ ...prev, [key]: amount }))
+      await persistDivOverride(key, amount)
+    }
     setEditingKey(null)
   }
 
   const clearOverride = async (key: string) => {
     setDividendOverrides(prev => { const next = { ...prev }; delete next[key]; return next })
     await persistDivOverride(key, null)
+  }
+
+  const handleConfirmEntry = async (entryId: number) => {
+    try {
+      const updated = await confirmDividendEntry(entryId)
+      onDividendLogUpdate?.(dividendLogEntries.map(e => e.id === updated.id ? updated : e))
+    } catch (err) {
+      console.error('[DividendsTab] Failed to confirm entry:', err)
+    }
+  }
+
+  const handleSaveLogEdit = async () => {
+    if (!editingLogEntry) return
+    setLogEditSaving(true)
+    try {
+      const newShares = parseFloat(logEditShares)
+      if (isNaN(newShares) || newShares <= 0) throw new Error('Invalid share count')
+      const newTotal = parseFloat((editingLogEntry.dividend_per_share * newShares).toFixed(4))
+      const updated = await updateDividendEntry(editingLogEntry.id, {
+        shares_held: newShares,
+        total_received: newTotal,
+      })
+      onDividendLogUpdate?.(dividendLogEntries.map(e => e.id === updated.id ? updated : e))
+      setEditingLogEntry(null)
+    } catch (err) {
+      console.error('[DividendsTab] Failed to save log edit:', err)
+    } finally {
+      setLogEditSaving(false)
+    }
   }
 
   if (holdings.length === 0) {
@@ -2695,9 +2882,80 @@ function DividendsTab({
 
   return (
     <div>
+      {/* Dividend log edit modal */}
+      {editingLogEntry && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 24, maxWidth: 420, width: '100%' }}>
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16, color: 'var(--text-1)' }}>
+              Edit Dividend Entry — {editingLogEntry.symbol}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 16 }}>
+              Payment date: {editingLogEntry.payment_date} · ${editingLogEntry.dividend_per_share}/share
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 11, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>Shares held at time of payment</label>
+              <input
+                autoFocus
+                type="number"
+                value={logEditShares}
+                onChange={e => setLogEditShares(e.target.value)}
+                placeholder={String(editingLogEntry.shares_held)}
+                style={{ width: '100%', background: 'var(--bg-3)', border: '1px solid var(--accent)', borderRadius: 4, color: 'var(--text-0)', padding: '6px 10px', fontSize: 13, fontFamily: 'var(--mono)' }}
+              />
+            </div>
+            {logEditShares && !isNaN(parseFloat(logEditShares)) && (
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 12 }}>
+                New total: <strong style={{ color: 'var(--green)' }}>${(editingLogEntry.dividend_per_share * parseFloat(logEditShares)).toFixed(4)}</strong>
+              </div>
+            )}
+            <div style={{ fontSize: 10, color: 'var(--yellow)', marginBottom: 16 }}>
+              ⚠ This will mark the entry as manually verified and lock it from auto-recalculation.
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditingLogEntry(null)} style={{ fontSize: 11, color: 'var(--text-2)', padding: '6px 12px', border: '1px solid var(--border)', borderRadius: 4, background: 'transparent', cursor: 'pointer' }}>Cancel</button>
+              <button
+                onClick={handleSaveLogEdit}
+                disabled={logEditSaving}
+                style={{ fontSize: 11, color: 'var(--bg-1)', background: 'var(--green)', padding: '6px 14px', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}
+              >
+                {logEditSaving ? 'Saving…' : 'Save & Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unconfirmed entries banner */}
+      {dividendLogLoaded && unconfirmedCount > 0 && (
+        <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 6, padding: '10px 14px', marginBottom: 14, fontSize: 11, color: 'var(--yellow)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 16 }}>⚡</span>
+          <span>
+            <strong>{unconfirmedCount} dividend entries</strong> estimated from your buy date and share count.
+            {' '}If your share count changed over time, click any cell to correct it.
+          </span>
+        </div>
+      )}
+
+      {/* Persistent log status banner */}
+      {dividendLogLoaded && dividendLogEntries.length > 0 ? (
+        <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 6, padding: '10px 14px', marginBottom: 12, fontSize: 11, color: 'var(--green)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <span>
+            📊 <strong>Dividend Ledger (Permanent Record)</strong> — {dividendLogEntries.length} historical entries · {dividendLogEntries.filter(e => e.is_confirmed).length} confirmed · {unconfirmedCount} estimated.
+            {' '}<span style={{ color: 'var(--text-3)', fontSize: 10 }}>Historical entries are immutable — selling shares never changes past dividend records.</span>
+          </span>
+        </div>
+      ) : (
+        <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 6, padding: '10px 14px', marginBottom: 12, fontSize: 11, color: 'var(--yellow)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span>⚠️ <strong>No dividend ledger yet</strong> — amounts shown are estimates based on current holdings. Use "Backfill All" or add dividends manually to create a permanent, accurate ledger.</span>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>Dividend Tracker</span>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-1)' }}>Dividend History </span>
+            <span style={{ fontSize: 10, color: 'var(--text-3)', fontStyle: 'italic' }}>— actual amounts received (immutable ledger)</span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--text-3)' }}>YEAR</label>
             <select
@@ -2744,8 +3002,16 @@ function DividendsTab({
                 )}
               </div>
               {h.buyDate && <div style={{ fontSize: 9.5, color: 'var(--text-3)', marginBottom: 4 }}>Since {h.buyDate}</div>}
-              <div style={{ fontSize: 10, color: 'var(--text-2)' }}>Proj/yr: <span style={{ color: hasOverride ? 'var(--yellow)' : 'var(--green)', fontFamily: 'var(--mono)' }}>{fmtDollar(projected)}</span></div>
-              <div style={{ fontSize: 10, color: 'var(--text-2)' }}>Auto-calc: <span style={{ color: 'var(--green)', fontFamily: 'var(--mono)' }}>{fmtDollar(autoTotal)}</span></div>
+              <div style={{ fontSize: 10, color: 'var(--text-2)' }}>
+                <span style={{ color: 'var(--text-3)', fontSize: 9, fontStyle: 'italic' }}>PROJECTED </span>
+                <span title="Estimate based on current share count and current dividend rate. Updates when you buy/sell." style={{ cursor: 'help' }}>ℹ</span>
+                {' '}<span style={{ color: hasOverride ? 'var(--yellow)' : 'var(--accent)', fontFamily: 'var(--mono)' }}>{fmtDollar(projected)}/yr</span>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-2)' }}>
+                <span style={{ color: 'var(--text-3)', fontSize: 9, fontStyle: 'italic' }}>RECEIVED </span>
+                <span title="Actual dividends received — from the permanent dividend ledger. Never recalculated when shares change." style={{ cursor: 'help' }}>ℹ</span>
+                {' '}<span style={{ color: 'var(--green)', fontFamily: 'var(--mono)' }}>{fmtDollar(autoTotal)}</span>
+              </div>
               {info?.dividendHistory?.length > 0 && <div style={{ fontSize: 9.5, color: 'var(--text-3)', marginTop: 2 }}>{info.dividendHistory.length} hist. payments</div>}
 
               {/* Annual rate override per holding */}
@@ -2789,16 +3055,20 @@ function DividendsTab({
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 16, fontSize: 10, color: 'var(--text-3)', marginBottom: 12 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 10, color: 'var(--text-3)', marginBottom: 12 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ width: 8, height: 8, background: 'var(--green)', borderRadius: 2, display: 'inline-block' }} />
-          Auto-calculated from dividend history
+          ✓ Confirmed in ledger
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ width: 8, height: 8, background: 'rgba(52,211,153,0.5)', borderRadius: 2, display: 'inline-block' }} />
+          ⚡ Estimated (click to verify)
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <span style={{ width: 8, height: 8, background: 'var(--yellow)', borderRadius: 2, display: 'inline-block' }} />
-          Manually overridden
+          * Manually overridden
         </span>
-        <span style={{ color: 'var(--text-3)' }}>Click cell to edit · Double-click override to clear</span>
+        <span style={{ color: 'var(--text-3)' }}>Click cell to edit shares · Double-click * to clear override</span>
       </div>
 
       {/* Grid */}
@@ -2833,8 +3103,24 @@ function DividendsTab({
                           const val = effectiveDividendData[key] || 0
                           const isAuto = !!autoCalculatedDividends[key] && !dividendOverrides[key]
                           const isOverride = !!dividendOverrides[key]
+                          const logEntries = logEntriesByKey[key] || []
+                          const isFromLog = dividendLogLoaded && logEntries.length > 0
+                          const isConfirmed = isFromLog && logEntries.every(e => e.is_confirmed)
+                          const isUnconfirmed = isFromLog && logEntries.some(e => !e.is_confirmed)
                           return (
-                            <td key={tk} style={tdStyle} onClick={() => isDemo ? onDemoAction?.() : startEdit(key)} onDoubleClick={() => !isDemo && isOverride && clearOverride(key)}>
+                            <td key={tk} style={tdStyle}
+                              onClick={() => {
+                                if (isDemo) { onDemoAction?.(); return }
+                                if (isFromLog && logEntries.length > 0) {
+                                  // Open log entry editor
+                                  setEditingLogEntry(logEntries[0])
+                                  setLogEditShares(String(logEntries[0].shares_held))
+                                } else {
+                                  startEdit(key)
+                                }
+                              }}
+                              onDoubleClick={() => !isDemo && isOverride && clearOverride(key)}
+                            >
                               {editingKey === key ? (
                                 <input
                                   ref={inputRef}
@@ -2846,9 +3132,14 @@ function DividendsTab({
                                   style={{ width: 70, background: 'var(--bg-3)', border: '1px solid var(--accent)', borderRadius: 3, color: 'var(--text-0)', padding: '2px 4px', fontSize: 11, fontFamily: 'var(--mono)', textAlign: 'right' }}
                                 />
                               ) : (
-                                <span style={{ color: isOverride ? 'var(--yellow)' : isAuto ? 'var(--green)' : 'var(--text-3)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
+                                <span style={{
+                                  color: isOverride ? 'var(--yellow)' : isConfirmed ? 'var(--green)' : isUnconfirmed ? 'rgba(52,211,153,0.6)' : isAuto ? 'var(--green)' : 'var(--text-3)',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3
+                                }}>
                                   {val > 0 ? `$${fmt(val)}` : '—'}
                                   {isOverride && <span style={{ fontSize: 8, opacity: 0.7 }}>*</span>}
+                                  {isConfirmed && <span style={{ fontSize: 8, opacity: 0.8 }}>✓</span>}
+                                  {isUnconfirmed && <span style={{ fontSize: 8, opacity: 0.7 }}>⚡</span>}
                                 </span>
                               )}
                             </td>
@@ -2878,6 +3169,7 @@ function DividendsTab({
 function SoldTab({
   soldPositions, setSoldPositions, autoFillFrom, onAutoFillConsumed, persistSold, deleteSoldAPI,
   holdings = [], holdingsEnriched = [], stockInfos = {},
+  logTotalsBySymbol = {},
   onSellRecorded,
   isDemo = false, onDemoAction,
 }: {
@@ -2890,13 +3182,14 @@ function SoldTab({
   holdings?: Holding[]
   holdingsEnriched?: HoldingEnriched[]
   stockInfos?: Record<string, StockInfo>
+  logTotalsBySymbol?: Record<string, number>
   onSellRecorded?: (ticker: string, sharesSold: number, salePrice: number, saleDate: string) => Promise<void>
   isDemo?: boolean
   onDemoAction?: () => void
 }) {
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const blank = { ticker: '', company: '', sector: 'Other', buyDate: '', dateSold: new Date().toISOString().slice(0, 10), shares: '', avgCost: '', salePrice: '', totalDividendsWhileHeld: '', notes: '', isPartial: false }
+  const blank = { ticker: '', company: '', sector: 'Other', buyDate: '', dateSold: new Date().toISOString().slice(0, 10), shares: '', avgCost: '', salePrice: '', totalDividendsWhileHeld: '', notes: '', isPartial: false, _totalShares: '', _totalDivs: '' }
   const [form, setForm] = useState(blank)
   const [formError, setFormError] = useState('')
   const [selectedHoldingId, setSelectedHoldingId] = useState<string>('')
@@ -2908,7 +3201,11 @@ function SoldTab({
     if (!h) return
     const info = stockInfos?.[h.ticker]
     const currentPrice = (h as HoldingEnriched).currentPrice || info?.currentPrice || h.avgCost
-    const totalDivs = (h as HoldingEnriched).totalDividendsReceived ?? h.totalDividendsReceived ?? 0
+    // Use immutable log totals (historical facts). Never recalculate from current shares.
+    const liveDivs = (h as HoldingEnriched).totalDividendsReceived ?? h.totalDividendsReceived ?? 0
+    const totalDivs = logTotalsBySymbol[h.ticker] ?? liveDivs
+    // Note: form.shares starts as h.shares (all shares). If user enters a partial sell amount,
+    // the shares onChange handler will recalculate totalDividendsWhileHeld proportionally.
     setForm(f => ({
       ...f,
       ticker: h.ticker,
@@ -2919,6 +3216,9 @@ function SoldTab({
       avgCost: String(h.avgCost),
       salePrice: String(currentPrice ? parseFloat(currentPrice.toFixed(2)) : h.avgCost),
       totalDividendsWhileHeld: String(Math.round(totalDivs * 100) / 100),
+      // Store the total shares and total dividends for proportional recalc on partial sells
+      _totalShares: String(h.shares),
+      _totalDivs: String(Math.round(totalDivs * 100) / 100),
     }))
   }
 
@@ -2926,6 +3226,7 @@ function SoldTab({
   useEffect(() => {
     if (autoFillFrom) {
       const h = autoFillFrom.holding
+      const totalDivs = Math.round((logTotalsBySymbol[h.ticker] ?? h.totalDividendsReceived) * 100) / 100
       setForm({
         ticker: h.ticker,
         company: h.company,
@@ -2935,16 +3236,18 @@ function SoldTab({
         shares: String(h.shares),
         avgCost: String(h.avgCost),
         salePrice: String(h.currentPrice || h.avgCost),
-        totalDividendsWhileHeld: String(Math.round(h.totalDividendsReceived * 100) / 100),
+        totalDividendsWhileHeld: String(totalDivs),
         notes: '',
         isPartial: false,
+        _totalShares: String(h.shares),
+        _totalDivs: String(totalDivs),
       })
       setEditId(null)
       setFormError('')
       setShowModal(true)
       onAutoFillConsumed()
     }
-  }, [autoFillFrom, onAutoFillConsumed])
+  }, [autoFillFrom, onAutoFillConsumed, logTotalsBySymbol])
 
   const openAdd = () => { setForm(blank); setEditId(null); setFormError(''); setSelectedHoldingId(''); setShowModal(true) }
   const openEdit = (s: SoldPosition) => {
@@ -2953,6 +3256,9 @@ function SoldTab({
       buyDate: s.buyDate || '', dateSold: s.dateSold,
       shares: String(s.shares), avgCost: String(s.avgCost), salePrice: String(s.salePrice),
       totalDividendsWhileHeld: String(s.totalDividendsWhileHeld), notes: s.notes || '', isPartial: false,
+      // When editing an existing sold position, the stored values are already final
+      _totalShares: String(s.shares),
+      _totalDivs: String(s.totalDividendsWhileHeld),
     })
     setEditId(s.id)
     setFormError('')
@@ -3182,7 +3488,23 @@ function SoldTab({
               </div>
               <div>
                 <label style={labelStyle}>Shares *</label>
-                <input style={inputStyle} type="number" value={form.shares} onChange={e => setForm(f => ({ ...f, shares: e.target.value }))} />
+                <input style={inputStyle} type="number" value={form.shares} onChange={e => {
+                  const newShares = e.target.value
+                  setForm(f => {
+                    // For partial sells: auto-proportionate totalDividendsWhileHeld
+                    // Rule: sell 50 of 100 shares → sold record gets 50% of historical dividends
+                    // The dividend LOG entries themselves never change.
+                    const totalShares = parseFloat(f._totalShares || '0')
+                    const totalDivs = parseFloat(f._totalDivs || '0')
+                    const sharesBeingSold = parseFloat(newShares || '0')
+                    let proportionalDivs = f.totalDividendsWhileHeld
+                    if (totalShares > 0 && totalDivs > 0 && sharesBeingSold > 0 && sharesBeingSold <= totalShares) {
+                      const proportion = sharesBeingSold / totalShares
+                      proportionalDivs = String(Math.round(totalDivs * proportion * 100) / 100)
+                    }
+                    return { ...f, shares: newShares, totalDividendsWhileHeld: proportionalDivs }
+                  })
+                }} />
               </div>
               <div>
                 <label style={labelStyle}>Avg Cost *</label>
