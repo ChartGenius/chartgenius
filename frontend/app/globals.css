@@ -697,7 +697,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   letter-spacing: 0.06em;
 }
@@ -739,7 +739,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .login-btn:hover { color: var(--text-0); border-color: var(--text-2); }
 
 .pro-btn {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--bg-0);
@@ -846,7 +846,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--text-1);
@@ -862,7 +862,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .feed-count {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   margin-left: auto;
 }
@@ -899,14 +899,14 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 .news-time {
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   white-space: nowrap;
   text-align: right;
 }
 
 .news-source {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--blue);
   white-space: nowrap;
@@ -917,7 +917,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .news-title {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-0);
   white-space: nowrap;
   overflow: hidden;
@@ -1033,7 +1033,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 
 .cal-title {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-0);
   white-space: nowrap;
   overflow: hidden;
@@ -1127,7 +1127,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 
 .watchlist-add-btn {
   display: inline-block;
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   padding: 2px 8px;
   margin: 2px 4px;
@@ -1259,7 +1259,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
   gap: 8px;
   padding: 9px 14px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   font-weight: 500;
   color: var(--text-1);
   text-decoration: none;
@@ -1534,7 +1534,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   padding: 8px 16px;
   background: var(--bg-1);
   border-top: 1px solid var(--border);
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   gap: 16px;
   flex-wrap: wrap;
@@ -1905,7 +1905,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
   gap: 4px;
   font-family: var(--mono);
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--blue);
   background: var(--blue-dim);
@@ -2194,7 +2194,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     white-space: normal;        /* allow wrapping */
     overflow: visible;
     text-overflow: unset;
-    font-size: 12.5px;
+    font-size: var(--fs-md);
     line-height: 1.4;
   }
 
@@ -2253,8 +2253,8 @@ html, body { overflow-x: hidden; max-width: 100vw; }
     line-height: 1.35;
   }
 
-  .cal-time  { font-size: 10.5px; }
-  .cal-currency { font-size: 10.5px; }
+  .cal-time  { font-size: var(--fs-sm); }
+  .cal-currency { font-size: var(--fs-sm); }
 
   /* ── Footer ────────────────────────────────────────────────────────────── */
   .site-footer {
@@ -2618,7 +2618,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   /* Ticker bar smaller text */
   .ticker-item {
     padding: 0 10px;
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
   }
 
   /* Search dropdown: full-width on small phones */
@@ -2639,12 +2639,12 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 
   .ticker-item {
     padding: 0 10px;
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
   }
 
   .cat-tab {
     padding: 0 8px;
-    font-size: 10.5px;
+    font-size: var(--fs-sm);
   }
 
   .news-title {
@@ -2723,7 +2723,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   align-items: center;
   gap: 6px;
   padding: 4px 14px;
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--blue);
   border-bottom: 1px solid var(--border);
   background: rgba(74, 158, 255, 0.05);
@@ -2799,7 +2799,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 }
 
 .auth-modal-subtitle {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
   line-height: 1.4;
 }
@@ -3202,7 +3202,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 }
 
 .settings-user-email {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-0);
   font-weight: 500;
   overflow: hidden;
@@ -3211,7 +3211,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
 }
 
 .settings-user-tier {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 
@@ -3237,7 +3237,7 @@ html, body { overflow-x: hidden; max-width: 100vw; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   border-top: 1px solid var(--border);
 }
@@ -3556,7 +3556,7 @@ html.theme-light ::-webkit-scrollbar-thumb {
 }
 
 .alert-prefs-label {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
   min-width: 60px;
   font-weight: 600;
@@ -3705,7 +3705,7 @@ html.theme-light ::-webkit-scrollbar-thumb {
 }
 
 .alert-row-title {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   font-weight: 500;
   color: var(--text-0);
   line-height: 1.4;
@@ -4059,7 +4059,7 @@ a.alert-row-title:hover {
 }
 
 .checklist-item-desc {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
   line-height: 1.3;
 }
@@ -4086,7 +4086,7 @@ a.alert-row-title:hover {
 }
 
 .checklist-encouragement {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
   flex: 1;
 }
@@ -4099,7 +4099,7 @@ a.alert-row-title:hover {
 }
 
 .checklist-dismiss {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   cursor: pointer;
   padding: 3px 8px;
@@ -4307,7 +4307,7 @@ a.alert-row-title:hover {
 }
 
 .ob-tooltip-dismiss {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   color: var(--accent);
   cursor: pointer;
   background: none;
@@ -4430,7 +4430,7 @@ a.alert-row-title:hover {
   border: 1px solid var(--border);
   background: var(--bg-3);
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-0);
   /* Slide-in from right */
   transform: translateX(calc(100% + 24px));
@@ -4882,7 +4882,7 @@ a.alert-row-title:hover {
 }
 
 .ecal-title {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--text-1);
@@ -5023,7 +5023,7 @@ a.alert-row-title:hover {
 }
 
 .company-name { font-size: 13px; font-weight: 600; color: var(--text-0); }
-.company-industry { font-size: 10.5px; color: var(--text-2); }
+.company-industry { font-size: var(--fs-sm); color: var(--text-2); }
 
 .company-description {
   font-size: 11.5px;
@@ -5089,7 +5089,7 @@ a.alert-row-title:hover {
 .news-filter-tabs::-webkit-scrollbar { display: none; }
 
 .news-filter-tab {
-  font-size: 10.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 3px;

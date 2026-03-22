@@ -450,8 +450,7 @@ export default function HomeClient() {
     if (view === 'market-intel') {
       setActiveNav('Market Intel')
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [searchParams, user])
 
   // ── Clock ────────────────────────────────────────────────────────────────────
   useEffect(() => {
