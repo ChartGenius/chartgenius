@@ -81,6 +81,24 @@ function IconTrash({ size = 14 }: { size?: number }) {
   )
 }
 
+function IconChevron({ open, size = 16 }: { open: boolean; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
 // ── Copyable URL box ──────────────────────────────────────────────────────────
 
 function CopyBox({ value, compact }: { value: string; compact?: boolean }) {
@@ -91,7 +109,6 @@ function CopyBox({ value, compact }: { value: string; compact?: boolean }) {
       setTimeout(() => setCopied(false), 2000)
     })
   }
-
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
       <div style={{
@@ -137,7 +154,7 @@ function CopyBox({ value, compact }: { value: string; compact?: boolean }) {
 
 // ── Copyable Code block ───────────────────────────────────────────────────────
 
-function CopyCode({ code }: { code: string }) {
+function CopyCode({ code, label }: { code: string; label?: string }) {
   const [copied, setCopied] = useState(false)
   const copy = () => {
     navigator.clipboard.writeText(code).then(() => {
@@ -145,9 +162,20 @@ function CopyCode({ code }: { code: string }) {
       setTimeout(() => setCopied(false), 2000)
     })
   }
-
   return (
     <div style={{ position: 'relative' }}>
+      {label && (
+        <div style={{
+          fontSize: 10,
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          color: 'var(--text-3, #6b7280)',
+          marginBottom: 6,
+        }}>
+          {label}
+        </div>
+      )}
       <pre style={{
         background: 'var(--bg-0, #0d0d14)',
         border: '1px solid var(--border, rgba(255,255,255,0.1))',
@@ -166,7 +194,7 @@ function CopyCode({ code }: { code: string }) {
         onClick={copy}
         style={{
           position: 'absolute',
-          top: 8,
+          top: label ? 'calc(1.5rem + 8px)' : 8,
           right: 8,
           display: 'flex',
           alignItems: 'center',
@@ -189,46 +217,78 @@ function CopyCode({ code }: { code: string }) {
   )
 }
 
-// ── Step Card ─────────────────────────────────────────────────────────────────
+// ── Expandable Step Card ───────────────────────────────────────────────────────
+// Steps expand/collapse independently — opening one never closes another.
 
 function StepCard({
   number,
   title,
+  defaultOpen = true,
   children,
 }: {
   number: number
   title: string
+  defaultOpen?: boolean
   children: React.ReactNode
 }) {
+  const [open, setOpen] = useState(defaultOpen)
+
   return (
     <div style={{
-      display: 'flex',
-      gap: 16,
       background: 'var(--bg-1, #1a1a2e)',
-      border: '1px solid var(--border, rgba(255,255,255,0.08))',
+      border: '1px solid ' + (open ? 'rgba(74,158,255,0.25)' : 'var(--border, rgba(255,255,255,0.08))'),
       borderRadius: 12,
-      padding: 18,
+      overflow: 'hidden',
+      transition: 'border-color 0.15s',
     }}>
-      <div style={{
-        flexShrink: 0,
-        width: 32,
-        height: 32,
-        borderRadius: '50%',
-        background: 'rgba(74,158,255,0.15)',
-        border: '1px solid rgba(74,158,255,0.4)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 14,
-        fontWeight: 800,
-        color: 'var(--blue, #4a9eff)',
-      }}>
-        {number}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0, #f9fafb)', marginBottom: 8 }}>{title}</div>
-        {children}
-      </div>
+      {/* Header — always clickable to toggle */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          padding: '14px 18px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        <div style={{
+          flexShrink: 0,
+          width: 30,
+          height: 30,
+          borderRadius: '50%',
+          background: open ? 'rgba(74,158,255,0.2)' : 'rgba(255,255,255,0.05)',
+          border: '1px solid ' + (open ? 'rgba(74,158,255,0.5)' : 'rgba(255,255,255,0.12)'),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 13,
+          fontWeight: 800,
+          color: open ? 'var(--blue, #4a9eff)' : 'var(--text-2, #9ca3af)',
+          transition: 'all 0.15s',
+        }}>
+          {number}
+        </div>
+        <div style={{ flex: 1, fontSize: 14, fontWeight: 700, color: open ? 'var(--text-0, #f9fafb)' : 'var(--text-1, #e0e0e0)' }}>
+          {title}
+        </div>
+        <div style={{ color: 'var(--text-3, #6b7280)', flexShrink: 0 }}>
+          <IconChevron open={open} size={15} />
+        </div>
+      </button>
+
+      {/* Body — visible only when open */}
+      {open && (
+        <div style={{ padding: '0 18px 18px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ paddingTop: 14 }}>
+            {children}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -259,7 +319,6 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
   const [error, setError] = useState<string | null>(null)
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
-  const overlayRef = useRef<HTMLDivElement>(null)
 
   const webhookUrl = webhookToken
     ? API_BASE + '/api/webhook/tv/' + webhookToken.token
@@ -305,15 +364,13 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
     loadToken()
   }, [loadToken])
 
+  // Escape key closes — but clicking the backdrop does NOT close the dialog
+  // so users don't accidentally lose their place during setup.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) onClose()
-  }
 
   const handleDisconnect = async () => {
     if (!token || !webhookToken) return
@@ -332,7 +389,9 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
     }
   }
 
-  const messageTemplate = `{
+  // ── Templates ────────────────────────────────────────────────────────────────
+
+  const jsonTemplate = `{
   "ticker": "{{ticker}}",
   "action": "buy",
   "price": {{close}},
@@ -340,10 +399,44 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
   "strategy": "My Strategy"
 }`
 
+  // Pine Script v5 template — fires alert with proper JSON payload
+  const pineTemplate = `//@version=5
+strategy("TradVue Auto-Import", overlay=true)
+
+// ── Your strategy logic here ──────────────────────────────
+longCondition  = ta.crossover(ta.sma(close, 10), ta.sma(close, 20))
+shortCondition = ta.crossunder(ta.sma(close, 10), ta.sma(close, 20))
+
+// ── Entry orders ──────────────────────────────────────────
+if longCondition
+    strategy.entry("Long", strategy.long, qty=1,
+        alert_message='{"ticker":"' + syminfo.ticker + '","action":"buy","price":' + str.tostring(close) + ',"qty":1,"strategy":"TradVue Auto-Import"}')
+
+if shortCondition
+    strategy.entry("Short", strategy.short, qty=1,
+        alert_message='{"ticker":"' + syminfo.ticker + '","action":"sell","price":' + str.tostring(close) + ',"qty":1,"strategy":"TradVue Auto-Import"}')`
+
+  const pineAlertTemplate = `//@version=5
+indicator("TradVue Alert", overlay=true)
+
+// ── Your condition ────────────────────────────────────────
+buySignal  = ta.crossover(ta.sma(close, 10), ta.sma(close, 20))
+sellSignal = ta.crossunder(ta.sma(close, 10), ta.sma(close, 20))
+
+// ── Plot signals ──────────────────────────────────────────
+plotshape(buySignal,  style=shape.arrowup,   color=color.green, location=location.belowbar)
+plotshape(sellSignal, style=shape.arrowdown, color=color.red,   location=location.abovebar)
+
+// ── Alert conditions ──────────────────────────────────────
+// In TradingView → Create Alert → Message, use:
+// {"ticker":"{{ticker}}","action":"buy","price":{{close}},"qty":1,"strategy":"TradVue"}
+alertcondition(buySignal,  title="Buy Signal",  message='{"ticker":"{{ticker}}","action":"buy","price":{{close}},"qty":1,"strategy":"TradVue"}')
+alertcondition(sellSignal, title="Sell Signal", message='{"ticker":"{{ticker}}","action":"sell","price":{{close}},"qty":1,"strategy":"TradVue"}')`
+
   return (
     <div
-      ref={overlayRef}
-      onClick={handleOverlayClick}
+      // Backdrop — clicking does NOT close. Use the X button to dismiss.
+      // This prevents accidentally losing your place while following the setup steps.
       style={{
         position: 'fixed',
         inset: 0,
@@ -362,12 +455,12 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
         border: '1px solid rgba(255,255,255,0.12)',
         borderRadius: 20,
         width: '100%',
-        maxWidth: 680,
+        maxWidth: 700,
         boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
         overflow: 'hidden',
         flexShrink: 0,
       }}>
-        {/* Header */}
+        {/* ── Header ──────────────────────────────────────────────────────── */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -401,6 +494,7 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
           </div>
           <button
             onClick={onClose}
+            title="Close"
             style={{
               background: 'none',
               border: 'none',
@@ -417,12 +511,61 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* ── Body ────────────────────────────────────────────────────────── */}
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* Section 1: Webhook URL */}
+          {/* ── Plain-English Explanation ────────────────────────────────── */}
+          <div style={{
+            padding: '16px 18px',
+            background: 'rgba(74,158,255,0.06)',
+            border: '1px solid rgba(74,158,255,0.18)',
+            borderRadius: 12,
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0, #f9fafb)', marginBottom: 8 }}>
+              How this works
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-1, #e0e0e0)', lineHeight: 1.7 }}>
+              Every time one of your TradingView alerts fires, TradingView will automatically send the trade details
+              to TradVue — no manual entry needed. You set the alert once in TradingView, and from then on your
+              trades land in your journal the moment the alert triggers, 24/7.
+            </p>
+          </div>
+
+          {/* ── Requirements ────────────────────────────────────────────── */}
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3, #6b7280)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3, #6b7280)', marginBottom: 10 }}>
+              Before you start
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { ok: true,  label: 'TradingView account', note: 'Free or paid' },
+                { ok: false, label: 'TradingView Pro, Pro+, or Premium', note: 'Webhook URL alerts require a paid TradingView plan' },
+                { ok: true,  label: 'Active TradVue account', note: 'You\'re already logged in ✓' },
+              ].map((req, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  padding: '10px 14px',
+                  background: req.ok ? 'rgba(16,185,129,0.06)' : 'rgba(245,158,11,0.06)',
+                  border: '1px solid ' + (req.ok ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'),
+                  borderRadius: 8,
+                }}>
+                  <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{req.ok ? '✓' : '⚠️'}</span>
+                  <div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: req.ok ? 'var(--green, #10b981)' : '#f59e0b' }}>
+                      {req.label}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-3, #6b7280)', marginLeft: 8 }}>{req.note}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Webhook URL ─────────────────────────────────────────────── */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3, #6b7280)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
               <IconLink size={12} />
               Your Webhook URL
             </div>
@@ -466,7 +609,7 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
             )}
           </div>
 
-          {/* Section 2: Status */}
+          {/* ── Connection Status ────────────────────────────────────────── */}
           {!loading && (
             <div style={{
               display: 'flex',
@@ -501,84 +644,123 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
             </div>
           )}
 
-          {/* Section 3: Setup Guide */}
+          {/* ── Setup Guide: 3 independent expandable steps ─────────────── */}
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3, #6b7280)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3, #6b7280)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
-              3-Step Setup Guide
+              3-Step Setup — click any step to expand or collapse
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-              <StepCard number={1} title="Open TradingView Alerts">
+              {/* Step 1 */}
+              <StepCard number={1} title="Open TradingView and create a new alert" defaultOpen={true}>
+                <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
+                  Go to <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradingView.com</strong> and open any chart.
+                  Click the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>clock icon</strong> in the right panel —
+                  or right-click anywhere on the chart and choose{' '}
+                  <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>"Add Alert"</strong>.
+                </p>
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
-                  Open any chart on <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>TradingView.com</strong> and click the{' '}
-                  <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Alerts icon</strong> (clock icon) in the right panel,
-                  or right-click the chart and select <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>"Add Alert"</strong>.
+                  Set your condition (price cross, indicator trigger, strategy signal — anything works).
+                  Leave the alert dialog open and move to Step 2.
                 </p>
               </StepCard>
 
-              <StepCard number={2} title="Configure Your Alert">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
-                    Set your alert condition (e.g., price crosses above/below a level). Under{' '}
-                    <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>"Notifications"</strong>, check{' '}
-                    <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>"Webhook URL"</strong> and paste your unique URL:
-                  </p>
-
-                  {webhookUrl ? (
-                    <CopyBox value={webhookUrl} compact />
-                  ) : (
-                    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-3, #6b7280)', fontFamily: 'var(--mono, monospace)' }}>
-                      [Your webhook URL will appear once connected]
-                    </div>
-                  )}
-
+              {/* Step 2 */}
+              <StepCard number={2} title="Paste your webhook URL and message template" defaultOpen={true}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div>
                     <p style={{ margin: '0 0 8px', fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
-                      In the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>"Message"</strong> field, paste this template:
+                      In the alert dialog, go to <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Notifications</strong>,
+                      check <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Webhook URL</strong>, and paste your URL:
                     </p>
-                    <CopyCode code={messageTemplate} />
+                    {webhookUrl ? (
+                      <CopyBox value={webhookUrl} compact />
+                    ) : (
+                      <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--text-3, #6b7280)', fontFamily: 'var(--mono, monospace)' }}>
+                        [Your webhook URL will appear once connected above]
+                      </div>
+                    )}
                   </div>
 
-                  <div style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, fontSize: 12, color: 'var(--text-1, #e0e0e0)', lineHeight: 1.6 }}>
-                    <strong style={{ color: '#f59e0b' }}>Note:</strong> Change{' '}
-                    <code style={{ fontFamily: 'var(--mono, monospace)', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 }}>"action"</code>{' '}
-                    to <code style={{ fontFamily: 'var(--mono, monospace)', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 }}>"sell"</code>{' '}
-                    for sell alerts. Adjust{' '}
-                    <code style={{ fontFamily: 'var(--mono, monospace)', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 }}>qty</code>{' '}
-                    to your position size.
-                  </div>
+                  <div>
+                    <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
+                      In the <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Message</strong> field, paste one of these templates:
+                    </p>
 
-                  <div style={{ fontSize: 12, color: 'var(--text-3, #6b7280)', lineHeight: 1.6 }}>
-                    You can also use TradingView variables:{' '}
-                    {['{{ticker}}', '{{close}}', '{{open}}', '{{high}}', '{{low}}', '{{volume}}', '{{time}}'].map((v) => (
-                      <code key={v} style={{ fontFamily: 'var(--mono, monospace)', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, marginRight: 4, display: 'inline-block', marginBottom: 4 }}>
-                        {v}
-                      </code>
-                    ))}
+                    {/* Pine Script templates — prominent section */}
+                    <div style={{ marginBottom: 14, padding: '14px 16px', background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 10 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                        </svg>
+                        Pine Script Templates
+                      </div>
+                      <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
+                        If you&apos;re writing a Pine Script strategy or indicator, use one of these templates to fire
+                        alerts with the correct JSON payload automatically.
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <CopyCode code={pineTemplate} label="Strategy (strategy.entry with alert_message)" />
+                        <CopyCode code={pineAlertTemplate} label="Indicator (alertcondition)" />
+                      </div>
+                    </div>
+
+                    {/* Plain JSON template */}
+                    <CopyCode code={jsonTemplate} label="Alert message JSON (for non-Pine-Script alerts)" />
+
+                    <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, fontSize: 12, color: 'var(--text-1, #e0e0e0)', lineHeight: 1.6 }}>
+                      <strong style={{ color: '#f59e0b' }}>Tip:</strong> Change{' '}
+                      <code style={{ fontFamily: 'var(--mono, monospace)', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 }}>"action"</code>{' '}
+                      to <code style={{ fontFamily: 'var(--mono, monospace)', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 }}>"sell"</code>{' '}
+                      for sell alerts. Adjust{' '}
+                      <code style={{ fontFamily: 'var(--mono, monospace)', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4 }}>qty</code>{' '}
+                      to match your position size.
+                    </div>
+
+                    <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-3, #6b7280)', lineHeight: 1.6 }}>
+                      Available TradingView variables:{' '}
+                      {['{{ticker}}', '{{close}}', '{{open}}', '{{high}}', '{{low}}', '{{volume}}', '{{time}}'].map((v) => (
+                        <code key={v} style={{ fontFamily: 'var(--mono, monospace)', background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, marginRight: 4, display: 'inline-block', marginBottom: 4 }}>
+                          {v}
+                        </code>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </StepCard>
 
-              <StepCard number={3} title="Done — Trades Import Automatically">
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
-                  When your alert triggers, TradingView sends the trade data to TradVue automatically. Check your{' '}
-                  <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Trade Log</strong> — your trade will appear within seconds.
+              {/* Step 3 */}
+              <StepCard number={3} title="Save the alert — you're done" defaultOpen={true}>
+                <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--text-2, #9ca3af)', lineHeight: 1.6 }}>
+                  Click <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Create</strong> (or Save) in TradingView.
+                  That&apos;s it — from now on, every time that alert fires, TradingView will send the trade data
+                  to TradVue and it will appear in your{' '}
+                  <strong style={{ color: 'var(--text-1, #e0e0e0)' }}>Trade Log</strong> within seconds.
                 </p>
-                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--green, #10b981)' }}>
-                  <IconCheck size={13} />
-                  No manual entry needed. Runs 24/7 automatically.
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[
+                    'No manual entry needed',
+                    'Runs 24/7 — even when you\'re away',
+                    'Works with any alert type: price, indicator, Pine Script strategy',
+                    'Repeating alerts create a new journal entry each time',
+                  ].map((line, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: 'var(--green, #10b981)' }}>
+                      <IconCheck size={13} />
+                      <span>{line}</span>
+                    </div>
+                  ))}
                 </div>
               </StepCard>
 
             </div>
           </div>
 
-          {/* Section 4: Disconnect */}
+          {/* ── Disconnect ───────────────────────────────────────────────── */}
           {webhookToken && (
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16 }}>
               {!showDisconnectConfirm ? (
@@ -603,9 +785,7 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
                 </button>
               ) : (
                 <div style={{ padding: '14px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', marginBottom: 6 }}>
-                    Are you sure?
-                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#ef4444', marginBottom: 6 }}>Are you sure?</div>
                   <div style={{ fontSize: 12, color: 'var(--text-2, #9ca3af)', marginBottom: 12, lineHeight: 1.5 }}>
                     This will revoke your webhook URL and stop auto-importing trades from TradingView.
                     You can reconnect at any time.
@@ -648,14 +828,15 @@ export default function TradingViewConnect({ onClose }: TradingViewConnectProps)
             </div>
           )}
 
-          {/* Security disclaimer */}
-          <div style={{ marginTop: 20, padding: '12px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
+          {/* ── Security disclaimer ─────────────────────────────────────── */}
+          <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-3)', flexShrink: 0, marginTop: 1 }}>
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
               </svg>
               <p style={{ margin: 0, fontSize: 10, color: 'var(--text-3)', lineHeight: 1.6 }}>
-                TradVue only receives trade data. We cannot access your TradingView account, broker account, place trades, or modify your positions. Your broker credentials are never shared with TradVue. All data is transmitted over HTTPS. See our <a href="/legal/privacy" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Privacy Policy</a>.
+                TradVue only receives trade data sent by your alerts. We cannot access your TradingView account, broker account, place trades, or modify positions. Your broker credentials are never shared with TradVue. All data is transmitted over HTTPS. See our{' '}
+                <a href="/legal/privacy" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Privacy Policy</a>.
               </p>
             </div>
           </div>
