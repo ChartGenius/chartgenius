@@ -1066,12 +1066,14 @@ export default function HomeClient() {
           {/* ── Col 2 (CENTER): News / Analysis / Market Intel ──────────────── */}
           {activeNav === 'Analysis' ? (
             <ErrorBoundary label="Analysis Panel">
+              <div style={{ overflowY: 'auto', height: '100%' }}>
               <AnalysisPanel
                 wlQuotes={quotes}
                 tickerQuotes={tickerQuotes}
                 calendarEvents={calendarEvents}
                 selectedTicker={selectedStock?.symbol ?? watchlist[0] ?? 'SPY'}
               />
+              </div>
             </ErrorBoundary>
           ) : activeNav === 'Market Intel' ? (
             <ErrorBoundary label="Market Intel">
