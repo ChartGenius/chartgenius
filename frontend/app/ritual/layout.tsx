@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { serializeJsonLd } from '../lib/serializeJsonLd'
 
 export const metadata: Metadata = {
   title: 'Post-Trade Ritual App — Daily Trading Journal Habit Tracker',
@@ -47,7 +48,7 @@ export default function RitualLayout({ children }: { children: React.ReactNode }
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       {children}
     </>

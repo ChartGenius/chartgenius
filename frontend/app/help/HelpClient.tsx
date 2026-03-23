@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import Breadcrumbs from '../components/Breadcrumbs'
 import PersistentNav from '../components/PersistentNav'
+import { serializeJsonLd } from '../lib/serializeJsonLd'
 import {
   IconArrowLeft, IconHouse, IconEye, IconBook, IconChart, IconWrench,
   IconSettings, IconRocket, IconZap, IconCreditCard, IconShield, IconLifeBuoy,
@@ -698,7 +699,7 @@ export default function HelpClient() {
     <>
       {/* FAQ structured data */}
       <Script id="faq-schema" type="application/ld+json">
-        {JSON.stringify(faqSchemaData)}
+        {serializeJsonLd(faqSchemaData)}
       </Script>
 
       <div style={{ fontFamily: 'var(--font)', background: 'var(--bg-0)', color: 'var(--text-0)', minHeight: '100vh' }}>

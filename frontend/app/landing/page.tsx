@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { serializeJsonLd } from '../lib/serializeJsonLd'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -348,7 +349,7 @@ export default function LandingPage() {
       const res = await fetch(`${API_BASE}/api/waitlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: serializeJsonLd({
           email: form.email.trim(),
           first_name: form.firstName.trim() || undefined,
           trade_type: form.tradeType || undefined,
@@ -398,7 +399,7 @@ export default function LandingPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serializeJsonLd({
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
             name: 'TradVue',

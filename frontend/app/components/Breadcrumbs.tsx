@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Script from 'next/script'
+import { serializeJsonLd } from '../lib/serializeJsonLd'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -89,7 +90,7 @@ export default function Breadcrumbs({ items, maxWidth = '1100px' }: BreadcrumbsP
     <>
       {/* Schema.org structured data */}
       <Script id={`breadcrumb-schema-${items.map(i => i.label).join('-')}`} type="application/ld+json">
-        {JSON.stringify(schemaData)}
+        {serializeJsonLd(schemaData)}
       </Script>
 
       <nav

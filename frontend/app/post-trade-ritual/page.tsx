@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import '../components/seo-landing.css'
+import { serializeJsonLd } from '../lib/serializeJsonLd'
 
 export const metadata: Metadata = {
   title: 'Post-Trade Ritual — Build a Daily Trading Journal Habit in 60 Seconds',
@@ -33,7 +34,7 @@ export default function PostTradeRitualPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serializeJsonLd({
             '@context': 'https://schema.org',
             '@graph': [
               {

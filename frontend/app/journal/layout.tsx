@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { serializeJsonLd } from '../lib/serializeJsonLd'
 
 export const metadata: Metadata = {
   title: 'Trading Journal — Track Every Trade with AI Analytics',
@@ -70,7 +71,7 @@ export default function JournalLayout({ children }: { children: React.ReactNode 
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       {children}
     </>

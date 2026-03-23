@@ -13,6 +13,7 @@ import FeedbackWidget from './components/FeedbackWidget'
 import AnnouncementBanner from './components/AnnouncementBanner'
 import TrialBanner from './components/TrialBanner'
 import SupportChat from './components/SupportChat'
+import { serializeJsonLd } from './lib/serializeJsonLd'
 
 // ─── Default Metadata ─────────────────────────────────────────────────────────
 
@@ -253,7 +254,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
         {/* Font-size preference — applied before hydration to prevent layout shift */}
         {/* Font-size: medium is default (15px). Only small/large need an explicit class. */}

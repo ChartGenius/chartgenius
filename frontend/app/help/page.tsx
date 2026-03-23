@@ -7,6 +7,7 @@
  */
 import type { Metadata } from 'next'
 import HelpClient from './HelpClient'
+import { serializeJsonLd } from '../lib/serializeJsonLd'
 
 export const metadata: Metadata = {
   title: 'Help & Support — FAQs, Guides & Troubleshooting | TradVue',
@@ -91,7 +92,7 @@ export default function HelpPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <HelpClient />
     </>

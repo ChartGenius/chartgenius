@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import '../components/seo-landing.css'
+import { serializeJsonLd } from '../lib/serializeJsonLd'
 
 export default function MarketIntelPage() {
   return (
@@ -8,7 +9,7 @@ export default function MarketIntelPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: serializeJsonLd({
             '@context': 'https://schema.org',
             '@graph': [
               {
