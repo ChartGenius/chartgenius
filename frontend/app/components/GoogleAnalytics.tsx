@@ -15,7 +15,10 @@
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+const rawGaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? process.env.NEXT_PUBLIC_GA_ID ?? ''
+const GA_ID = rawGaId.trim().replace(/^['"]|['"]$/g, '')
+const GA_ID_PATTERN = /^G-[A-Z0-9]+$/i
+const HAS_VALID_GA_ID = GA_ID_PATTERN.test(GA_ID)
 
 const CONSENT_KEY = 'cg_analytics_consent'
 
@@ -33,7 +36,7 @@ function GoogleAnalyticsPageTracker() {
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!GA_ID || !hasConsent()) return
+    if (!HAS_VALID_GA_ID || !hasConsent()) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const w = window as any
     if (typeof w.gtag !== 'function') return
@@ -47,7 +50,7 @@ function GoogleAnalyticsPageTracker() {
 
 export default function GoogleAnalytics() {
   // Only render in production and when a measurement ID is configured
-  if (!GA_ID || process.env.NODE_ENV !== 'production') {
+  if (!HAS_VALID_GA_ID || process.env.NODE_ENV !== 'production') {
     return null
   }
 

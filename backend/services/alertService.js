@@ -9,7 +9,12 @@ const { createClient } = require('@supabase/supabase-js');
 const rss = require('./rssFeedAggregator');
 
 function getSupabase() {
-  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    throw new Error('SUPABASE_URL and a Supabase key are required');
+  }
+  return createClient(url, key);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

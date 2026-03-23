@@ -2,6 +2,9 @@
 const request = require('supertest');
 const express = require('express');
 
+process.env.SUPABASE_URL = 'https://test.supabase.co';
+process.env.SUPABASE_ANON_KEY = 'test-anon-key';
+
 const mockSelectQueue = [];
 const mockSingleQueue = [];
 const mockCountQueue = [];

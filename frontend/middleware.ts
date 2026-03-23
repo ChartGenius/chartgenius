@@ -17,7 +17,10 @@ import type { NextRequest } from 'next/server'
  */
 
 // Routes that are NEVER accessible in production (no auth bypass)
-const BLOCKED_PATHS = ['/dashboard', '/ops', '/admin']
+// /admin is intentionally excluded: it now relies on the in-app auth/admin
+// guard, which can read localStorage after hydration. Blocking it here caused
+// an unconditional production redirect before admin auth could resolve.
+const BLOCKED_PATHS = ['/dashboard', '/ops']
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -43,5 +46,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/ops/:path*', '/admin/:path*', '/admin'],
+  matcher: ['/dashboard/:path*', '/ops/:path*'],
 }
