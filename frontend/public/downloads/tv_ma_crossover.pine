@@ -7,7 +7,7 @@
 // 2. In the strategy's "Alerts" tab, create an alert with:
 //    - Condition: "MA Crossover Strategy: Order fills only"  
 //    - Message: (leave blank — uses alert() function below)
-//    - Webhook URL: https://chartgenius.io/api/webhook/tv/YOUR_TOKEN_HERE
+//    - Webhook URL: https://tradvue-api.onrender.com/api/webhook/tv/YOUR_TOKEN_HERE
 // 3. Replace YOUR_TOKEN_HERE with your TradVue webhook token
 
 strategy(

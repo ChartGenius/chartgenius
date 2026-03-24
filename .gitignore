@@ -34,3 +34,11 @@ Thumbs.db
 *.log
 frontend/app/dashboard/
 .vercel
+
+# Generated TypeScript build info
+*.tsbuildinfo
+
+# Ephemeral security monitor outputs
+backend/docs/security/.security_monitor_result.json
+backend/docs/security/monitor-latest.json
+backend/docs/security/security-monitor-result.json

@@ -6,7 +6,7 @@
 // 1. Open this script in TradingView's Pine Script editor
 // 2. Create an alert on this strategy with:
 //    - Condition: "RSI Strategy: Order fills only"
-//    - Webhook URL: https://chartgenius.io/api/webhook/tv/YOUR_TOKEN_HERE
+//    - Webhook URL: https://tradvue-api.onrender.com/api/webhook/tv/YOUR_TOKEN_HERE
 // 3. Replace YOUR_TOKEN_HERE with your TradVue webhook token
 
 strategy(

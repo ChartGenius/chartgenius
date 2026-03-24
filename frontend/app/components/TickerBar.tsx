@@ -25,19 +25,24 @@ export default function TickerBar({
   onOpenSettings,
   size = 'compact',
 }: Props) {
-  const defaultItems = Object.keys(tickerQuotes).length > 0
+  const hasLiveOrCachedQuotes = Object.keys(tickerQuotes).length > 0
+  const usingFallbackData = !hasLiveOrCachedQuotes && !isLoading
+
+  const defaultItems = hasLiveOrCachedQuotes
     ? TICKER_SYMBOLS
         .filter(sym => tickerQuotes[sym] && !hiddenSymbols.has(sym))
         .map(sym => {
           const q = tickerQuotes[sym]
           return { symbol: TICKER_DISPLAY[sym] || sym, price: q.current, change: q.changePct, isReal: q.source !== 'mock', raw: sym, isCustom: false }
         })
-    : TICKER_FALLBACK
-        .filter(t => {
-          const originalSym = Object.entries(TICKER_DISPLAY).find(([, v]) => v === t.symbol)?.[0] || t.symbol
-          return !hiddenSymbols.has(originalSym)
-        })
-        .map(t => ({ ...t, isReal: false, raw: t.symbol, isCustom: false }))
+    : usingFallbackData
+        ? TICKER_FALLBACK
+            .filter(t => {
+              const originalSym = Object.entries(TICKER_DISPLAY).find(([, v]) => v === t.symbol)?.[0] || t.symbol
+              return !hiddenSymbols.has(originalSym)
+            })
+            .map(t => ({ ...t, isReal: false, raw: t.symbol, isCustom: false }))
+        : []
 
   const customItems = customSymbols
     .filter(sym => tickerQuotes[sym])
@@ -56,13 +61,31 @@ export default function TickerBar({
       role="region"
       aria-label="Live market ticker"
     >
-      {isLoading && Object.keys(tickerQuotes).length === 0 && (
+      {isLoading && !hasLiveOrCachedQuotes && (
         <div
           className="connecting-banner"
           style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, zIndex: 3, padding: '0 16px' }}
         >
           <span className="connecting-dot" />
           Connecting to live data…
+        </div>
+      )}
+      {usingFallbackData && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 12,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 3,
+            fontSize: 11,
+            color: 'var(--text-3)',
+            pointerEvents: 'none',
+            background: 'linear-gradient(90deg, rgba(10,10,12,0.92), rgba(10,10,12,0.6), transparent)',
+            paddingRight: 24,
+          }}
+        >
+          Live data temporarily unavailable — showing market snapshot.
         </div>
       )}
       <div className="ticker-track" aria-hidden="true">

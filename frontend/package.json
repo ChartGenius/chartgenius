@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "jest --runInBand",
     "test:e2e": "playwright test",
     "verify": "npm run test && npm run typecheck && npm run build"

@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { API_BASE } from '../lib/api'
 import PersistentNav from '../components/PersistentNav'
+import { getBrokerSyncCta, normalizeBrokerSyncState, type BrokerSyncState } from '../utils/brokerSync'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -49,7 +50,7 @@ interface WebhookEvent {
   created_at: string
 }
 
-type IntegrationType = 'nt' | 'tv'
+type IntegrationType = 'nt' | 'tv' | 'broker'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -166,6 +167,36 @@ function IconCheckCircle() {
   )
 }
 
+
+function IconNinjaTrader() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="3"/>
+      <path d="M7 15V9l4 6V9l6 6V9"/>
+    </svg>
+  )
+}
+
+function IconTradingView() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 15.5h5L12 8l3 7.5h5"/>
+      <path d="M4 18h16"/>
+    </svg>
+  )
+}
+
+function IconBrokerSync() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M7 7h5a3 3 0 0 1 0 6H7"/>
+      <path d="M7 17h10"/>
+      <path d="M17 10v7"/>
+      <path d="M7 4v16"/>
+    </svg>
+  )
+}
+
 // ── Reusable components ────────────────────────────────────────────────────────
 
 function SectionCard({ title, children, subtitle }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -274,18 +305,24 @@ function Code({ children }: { children: React.ReactNode }) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 function ConnectionTypeSelector({ selected, onChange }: { selected: IntegrationType; onChange: (type: IntegrationType) => void }) {
-  const options: { type: IntegrationType; title: string; icon: string; desc: string }[] = [
+  const options: { type: IntegrationType; title: string; icon: React.ReactNode; desc: string }[] = [
     {
       type: 'nt',
       title: 'NinjaTrader 8',
-      icon: 'nt',
+      icon: <IconNinjaTrader />,
       desc: 'Auto-journal every futures trade. Real broker fills, zero manual entry.',
     },
     {
       type: 'tv',
       title: 'TradingView',
-      icon: 'tv',
+      icon: <IconTradingView />,
       desc: 'Auto-journal strategy signals. Works with any Pine Script strategy.',
+    },
+    {
+      type: 'broker',
+      title: 'Robinhood Auto-Sync',
+      icon: <IconBrokerSync />,
+      desc: 'Save your Robinhood auto-sync preference now and join the gated rollout.',
     },
   ]
 
@@ -306,7 +343,7 @@ function ConnectionTypeSelector({ selected, onChange }: { selected: IntegrationT
             textAlign: 'left',
           }}
         >
-          <div style={{ fontSize: 24 }}>{opt.icon}</div>
+          <div style={{ width: 44, height: 44, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: selected === opt.type ? 'rgba(139,92,246,0.18)' : 'rgba(255,255,255,0.05)', color: selected === opt.type ? '#c4b5fd' : 'var(--text-2)' }}>{opt.icon}</div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-0)' }}>{opt.title}</div>
           <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>{opt.desc}</div>
         </button>
@@ -1378,6 +1415,60 @@ function TokenManagementSection({ tokens, onDelete, onGenerate, generating }: {
   )
 }
 
+
+function BrokerSyncGuide({ state, saving, onJoinWaitlist }: { state: BrokerSyncState; saving: boolean; onJoinWaitlist: () => void }) {
+  const cta = getBrokerSyncCta(state)
+  return (
+    <>
+      <SectionCard title="Robinhood Auto-Sync" subtitle="Join the gated rollout now, then connect once live brokerage access is enabled.">
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-0)', marginBottom: 6 }}>Robinhood auto-sync, starting with a gated rollout.</div>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, maxWidth: 520 }}>
+              TradVue supports Robinhood CSV import today. This broker sync lane lets you save your Robinhood preference now, get notified when access opens, and connect only after the live provider setup is ready.
+            </div>
+          </div>
+          <Badge label={state.status === 'waitlist' ? 'Robinhood waitlist' : state.featureEnabled ? 'Beta gated' : 'Pending setup'} color={state.status === 'waitlist' ? 'purple' : state.featureEnabled ? 'yellow' : 'gray'} />
+        </div>
+
+        <div style={{ display: 'grid', gap: 10, marginBottom: 18 }}>
+          {[
+            'Robinhood is the first brokerage in the initial auto-sync rollout.',
+            'TradVue plans to use SnapTrade for the connection layer, so broker credentials stay with the provider instead of being stored by TradVue.',
+            'Until live access is enabled, use Robinhood CSV import to keep your journal up to date.',
+          ].map(item => (
+            <div key={item} style={{ fontSize: 13, color: 'var(--text-1)', padding: '10px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>{item}</div>
+          ))}
+        </div>
+
+        <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-0)', marginBottom: 4 }}>{cta.label}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>{cta.helper}</div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+            <button onClick={onJoinWaitlist} disabled={saving || state.status === 'waitlist'} style={{ ...primaryBtnStyle, width: 'auto', opacity: saving || state.status === 'waitlist' ? 0.65 : 1 }}>
+              {state.status === 'waitlist' ? 'Saved' : saving ? 'Saving…' : 'Join Robinhood waitlist'}
+            </button>
+            <a href="/journal" style={{ display: 'inline-flex', alignItems: 'center', padding: '13px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-1)', textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
+              Use Robinhood CSV import now
+            </a>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Security & Privacy">
+        <div style={{ display: 'grid', gap: 10 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
+            TradVue will only expose the live connection flow after SnapTrade configuration is enabled. Broker credentials are handled by the aggregation provider, not stored by TradVue.
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
+            Review the current disclosures in <a href="/legal/privacy" style={{ color: '#a78bfa' }}>Privacy Policy</a> sections 2.7 and 5.9 before connecting a brokerage account when the feature goes live.
+          </div>
+        </div>
+      </SectionCard>
+    </>
+  )
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Main Page
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1392,6 +1483,9 @@ export default function IntegrationsPage() {
   const [generating, setGenerating] = useState(false)
   const [eventsRefreshKey, setEventsRefreshKey] = useState(0)
   const [integrationType, setIntegrationType] = useState<IntegrationType>('nt')
+  const [brokerSync, setBrokerSync] = useState<BrokerSyncState>(normalizeBrokerSyncState(null))
+  const [brokerSyncLoading, setBrokerSyncLoading] = useState(true)
+  const [brokerSyncSaving, setBrokerSyncSaving] = useState(false)
 
   const fetchTokens = useCallback(async () => {
     if (!token) return
@@ -1415,6 +1509,28 @@ export default function IntegrationsPage() {
     else if (!authLoading) setTokensLoading(false)
   }, [authLoading, token, fetchTokens])
 
+  const fetchBrokerSync = useCallback(async () => {
+    if (!token) return
+    setBrokerSyncLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/integrations/broker-sync`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Failed to load broker sync status')
+      const data = await res.json()
+      setBrokerSync(normalizeBrokerSyncState(data.brokerSync))
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to load broker sync status', 'error')
+    } finally {
+      setBrokerSyncLoading(false)
+    }
+  }, [token, showToast])
+
+  useEffect(() => {
+    if (!authLoading && token) fetchBrokerSync()
+    else if (!authLoading) setBrokerSyncLoading(false)
+  }, [authLoading, token, fetchBrokerSync])
+
   async function handleGenerate() {
     if (!token) return
     setGenerating(true)
@@ -1433,6 +1549,26 @@ export default function IntegrationsPage() {
       showToast(err instanceof Error ? err.message : 'Failed to generate token', 'error')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  async function handleJoinBrokerWaitlist() {
+    if (!token) return
+    setBrokerSyncSaving(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/integrations/broker-sync`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ preferredBroker: 'robinhood', requestedAccess: true, emailUpdates: true }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to save broker sync preference')
+      setBrokerSync(normalizeBrokerSyncState(data.brokerSync))
+      showToast('Robinhood auto-sync interest saved', 'success')
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to save broker sync preference', 'error')
+    } finally {
+      setBrokerSyncSaving(false)
     }
   }
 
@@ -1529,16 +1665,16 @@ export default function IntegrationsPage() {
           
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-0)' }}>
-              {integrationType === 'nt' ? 'NinjaTrader 8' : 'TradingView'}
+              {integrationType === 'nt' ? 'NinjaTrader 8' : integrationType === 'tv' ? 'TradingView' : 'Robinhood Auto-Sync'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
-              {integrationType === 'nt' ? 'TradVue Addon — Real-time trade sync' : 'Webhook alerts — Strategy signal sync'}
+              {integrationType === 'nt' ? 'TradVue Addon — Real-time trade sync' : integrationType === 'tv' ? 'Webhook alerts — Strategy signal sync' : 'SnapTrade-backed broker sync — gated pending setup'}
             </div>
           </div>
           <div style={{ marginLeft: 'auto' }}>
             <Badge
-              label={tokens.some(t => t.is_active && t.last_used_at) ? '🟢 Connected & active' : tokens.some(t => t.is_active) ? '🟡 Token ready — awaiting first' : '⚪ Not configured'}
-              color={tokens.some(t => t.is_active && t.last_used_at) ? 'green' : tokens.some(t => t.is_active) ? 'yellow' : 'gray'}
+              label={integrationType === 'broker' ? (brokerSync.status === 'waitlist' ? '🟣 Waitlist saved' : brokerSync.featureEnabled ? '🟡 Beta gated' : '⚪ Pending setup') : tokens.some(t => t.is_active && t.last_used_at) ? '🟢 Connected & active' : tokens.some(t => t.is_active) ? '🟡 Token ready — awaiting first' : '⚪ Not configured'}
+              color={integrationType === 'broker' ? (brokerSync.status === 'waitlist' ? 'purple' : brokerSync.featureEnabled ? 'yellow' : 'gray') : tokens.some(t => t.is_active && t.last_used_at) ? 'green' : tokens.some(t => t.is_active) ? 'yellow' : 'gray'}
             />
           </div>
         </div>
@@ -1557,7 +1693,7 @@ export default function IntegrationsPage() {
             <Troubleshooting type="nt" />
             <SecuritySection type="nt" />
           </>
-        ) : (
+        ) : integrationType === 'tv' ? (
           <>
             <TradingViewInstallGuide
               webhookUrl={webhookUrl}
@@ -1570,20 +1706,28 @@ export default function IntegrationsPage() {
             <Troubleshooting type="tv" />
             <SecuritySection type="tv" />
           </>
+        ) : brokerSyncLoading ? (
+          <SectionCard title="Robinhood Auto-Sync"><div style={{ color: 'var(--text-2)', fontSize: 14 }}>Loading broker sync status…</div></SectionCard>
+        ) : (
+          <BrokerSyncGuide state={brokerSync} saving={brokerSyncSaving} onJoinWaitlist={handleJoinBrokerWaitlist} />
         )}
 
-        <WebhookURLSection
-          tokens={tokens}
-          loading={tokensLoading}
-          onGenerate={handleGenerate}
-          onRotate={handleRotate}
-          onDelete={handleDelete}
-          generating={generating}
-          type={integrationType}
-        />
+        {integrationType !== 'broker' && (
+          <>
+            <WebhookURLSection
+              tokens={tokens}
+              loading={tokensLoading}
+              onGenerate={handleGenerate}
+              onRotate={handleRotate}
+              onDelete={handleDelete}
+              generating={generating}
+              type={integrationType}
+            />
 
-        <EventsSection token={token} refreshKey={eventsRefreshKey} />
-        <TokenManagementSection tokens={tokens} onDelete={handleDelete} onGenerate={handleGenerate} generating={generating} />
+            <EventsSection token={token} refreshKey={eventsRefreshKey} />
+            <TokenManagementSection tokens={tokens} onDelete={handleDelete} onGenerate={handleGenerate} generating={generating} />
+          </>
+        )}
 
       </div>
     </div>

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Middleware — runs at the edge BEFORE any page renders.
+ * Proxy — runs at the edge BEFORE any page renders.
  *
  * - /dashboard, /ops, /admin: fully blocked in production (internal tools).
  *   These pages use localStorage-based auth (no cookies) so true server-side
@@ -22,7 +22,7 @@ import type { NextRequest } from 'next/server'
 // an unconditional production redirect before admin auth could resolve.
 const BLOCKED_PATHS = ['/dashboard', '/ops']
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const hostname = request.headers.get('host') || ''
 

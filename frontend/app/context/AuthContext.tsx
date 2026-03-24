@@ -6,13 +6,14 @@ import { initFullSync, getSyncStatus, subscribeSyncStatus, type SyncStatus } fro
 import {
   apiLogin,
   apiRegister,
+  apiGetMe,
   apiGetWatchlist,
   apiAddToWatchlist,
   apiRemoveFromWatchlist,
   type AuthUser,
   type WatchlistItem,
 } from '../lib/api'
-import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from '../utils/storageKeys'
+import { AUTH_REFRESH_TOKEN_KEY, AUTH_TOKEN_KEY, AUTH_USER_KEY, clearStoredAuth, persistStoredAuth } from '../utils/storageKeys'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -68,17 +69,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (didInit.current) return
     didInit.current = true
-    try {
-      const storedToken = localStorage.getItem(AUTH_TOKEN_KEY) // cg_ = legacy prefix from ChartGenius era (now TradVue); kept to avoid breaking existing user data
-      const storedUser  = localStorage.getItem(AUTH_USER_KEY)  // cg_ = legacy prefix from ChartGenius era (now TradVue); kept to avoid breaking existing user data
-      if (storedToken && storedUser) {
+
+    let cancelled = false
+
+    const hydrateAuth = async () => {
+      try {
+        const storedToken = localStorage.getItem(AUTH_TOKEN_KEY) // cg_ = legacy prefix from ChartGenius era (now TradVue); kept to avoid breaking existing user data
+        const storedUser  = localStorage.getItem(AUTH_USER_KEY)  // cg_ = legacy prefix from ChartGenius era (now TradVue); kept to avoid breaking existing user data
+
+        if (!storedToken) return
+
+        if (storedUser) {
+          if (cancelled) return
+          setToken(storedToken)
+          setUser(JSON.parse(storedUser))
+          // Trigger initial cloud sync for returning logged-in users
+          initFullSync(storedToken)
+          return
+        }
+
+        const refreshedUser = await apiGetMe(storedToken)
+        if (!refreshedUser) {
+          clearAuth()
+          return
+        }
+
+        if (cancelled) return
         setToken(storedToken)
-        setUser(JSON.parse(storedUser))
-        // Trigger initial cloud sync for returning logged-in users
+        setUser(refreshedUser)
+        persistStoredAuth(storedToken, refreshedUser, localStorage.getItem(AUTH_REFRESH_TOKEN_KEY))
         initFullSync(storedToken)
+      } catch {
+        clearAuth()
       }
-    } catch {}
-    setLoading(false)
+    }
+
+    hydrateAuth().finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   // ── Load watchlist from backend after login ───────────────────────────────
@@ -108,18 +140,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [token, loadWatchlistFromBackend])
 
   // ── Persist auth to localStorage ──────────────────────────────────────────
-  function persistAuth(tok: string, usr: AuthUser) {
-    try {
-      localStorage.setItem(AUTH_TOKEN_KEY, tok)
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(usr))
-    } catch {}
+  function persistAuth(tok: string, usr: AuthUser, refreshToken?: string | null) {
+    persistStoredAuth(tok, usr, refreshToken)
   }
 
   function clearAuth() {
-    try {
-      localStorage.removeItem(AUTH_TOKEN_KEY)
-      localStorage.removeItem(AUTH_USER_KEY)
-    } catch {}
+    clearStoredAuth()
   }
 
   // ── Login ─────────────────────────────────────────────────────────────────
@@ -133,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setToken(accessToken)
       setUser(res.user)
-      persistAuth(accessToken, res.user)
+      persistAuth(accessToken, res.user, res.session?.refresh_token)
       // Trigger initial cloud sync after login
       initFullSync(accessToken)
       return {}
@@ -159,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setToken(accessToken)
       setUser(res.user)
-      persistAuth(accessToken, res.user)
+      persistAuth(accessToken, res.user, res.session?.refresh_token)
       // Trigger initial cloud sync after registration
       initFullSync(accessToken)
       return {}

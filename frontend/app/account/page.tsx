@@ -27,6 +27,7 @@ import { API_BASE } from '../lib/api'
 import { getUserTier, isTrialActive, TRIAL_DAYS, MONTHLY_PRICE, ANNUAL_PRICE } from '../utils/tierAccess'
 import PricingCard from '../components/PricingCard'
 import PersistentNav from '../components/PersistentNav'
+import { getBrokerSyncCta, normalizeBrokerSyncState, type BrokerSyncState } from '../utils/brokerSync'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -246,6 +247,27 @@ function AccountPageInner() {
   const [ntTokens, setNtTokens] = useState<{ id: number; is_active: boolean }[]>([])
   const [showDisconnectModal, setShowDisconnectModal] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+
+  const [brokerSync, setBrokerSync] = useState<BrokerSyncState>(normalizeBrokerSyncState(null))
+  const [brokerSyncLoading, setBrokerSyncLoading] = useState(false)
+
+
+  const brokerSyncCta = getBrokerSyncCta(brokerSync)
+
+  useEffect(() => {
+    if (authLoading || !token) return
+    setBrokerSyncLoading(true)
+    fetch(`${API_BASE}/api/integrations/broker-sync`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async r => {
+        const data = await r.json().catch(() => ({}))
+        if (!r.ok) throw new Error(data.error || 'Failed to load broker sync status')
+        setBrokerSync(normalizeBrokerSyncState(data.brokerSync))
+      })
+      .catch(err => console.error('[Account] Failed to load broker sync:', err))
+      .finally(() => setBrokerSyncLoading(false))
+  }, [authLoading, token])
 
   // Fetch subscription status
   useEffect(() => {
@@ -761,6 +783,37 @@ Delete My Account
               </button>
             </div>
           )}
+
+        </SectionCard>
+
+        {/* ── Broker Auto-Sync ────────────────────────────────────────────── */}
+        <SectionCard title="Broker Auto-Sync">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-0, #f9fafb)', marginBottom: 4 }}>
+                Robinhood auto-sync rollout
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: brokerSync.status === 'waitlist' ? '#8b5cf6' : brokerSync.featureEnabled ? '#fbbf24' : 'var(--text-3, #6b7280)', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: 'var(--text-2, #9ca3af)' }}>
+                  {brokerSyncLoading ? 'Checking…' : brokerSyncCta.label}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/integrations')}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                background: 'transparent', border: '1px solid rgba(139,92,246,0.45)', borderRadius: 10,
+                padding: '9px 18px', color: '#a78bfa', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              {brokerSync.status === 'waitlist' ? 'Manage Waitlist' : 'Open Broker Sync'}
+            </button>
+          </div>
+          <p style={{ margin: '12px 0 0', fontSize: 12, color: 'var(--text-3, #6b7280)', lineHeight: 1.6 }}>
+            {brokerSyncCta.helper}
+          </p>
         </SectionCard>
 
         {/* ── Notifications ─────────────────────────────────────────────────── */}

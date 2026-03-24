@@ -87,6 +87,19 @@ export async function apiRegister(email: string, password: string): Promise<Auth
   }
 }
 
+export async function apiGetMe(token: string): Promise<AuthUser | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    return data.user || null
+  } catch {
+    return null
+  }
+}
+
 export async function apiGetWatchlist(token: string): Promise<WatchlistResponse> {
   const res = await fetch(`${API_BASE}/api/watchlist`, {
     headers: { Authorization: `Bearer ${token}` },

@@ -156,13 +156,6 @@ function IconDiscord() {
   )
 }
 
-function IconGithub() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-    </svg>
-  )
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Animated counter hook
@@ -375,11 +368,11 @@ export default function LandingPage() {
   }
 
   const pricingFree = [
-    'Real-time news feed (15-min delay)',
-    'Basic alerts (3 per watchlist)',
-    'Watchlist tracking (up to 5 lists)',
-    'Economic calendar',
-    'Community forum access',
+    '3-week full-feature trial',
+    'Dashboard, watchlist, news, and trading tools',
+    'Trading journal and portfolio with a 30-day rolling view after trial',
+    'Up to 3 price alerts',
+    'Economic calendar and community support',
   ]
 
   const pricingPro = [
@@ -411,11 +404,6 @@ export default function LandingPage() {
               price: '0',
               priceValidUntil: '2026-12-31',
             },
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: '4.8',
-              ratingCount: '1245',
-            },
           }),
         }}
       />
@@ -446,11 +434,6 @@ export default function LandingPage() {
                 alt="TradVue"
                 style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
               />
-              <span style={{
-                fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em',
-                color: 'var(--blue)', background: 'var(--blue-dim)',
-                border: '1px solid rgba(74,158,255,0.25)', padding: '2px 6px', borderRadius: '4px',
-              }}>NEW</span>
             </Link>
 
             {/* Desktop nav links */}
@@ -467,7 +450,11 @@ export default function LandingPage() {
               <Link href="/" style={{ fontSize: '14px', color: 'var(--text-2)', textDecoration: 'none' }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-0)')}
                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}
-              >Dashboard</Link>
+              >Open app</Link>
+              <Link href="/?signup=true" style={{ fontSize: '14px', color: 'var(--text-2)', textDecoration: 'none' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-0)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}
+              >Sign in</Link>
             </div>
 
             {/* CTA */}
@@ -581,7 +568,7 @@ export default function LandingPage() {
               >
                 Get Early Access (Free) <IconArrow />
               </button>
-              <Link href="/"
+              <Link href="/?signup=true"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '8px',
                   fontSize: '15px', fontWeight: 600, padding: '14px 28px',
@@ -593,9 +580,22 @@ export default function LandingPage() {
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-2)'; e.currentTarget.style.color = 'var(--text-0)'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-1)'; }}
               >
-                View Dashboard
+                Sign in
               </Link>
             </div>
+
+            <p style={{
+              marginTop: '18px',
+              fontSize: '13px',
+              color: 'var(--text-2)',
+              lineHeight: 1.6,
+            }}>
+              Already have an account?{' '}
+              <Link href="/?signup=true" style={{ color: 'var(--text-0)', textDecoration: 'none', fontWeight: 600 }}>
+                Sign in to continue where you left off
+              </Link>
+              .
+            </p>
 
             {/* Trust signals */}
             <div style={{
@@ -768,7 +768,7 @@ export default function LandingPage() {
               fontWeight: 800, letterSpacing: '-0.03em',
               marginBottom: '64px', color: 'var(--text-0)',
             }}>
-              Trusted by Active Traders Across Markets
+              Built for Active Traders Across Markets
             </h2>
 
             {/* Stats */}
@@ -808,18 +808,26 @@ export default function LandingPage() {
               ))}
             </div>
 
-            {/* Testimonial placeholders */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: '20px',
             }}>
               {[
-                { name: 'Alex T.', handle: '@AlexTradesNYC', market: 'Equities', quote: 'I caught a 12% move in NVDA because of the sentiment alert. That\'s a win you don\'t get from candlesticks alone.' },
-                { name: 'Maya R.', handle: '@CryptoMayaR', market: 'Crypto', quote: 'The news feed actually filters out the noise. I\'m seeing fewer false signals and spending less time on Twitter.' },
-                { name: 'James K.', handle: '@JKOptions', market: 'Options', quote: 'Economic calendar plus live impact analysis changed how I trade Fed days. It\'s like having a second screen built in.' },
-              ].map(t => (
-                <div key={t.name} style={{
+                {
+                  title: 'Built for real workflows',
+                  body: 'Import past trades from CSV today, then layer in alerts, journaling, and portfolio tracking without rebuilding your process from scratch.',
+                },
+                {
+                  title: 'Clear on what is live today',
+                  body: 'TradVue focuses on live market context, journaling, and analytics that are available now, with new integrations rolled out only after they are fully ready.',
+                },
+                {
+                  title: 'Privacy-first by design',
+                  body: 'Your journal, watchlists, and portfolio data stay tied to your account, with encrypted sync and clear controls over how your information is used.',
+                },
+              ].map(card => (
+                <div key={card.title} style={{
                   background: 'var(--bg-2)', border: '1px solid var(--border)',
                   borderRadius: '12px', padding: '24px',
                   transition: 'border-color 0.2s',
@@ -827,23 +835,22 @@ export default function LandingPage() {
                   onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-bright)'}
                   onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)'}
                 >
-                  <p style={{ fontSize: '15px', color: 'var(--text-1)', lineHeight: 1.6, marginBottom: '20px', fontStyle: 'italic' }}>
-                    "{t.quote}"
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '36px', height: '36px', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, var(--blue), var(--purple))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '14px', fontWeight: 700, color: '#fff', flexShrink: 0,
-                    }}>
-                      {t.name[0]}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-0)' }}>{t.name}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-2)' }}>{t.handle} · {t.market}</div>
-                    </div>
+                  <div style={{
+                    width: '42px', height: '42px', borderRadius: '10px',
+                    background: 'linear-gradient(135deg, rgba(74,158,255,0.16), rgba(99,102,241,0.16))',
+                    border: '1px solid rgba(99,102,241,0.18)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: '18px',
+                    color: 'var(--blue)',
+                  }}>
+                    <IconCheck />
                   </div>
+                  <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-0)', margin: '0 0 10px' }}>
+                    {card.title}
+                  </h3>
+                  <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, margin: 0 }}>
+                    {card.body}
+                  </p>
                 </div>
               ))}
             </div>
@@ -1256,10 +1263,9 @@ export default function LandingPage() {
                 </p>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   {[
-                    { icon: <IconTwitter />, href: 'https://twitter.com/tradvue', label: 'Twitter' },
+                    { icon: <IconTwitter />, href: 'https://x.com/tradvue', label: 'X' },
                     { icon: <IconTelegram />, href: 'https://t.me/tradvue', label: 'Telegram' },
                     { icon: <IconDiscord />, href: 'https://discord.gg/tradvue', label: 'Discord' },
-                    { icon: <IconGithub />, href: 'https://github.com/tradvue', label: 'GitHub' },
                   ].map(s => (
                     <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                       aria-label={s.label}
@@ -1287,9 +1293,9 @@ export default function LandingPage() {
                   {[
                     { label: 'Features', href: '#features' },
                     { label: 'Pricing', href: '#pricing' },
-                    { label: 'Roadmap', href: '/changelog' },
+                    { label: 'Open App', href: '/' },
+                    { label: 'Sign In', href: '/?signup=true' },
                     { label: 'Changelog', href: '/changelog' },
-                    { label: 'Dashboard', href: '/' },
                   ].map(l => (
                     <li key={l.label}>
                       <a href={l.href} style={{ fontSize: '14px', color: 'var(--text-2)', textDecoration: 'none', transition: 'color 0.15s' }}

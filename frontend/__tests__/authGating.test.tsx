@@ -11,6 +11,7 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
+import { clearStoredAuth, persistStoredAuth } from '../app/utils/storageKeys'
 
 // ─── localStorage mock ───────────────────────────────────────────────────────
 
@@ -92,6 +93,24 @@ function AICoachToggleConsumer() {
     </div>
   )
 }
+
+describe('storageKeys auth helpers', () => {
+  beforeEach(() => localStorageMock.clear())
+
+  it('clears access token, user, and refresh token on logout cleanup', () => {
+    persistStoredAuth('access-123', { email: 'test@tradvue.com' }, 'refresh-456')
+
+    expect(localStorageMock.getItem('cg_token')).toBe('access-123')
+    expect(localStorageMock.getItem('cg_user')).toContain('test@tradvue.com')
+    expect(localStorageMock.getItem('cg_refresh_token')).toBe('refresh-456')
+
+    clearStoredAuth()
+
+    expect(localStorageMock.getItem('cg_token')).toBeNull()
+    expect(localStorageMock.getItem('cg_user')).toBeNull()
+    expect(localStorageMock.getItem('cg_refresh_token')).toBeNull()
+  })
+})
 
 describe('SettingsContext: aiCoachEnabled', () => {
   beforeEach(() => localStorageMock.clear())
