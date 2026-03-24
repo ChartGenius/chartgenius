@@ -35,7 +35,7 @@ describe('Auth callback UX', () => {
 
     await waitFor(() => expect(screen.getByText(/Reset Link Expired/i)).toBeInTheDocument())
     expect(screen.getByText(/Request a fresh password reset from the sign-in screen/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Back to sign in/i })).toHaveAttribute('href', '/#signin')
+    expect(screen.getByRole('link', { name: /Back to sign in/i })).toHaveAttribute('href', '/?signup=true')
     expect(persistStoredAuthMock).not.toHaveBeenCalled()
   })
 

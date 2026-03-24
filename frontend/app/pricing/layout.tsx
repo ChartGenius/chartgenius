@@ -28,13 +28,7 @@ export const metadata: Metadata = {
 // ─── JSON-LD for Pricing page ─────────────────────────────────────────────────
 //
 // Using SoftwareApplication (not Product) — TradVue is a SaaS web app.
-// GSC fixes applied 2026-03-20:
-//   - @type: Product → SoftwareApplication
-//   - Added: image (required for rich results)
-//   - Added: applicationCategory, operatingSystem
-//   - Added: priceValidUntil on each Offer
-//   - Added: aggregateRating (update ratingCount as reviews grow)
-//   - Added: review (add real reviews here as they come in)
+// Keep this schema factual: pricing, product description, and real feature data only.
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -86,43 +80,6 @@ const jsonLd = {
           availability: 'https://schema.org/InStock',
           url: 'https://www.tradvue.com/pricing',
           seller: { '@type': 'Organization', name: 'TradVue' },
-        },
-      ],
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.8',
-        ratingCount: '52',
-        bestRating: '5',
-        worstRating: '1',
-      },
-      review: [
-        {
-          '@type': 'Review',
-          reviewRating: {
-            '@type': 'Rating',
-            ratingValue: '5',
-            bestRating: '5',
-          },
-          author: {
-            '@type': 'Person',
-            name: 'Alex M.',
-          },
-          reviewBody:
-            'TradVue has completely changed how I track and analyze my trades. The AI coach surfaces patterns I would have missed entirely.',
-        },
-        {
-          '@type': 'Review',
-          reviewRating: {
-            '@type': 'Rating',
-            ratingValue: '5',
-            bestRating: '5',
-          },
-          author: {
-            '@type': 'Person',
-            name: 'Sarah K.',
-          },
-          reviewBody:
-            'Best trading journal I have used. The prop firm tracker alone is worth the Pro price, and the cloud sync across my devices is seamless.',
         },
       ],
       featureList: [

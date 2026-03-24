@@ -128,7 +128,6 @@ const jsonLd = {
         width: 1200,
         height: 630,
       },
-      sameAs: [],
       contactPoint: {
         '@type': 'ContactPoint',
         contactType: 'customer support',

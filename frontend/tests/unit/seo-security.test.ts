@@ -384,14 +384,29 @@ describe('JSON-LD Structured Data Security', () => {
     expect(content).toContain('SoftwareApplication')
   })
 
-  test('Pricing page JSON-LD includes Product and Offer schema', () => {
+  test('Pricing page JSON-LD includes factual SoftwareApplication and Offer schema only', () => {
     const pricingLayoutPath = path.join(APP_DIR, 'pricing/layout.tsx')
     const content = readFile(pricingLayoutPath)
     if (content) {
-      expect(content).toContain('Product')
+      expect(content).toContain('SoftwareApplication')
       expect(content).toContain('Offer')
       expect(content).toContain('24')
       expect(content).toContain('201.60')
+      expect(content).not.toContain('aggregateRating')
+      expect(content).not.toContain('ratingValue')
+      expect(content).not.toContain('ratingCount')
+      expect(content).not.toContain("'Review'")
+      expect(content).not.toContain('reviewBody')
+    }
+  })
+
+  test('Pricing page source does not claim unverified popularity or named testimonials', () => {
+    const pricingPagePath = path.join(APP_DIR, 'pricing/page.tsx')
+    const content = readFile(pricingPagePath)
+    if (content) {
+      expect(content).not.toContain('Most Popular')
+      expect(content).not.toContain('Alex M.')
+      expect(content).not.toContain('Sarah K.')
     }
   })
 })

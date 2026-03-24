@@ -31,7 +31,7 @@ function getErrorTitle(kind: CallbackKind) {
 function getErrorActions(kind: CallbackKind, fallbackEmail: string) {
   if (kind === 'recovery') {
     return {
-      primaryHref: '/#signin',
+      primaryHref: '/?signup=true',
       primaryLabel: 'Back to sign in',
       secondaryHref: fallbackEmail ? `mailto:support@tradvue.com?subject=Password%20reset%20help&body=Hi%20TradVue,%20I%20need%20help%20with%20a%20password%20reset%20link%20for%20${encodeURIComponent(fallbackEmail)}.` : '/help',
       secondaryLabel: fallbackEmail ? 'Contact support' : 'Open help center',
@@ -40,7 +40,7 @@ function getErrorActions(kind: CallbackKind, fallbackEmail: string) {
   }
 
   return {
-    primaryHref: '/#signin',
+    primaryHref: '/?signup=true',
     primaryLabel: 'Back to sign in',
     secondaryHref: fallbackEmail ? `mailto:support@tradvue.com?subject=Email%20verification%20help&body=Hi%20TradVue,%20I%20need%20help%20with%20email%20verification%20for%20${encodeURIComponent(fallbackEmail)}.` : '/help',
     secondaryLabel: fallbackEmail ? 'Contact support' : 'Open help center',

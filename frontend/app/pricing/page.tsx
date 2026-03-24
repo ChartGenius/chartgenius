@@ -285,10 +285,7 @@ export default function PricingPage() {
 
         {/* Card 3: Pro */}
         <div style={tierCardStyle(true)}>
-          {/* Recommended badge */}
-          <div style={recommendedBadgeStyle}>⭐ Most Popular</div>
-
-          <div style={{ marginBottom: 20, marginTop: 8 }}>
+          <div style={{ marginBottom: 20 }}>
             <div style={tierLabelStyle('#a78bfa')}>Pro</div>
 
             {/* Billing toggle */}
@@ -519,21 +516,6 @@ function tierCardStyle(highlighted: boolean): React.CSSProperties {
     position: 'relative',
     boxShadow: highlighted ? '0 0 40px rgba(99,102,241,0.15)' : 'none',
   }
-}
-
-const recommendedBadgeStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: -14,
-  left: '50%',
-  transform: 'translateX(-50%)',
-  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-  color: '#fff',
-  fontSize: 11,
-  fontWeight: 800,
-  padding: '4px 14px',
-  borderRadius: 20,
-  letterSpacing: '0.04em',
-  whiteSpace: 'nowrap',
 }
 
 function tierLabelStyle(color: string): React.CSSProperties {
