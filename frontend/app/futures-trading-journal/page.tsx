@@ -6,14 +6,14 @@ import { serializeJsonLd } from '../lib/serializeJsonLd'
 export const metadata: Metadata = {
   title: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L',
   description:
-    'The best futures trading journal. Auto-detect specs for 20 contracts including NQ, ES, CL. Tick-based P&L, margin tracking, prop firm sync. Free to start.',
+    'Futures trading journal with 20 built-in contract specs including NQ, ES, and CL. Tick-based P&L, margin tracking, and prop firm monitoring inside the broader TradVue workflow.',
   alternates: {
     canonical: 'https://www.tradvue.com/futures-trading-journal',
   },
   openGraph: {
     title: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L | TradVue',
     description:
-      'Best futures journal. 20 contract specs built-in, tick-based P&L, prop firm integration. Free to start.',
+      'Futures journal with 20 contract specs built in, tick-based P&L, and prop firm monitoring as part of the TradVue workflow. Free to start.',
     url: 'https://www.tradvue.com/futures-trading-journal',
     siteName: 'TradVue',
     images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'Futures Trading Journal — TradVue' }],
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Futures Trading Journal — Track NQ, ES, CL with Tick-Based P&L | TradVue',
-    description: 'Best futures journal with 20 built-in contract specs and tick-based P&L. Free to start.',
+    description: 'Futures journal with 20 built-in contract specs, tick-based P&L, and broader TradVue workflow support. Free to start.',
     images: ['/og-image.png'],
   },
 }
@@ -92,7 +92,7 @@ export default function FuturesTradingJournalPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-header.svg" alt="TradVue" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
           </Link>
-          <Link href="/#signup" className="seo-nav-cta">Get Started Free</Link>
+          <Link href="/landing#signup" className="seo-nav-cta">Start Free</Link>
         </div>
       </nav>
 
@@ -110,15 +110,14 @@ export default function FuturesTradingJournalPage() {
             <span className="gradient-text">Tick-Accurate P&amp;L</span>
           </h1>
           <p className="seo-hero-sub">
-            Trade NQ, ES, CL, and 17 other futures contracts with auto-detected specs, tick-based P&L,
-            and integrated prop firm tracking. TradVue does the math so you focus on trading.
+            Trade NQ, ES, CL, and 17 other futures contracts with auto-detected specs and tick-based P&L inside a broader workflow for journaling, prop firm rules, tools, and review.
           </p>
-          <Link href="/#signup" className="seo-hero-cta">
+          <Link href="/landing#signup" className="seo-hero-cta">
             Start Journaling Free
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
           <div className="seo-hero-trust">
-            {['20 built-in contracts', 'Tick-accurate P&L', 'Prop firm sync'].map(t => (
+            {['20 built-in contracts', 'Tick-accurate P&L', 'Prop firm monitoring'].map(t => (
               <span key={t} className="seo-hero-trust-item">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 {t}
@@ -309,8 +308,8 @@ export default function FuturesTradingJournalPage() {
       <section className="seo-cta-section">
         <div className="seo-cta-inner">
           <h2 className="seo-cta-h2">Journal Your Futures Trades with Confidence</h2>
-          <p className="seo-cta-sub">Let TradVue handle the contract specs and calculations. You focus on trading.</p>
-          <Link href="/#signup" className="seo-cta-btn">
+          <p className="seo-cta-sub">Use TradVue to keep futures journaling, prop firm rules, contract math, and post-trade review in one place.</p>
+          <Link href="/landing#signup" className="seo-cta-btn">
             Start Journaling Free
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>

@@ -6,14 +6,14 @@ import { serializeJsonLd } from '../lib/serializeJsonLd'
 export const metadata: Metadata = {
   title: '30+ Free Trading Calculators — Position Size, Risk, Options Greeks',
   description:
-    'Free trading calculators for position sizing, risk/reward, options Greeks, futures tick value, Sharpe ratio, Kelly criterion, trade expectancy, and more. Try now.',
+    'Free trading calculators for position sizing, risk/reward, options Greeks, futures tick value, Sharpe ratio, Kelly criterion, trade expectancy, and more — part of the broader TradVue trader workflow.',
   alternates: {
     canonical: 'https://www.tradvue.com/trading-calculators',
   },
   openGraph: {
     title: '30+ Free Trading Calculators — Position Size, Risk, Options Greeks | TradVue',
     description:
-      '30+ free trading calculators: position sizing, risk/reward, Greeks, futures specs, Sharpe ratio, Kelly criterion, and more. No sign-up required.',
+      '30+ free trading calculators for position sizing, risk/reward, Greeks, futures specs, Sharpe ratio, Kelly criterion, and more. Part of the broader TradVue trader workflow. No sign-up required.',
     url: 'https://www.tradvue.com/trading-calculators',
     siteName: 'TradVue',
     images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'TradVue Free Trading Calculators' }],
@@ -118,8 +118,7 @@ export default function TradingCalculatorsPage() {
             <span className="gradient-text">Calculate Before You Trade</span>
           </h1>
           <p className="seo-hero-sub">
-            Everything a trader needs to calculate. Position sizing, risk/reward, Greeks, futures specs,
-            Sharpe ratio, and more. Free to use — no sign-up, no credit card required.
+            Everything a trader needs to calculate — with tools that connect back to journaling, portfolio review, prop firm tracking, ritual, and market context in TradVue. Free to use.
           </p>
           <Link href="/tools" className="seo-hero-cta">
             Access All Calculators
@@ -243,7 +242,7 @@ export default function TradingCalculatorsPage() {
               if the expected value is positive. This is the difference between amateurs and pros.
             </p>
             <p style={{ fontSize: '15px', color: 'var(--text-1)', lineHeight: 1.75, marginBottom: '32px' }}>
-              You don't need expensive software. TradVue gives you the same tools — free to use.
+              You don't need expensive software. TradVue gives you the tools inside a broader workflow for planning, journaling, and review.
             </p>
             <Link href="/tools" className="seo-hero-cta" style={{ fontSize: '14px', padding: '12px 28px' }}>
               Access All Calculators
@@ -296,9 +295,9 @@ export default function TradingCalculatorsPage() {
       {/* ── CTA ── */}
       <section className="seo-cta-section">
         <div className="seo-cta-inner">
-          <h2 className="seo-cta-h2">Start Calculating Like a Pro</h2>
+          <h2 className="seo-cta-h2">Put Better Math Into Your Trading Workflow</h2>
           <p className="seo-cta-sub">
-            All calculators are free to use. No credit card. No sign-up required. Just better trading.
+            Use the calculators free, then plug the numbers back into your journal and review process inside TradVue.
           </p>
           <Link href="/tools" className="seo-cta-btn">
             Use Calculators Now

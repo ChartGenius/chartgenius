@@ -92,7 +92,7 @@ export default function OptionsTradingJournalPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-header.svg" alt="TradVue" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
           </Link>
-          <Link href="/#signup" className="seo-nav-cta">Get Started Free</Link>
+          <Link href="/landing#signup" className="seo-nav-cta">Start Free</Link>
         </div>
       </nav>
 
@@ -110,10 +110,9 @@ export default function OptionsTradingJournalPage() {
             <span className="gradient-text">With Greeks Precision</span>
           </h1>
           <p className="seo-hero-sub">
-            Multi-leg strategies, Greeks analysis, and P&L by strategy type. TradVue lets you understand
-            your options portfolio with the precision it demands.
+            Multi-leg strategies, Greeks analysis, and P&L by strategy type inside the broader TradVue workflow for journaling, portfolio review, tools, and market context.
           </p>
-          <Link href="/#signup" className="seo-hero-cta">
+          <Link href="/landing#signup" className="seo-hero-cta">
             Try Options Journaling Free
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
@@ -302,8 +301,8 @@ export default function OptionsTradingJournalPage() {
       <section className="seo-cta-section">
         <div className="seo-cta-inner">
           <h2 className="seo-cta-h2">Stop Guessing. Start Understanding Your Options.</h2>
-          <p className="seo-cta-sub">TradVue gives you the math. Greeks, P&L, strategy performance. Trade smarter.</p>
-          <Link href="/#signup" className="seo-cta-btn">
+          <p className="seo-cta-sub">Bring options journaling, portfolio review, calculators, and market context into one workflow. Trade with better context.</p>
+          <Link href="/landing#signup" className="seo-cta-btn">
             Try Options Journaling Free
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>

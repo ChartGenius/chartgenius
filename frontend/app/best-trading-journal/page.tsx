@@ -6,14 +6,14 @@ import { serializeJsonLd } from '../lib/serializeJsonLd'
 export const metadata: Metadata = {
   title: 'Best Trading Journal for Day Traders 2026 | TradVue',
   description:
-    'The best free trading journal for day traders in 2026. AI analytics, 30+ calculators, prop firm tracking, and real-time alerts. Create a free account — no credit card required.',
+    'The best free trading journal for day traders in 2026. TradVue combines journaling, portfolio tracking, calculators, prop firm monitoring, ritual, and market intel in one platform.',
   alternates: {
     canonical: 'https://www.tradvue.com/best-trading-journal',
   },
   openGraph: {
     title: 'Best Trading Journal for Day Traders 2026 | TradVue',
     description:
-      'The best free trading journal for day traders. AI-powered analytics, 30+ calculators, prop firm tracking, and real-time alerts. Free to start.',
+      'The best free trading journal for day traders. TradVue combines journaling, portfolio tracking, calculators, prop firm monitoring, ritual, and market intel. Free to start.',
     url: 'https://www.tradvue.com/best-trading-journal',
     siteName: 'TradVue',
     images: [{ url: 'https://www.tradvue.com/og-image.png', width: 1200, height: 630, alt: 'Best Trading Journal for Day Traders — TradVue' }],
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Best Trading Journal for Day Traders 2026 | TradVue',
     description:
-      'The best free trading journal. AI analytics, 30+ calculators, prop firm tracking. Free to start.',
+      'The best free trading journal. TradVue combines journaling, portfolio tracking, tools, and prop firm monitoring. Free to start.',
     images: ['/og-image.png'],
   },
 }
@@ -46,7 +46,7 @@ export default function BestTradingJournalPage() {
                     name: 'What makes TradVue the best trading journal for day traders?',
                     acceptedAnswer: {
                       '@type': 'Answer',
-                      text: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real-time drawdown gauges, emotion tracking, and pattern detection — available with a free account.',
+                      text: 'TradVue combines journaling, portfolio tracking, 30+ calculators, prop firm monitoring, ritual, and market intel in one trader workflow. You get drawdown gauges, emotion tracking, and pattern analysis with a free account.',
                     },
                   },
                   {
@@ -102,7 +102,7 @@ export default function BestTradingJournalPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-header.svg" alt="TradVue" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
           </Link>
-          <Link href="/#signup" className="seo-nav-cta">Get Started Free</Link>
+          <Link href="/landing#signup" className="seo-nav-cta">Start Free</Link>
         </div>
       </nav>
 
@@ -120,11 +120,10 @@ export default function BestTradingJournalPage() {
             <span className="gradient-text">Built for Day Traders</span>
           </h1>
           <p className="seo-hero-sub">
-            Stop journaling in spreadsheets. TradVue gives you AI-powered insights, real-time prop firm tracking,
-            and 30+ trading calculators — free account, no credit card required.
+            Stop journaling in spreadsheets. TradVue gives you the broader trader workflow: journal, portfolio tracking, prop firm monitoring, ritual, tools, and market intel in one place.
           </p>
-          <Link href="/#signup" className="seo-hero-cta">
-            Start Journaling Free
+          <Link href="/landing#signup" className="seo-hero-cta">
+            Start Free in TradVue
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
           <div className="seo-hero-trust">
@@ -162,7 +161,7 @@ export default function BestTradingJournalPage() {
             <h2>Why TradVue Stands Out</h2>
             <div className="seo-divider" />
             <p style={{ marginTop: '20px' }}>
-              Every feature built to help you analyze your trading — not just log more.
+              TradVue is built to help you review, manage risk, and stay consistent — not just log more.
             </p>
           </div>
           <div className="seo-grid-3">
@@ -287,15 +286,6 @@ export default function BestTradingJournalPage() {
                   position: 'relative',
                 }}
               >
-                {tier.highlight && (
-                  <div style={{
-                    position: 'absolute', top: '20px', right: '20px',
-                    background: 'linear-gradient(135deg, #4a9eff, #6366f1)',
-                    color: '#fff', fontSize: '10px', fontWeight: 700,
-                    letterSpacing: '0.08em', padding: '4px 10px', borderRadius: '100px',
-                    textTransform: 'uppercase',
-                  }}>Popular</div>
-                )}
                 <div style={{ marginBottom: '20px' }}>
                   <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em', color: tier.highlight ? 'var(--blue)' : 'var(--text-2)', textTransform: 'uppercase', marginBottom: '8px' }}>{tier.name}</div>
                   <div style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-0)', lineHeight: 1 }}>{tier.price}</div>
@@ -309,14 +299,14 @@ export default function BestTradingJournalPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/#signup" style={{
+                <Link href="/landing#signup" style={{
                   display: 'block', textAlign: 'center', padding: '12px',
                   borderRadius: '8px', textDecoration: 'none', fontWeight: 700, fontSize: '14px',
                   background: tier.highlight ? 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)' : 'var(--bg-3)',
                   color: '#fff',
                   border: tier.highlight ? 'none' : '1px solid var(--border)',
                 }}>
-                  Get Started Free
+                  Start Free
                 </Link>
               </div>
             ))}
@@ -333,7 +323,7 @@ export default function BestTradingJournalPage() {
           </div>
           <div className="seo-faq-list">
             {[
-              { q: 'What makes TradVue the best trading journal for day traders?', a: 'TradVue combines AI-powered analytics, 30+ free calculators, prop firm tracking, and a clean interface built by traders. You get real-time drawdown gauges, emotion tracking, and pattern detection — available with a free account.' },
+              { q: 'What makes TradVue the best trading journal for day traders?', a: 'TradVue combines journaling, portfolio tracking, 30+ calculators, prop firm monitoring, ritual, and market intel in one trader workflow. You get drawdown gauges, emotion tracking, and pattern analysis with a free account.' },
               { q: 'Is TradVue really free to use?', a: 'Yes. Create a free account (no credit card required) and get a 3-week full trial of all features. The free tier includes manual trade logging, basic analytics (30-day view window), and access to all 30+ calculators. Dashboard, news, and calendar are available without any account.' },
               { q: 'Can I track prop firm drawdowns in TradVue?', a: 'Yes. TradVue has built-in prop firm tracking that syncs your journal with prop firm rules, showing real-time drawdown gauges, daily loss limits, and trailing loss status.' },
               { q: 'Can I import my existing trades into TradVue?', a: 'Yes. TradVue supports CSV import from most major brokers and platforms. You can import your full trade history to analyze historical performance.' },
@@ -370,10 +360,10 @@ export default function BestTradingJournalPage() {
         <div className="seo-cta-inner">
           <h2 className="seo-cta-h2">Ready to Level Up Your Trading?</h2>
           <p className="seo-cta-sub">
-            Join traders using AI and data to trade smarter. Create a free account today — no credit card required.
+            Start with a trader workflow that connects journaling, risk tools, portfolio review, and market context. Create a free account today.
           </p>
-          <Link href="/#signup" className="seo-cta-btn">
-            Start Journaling Free
+          <Link href="/landing#signup" className="seo-cta-btn">
+            Start Free in TradVue
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
         </div>

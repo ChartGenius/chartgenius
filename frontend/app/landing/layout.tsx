@@ -3,19 +3,19 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.tradvue.com'),
   // ── Title & Description ────────────────────────────────────────────────
-  title: 'TradVue — Real-Time Market Intelligence for Active Traders',
+  title: 'TradVue — The Trader Operating System for Journal, Portfolio, Tools & Market Intel',
   description:
-    'AI-powered news feeds, sentiment analysis, and smart alerts. React faster to market moves. Free to start — no credit card required.',
+    'TradVue brings trading journal, portfolio tracking, prop firm monitoring, calculators, post-trade ritual, and market intel into one platform. Free to start — no credit card required.',
 
   // ── Keywords ──────────────────────────────────────────────────────────
   keywords: [
-    'real-time market data',
-    'trading alerts',
-    'AI sentiment analysis',
-    'market news feed',
+    'trading journal',
+    'portfolio tracker',
+    'prop firm tracker',
+    'trading calculators',
+    'post-trade ritual',
+    'market intel',
     'trader tools',
-    'stock market dashboard',
-    'crypto trading alerts',
     'trading platform',
   ],
 
@@ -24,15 +24,15 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://tradvue.com/landing',
     siteName: 'TradVue',
-    title: 'TradVue — Real-Time Market Intelligence for Active Traders',
+    title: 'TradVue — The Trader Operating System for Journal, Portfolio, Tools & Market Intel',
     description:
-      'AI-powered news feeds, sentiment analysis, and smart alerts for traders who can\'t afford to miss a move.',
+      'TradVue brings trading journal, portfolio tracking, calculators, prop firm tracking, ritual, and market intel into one trader workflow.',
     images: [
       {
         url: 'https://www.tradvue.com/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'TradVue — AI Driven Alpha',
+        alt: 'TradVue — Trader operating system',
       },
     ],
   },
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@tradvue',
     creator: '@tradvue',
-    title: 'TradVue — Real-Time Market Intelligence for Active Traders',
-    description: 'AI-powered news, sentiment analysis, and smart alerts. Free to start.',
+    title: 'TradVue — The Trader Operating System for Journal, Portfolio, Tools & Market Intel',
+    description: 'Trading journal, portfolio tracking, prop firm tools, calculators, ritual, and market intel in one platform. Free to start.',
     images: ['https://www.tradvue.com/og-twitter.png'],
   },
 

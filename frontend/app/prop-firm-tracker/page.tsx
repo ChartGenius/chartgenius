@@ -101,7 +101,7 @@ export default function PropFirmTrackerPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-header.svg" alt="TradVue" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
           </Link>
-          <Link href="/#signup" className="seo-nav-cta">Get Started Free</Link>
+          <Link href="/landing#signup" className="seo-nav-cta">Start Free</Link>
         </div>
       </nav>
 
@@ -119,10 +119,9 @@ export default function PropFirmTrackerPage() {
             <span className="gradient-text">In Real-Time</span>
           </h1>
           <p className="seo-hero-sub">
-            Monitor your daily loss and max drawdown limits as you log trades. TradVue's prop firm tracker syncs your journal
-            with your firm's rules and shows you exactly where you stand.
+            Monitor your daily loss and max drawdown limits as you log trades. TradVue keeps prop firm rules connected to your journal, tools, portfolio review, and market workflow.
           </p>
-          <Link href="/#signup" className="seo-hero-cta">
+          <Link href="/landing#signup" className="seo-hero-cta">
             Try Prop Firm Tracker Free
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
@@ -302,9 +301,9 @@ export default function PropFirmTrackerPage() {
         <div className="seo-cta-inner">
           <h2 className="seo-cta-h2">Always Know Where You Stand</h2>
           <p className="seo-cta-sub">
-            Real-time tracking keeps you compliant. Prop firm trading requires discipline — let TradVue handle the math.
+            Keep prop firm rules tied to your journal and review flow. TradVue helps you stay disciplined with the math in one place.
           </p>
-          <Link href="/#signup" className="seo-cta-btn">
+          <Link href="/landing#signup" className="seo-cta-btn">
             Try Prop Firm Tracker
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>

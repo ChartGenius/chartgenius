@@ -397,7 +397,7 @@ export default function LandingPage() {
             '@type': 'SoftwareApplication',
             name: 'TradVue',
             applicationCategory: 'FinanceApplication',
-            description: 'Free trading journal, portfolio tracker, and market analysis tools. 30+ calculators, smart alerts, DRIP simulator, and more.',
+            description: 'TradVue brings your trading journal, portfolio tracker, prop firm monitoring, calculators, ritual, and market intel into one platform.',
             offers: {
               '@type': 'Offer',
               priceCurrency: 'USD',
@@ -510,7 +510,7 @@ export default function LandingPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo-header.svg"
-                alt="TradVue — AI Driven Alpha"
+                alt="TradVue — Trader operating system"
                 style={{
                   height: 'clamp(100px, 18vw, 160px)',
                   width: 'auto',
@@ -529,13 +529,13 @@ export default function LandingPage() {
               marginBottom: '24px',
               color: 'var(--text-0)',
             }}>
-              Real-Time Market Intelligence.{' '}
+              The Trader Operating System{' '}
               <span style={{
                 background: 'linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
-              }}>React Faster.</span>
+              }}>Built for Review and Execution.</span>
             </h1>
 
             {/* Subheadline */}
@@ -547,7 +547,7 @@ export default function LandingPage() {
               margin: '0 auto 40px',
               fontWeight: 400,
             }}>
-              AI-powered news, sentiment analysis, and alerts designed for traders who can't afford to miss a move. Start free today.
+              Journal trades, track portfolio and prop firm rules, use built-in tools, keep your ritual tight, and use market intel when it matters. Start free today.
             </p>
 
             {/* CTAs */}
@@ -604,7 +604,7 @@ export default function LandingPage() {
             }}>
               {[
                 'No credit card required',
-                '0-second data delay (Pro)',
+                'Journal, tools, and intel in one place',
                 'Built for reliability',
               ].map(t => (
                 <span key={t} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-2)', fontWeight: 500 }}>
@@ -634,10 +634,10 @@ export default function LandingPage() {
                 marginBottom: '16px',
                 color: 'var(--text-0)',
               }}>
-                You're Missing Moves Because You're Missing Intelligence
+                Trading Breaks Down When Your Workflow Lives in Six Different Tabs
               </h2>
               <p style={{ fontSize: '16px', color: 'var(--text-2)', maxWidth: '580px', margin: '0 auto', lineHeight: 1.6 }}>
-                Traders lose money not on bad decisions — on slow ones. By the time you see the news, others have already moved.
+                Journaling, portfolio review, prop firm rules, calculators, and market context all matter. When they live in separate tools, consistency slips.
               </p>
             </div>
 
@@ -649,20 +649,20 @@ export default function LandingPage() {
               {[
                 {
                   number: '01',
-                  title: 'Information Overload',
-                  desc: "You're drowning in data. Market news, earnings calls, SEC filings, social signals. Which ones matter? Right now?",
+                  title: 'Fragmented Workflow',
+                  desc: 'Your journal is in one place, your portfolio in another, your calculators in bookmarks, and your prop rules in notes. That fragmentation costs focus.',
                   color: 'var(--red)',
                 },
                 {
                   number: '02',
-                  title: 'The Speed Gap',
-                  desc: 'Professional traders get institutional feeds. You get Twitter. By the time retail attention hits, the alpha is gone.',
+                  title: 'Review Without Context',
+                  desc: 'A journal without portfolio context, rule tracking, or market backdrop only tells part of the story. You need the full trading picture.',
                   color: 'var(--yellow)',
                 },
                 {
                   number: '03',
-                  title: 'Emotion vs. Edge',
-                  desc: "You feel the market moving but can't quantify sentiment fast enough. Is this a real reversal or noise?",
+                  title: 'Discipline Needs Systems',
+                  desc: 'Good routines break when logging, notes, risk math, and post-trade review take too many steps. Consistency needs a tighter operating system.',
                   color: 'var(--purple)',
                 },
               ].map(item => (
@@ -701,10 +701,10 @@ export default function LandingPage() {
                 fontWeight: 800, letterSpacing: '-0.03em',
                 marginBottom: '16px', color: 'var(--text-0)',
               }}>
-                Everything You Need to Trade with Edge
+                One Platform for the Full Trading Workflow
               </h2>
               <p style={{ fontSize: '16px', color: 'var(--text-2)', maxWidth: '540px', margin: '0 auto', lineHeight: 1.6 }}>
-                Real-time intelligence, a professional trading journal, portfolio analytics, and 30+ built-in calculators — all in one platform. Free to start.
+                Trading journal, portfolio analytics, prop firm tracking, post-trade ritual, market intel, and 30+ built-in calculators — all in one platform. Free to start.
               </p>
             </div>
 
@@ -768,7 +768,7 @@ export default function LandingPage() {
               fontWeight: 800, letterSpacing: '-0.03em',
               marginBottom: '64px', color: 'var(--text-0)',
             }}>
-              Built for Active Traders Across Markets
+              Built for Active Traders Who Need One System
             </h2>
 
             {/* Stats */}
@@ -1026,10 +1026,10 @@ export default function LandingPage() {
                 fontWeight: 800, letterSpacing: '-0.03em',
                 marginBottom: '14px', color: 'var(--text-0)',
               }}>
-                Get Real-Time Market Intelligence
+                Start Using the Full Trader Workflow
               </h2>
               <p style={{ fontSize: '15px', color: 'var(--text-2)', lineHeight: 1.6 }}>
-                Join traders who react faster. We'll send you free access + market tips. No spam. Cancel anytime.
+                Get access to TradVue's trading journal, portfolio tracking, tools, ritual, and market intel. No spam. Cancel anytime.
               </p>
             </div>
 
@@ -1259,7 +1259,7 @@ export default function LandingPage() {
                   <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-0)', letterSpacing: '-0.02em' }}>TradVue</span>
                 </div>
                 <p style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '20px', maxWidth: '200px' }}>
-                  Real-time market intelligence for active traders.
+                  Trading journal, portfolio, tools, ritual, and market intel in one system.
                 </p>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   {[

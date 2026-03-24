@@ -56,6 +56,14 @@ describe('Landing page trust content', () => {
     expect(screen.queryByText(/up to 5 lists/i)).not.toBeInTheDocument()
   })
 
+  it('positions TradVue as a broader trader workflow instead of only market intelligence', () => {
+    render(<LandingPage />)
+
+    expect(screen.getByRole('heading', { name: /The Trader Operating System Built for Review and Execution/i })).toBeInTheDocument()
+    expect(screen.getByText(/Journal trades, track portfolio and prop firm rules, use built-in tools, keep your ritual tight, and use market intel when it matters/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Real-Time Market Intelligence\. React Faster\./i)).not.toBeInTheDocument()
+  })
+
   it('only shows verified community links in the landing footer', () => {
     render(<LandingPage />)
 

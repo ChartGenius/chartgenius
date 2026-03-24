@@ -16,7 +16,7 @@ export default function MarketIntelPage() {
                 '@type': 'WebPage',
                 name: 'Free Insider Trading Tracker — SEC Form 4 Filings, Earnings & IPOs | TradVue',
                 description:
-                  'Track insider buying and selling in real-time. Free SEC Form 4 data for AAPL, MSFT, NVDA, TSLA, and more. Filter by buy, sell, award, gift.',
+                  'Track insider buying and selling with free SEC Form 4 data, earnings, and IPO calendars. Market Intel is one part of the broader TradVue trader workflow.',
                 url: 'https://www.tradvue.com/market-intel',
               },
               {
@@ -101,8 +101,7 @@ export default function MarketIntelPage() {
             <span className="gradient-text">Updated Daily</span>
           </h1>
           <p className="seo-hero-sub">
-            Track what corporate insiders are buying and selling. Real SEC Form 4 filings for the world&apos;s
-            biggest companies. No account required.
+            Track what corporate insiders are buying and selling. Market Intel gives you one pillar of the broader TradVue workflow alongside journaling, tools, portfolio review, and prop firm tracking.
           </p>
           <Link href="/?view=market-intel" className="seo-hero-cta">
             Track Insider Trades
@@ -408,9 +407,9 @@ export default function MarketIntelPage() {
       {/* ── CTA ── */}
       <section className="seo-cta-section">
         <div className="seo-cta-inner">
-          <h2 className="seo-cta-h2">Start Tracking Insider Activity</h2>
+          <h2 className="seo-cta-h2">Use Market Intel Inside the Broader Workflow</h2>
           <p className="seo-cta-sub">
-            Free SEC Form 4 data, earnings calendar, IPO tracker, and economic indicators — all in one place. No account required.
+            Use free SEC Form 4 data, earnings, IPO tracking, and economic indicators as part of the broader TradVue workflow. No account required for this page.
           </p>
           <Link href="/?view=market-intel" className="seo-cta-btn">
             Open Market Intel
@@ -427,7 +426,7 @@ export default function MarketIntelPage() {
           </h2>
           <div className="seo-related-grid">
             {[
-              { href: '/best-trading-journal', title: 'Trading Journal', desc: 'Log, analyze, and improve your trades' },
+              { href: '/best-trading-journal', title: 'Trading Journal', desc: 'Connect market context to trade review and journaling' },
               { href: '/prop-firm-tracker', title: 'Prop Firm Tracker', desc: 'Track drawdown and daily loss limits in real-time' },
               { href: '/trading-calculators', title: '30+ Calculators', desc: 'Position sizing, risk/reward, Greeks, and more' },
               { href: '/futures-trading-journal', title: 'Futures Journal', desc: 'Track NQ, ES, CL with tick-based P&L' },

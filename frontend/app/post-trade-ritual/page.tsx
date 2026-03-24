@@ -93,7 +93,7 @@ export default function PostTradeRitualPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-header.svg" alt="TradVue" style={{ height: '36px', width: 'auto', objectFit: 'contain' }} />
           </Link>
-          <Link href="/#signup" className="seo-nav-cta">Get Started Free</Link>
+          <Link href="/landing#signup" className="seo-nav-cta">Start Free</Link>
         </div>
       </nav>
 
@@ -111,10 +111,9 @@ export default function PostTradeRitualPage() {
             <span className="gradient-text">In 60 Seconds</span>
           </h1>
           <p className="seo-hero-sub">
-            Most traders skip journaling because it's tedious. TradVue's post-trade ritual removes friction and makes
-            journaling automatic. Track emotions, build streaks, improve faster.
+            Most traders skip journaling because it's tedious. TradVue's post-trade ritual keeps review lightweight and connects it to your broader journal, tools, portfolio, and market workflow.
           </p>
-          <Link href="/#signup" className="seo-hero-cta">
+          <Link href="/landing#signup" className="seo-hero-cta">
             Start Your Ritual
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
@@ -323,9 +322,9 @@ export default function PostTradeRitualPage() {
         <div className="seo-cta-inner">
           <h2 className="seo-cta-h2">60 Seconds Changes Everything</h2>
           <p className="seo-cta-sub">
-            A small ritual, done daily, creates momentum. Track your streak. Watch your habits change. Improve faster.
+            A small ritual, done daily, creates momentum. Keep review connected to the rest of your trading workflow and improve with cleaner data.
           </p>
-          <Link href="/#signup" className="seo-cta-btn">
+          <Link href="/landing#signup" className="seo-cta-btn">
             Start Your Ritual
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </Link>
