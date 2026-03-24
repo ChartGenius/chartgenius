@@ -1,153 +1,136 @@
-# VIP Twitter Accounts to Monitor
+# TradVue VIP Accounts
 
-High-impact market-moving accounts across politics, finance, and media.
-
-## Politicians
-
-### Executive Branch
-| Name | Handle | Focus | Priority |
-|------|--------|-------|----------|
-| Donald Trump | @realDonaldTrump | Trade policy, tariffs, executive orders | CRITICAL |
-| Joe Biden | @JoeBiden | Policy announcements, economic statements | CRITICAL |
-| Kamala Harris | @KamalaHarris | Administration policy | HIGH |
-| Elon Musk | @elonmusk | Tech, policy influence, market-moving tweets | CRITICAL |
-
-### Key Senators (Finance/Trade/Policy)
-| Name | Handle | Focus | Priority |
-|------|--------|-------|----------|
-| Chuck Schumer | @SenSchumer | Senate leadership, economic policy | HIGH |
-| Mitch McConnell | @SenateMajLdr | Senate Republican leader | HIGH |
-| Ron Wyden | @RonWyden | Trade & finance committee | HIGH |
-| Patty Murray | @PattyMurray | Senate leadership | HIGH |
-| Elizabeth Warren | @SenWarren | Banking regulation, Wall Street | HIGH |
-| Bernie Sanders | @SenBernie | Economic policy, inequality | MEDIUM |
-| Kyrsten Sinema | @SenatorSinema | Finance bills, trade | MEDIUM |
-| Rob Portman | @senrobportman | Trade & deficit concerns | MEDIUM |
-
-### House Leaders
-| Name | Handle | Focus | Priority |
-|------|--------|-------|----------|
-| Kevin McCarthy | @SpeakerMcCarthy | House leadership (if applicable) | MEDIUM |
-| Alexandria Ocasio-Cortez | @AOC | Economic & financial regulation | MEDIUM |
+**Purpose:** High-fit users and account archetypes to invite early into beta  
+**Note:** This is a product/beta outreach list, not a social monitoring watchlist.
 
 ---
 
-## Federal Reserve Officials
+## 1) VIP Account Archetypes
 
-| Name | Title | Handle | Priority |
-|------|-------|--------|----------|
-| Jerome Powell | Fed Chair | @jerrpowellfed | CRITICAL |
-| Vice Chair | Vice Chair | @FedViceChair | HIGH |
-| Lael Brainard | Vice Chair for Supervision | @BrainardJD | HIGH |
-| Chris Waller | Governor | @chris_wb | HIGH |
-| Beth Hammack | Governor | @BethHammack | MEDIUM |
-| Philip Jefferson | Governor | @PhilJefferson | MEDIUM |
+### A. Spreadsheet Trader
+**Profile:** Tracks trades in Excel/Google Sheets, inconsistent review process  
+**Why high value:** Clear pain point, easiest product replacement story  
+**Invite priority:** CRITICAL
 
-### Past/Influential Officials
-| Name | Title | Handle | Priority |
-|------|-------|--------|----------|
-| Janet Yellen | Treasury Secretary | @JanetYellen | HIGH |
-| Ben Bernanke | Former Fed Chair | @benbernanke | HIGH |
+### B. Prop Firm Challenge Trader
+**Profile:** Currently in or repeatedly attempting funded challenges  
+**Why high value:** High discipline, frequent review, strong retention potential  
+**Invite priority:** CRITICAL
 
----
+### C. TradingView-Heavy User
+**Profile:** Lives in TradingView, uses alerts or setup-based workflows  
+**Why high value:** Strong fit for TradVue workflow improvements  
+**Invite priority:** HIGH
 
-## Treasury & Economic Officials
+### D. Futures Trader
+**Profile:** Trades ES/NQ/CL/GC or micros regularly  
+**Why high value:** Helps validate multi-asset use case beyond stocks  
+**Invite priority:** HIGH
 
-| Name | Title | Handle | Priority |
-|------|--------|--------|----------|
-| Janet Yellen | Treasury Secretary | @JanetYellen | CRITICAL |
-| Lael Brainard | Deputy Secretary (if applicable) | @BrainardJD | HIGH |
-| Gary Gensler | SEC Chair | @GaryGensler | HIGH |
-| Paul Atkins | CFTC Chair (if applicable) | @CMEGroup | MEDIUM |
+### E. Forex Trader
+**Profile:** Tracks pairs systematically, often underserved by generic journals  
+**Why high value:** Good expansion fit and product differentiation  
+**Invite priority:** HIGH
 
----
+### F. Crypto Trader
+**Profile:** Wants one journal across crypto and other markets  
+**Why high value:** Good signal for multi-asset roadmap and product messaging  
+**Invite priority:** MEDIUM
 
-## Major CEOs & Business Leaders (Market Movers)
+### G. Small Trading Creator
+**Profile:** 2k–50k audience, engaged followers, educational/process-driven content  
+**Why high value:** Can become referral source if product is genuinely useful  
+**Invite priority:** HIGH
 
-| Name | Company | Handle | Focus | Priority |
-|------|---------|--------|-------|----------|
-| Elon Musk | Tesla/SpaceX | @elonmusk | Tech, policy, market impact | CRITICAL |
-| Tim Cook | Apple | @tim_cook | Tech earnings, supply chain | HIGH |
-| Satya Nadella | Microsoft | @satyanadella | Tech, AI, earnings | HIGH |
-| Jensen Huang | NVIDIA | @jhuang | AI chips, earnings | HIGH |
-| Sundar Pichai | Google | @sundarpichai | Tech, AI | MEDIUM |
-| Sam Altman | OpenAI | @sama | AI policy, market sentiment | MEDIUM |
-| Sheryl Sandberg | Meta (former) | @sherylsandberg | Meta, tech regulation | MEDIUM |
-| Reed Hastings | Netflix | @reedhastings | Media, earnings | MEDIUM |
-| Jamie Dimon | JPMorgan Chase | @dimon | Banking, economy, systemic risk | HIGH |
-| Brian Moynihan | Bank of America | @BofA_news | Banking sector | MEDIUM |
-| Jane Fraser | Citigroup | @janefrase | Banking, credit conditions | MEDIUM |
-| Charlie Scharf | Wells Fargo | @WellsFargo | Banking | MEDIUM |
+### H. High-Discipline Journaler
+**Profile:** Already journals consistently and can compare TradVue against existing workflow  
+**Why high value:** Best source of detailed product feedback  
+**Invite priority:** HIGH
 
 ---
 
-## Financial Media & Journalists (Breaking News)
+## 2) Priority Invite Buckets
 
-### Top Tier Financial News
-| Outlet/Person | Handle | Focus | Priority |
-|-------|--------|-------|----------|
-| Reuters | @reuters | Breaking economic news | CRITICAL |
-| Bloomberg | @business | Markets, earnings, policy | CRITICAL |
-| Financial Times | @FinancialTimes | Markets, economic data | CRITICAL |
-| MarketWatch | @MarketWatch | Market news, analysis | HIGH |
-| CNBC | @CNBC | Market updates, Fed news | HIGH |
-| Wall Street Journal | @WSJ | Breaking news, investigations | HIGH |
-
-### Key Business Journalists
-| Name | Outlet | Handle | Focus | Priority |
-|------|--------|--------|-------|----------|
-| Andrew Ross Sorkin | NYT/CNBC | @asorkin | Markets, M&A, finance | HIGH |
-| David Faber | CNBC | @DavidFaber | Corporate news, deals | HIGH |
-| Kate Rooney | CNBC | @kroneycnbc | Fed, markets, tech | HIGH |
-| Kayla Tausche | CNBC | @taylushe | Fed, Treasury, policy | HIGH |
-| Jeff Cox | CNBC | @CNBCJeffCox | Fed, economic data | HIGH |
-| Ethan Nicholas Harris | Bloomberg | @BloombergEconomics | Economic analysis | MEDIUM |
-| Larry Summers | Economist/Pundit | @LawrenceSummers | Economic commentary | HIGH |
-| Paul Krugman | NYT | @paulkrugman | Economic analysis | MEDIUM |
+| Bucket | Count Goal | Why |
+|---|---|---|
+| Spreadsheet traders | 10 | Fastest replacement story |
+| Prop traders | 5 | High frequency + disciplined feedback |
+| TradingView-heavy users | 5 | Workflow validation |
+| Futures/forex/crypto traders | 5 | Multi-asset validation |
+| Small creators | 5 | Amplification + feedback |
 
 ---
 
-## Sector-Specific Influencers
+## 3) VIP Qualification Rules
 
-### Energy & Commodities
-| Name | Handle | Focus | Priority |
-|------|--------|-------|----------|
-| OPEC | @OPECSecretariat | Oil market | HIGH |
-| IEA (Int'l Energy Agency) | @IEA | Energy markets | MEDIUM |
+Invite early if they match 2 or more of these:
+- actively trades at least weekly
+- already uses a journal or spreadsheet
+- talks about review, discipline, or process
+- has pain around manual logging or scattered workflows
+- uses TradingView heavily
+- influences a small but relevant trader audience
 
-### Tech & Innovation
-| Name | Handle | Focus | Priority |
-|------|--------|-------|----------|
-| Cathie Wood (ARK Invest) | @CathieDWood | Tech, innovation, market trends | MEDIUM |
-| Marc Andreessen | @pmarca | Tech, VC, market outlook | MEDIUM |
-
-### Crypto & Digital Assets
-| Name | Handle | Focus | Priority |
-|------|--------|-------|----------|
-| Michael Saylor (MicroStrategy) | @michael_saylor | Bitcoin, macro | MEDIUM |
-| Brian Armstrong (Coinbase) | @brian_armstrong | Crypto regulation | MEDIUM |
+Avoid prioritizing people who:
+- only want signals/calls
+- mostly chase hype without process
+- are unlikely to actually test the product
+- have huge audiences but low relevance to journaling/review
 
 ---
 
-## Macro & Market Strategists
+## 4) Outreach Notes Template
 
-| Name | Organization | Handle | Focus | Priority |
-|------|---|--------|-------|----------|
-| Raoul Pal | Real Vision | @RaoulPal | Macro, markets | MEDIUM |
-| Derek Lowe | Science blogs | @Dereklowe | Market commentary | LOW |
+Use this structure per VIP target:
+- **Name / Handle:**
+- **Platform:**
+- **Audience size:**
+- **Trader type:**
+- **Why they fit:**
+- **Pain point likely:**
+- **Outreach channel:**
+- **Status:** Not started / Sent / Replied / Activated / Passed
+- **Notes:**
 
 ---
 
-## Watchlist Configuration Notes
+## 5) Example High-Fit Targets to Look For
 
-- **CRITICAL**: Monitor every tweet in real-time for trading implications
-- **HIGH**: Check multiple times daily, especially during market hours
-- **MEDIUM**: Check during morning market prep and end-of-day reviews
-- **LOW**: Periodic review for context
+### Search patterns on X / Discord / Reddit / YouTube
+- traders posting screenshots of spreadsheet journals
+- prop challenge recap creators
+- “end of day review” or “weekly recap” traders
+- TradingView tutorial creators
+- futures journaling / discipline content
+- forex process and psychology creators
+- smaller creators with active replies and community trust
 
-### Recommendation
-Set up:
-1. Critical accounts → Push notifications
-2. High priority → Tweet timeline monitoring
-3. Medium priority → Daily digest
-4. Retweets from financial outlets should trigger secondary search for original source
+---
+
+## 6) Recommended Invite Order
+
+1. Spreadsheet traders
+2. Prop traders
+3. TradingView-heavy users
+4. Futures + forex traders
+5. Small creators with process-oriented audiences
+6. Crypto traders
+
+---
+
+## 7) Success Definition
+
+A VIP invite is successful if the person:
+- signs up,
+- logs/imports trades,
+- completes at least one review session,
+- and gives actionable feedback or a testimonial.
+
+---
+
+## 8) Immediate Next Actions
+
+- Fill this doc with 15–25 real names/handles once sourced
+- Keep only high-fit targets; don’t pad with vanity accounts
+- Track status weekly
+- Use positive early users as source for referral invites
