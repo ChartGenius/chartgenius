@@ -40,4 +40,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: supabase-dump
-          path: backups/
+          path: |
+            backups/supabase-schema.sql
+            backups/supabase-full.sql
