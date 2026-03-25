@@ -21,19 +21,20 @@ jobs:
           sudo sh -c 'echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           sudo apt-get update
           sudo apt-get install -y postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
 
       - name: Dump schema
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
         run: |
           mkdir -p backups
-          pg_dump-17 "$DATABASE_URL" --schema-only -f backups/supabase-schema.sql
+          pg_dump "$DATABASE_URL" --schema-only -f backups/supabase-schema.sql
 
       - name: Dump full database
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
         run: |
-          pg_dump-17 "$DATABASE_URL" -f backups/supabase-full.sql
+          pg_dump "$DATABASE_URL" -f backups/supabase-full.sql
 
       - name: Upload dump artifacts
         uses: actions/upload-artifact@v4
