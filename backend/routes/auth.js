@@ -316,6 +316,7 @@ router.post('/login', validateEmailFormat, authLimiter, async (req, res) => {
         ...sanitizeUser(data.user),
         tier: profile?.tier || 'free',
         trial_ends_at: profile?.trial_ends_at || null,
+        is_admin: ADMIN_ALLOWLIST.length > 0 && ADMIN_ALLOWLIST.includes(email),
       },
     });
   } catch (err) {

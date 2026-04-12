@@ -85,6 +85,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(JSON.parse(storedUser))
           // Trigger initial cloud sync for returning logged-in users
           initFullSync(storedToken)
+          
+          // Background refresh to catch tier/admin changes
+          apiGetMe(storedToken).then(refreshedUser => {
+            if (refreshedUser && !cancelled) {
+              setUser(refreshedUser)
+              persistStoredAuth(storedToken, refreshedUser, localStorage.getItem(AUTH_REFRESH_TOKEN_KEY))
+            }
+          }).catch(() => {})
+          
           return
         }
 
